@@ -6,6 +6,17 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // CORS 설정
+  const allowedOrigins =
+    process.env.NODE_ENV === 'production'
+      ? ['https://family-planner-web.netlify.app']
+      : ['http://localhost:3000', 'http://localhost:3001'];
+
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+  });
+
   // 전역 ValidationPipe 설정
   app.useGlobalPipes(
     new ValidationPipe({

@@ -33,6 +33,8 @@ model User {
   isEmailVerified           Boolean        @default(false) // 이메일 인증 여부
   emailVerificationToken    String?        @db.VarChar(255) // 이메일 인증 토큰
   emailVerificationExpires  DateTime?      // 이메일 인증 토큰 만료 시간
+  passwordResetToken        String?        @db.VarChar(255) // 비밀번호 재설정 토큰
+  passwordResetExpires      DateTime?      // 비밀번호 재설정 토큰 만료 시간
   createdAt                 DateTime       @default(now())
   updatedAt                 DateTime       @updatedAt
   refreshTokens             RefreshToken[] // RTR 방식을 위한 다중 refresh token 지원
@@ -40,6 +42,7 @@ model User {
   @@unique([provider, providerId]) // 같은 제공자에서 같은 ID는 유일해야 함
   @@index([email])
   @@index([emailVerificationToken])
+  @@index([passwordResetToken])
   @@map("users")
 }
 

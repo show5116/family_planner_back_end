@@ -4,15 +4,105 @@
 
 ---
 
-## ⬜ 1. 회원 가입 및 로그인
+## 🟨 1. 회원 가입 및 로그인
 
-### RTR 방식
-- 보안은 AccessToken과 RefreshToken을 RTR(Refresh Token Rotation) 방식으로 사용할 것
+### ✅ LOCAL 인증 (이메일/비밀번호)
 
-### 소셜 로그인
-- 구글 로그인
-- 카카오 로그인
-- 애플 로그인
+#### 회원가입 (`POST /auth/signup`)
+- ✅ 이메일, 비밀번호(최소 6자), 이름 입력
+- ✅ 이메일 중복 체크
+- ✅ bcrypt로 비밀번호 해싱 (salt rounds: 10)
+- ✅ 이메일 인증 토큰 생성 (24시간 유효, crypto.randomBytes 32bytes)
+- ✅ AWS SES를 통한 인증 이메일 자동 발송
+- ✅ 응답: 사용자 정보 (id, email, name, createdAt, isEmailVerified)
+
+#### 이메일 인증 시스템
+- ✅ 이메일 인증 (`POST /auth/verify-email`)
+  - 토큰 유효성 검증
+  - 만료 시간 확인 (24시간)
+  - 인증 완료 시 `isEmailVerified = true`
+- ✅ 인증 이메일 재전송 (`POST /auth/resend-verification`)
+  - 새로운 토큰 생성 및 이메일 재발송
+  - 소셜 로그인 사용자는 제외
+
+#### 로그인 (`POST /auth/login`)
+- ✅ 이메일/비밀번호 검증
+- ✅ 이메일 인증 완료 여부 확인 (LOCAL 로그인만)
+- ✅ JWT Access Token (15분) + Refresh Token (7일) 발급
+- ✅ Refresh Token은 DB에 저장 (`refresh_tokens` 테이블)
+- ✅ 응답: accessToken, refreshToken, 사용자 정보
+
+#### RTR (Refresh Token Rotation) 방식
+- ✅ 토큰 갱신 (`POST /auth/refresh`)
+  - Refresh Token 유효성 검증 (DB 조회)
+  - 만료 및 무효화 여부 확인
+  - 기존 Refresh Token 자동 무효화 (`isRevoked = true`)
+  - 새로운 Access Token + Refresh Token 쌍 발급
+  - 새 Refresh Token DB 저장
+- ✅ 다중 Refresh Token 지원 (여러 기기 로그인)
+- ✅ Cascade 삭제 설정 (사용자 삭제 시 모든 토큰 삭제)
+
+#### 로그아웃 (`POST /auth/logout`)
+- ✅ Refresh Token 무효화 (`isRevoked = true`)
+- ✅ 특정 기기만 로그아웃 (해당 Refresh Token만 무효화)
+
+#### 인증 확인
+- ✅ 사용자 정보 조회 (`GET /auth/me`)
+  - JWT Guard로 보호
+  - Bearer Token 필요
+  - 응답: userId, email, name
+- ✅ JWT Strategy (passport-jwt)
+  - Bearer Token 추출
+  - Access Token 검증 (15분 만료)
+  - 사용자 존재 여부 확인
+
+#### 비밀번호 찾기/재설정
+- ✅ 비밀번호 재설정 요청 (`POST /auth/request-password-reset`)
+  - 이메일 입력
+  - 6자리 인증 코드 생성 (1시간 유효)
+  - 이메일로 인증 코드 발송
+  - LOCAL 로그인 사용자만 가능
+- ✅ 비밀번호 재설정 (`POST /auth/reset-password`)
+  - 이메일, 인증 코드, 새 비밀번호 입력
+  - 인증 코드 유효성 검증 (1시간)
+  - 비밀번호 해싱 후 업데이트
+  - 인증 코드 삭제
+
+#### 보안 구현
+- ✅ bcrypt 비밀번호 해싱
+- ✅ JWT Access Token (기본 15분, `JWT_ACCESS_SECRET` 환경변수)
+- ✅ JWT Refresh Token (기본 7일, `JWT_REFRESH_SECRET` 환경변수)
+- ✅ 토큰 만료시간 환경변수 설정 가능 (`JWT_ACCESS_EXPIRATION`, `JWT_REFRESH_EXPIRATION`)
+- ✅ 이메일 인증 필수 (LOCAL 로그인)
+- ✅ Refresh Token DB 관리 및 무효화 메커니즘
+
+#### 데이터베이스 스키마
+- ✅ `User` 테이블
+  - id (UUID), email (unique), name, profileImage
+  - provider (GOOGLE | KAKAO | APPLE | LOCAL)
+  - providerId (소셜 로그인 ID)
+  - password (LOCAL만 사용, nullable)
+  - isEmailVerified, emailVerificationToken, emailVerificationExpires
+  - passwordResetToken, passwordResetExpires (비밀번호 재설정)
+  - createdAt, updatedAt
+- ✅ `RefreshToken` 테이블
+  - id (UUID), token (unique), userId, expiresAt
+  - isRevoked (무효화 여부)
+  - createdAt
+  - User와 1:N 관계 (Cascade 삭제)
+
+### ⬜ 소셜 로그인 (준비 단계)
+- ⬜ 구글 로그인 (OAuth 2.0)
+- ⬜ 카카오 로그인
+- ⬜ 애플 로그인
+- ✅ Provider enum 정의 (GOOGLE, KAKAO, APPLE, LOCAL)
+- ✅ User 스키마에 provider, providerId 필드 준비됨
+- ⬜ Passport 전략 구현 필요 (google, kakao, apple)
+
+#### 참고사항
+- 소셜 로그인 사용자는 비밀번호가 null
+- 소셜 로그인 사용자는 이메일 인증 불필요
+- provider + providerId 조합으로 유니크 제약
 
 ---
 
@@ -179,4 +269,4 @@
 
 ---
 
-**Last Updated:** 2025-11-17
+**Last Updated:** 2025-11-20
