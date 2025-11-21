@@ -91,13 +91,21 @@
   - createdAt
   - User와 1:N 관계 (Cascade 삭제)
 
-### ⬜ 소셜 로그인 (준비 단계)
-- ⬜ 구글 로그인 (OAuth 2.0)
-- ⬜ 카카오 로그인
+### 🟨 소셜 로그인
+- ✅ 구글 로그인 (OAuth 2.0)
+  - GoogleStrategy 구현 (passport-google-oauth20)
+  - GET /auth/google (로그인 시작)
+  - GET /auth/google/callback (콜백 처리)
+  - 자동 회원가입 및 로그인
+- ✅ 카카오 로그인
+  - KakaoStrategy 구현 (passport-kakao)
+  - GET /auth/kakao (로그인 시작)
+  - GET /auth/kakao/callback (콜백 처리)
+  - 자동 회원가입 및 로그인
 - ⬜ 애플 로그인
 - ✅ Provider enum 정의 (GOOGLE, KAKAO, APPLE, LOCAL)
 - ✅ User 스키마에 provider, providerId 필드 준비됨
-- ⬜ Passport 전략 구현 필요 (google, kakao, apple)
+- ✅ Passport 전략 구현 (google, kakao 완료, apple 대기)
 
 #### 참고사항
 - 소셜 로그인 사용자는 비밀번호가 null

@@ -1,21 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    this.resend = new Resend(process.env.RESEND_API_KEY);
   }
 
   /**
@@ -23,8 +15,8 @@ export class EmailService {
    */
   async sendVerificationEmail(to: string, code: string, userName: string) {
     try {
-      await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || '"Family Planner" <noreply@familyplanner.com>',
+      await this.resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || 'Family Planner <onboarding@resend.dev>',
         to,
         subject: '이메일 인증 코드입니다',
         html: this.getVerificationEmailTemplate(userName, code),
@@ -42,8 +34,8 @@ export class EmailService {
    */
   async sendPasswordResetEmail(to: string, code: string, userName: string) {
     try {
-      await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || '"Family Planner" <noreply@familyplanner.com>',
+      await this.resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || 'Family Planner <onboarding@resend.dev>',
         to,
         subject: '비밀번호 재설정 인증 코드입니다',
         html: this.getPasswordResetEmailTemplate(userName, code),

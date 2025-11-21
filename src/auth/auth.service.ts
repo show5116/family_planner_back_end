@@ -388,4 +388,67 @@ export class AuthService {
 
     return { message: '비밀번호가 성공적으로 재설정되었습니다' };
   }
+
+  /**
+   * 소셜 로그인 처리 (Google, Kakao 등)
+   * 사용자가 없으면 자동으로 회원가입 후 로그인
+   */
+  async validateSocialUser(socialUser: {
+    provider: string;
+    providerId: string;
+    email: string | null;
+    name: string;
+    profileImage?: string;
+  }) {
+    // 기존 사용자 확인 (provider + providerId 조합으로)
+    let user = await this.prisma.user.findUnique({
+      where: {
+        provider_providerId: {
+          provider: socialUser.provider as any,
+          providerId: socialUser.providerId,
+        },
+      },
+    });
+
+    // 사용자가 없으면 자동 회원가입
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email: socialUser.email,
+          name: socialUser.name,
+          profileImage: socialUser.profileImage,
+          provider: socialUser.provider as any,
+          providerId: socialUser.providerId,
+          isEmailVerified: true, // 소셜 로그인은 이메일 인증 불필요
+          password: null, // 소셜 로그인은 비밀번호 없음
+        },
+      });
+    }
+
+    // 토큰 생성
+    const tokens = await this.generateTokens(user.id);
+
+    // Refresh Token 저장 (RTR)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7일
+
+    await this.prisma.refreshToken.create({
+      data: {
+        token: tokens.refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        profileImage: user.profileImage,
+      },
+    };
+  }
 }

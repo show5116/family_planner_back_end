@@ -1,4 +1,5 @@
-import { Body, Controller, Post, UseGuards, Get, Request } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Get, Request, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -14,6 +15,8 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { KakaoAuthGuard } from './guards/kakao-auth.guard';
 
 @ApiTags('인증')
 @Controller('auth')
@@ -100,6 +103,52 @@ export class AuthController {
       resetDto.email,
       resetDto.code,
       resetDto.newPassword,
+    );
+  }
+
+  // ===== 소셜 로그인 =====
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: 'Google 로그인 시작' })
+  @ApiResponse({ status: 302, description: 'Google OAuth 페이지로 리다이렉트' })
+  async googleLogin() {
+    // Guard가 자동으로 Google OAuth로 리다이렉트
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: 'Google 로그인 콜백' })
+  @ApiResponse({ status: 200, description: 'Google 로그인 성공, 토큰 반환' })
+  async googleCallback(@Request() req, @Res() res: Response) {
+    const tokens = await this.authService.validateSocialUser(req.user);
+
+    // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    res.redirect(
+      `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
+    );
+  }
+
+  @Get('kakao')
+  @UseGuards(KakaoAuthGuard)
+  @ApiOperation({ summary: 'Kakao 로그인 시작' })
+  @ApiResponse({ status: 302, description: 'Kakao OAuth 페이지로 리다이렉트' })
+  async kakaoLogin() {
+    // Guard가 자동으로 Kakao OAuth로 리다이렉트
+  }
+
+  @Get('kakao/callback')
+  @UseGuards(KakaoAuthGuard)
+  @ApiOperation({ summary: 'Kakao 로그인 콜백' })
+  @ApiResponse({ status: 200, description: 'Kakao 로그인 성공, 토큰 반환' })
+  async kakaoCallback(@Request() req, @Res() res: Response) {
+    const tokens = await this.authService.validateSocialUser(req.user);
+
+    // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    res.redirect(
+      `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
     );
   }
 }
