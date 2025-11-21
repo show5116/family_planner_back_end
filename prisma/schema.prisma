@@ -21,6 +21,13 @@ enum Provider {
   LOCAL
 }
 
+// 그룹 멤버 역할
+enum GroupMemberRole {
+  OWNER  // 그룹 생성자 (삭제, 모든 권한)
+  ADMIN  // 관리자 (멤버 초대/삭제, 그룹 수정)
+  MEMBER // 일반 멤버 (조회만)
+}
+
 // 사용자 테이블
 model User {
   id                        String         @id @default(uuid())
@@ -38,6 +45,7 @@ model User {
   createdAt                 DateTime       @default(now())
   updatedAt                 DateTime       @updatedAt
   refreshTokens             RefreshToken[] // RTR 방식을 위한 다중 refresh token 지원
+  groupMemberships          GroupMember[]  // 사용자가 속한 그룹들
 
   @@unique([provider, providerId]) // 같은 제공자에서 같은 ID는 유일해야 함
   @@index([email])
@@ -58,4 +66,34 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+// 그룹 테이블
+model Group {
+  id          String        @id @default(uuid())
+  name        String        @db.VarChar(100) // 그룹명
+  description String?       @db.Text // 그룹 설명
+  inviteCode  String        @unique @db.VarChar(12) // 초대 코드 (고유)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  members     GroupMember[] // 그룹 멤버들
+
+  @@index([inviteCode])
+  @@map("groups")
+}
+
+// 그룹 멤버 테이블
+model GroupMember {
+  id       String          @id @default(uuid())
+  groupId  String
+  group    Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     GroupMemberRole @default(MEMBER) // 역할
+  joinedAt DateTime        @default(now())
+
+  @@unique([groupId, userId]) // 같은 그룹에 같은 사용자 중복 방지
+  @@index([groupId])
+  @@index([userId])
+  @@map("group_members")
 }

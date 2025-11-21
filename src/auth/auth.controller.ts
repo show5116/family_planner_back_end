@@ -14,6 +14,8 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { KakaoAuthGuard } from './guards/kakao-auth.guard';
@@ -103,6 +105,32 @@ export class AuthController {
       resetDto.email,
       resetDto.code,
       resetDto.newPassword,
+    );
+  }
+
+  @Post('set-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '비밀번호 설정 (소셜 로그인 사용자용)' })
+  @ApiResponse({ status: 200, description: '비밀번호 설정 성공' })
+  @ApiResponse({ status: 400, description: '이미 비밀번호가 설정되어 있음' })
+  @ApiResponse({ status: 401, description: '인증되지 않음' })
+  async setPassword(@Request() req, @Body() setPasswordDto: SetPasswordDto) {
+    return this.authService.setPassword(req.user.userId, setPasswordDto.password);
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '비밀번호 변경' })
+  @ApiResponse({ status: 200, description: '비밀번호 변경 성공' })
+  @ApiResponse({ status: 400, description: '비밀번호가 설정되어 있지 않음' })
+  @ApiResponse({ status: 401, description: '현재 비밀번호가 올바르지 않거나 인증되지 않음' })
+  async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
+    return this.authService.changePassword(
+      req.user.userId,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword,
     );
   }
 

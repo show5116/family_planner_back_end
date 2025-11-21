@@ -95,15 +95,14 @@ export class AuthService {
       throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다');
     }
 
-    // LOCAL 로그인이 아닌 경우
-    if (user.provider !== 'LOCAL') {
-      throw new UnauthorizedException(
-        `이 계정은 ${user.provider} 로그인을 사용합니다`,
-      );
-    }
-
     // 비밀번호 확인
     if (!user.password) {
+      // 소셜 로그인 사용자가 비밀번호를 설정하지 않은 경우
+      if (user.provider !== 'LOCAL') {
+        throw new UnauthorizedException(
+          `이 계정은 ${user.provider} 로그인을 사용합니다. 먼저 비밀번호를 설정해주세요`,
+        );
+      }
       throw new UnauthorizedException('비밀번호가 설정되지 않은 계정입니다');
     }
 
@@ -112,8 +111,8 @@ export class AuthService {
       throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다');
     }
 
-    // 이메일 인증 확인 (LOCAL 로그인만)
-    if (!user.isEmailVerified) {
+    // 이메일 인증 확인 (LOCAL 로그인 사용자만)
+    if (user.provider === 'LOCAL' && !user.isEmailVerified) {
       throw new UnauthorizedException('이메일 인증이 필요합니다. 이메일을 확인해주세요');
     }
 
@@ -450,5 +449,73 @@ export class AuthService {
         profileImage: user.profileImage,
       },
     };
+  }
+
+  /**
+   * 비밀번호 설정 (소셜 로그인 사용자용)
+   */
+  async setPassword(userId: string, password: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    // 이미 비밀번호가 설정되어 있는 경우
+    if (user.password) {
+      throw new BadRequestException(
+        '이미 비밀번호가 설정되어 있습니다. 비밀번호 변경을 사용해주세요',
+      );
+    }
+
+    // 비밀번호 해싱
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 비밀번호 설정
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: '비밀번호가 설정되었습니다. 이제 이메일/비밀번호로 로그인할 수 있습니다' };
+  }
+
+  /**
+   * 비밀번호 변경
+   */
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    // 비밀번호가 설정되어 있지 않은 경우
+    if (!user.password) {
+      throw new BadRequestException(
+        '비밀번호가 설정되어 있지 않습니다. 비밀번호 설정을 먼저 해주세요',
+      );
+    }
+
+    // 현재 비밀번호 확인
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('현재 비밀번호가 올바르지 않습니다');
+    }
+
+    // 새 비밀번호 해싱
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 비밀번호 업데이트
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: '비밀번호가 변경되었습니다' };
   }
 }
