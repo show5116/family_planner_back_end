@@ -151,8 +151,13 @@ export class AuthController {
   async googleCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
 
-    // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+
+    // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
+    // Universal Links/App Links를 통해 웹앱 및 모바일 앱 모두 지원
+    // - 웹: 웹 페이지로 이동
+    // - iOS: apple-app-site-association 설정 시 앱에서 인터셉트
+    // - Android: assetlinks.json 설정 시 앱에서 인터셉트
     res.redirect(
       `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
     );
@@ -173,8 +178,13 @@ export class AuthController {
   async kakaoCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
 
-    // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+
+    // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
+    // Universal Links/App Links를 통해 웹앱 및 모바일 앱 모두 지원
+    // - 웹: 웹 페이지로 이동
+    // - iOS: apple-app-site-association 설정 시 앱에서 인터셉트
+    // - Android: assetlinks.json 설정 시 앱에서 인터셉트
     res.redirect(
       `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
     );
