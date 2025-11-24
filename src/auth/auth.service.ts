@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  ForbiddenException,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
@@ -113,7 +114,7 @@ export class AuthService {
 
     // 이메일 인증 확인 (LOCAL 로그인 사용자만)
     if (user.provider === 'LOCAL' && !user.isEmailVerified) {
-      throw new UnauthorizedException('이메일 인증이 필요합니다. 이메일을 확인해주세요');
+      throw new ForbiddenException('이메일 인증이 필요합니다. 이메일을 확인해주세요');
     }
 
     // 토큰 생성
@@ -287,7 +288,7 @@ export class AuthService {
     // 이메일 발송
     try {
       await this.emailService.sendVerificationEmail(email, verificationCode, user.name);
-    } catch (error) {
+    } catch {
       throw new BadRequestException('이메일 전송에 실패했습니다');
     }
 
@@ -346,7 +347,7 @@ export class AuthService {
     // 이메일 발송
     try {
       await this.emailService.sendPasswordResetEmail(email, resetCode, user.name);
-    } catch (error) {
+    } catch {
       throw new BadRequestException('이메일 전송에 실패했습니다');
     }
 
