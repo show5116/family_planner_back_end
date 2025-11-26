@@ -34,14 +34,17 @@ model User {
   email                     String?        @unique
   name                      String
   profileImage              String?        @db.Text
+  phoneNumber               String?        @db.VarChar(20) // 전화번호
   provider                  Provider       @default(LOCAL)
   providerId                String?        // 소셜 로그인 제공자의 고유 ID
   password                  String?        // LOCAL 로그인 시에만 사용, 소셜 로그인 시 null
   isEmailVerified           Boolean        @default(false) // 이메일 인증 여부
+  isAdmin                   Boolean        @default(false) // 관리자 여부
   emailVerificationToken    String?        @db.VarChar(255) // 이메일 인증 토큰
   emailVerificationExpires  DateTime?      // 이메일 인증 토큰 만료 시간
   passwordResetToken        String?        @db.VarChar(255) // 비밀번호 재설정 토큰
   passwordResetExpires      DateTime?      // 비밀번호 재설정 토큰 만료 시간
+  lastLoginAt               DateTime?      // 마지막 로그인 시간
   createdAt                 DateTime       @default(now())
   updatedAt                 DateTime       @updatedAt
   refreshTokens             RefreshToken[] // RTR 방식을 위한 다중 refresh token 지원

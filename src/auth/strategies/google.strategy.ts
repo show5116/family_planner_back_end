@@ -21,11 +21,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ): Promise<any> {
     const { id, name, emails, photos } = profile;
 
+    // 한국식 이름 형식: 성(familyName) + 이름(givenName)
+    const fullName = name.familyName && name.givenName
+      ? `${name.familyName}${name.givenName}`
+      : name.givenName || name.familyName || emails[0].value.split('@')[0];
+
     const user = {
       provider: 'GOOGLE',
       providerId: id,
       email: emails[0].value,
-      name: name.givenName + ' ' + name.familyName,
+      name: fullName,
       profileImage: photos[0]?.value,
     };
 

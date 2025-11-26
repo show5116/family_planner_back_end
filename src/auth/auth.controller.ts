@@ -15,7 +15,7 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SetPasswordDto } from './dto/set-password.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { KakaoAuthGuard } from './guards/kakao-auth.guard';
@@ -81,10 +81,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '현재 로그인한 사용자 정보 조회' })
-  @ApiResponse({ status: 200, description: '사용자 정보 반환' })
+  @ApiResponse({ status: 200, description: '사용자 정보 반환 (isAdmin, profileImage 포함)' })
   @ApiResponse({ status: 401, description: '인증되지 않음' })
   async getProfile(@Request() req) {
-    return req.user;
+    return this.authService.getMe(req.user.userId);
   }
 
   @Post('request-password-reset')
@@ -119,19 +119,20 @@ export class AuthController {
     return this.authService.setPassword(req.user.userId, setPasswordDto.password);
   }
 
-  @Post('change-password')
+  @Post('update-profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: '비밀번호 변경' })
-  @ApiResponse({ status: 200, description: '비밀번호 변경 성공' })
-  @ApiResponse({ status: 400, description: '비밀번호가 설정되어 있지 않음' })
+  @ApiOperation({ summary: '프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)' })
+  @ApiResponse({ status: 200, description: '프로필 업데이트 성공' })
+  @ApiResponse({ status: 400, description: '업데이트할 정보가 없거나 비밀번호가 설정되지 않음' })
   @ApiResponse({ status: 401, description: '현재 비밀번호가 올바르지 않거나 인증되지 않음' })
-  async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
-    return this.authService.changePassword(
-      req.user.userId,
-      changePasswordDto.currentPassword,
-      changePasswordDto.newPassword,
-    );
+  async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.userId, updateProfileDto.currentPassword, {
+      name: updateProfileDto.name,
+      profileImage: updateProfileDto.profileImage,
+      phoneNumber: updateProfileDto.phoneNumber,
+      newPassword: updateProfileDto.newPassword,
+    });
   }
 
   // ===== 소셜 로그인 =====

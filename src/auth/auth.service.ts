@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -15,6 +16,8 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -117,30 +120,14 @@ export class AuthService {
       throw new ForbiddenException('이메일 인증이 필요합니다. 이메일을 확인해주세요');
     }
 
-    // 토큰 생성
-    const tokens = await this.generateTokens(user.id);
-
-    // Refresh Token 저장 (RTR)
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7일
-
-    await this.prisma.refreshToken.create({
-      data: {
-        token: tokens.refreshToken,
-        userId: user.id,
-        expiresAt,
-      },
+    // 공통 로그인 처리 함수 호출
+    return this.handleLoginSuccess({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profileImage: user.profileImage,
+      isAdmin: user.isAdmin,
     });
-
-    return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    };
   }
 
   /**
@@ -217,6 +204,51 @@ export class AuthService {
     ]);
 
     return { accessToken, refreshToken };
+  }
+
+  /**
+   * 로그인 처리 공통 함수
+   * Refresh Token 저장 및 마지막 로그인 시간 업데이트
+   */
+  private async handleLoginSuccess(user: {
+    id: string;
+    email: string | null;
+    name: string;
+    profileImage: string | null;
+    isAdmin: boolean;
+  }) {
+    // 토큰 생성
+    const tokens = await this.generateTokens(user.id);
+
+    // Refresh Token 저장 (RTR) 및 마지막 로그인 시간 업데이트
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7일
+
+    await Promise.all([
+      this.prisma.refreshToken.create({
+        data: {
+          token: tokens.refreshToken,
+          userId: user.id,
+          expiresAt,
+        },
+      }),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      }),
+    ]);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        profileImage: user.profileImage,
+        isAdmin: user.isAdmin,
+      },
+    };
   }
 
   /**
@@ -425,31 +457,47 @@ export class AuthService {
       });
     }
 
-    // 토큰 생성
-    const tokens = await this.generateTokens(user.id);
+    // 공통 로그인 처리 함수 호출
+    return this.handleLoginSuccess({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profileImage: user.profileImage,
+      isAdmin: user.isAdmin,
+    });
+  }
 
-    // Refresh Token 저장 (RTR)
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7일
-
-    await this.prisma.refreshToken.create({
-      data: {
-        token: tokens.refreshToken,
-        userId: user.id,
-        expiresAt,
+  /**
+   * 현재 사용자 정보 조회 (lastLoginAt 업데이트)
+   */
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        profileImage: true,
+        isAdmin: true,
+        createdAt: true,
       },
     });
 
-    return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        profileImage: user.profileImage,
-      },
-    };
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    // lastLoginAt 업데이트 (비동기로 처리하여 응답 속도에 영향 없도록)
+    this.prisma.user
+      .update({
+        where: { id: userId },
+        data: { lastLoginAt: new Date() },
+      })
+      .catch((error) => {
+        this.logger.error(`Failed to update lastLoginAt for user ${userId}`, error);
+      });
+
+    return user;
   }
 
   /**
@@ -484,9 +532,18 @@ export class AuthService {
   }
 
   /**
-   * 비밀번호 변경
+   * 프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)
    */
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+  async updateProfile(
+    userId: string,
+    currentPassword: string,
+    updates: {
+      name?: string;
+      profileImage?: string;
+      phoneNumber?: string;
+      newPassword?: string;
+    },
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -495,28 +552,65 @@ export class AuthService {
       throw new NotFoundException('사용자를 찾을 수 없습니다');
     }
 
-    // 비밀번호가 설정되어 있지 않은 경우
-    if (!user.password) {
+    // 소셜 로그인 사용자이고 비밀번호가 설정되지 않은 경우
+    if (!user.password && user.provider !== 'LOCAL') {
       throw new BadRequestException(
-        '비밀번호가 설정되어 있지 않습니다. 비밀번호 설정을 먼저 해주세요',
+        '소셜 로그인 사용자는 먼저 비밀번호를 설정해야 프로필을 수정할 수 있습니다',
       );
     }
 
     // 현재 비밀번호 확인
+    if (!user.password) {
+      throw new BadRequestException('비밀번호가 설정되어 있지 않습니다');
+    }
+
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('현재 비밀번호가 올바르지 않습니다');
     }
 
-    // 새 비밀번호 해싱
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // 업데이트할 데이터 준비
+    const updateData: any = {};
 
-    // 비밀번호 업데이트
-    await this.prisma.user.update({
+    if (updates.name !== undefined) {
+      updateData.name = updates.name;
+    }
+
+    if (updates.profileImage !== undefined) {
+      updateData.profileImage = updates.profileImage;
+    }
+
+    if (updates.phoneNumber !== undefined) {
+      updateData.phoneNumber = updates.phoneNumber;
+    }
+
+    if (updates.newPassword) {
+      updateData.password = await bcrypt.hash(updates.newPassword, 10);
+    }
+
+    // 업데이트할 내용이 없는 경우
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('업데이트할 정보가 없습니다');
+    }
+
+    // 프로필 업데이트
+    const updatedUser = await this.prisma.user.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        profileImage: true,
+        phoneNumber: true,
+        isAdmin: true,
+        createdAt: true,
+      },
     });
 
-    return { message: '비밀번호가 변경되었습니다' };
+    return {
+      message: '프로필이 성공적으로 업데이트되었습니다',
+      user: updatedUser,
+    };
   }
 }
