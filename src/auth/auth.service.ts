@@ -127,6 +127,7 @@ export class AuthService {
       name: user.name,
       profileImage: user.profileImage,
       isAdmin: user.isAdmin,
+      hasPassword: user.password !== null,
     });
   }
 
@@ -216,6 +217,7 @@ export class AuthService {
     name: string;
     profileImage: string | null;
     isAdmin: boolean;
+    hasPassword: boolean;
   }) {
     // 토큰 생성
     const tokens = await this.generateTokens(user.id);
@@ -247,6 +249,7 @@ export class AuthService {
         name: user.name,
         profileImage: user.profileImage,
         isAdmin: user.isAdmin,
+        hasPassword: user.hasPassword,
       },
     };
   }
@@ -464,6 +467,7 @@ export class AuthService {
       name: user.name,
       profileImage: user.profileImage,
       isAdmin: user.isAdmin,
+      hasPassword: user.password !== null,
     });
   }
 
@@ -480,6 +484,7 @@ export class AuthService {
         profileImage: true,
         isAdmin: true,
         createdAt: true,
+        password: true,
       },
     });
 
@@ -497,38 +502,15 @@ export class AuthService {
         this.logger.error(`Failed to update lastLoginAt for user ${userId}`, error);
       });
 
-    return user;
-  }
-
-  /**
-   * 비밀번호 설정 (소셜 로그인 사용자용)
-   */
-  async setPassword(userId: string, password: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
-    }
-
-    // 이미 비밀번호가 설정되어 있는 경우
-    if (user.password) {
-      throw new BadRequestException(
-        '이미 비밀번호가 설정되어 있습니다. 비밀번호 변경을 사용해주세요',
-      );
-    }
-
-    // 비밀번호 해싱
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 비밀번호 설정
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedPassword },
-    });
-
-    return { message: '비밀번호가 설정되었습니다. 이제 이메일/비밀번호로 로그인할 수 있습니다' };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profileImage: user.profileImage,
+      isAdmin: user.isAdmin,
+      createdAt: user.createdAt,
+      hasPassword: user.password !== null,
+    };
   }
 
   /**

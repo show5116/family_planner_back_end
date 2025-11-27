@@ -14,7 +14,6 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { SetPasswordDto } from './dto/set-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -106,17 +105,6 @@ export class AuthController {
       resetDto.code,
       resetDto.newPassword,
     );
-  }
-
-  @Post('set-password')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: '비밀번호 설정 (소셜 로그인 사용자용)' })
-  @ApiResponse({ status: 200, description: '비밀번호 설정 성공' })
-  @ApiResponse({ status: 400, description: '이미 비밀번호가 설정되어 있음' })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  async setPassword(@Request() req, @Body() setPasswordDto: SetPasswordDto) {
-    return this.authService.setPassword(req.user.userId, setPasswordDto.password);
   }
 
   @Post('update-profile')
