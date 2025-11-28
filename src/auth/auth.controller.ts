@@ -89,7 +89,7 @@ export class AuthController {
   @Post('request-password-reset')
   @ApiOperation({ summary: '비밀번호 재설정 요청' })
   @ApiResponse({ status: 200, description: '인증 코드가 이메일로 전송됨' })
-  @ApiResponse({ status: 400, description: '소셜 로그인 사용자 또는 요청 실패' })
+  @ApiResponse({ status: 400, description: '요청 실패' })
   @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
   async requestPasswordReset(@Body() requestDto: RequestPasswordResetDto) {
     return this.authService.requestPasswordReset(requestDto.email);

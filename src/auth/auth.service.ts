@@ -362,10 +362,6 @@ export class AuthService {
       throw new NotFoundException('사용자를 찾을 수 없습니다');
     }
 
-    if (user.provider !== 'LOCAL') {
-      throw new BadRequestException('소셜 로그인 사용자는 비밀번호 재설정이 불가능합니다');
-    }
-
     // 6자리 인증 코드 생성 (1시간 유효)
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     const resetExpires = new Date();
