@@ -12,7 +12,6 @@ export class UpdateProfileDto {
   @ApiProperty({
     description: '이름',
     example: '홍길동',
-    required: false,
   })
   @IsOptional()
   @IsString()

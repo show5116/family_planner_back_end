@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards, Get, Request, Res } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Get, Request, Res, Patch } from '@nestjs/common';
 import type { Response } from 'express';
 import {
   ApiTags,
@@ -107,7 +107,7 @@ export class AuthController {
     );
   }
 
-  @Post('update-profile')
+  @Patch('update-profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)' })
