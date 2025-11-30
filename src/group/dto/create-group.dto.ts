@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, MaxLength, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateGroupDto {
@@ -18,4 +18,14 @@ export class CreateGroupDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiPropertyOptional({
+    description: '그룹 기본 색상 (HEX 코드)',
+    example: '#6366F1',
+    pattern: '^#[0-9A-Fa-f]{6}$',
+  })
+  @IsString()
+  @IsOptional()
+  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: '유효한 HEX 색상 코드를 입력해주세요 (예: #6366F1)' })
+  defaultColor?: string;
 }

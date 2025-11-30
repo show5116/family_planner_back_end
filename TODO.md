@@ -127,62 +127,128 @@
 
 ---
 
-## ✅ 2. 그룹 관리
+## 🟨 2. 그룹 관리
+
+### 핵심 개념
+- **구조**: 1명의 사용자는 여러 그룹에 소속 가능 (가족, 회사, 친구, 연인 등)
+- **색상 정책**:
+  - Default Color: 그룹장이 정한 그룹 기본 색상
+  - Custom Color: 개인이 그룹별로 정한 커스텀 색상 (개인 설정 우선)
+- **UI 필터**: 전체 UI에서 그룹별 필터 기능 제공 (일정, ToDo, 메모, 가계부 등)
 
 ### 그룹 생성 및 관리
 - ✅ 그룹 생성 (`POST /groups`)
-  - 그룹명, 설명 입력
-  - 생성자는 자동으로 OWNER 역할 부여
-  - 8자리 랜덤 초대 코드 자동 생성
+  - 그룹명, 설명, 기본 색상 입력
+  - 생성자는 자동으로 OWNER(그룹장) 역할 부여 (고정, 삭제 불가)
+  - 8자리 랜덤 초대 코드 자동 생성 (영문 대소문자 + 숫자)
 - ✅ 내가 속한 그룹 목록 조회 (`GET /groups`)
+  - 개인 커스텀 색상 포함
 - ✅ 그룹 상세 조회 (`GET /groups/:id`)
   - 멤버만 조회 가능
   - 멤버 목록 포함
 - ✅ 그룹 정보 수정 (`PATCH /groups/:id`)
-  - OWNER, ADMIN만 가능
+  - OWNER, ADMIN(초대 권한 있는 역할)만 가능
+  - 기본 색상 변경 가능
 - ✅ 그룹 삭제 (`DELETE /groups/:id`)
   - OWNER만 가능
+- ⬜ 그룹장 양도 (`POST /groups/:id/transfer-ownership`)
+  - 현재 OWNER만 가능
+  - 다른 멤버에게 OWNER 역할 이전
+  - 기존 OWNER는 다른 역할로 변경
 
-### 초대 코드 시스템
+### 초대 시스템
+#### 초대 코드 방식
 - ✅ 초대 코드로 그룹 가입 (`POST /groups/join`)
-  - 8자리 영숫자 코드 (예: ABC123XYZ)
+  - 8자리 영문(대소문자 구분) + 숫자 조합 코드 (예: aBc12XyZ)
+  - 사용자가 직접 코드 입력
   - 중복 가입 방지
+  - 가입 시 is_default_role=true인 역할 자동 부여
 - ✅ 초대 코드 재생성 (`POST /groups/:id/regenerate-code`)
-  - OWNER, ADMIN만 가능
-  - 보안을 위해 코드 재생성 가능
+  - 초대 권한이 있는 역할만 가능 (OWNER, ADMIN 등)
+  - 백엔드에서 중복 검사 후 고유 코드 생성
+  - 보안을 위해 코드 재발급 가능
+
+#### 이메일 초대 방식 (신규)
+- ⬜ 이메일로 초대 (`POST /groups/:id/invite-by-email`)
+  - 초대 권한이 있는 역할만 가능
+  - 초대할 사용자 이메일 입력
+  - 시스템에서 초대 이메일 자동 발송 (초대 코드 포함)
+  - 수신자는 이메일의 초대 코드로 가입
+
+#### 향후 고려사항
+- ⏸️ 카카오톡/문자로 초대 메시지 발송 기능
 
 ### 멤버 관리
 - ✅ 그룹 멤버 목록 조회 (`GET /groups/:id/members`)
-- ✅ 멤버 역할 변경 (`PATCH /groups/:id/members/:userId/role`)
+  - 멤버별 역할 정보 포함
+- ⬜ 개인 그룹 색상 설정 (`PATCH /groups/:id/my-color`)
+  - 그룹의 기본 색상 대신 개인이 설정한 색상 사용
+  - 미설정 시 그룹 기본 색상 사용
+- ⬜ 멤버 역할 변경 (`PATCH /groups/:id/members/:userId/role`)
   - OWNER만 가능
   - 자신의 역할은 변경 불가
+  - OWNER 역할은 양도만 가능 (변경 불가)
 - ✅ 멤버 삭제 (`DELETE /groups/:id/members/:userId`)
   - OWNER, ADMIN만 가능
   - 자신은 삭제 불가 (나가기 사용)
-  - OWNER는 삭제 불가
+  - OWNER는 삭제 불가 (양도만 가능)
 - ✅ 그룹 나가기 (`POST /groups/:id/leave`)
-  - OWNER는 나갈 수 없음 (권한 위임 또는 그룹 삭제 필요)
+  - OWNER는 나갈 수 없음 (권한 양도 또는 그룹 삭제 필요)
 
-### 역할 체계
-- ✅ OWNER: 그룹 생성자, 모든 권한 (그룹 삭제, 멤버 역할 변경 등)
-- ✅ ADMIN: 관리자, 그룹 수정 및 멤버 관리 가능
-- ✅ MEMBER: 일반 멤버, 조회만 가능
+### 역할(Role) 체계
+#### 공통 역할 (group_id = null)
+- ⬜ OWNER: 그룹장, 모든 권한 (그룹 생성 시 자동 부여, 삭제 불가, 양도만 가능)
+- ⬜ ADMIN: 관리자, 초대 권한 포함 (그룹 수정, 멤버 관리, 초대 코드 재생성, 이메일 초대)
+- ⬜ MEMBER: 일반 멤버, 조회만 가능
+
+#### 그룹별 커스텀 역할 (group_id 지정)
+- ⬜ 각 그룹마다 고유한 역할 생성 가능
+- ⬜ `is_default_role` 플래그로 초대 시 자동 부여 역할 지정
+- ⬜ 예: "가족" 그룹의 "부모", "자녀" 역할 / "회사" 그룹의 "팀장", "팀원" 역할
+
+#### 권한 설정
+- ⬜ 역할별 세부 권한 정의 (조회, 생성, 수정, 삭제, 초대 등)
+- ⬜ 그룹장(OWNER)은 역할 생성 및 권한 편집 가능
 
 ### 데이터베이스 스키마
-- ✅ `Group` 테이블
-  - id, name, description, inviteCode (unique)
+- ⬜ `Group` 테이블 (수정 필요)
+  - id, name, description, inviteCode (unique, 8자리 영문+숫자)
+  - defaultColor (그룹 기본 색상, 예: #FF5733)
   - createdAt, updatedAt
-- ✅ `GroupMember` 테이블
-  - id, groupId, userId, role, joinedAt
+- ⬜ `GroupMember` 테이블 (수정 필요)
+  - id, groupId, userId, roleId (Role 테이블 참조)
+  - customColor (개인 설정 색상, nullable)
+  - joinedAt
   - 복합 unique 제약: (groupId, userId)
-- ✅ `GroupMemberRole` enum (OWNER, ADMIN, MEMBER)
+- ⬜ `Role` 테이블 (신규)
+  - id, name, groupId (nullable, null이면 공통 역할)
+  - is_default_role (초대 시 자동 부여 여부)
+  - permissions (JSON 또는 별도 테이블로 권한 관리)
+  - createdAt, updatedAt
+  - unique 제약: (name, groupId)
+
+### 변경 사항 요약
+#### 이전 설계 대비 변경점
+1. **역할 시스템 확장**: 고정 enum(OWNER, ADMIN, MEMBER) → 유연한 Role 테이블
+2. **색상 정책 추가**: 그룹 기본 색상 + 개인 커스텀 색상
+3. **초대 방식 확장**: 초대 코드만 → 초대 코드 + 이메일 초대 병행
+4. **그룹장 관리**: 삭제 불가 명시, 양도 기능 추가
+5. **초대 코드 정책**: 재생성 시 중복 검사 명시
+
+#### 새로 추가된 기능
+1. UI 그룹 필터 기능 (전체 메뉴 적용)
+2. 개인별 그룹 색상 커스터마이징
+3. 이메일 초대 기능
+4. 역할별 is_default_role 설정
+5. 그룹별 커스텀 역할 생성
+6. 그룹장 양도 기능
 
 ### 향후 활용
-- 일정 관리: 그룹 멤버와 일정 공유
-- ToDoList: 그룹 내 할일 공유 및 협업
-- 육아 포인트: 부모-자녀 그룹에서 포인트 관리
-- 메모: 그룹 멤버와 메모 공유
-- 가계부: 가족 그룹 내 가계부 공유
+- 일정 관리: 그룹 멤버와 일정 공유, 그룹별 필터링
+- ToDoList: 그룹 내 할일 공유 및 협업, 역할별 권한 관리
+- 육아 포인트: 부모-자녀 역할 기반 포인트 관리
+- 메모: 그룹 멤버와 메모 공유, 역할별 접근 권한
+- 가계부: 가족 그룹 내 가계부 공유, 역할별 조회/수정 권한
 
 ---
 

@@ -20,6 +20,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
+import { UpdateMyColorDto } from './dto/update-my-color.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('그룹')
@@ -55,7 +56,7 @@ export class GroupController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: '그룹 정보 수정 (OWNER, ADMIN만)' })
+  @ApiOperation({ summary: '그룹 정보 수정 (UPDATE 권한 필요)' })
   @ApiResponse({ status: 200, description: '그룹 수정 성공' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   @ApiResponse({ status: 404, description: '그룹을 찾을 수 없음' })
@@ -68,7 +69,7 @@ export class GroupController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: '그룹 삭제 (OWNER만)' })
+  @ApiOperation({ summary: '그룹 삭제 (DELETE 권한 필요)' })
   @ApiResponse({ status: 200, description: '그룹 삭제 성공' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   @ApiResponse({ status: 404, description: '그룹을 찾을 수 없음' })
@@ -106,7 +107,7 @@ export class GroupController {
   }
 
   @Patch(':id/members/:userId/role')
-  @ApiOperation({ summary: '멤버 역할 변경 (OWNER만)' })
+  @ApiOperation({ summary: '멤버 역할 변경 (ASSIGN_ROLE 권한 필요)' })
   @ApiResponse({ status: 200, description: '역할 변경 성공' })
   @ApiResponse({ status: 400, description: '자신의 역할은 변경 불가' })
   @ApiResponse({ status: 403, description: '권한 없음' })
@@ -121,12 +122,28 @@ export class GroupController {
       id,
       targetUserId,
       req.user.userId,
-      updateMemberRoleDto.role,
+      updateMemberRoleDto.roleId,
+    );
+  }
+
+  @Patch(':id/my-color')
+  @ApiOperation({ summary: '개인 그룹 색상 설정' })
+  @ApiResponse({ status: 200, description: '색상 설정 성공' })
+  @ApiResponse({ status: 403, description: '접근 권한 없음' })
+  updateMyColor(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() updateMyColorDto: UpdateMyColorDto,
+  ) {
+    return this.groupService.updateMyColor(
+      id,
+      req.user.userId,
+      updateMyColorDto.customColor,
     );
   }
 
   @Delete(':id/members/:userId')
-  @ApiOperation({ summary: '멤버 삭제 (OWNER, ADMIN만)' })
+  @ApiOperation({ summary: '멤버 삭제 (REMOVE_MEMBER 권한 필요)' })
   @ApiResponse({ status: 200, description: '멤버 삭제 성공' })
   @ApiResponse({ status: 400, description: '자신은 삭제 불가 또는 OWNER 삭제 불가' })
   @ApiResponse({ status: 403, description: '권한 없음' })
@@ -140,7 +157,7 @@ export class GroupController {
   }
 
   @Post(':id/regenerate-code')
-  @ApiOperation({ summary: '초대 코드 재생성 (OWNER, ADMIN만)' })
+  @ApiOperation({ summary: '초대 코드 재생성 (REGENERATE_INVITE_CODE 권한 필요)' })
   @ApiResponse({ status: 200, description: '초대 코드 재생성 성공' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   regenerateInviteCode(@Param('id') id: string, @Request() req) {

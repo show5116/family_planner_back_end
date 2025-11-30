@@ -21,11 +21,25 @@ enum Provider {
   LOCAL
 }
 
-// 그룹 멤버 역할
-enum GroupMemberRole {
-  OWNER  // 그룹 생성자 (삭제, 모든 권한)
-  ADMIN  // 관리자 (멤버 초대/삭제, 그룹 수정)
-  MEMBER // 일반 멤버 (조회만)
+// 권한 카테고리
+enum PermissionCategory {
+  BASIC   // 기본 (조회, 생성, 수정, 삭제)
+  MEMBER  // 멤버 관리
+  ROLE    // 역할 관리
+  INVITE  // 초대 관리
+}
+
+// 그룹 가입 요청 타입
+enum JoinRequestType {
+  REQUEST // 사용자가 초대 코드로 가입 요청
+  INVITE  // 관리자가 이메일로 초대
+}
+
+// 그룹 가입 요청 상태
+enum JoinRequestStatus {
+  PENDING  // 대기 중
+  ACCEPTED // 승인됨
+  REJECTED // 거부됨
 }
 
 // 사용자 테이블
@@ -73,30 +87,87 @@ model RefreshToken {
 
 // 그룹 테이블
 model Group {
-  id          String        @id @default(uuid())
-  name        String        @db.VarChar(100) // 그룹명
-  description String?       @db.Text // 그룹 설명
-  inviteCode  String        @unique @db.VarChar(12) // 초대 코드 (고유)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  members     GroupMember[] // 그룹 멤버들
+  id           String             @id @default(uuid())
+  name         String             @db.VarChar(100) // 그룹명
+  description  String?            @db.Text // 그룹 설명
+  inviteCode   String             @unique @db.VarChar(8) // 초대 코드 (8자리 영문+숫자)
+  defaultColor String             @default("#6366F1") @db.VarChar(7) // 그룹 기본 색상 (HEX)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  members      GroupMember[]      // 그룹 멤버들
+  customRoles  Role[]             // 그룹별 커스텀 역할들
+  joinRequests GroupJoinRequest[] // 그룹 가입 요청들
 
   @@index([inviteCode])
   @@map("groups")
 }
 
+// 역할 테이블 (공통 역할 + 그룹별 커스텀 역할)
+model Role {
+  id              String        @id @default(uuid())
+  name            String        @db.VarChar(50) // 역할명 (예: OWNER, ADMIN, MEMBER, 부모, 자녀 등)
+  groupId         String?       // null이면 공통 역할, 값이 있으면 그룹별 커스텀 역할
+  group           Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  isDefaultRole   Boolean       @default(false) // 초대 시 자동 부여 역할 여부
+  isImmutable     Boolean       @default(false) // true이면 수정 불가능한 역할 (예: OWNER, ADMIN, MEMBER)
+  permissions     Json          @default("[]") // 권한 목록 (JSON 배열: ["VIEW", "CREATE", "UPDATE", ...])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  groupMembers    GroupMember[] // 이 역할을 가진 멤버들
+
+  @@unique([name, groupId]) // 같은 그룹(또는 공통)에서 역할명 중복 방지
+  @@index([groupId])
+  @@map("roles")
+}
+
 // 그룹 멤버 테이블
 model GroupMember {
-  id       String          @id @default(uuid())
-  groupId  String
-  group    Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId   String
-  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role     GroupMemberRole @default(MEMBER) // 역할
-  joinedAt DateTime        @default(now())
+  id          String   @id @default(uuid())
+  groupId     String
+  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId      String   // Role 테이블 참조
+  role        Role     @relation(fields: [roleId], references: [id])
+  customColor String?  @db.VarChar(7) // 개인 설정 색상 (HEX, nullable)
+  joinedAt    DateTime @default(now())
 
   @@unique([groupId, userId]) // 같은 그룹에 같은 사용자 중복 방지
   @@index([groupId])
   @@index([userId])
+  @@index([roleId])
   @@map("group_members")
+}
+
+// 그룹 가입 요청 테이블
+model GroupJoinRequest {
+  id        String            @id @default(uuid())
+  groupId   String
+  group     Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  type      JoinRequestType   @default(REQUEST) // REQUEST: 사용자 요청, INVITE: 관리자 초대
+  email     String            @db.VarChar(255) // 초대 대상 이메일
+  status    JoinRequestStatus @default(PENDING) // PENDING, ACCEPTED, REJECTED
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([groupId])
+  @@index([email])
+  @@index([status])
+  @@map("group_join_requests")
+}
+
+// 권한 정의 테이블 (UI 표시 및 메타데이터용)
+model Permission {
+  id          String             @id @default(uuid())
+  code        String             @unique @db.VarChar(50) // 권한 코드 (예: VIEW, CREATE, UPDATE, DELETE 등)
+  name        String             @db.VarChar(100) // 권한 이름 (예: "조회", "생성", "수정", "삭제")
+  description String?            @db.Text // 권한 설명
+  category    PermissionCategory @default(BASIC) // 권한 카테고리
+  isActive    Boolean            @default(true) // 활성화 여부
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@map("permissions")
 }

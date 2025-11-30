@@ -1,18 +1,11 @@
-import { IsEnum } from 'class-validator';
+import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum GroupMemberRole {
-  OWNER = 'OWNER',
-  ADMIN = 'ADMIN',
-  MEMBER = 'MEMBER',
-}
 
 export class UpdateMemberRoleDto {
   @ApiProperty({
-    description: '멤버 역할',
-    enum: GroupMemberRole,
-    example: GroupMemberRole.ADMIN,
+    description: '역할 ID (Role 테이블의 ID)',
+    example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  @IsEnum(GroupMemberRole)
-  role: GroupMemberRole;
+  @IsString()
+  roleId: string;
 }

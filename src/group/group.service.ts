@@ -8,18 +8,16 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
-import { GroupMemberRole } from './dto/update-member-role.dto';
-import type { GroupMemberRole as PrismaGroupMemberRole } from '@prisma/client';
 
 @Injectable()
 export class GroupService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * 초대 코드 생성 (8자리 랜덤 영숫자)
+   * 초대 코드 생성 (8자리 랜덤 영문 대소문자 + 숫자)
    */
   private generateInviteCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let code = '';
     for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -48,26 +46,126 @@ export class GroupService {
   }
 
   /**
+   * OWNER 역할 조회 (공통 역할)
+   */
+  private async getOwnerRole() {
+    const ownerRole = await this.prisma.role.findFirst({
+      where: {
+        name: 'OWNER',
+        groupId: null, // 공통 역할
+      },
+    });
+
+    if (!ownerRole) {
+      throw new Error('OWNER 역할을 찾을 수 없습니다. 데이터베이스 시드를 실행해주세요.');
+    }
+
+    return ownerRole;
+  }
+
+  /**
+   * 기본 역할 조회 (is_default_role=true)
+   */
+  private async getDefaultRole() {
+    const defaultRole = await this.prisma.role.findFirst({
+      where: {
+        groupId: null, // 공통 역할
+        isDefaultRole: true,
+      },
+    });
+
+    if (!defaultRole) {
+      throw new Error('기본 역할을 찾을 수 없습니다. 데이터베이스 시드를 실행해주세요.');
+    }
+
+    return defaultRole;
+  }
+
+  /**
+   * 권한 체크 헬퍼 메서드
+   * @param groupId - 그룹 ID
+   * @param userId - 사용자 ID
+   * @param requiredPermissions - 필요한 권한 배열 (예: ['INVITE', 'MANAGE_MEMBER'])
+   */
+  private async checkPermissions(
+    groupId: string,
+    userId: string,
+    requiredPermissions: string[],
+  ) {
+    const member = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId,
+        },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다');
+    }
+
+    // 권한 체크
+    const userPermissions = JSON.parse(member.role.permissions as string) as string[];
+    const hasPermission = requiredPermissions.every((perm) => userPermissions.includes(perm));
+
+    if (!hasPermission) {
+      throw new ForbiddenException('이 작업을 수행할 권한이 없습니다');
+    }
+
+    return member;
+  }
+
+  /**
+   * 멤버십 체크 헬퍼 메서드
+   */
+  private async checkMembership(groupId: string, userId: string) {
+    const member = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId,
+        },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다');
+    }
+
+    return member;
+  }
+
+  /**
    * 그룹 생성
    */
   async create(userId: string, createGroupDto: CreateGroupDto) {
     const inviteCode = await this.generateUniqueInviteCode();
+    const ownerRole = await this.getOwnerRole();
 
     const group = await this.prisma.group.create({
       data: {
         name: createGroupDto.name,
         description: createGroupDto.description,
+        defaultColor: createGroupDto.defaultColor || '#6366F1', // 기본 색상
         inviteCode,
         members: {
           create: {
             userId,
-            role: 'OWNER', // 생성자는 자동으로 OWNER
+            roleId: ownerRole.id, // OWNER 역할 부여
           },
         },
       },
       include: {
         members: {
           include: {
+            role: true,
             user: {
               select: {
                 id: true,
@@ -98,15 +196,11 @@ export class GroupService {
       },
       include: {
         members: {
+          where: {
+            userId, // 내 멤버십 정보만 포함
+          },
           include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                name: true,
-                profileImage: true,
-              },
-            },
+            role: true,
           },
         },
         _count: {
@@ -120,7 +214,12 @@ export class GroupService {
       },
     });
 
-    return groups;
+    // 개인 커스텀 색상 또는 그룹 기본 색상 반환
+    return groups.map((group) => ({
+      ...group,
+      myColor: group.members[0]?.customColor || group.defaultColor,
+      myRole: group.members[0]?.role,
+    }));
   }
 
   /**
@@ -132,6 +231,7 @@ export class GroupService {
       include: {
         members: {
           include: {
+            role: true,
             user: {
               select: {
                 id: true,
@@ -162,17 +262,22 @@ export class GroupService {
   }
 
   /**
-   * 그룹 정보 수정 (OWNER, ADMIN만 가능)
+   * 그룹 정보 수정 (UPDATE 권한 필요)
    */
   async update(groupId: string, userId: string, updateGroupDto: UpdateGroupDto) {
-    await this.checkPermission(groupId, userId, ['OWNER', 'ADMIN']);
+    await this.checkPermissions(groupId, userId, ['UPDATE']);
 
     const group = await this.prisma.group.update({
       where: { id: groupId },
-      data: updateGroupDto,
+      data: {
+        name: updateGroupDto.name,
+        description: updateGroupDto.description,
+        defaultColor: updateGroupDto.defaultColor,
+      },
       include: {
         members: {
           include: {
+            role: true,
             user: {
               select: {
                 id: true,
@@ -190,10 +295,10 @@ export class GroupService {
   }
 
   /**
-   * 그룹 삭제 (OWNER만 가능)
+   * 그룹 삭제 (DELETE 권한 필요 - 보통 OWNER만)
    */
   async remove(groupId: string, userId: string) {
-    await this.checkPermission(groupId, userId, ['OWNER']);
+    await this.checkPermissions(groupId, userId, ['DELETE']);
 
     await this.prisma.group.delete({
       where: { id: groupId },
@@ -228,18 +333,23 @@ export class GroupService {
       throw new ConflictException('이미 이 그룹의 멤버입니다');
     }
 
+    // 기본 역할 조회
+    const defaultRole = await this.getDefaultRole();
+
     // 멤버 추가
     const member = await this.prisma.groupMember.create({
       data: {
         groupId: group.id,
         userId,
-        role: 'MEMBER',
+        roleId: defaultRole.id, // 기본 역할 부여
       },
       include: {
+        role: true,
         group: {
           include: {
             members: {
               include: {
+                role: true,
                 user: {
                   select: {
                     id: true,
@@ -269,14 +379,17 @@ export class GroupService {
           userId,
         },
       },
+      include: {
+        role: true,
+      },
     });
 
     if (!member) {
       throw new NotFoundException('그룹 멤버를 찾을 수 없습니다');
     }
 
-    // OWNER는 나갈 수 없음 (다른 멤버에게 위임 필요)
-    if (member.role === 'OWNER') {
+    // OWNER는 나갈 수 없음
+    if (member.role.name === 'OWNER') {
       throw new BadRequestException(
         'OWNER는 그룹을 나갈 수 없습니다. 다른 멤버에게 OWNER 권한을 위임하거나 그룹을 삭제해주세요',
       );
@@ -299,6 +412,7 @@ export class GroupService {
     const members = await this.prisma.groupMember.findMany({
       where: { groupId },
       include: {
+        role: true,
         user: {
           select: {
             id: true,
@@ -317,15 +431,15 @@ export class GroupService {
   }
 
   /**
-   * 멤버 역할 변경 (OWNER만 가능)
+   * 멤버 역할 변경 (ASSIGN_ROLE 권한 필요 - 보통 OWNER만)
    */
   async updateMemberRole(
     groupId: string,
     targetUserId: string,
     userId: string,
-    role: GroupMemberRole,
+    roleId: string,
   ) {
-    await this.checkPermission(groupId, userId, ['OWNER']);
+    await this.checkPermissions(groupId, userId, ['ASSIGN_ROLE']);
 
     // 자기 자신의 역할은 변경할 수 없음
     if (userId === targetUserId) {
@@ -339,16 +453,39 @@ export class GroupService {
           userId: targetUserId,
         },
       },
+      include: {
+        role: true,
+      },
     });
 
     if (!member) {
       throw new NotFoundException('그룹 멤버를 찾을 수 없습니다');
     }
 
+    // OWNER 역할은 양도만 가능 (변경 불가)
+    if (member.role.name === 'OWNER') {
+      throw new BadRequestException('OWNER 역할은 변경할 수 없습니다. 그룹장 양도 기능을 사용해주세요');
+    }
+
+    // 새 역할 확인
+    const newRole = await this.prisma.role.findUnique({
+      where: { id: roleId },
+    });
+
+    if (!newRole) {
+      throw new NotFoundException('역할을 찾을 수 없습니다');
+    }
+
+    // OWNER 역할로는 변경할 수 없음
+    if (newRole.name === 'OWNER') {
+      throw new BadRequestException('OWNER 역할은 할당할 수 없습니다. 그룹장 양도 기능을 사용해주세요');
+    }
+
     const updatedMember = await this.prisma.groupMember.update({
       where: { id: member.id },
-      data: { role },
+      data: { roleId },
       include: {
+        role: true,
         user: {
           select: {
             id: true,
@@ -364,10 +501,10 @@ export class GroupService {
   }
 
   /**
-   * 멤버 삭제 (OWNER, ADMIN만 가능)
+   * 멤버 삭제 (REMOVE_MEMBER 권한 필요)
    */
   async removeMember(groupId: string, targetUserId: string, userId: string) {
-    await this.checkPermission(groupId, userId, ['OWNER', 'ADMIN']);
+    await this.checkPermissions(groupId, userId, ['REMOVE_MEMBER']);
 
     // 자기 자신은 삭제할 수 없음 (나가기 사용)
     if (userId === targetUserId) {
@@ -381,6 +518,9 @@ export class GroupService {
           userId: targetUserId,
         },
       },
+      include: {
+        role: true,
+      },
     });
 
     if (!targetMember) {
@@ -388,7 +528,7 @@ export class GroupService {
     }
 
     // OWNER는 삭제할 수 없음
-    if (targetMember.role === 'OWNER') {
+    if (targetMember.role.name === 'OWNER') {
       throw new BadRequestException('OWNER는 삭제할 수 없습니다');
     }
 
@@ -400,10 +540,10 @@ export class GroupService {
   }
 
   /**
-   * 초대 코드 재생성 (OWNER, ADMIN만 가능)
+   * 초대 코드 재생성 (REGENERATE_INVITE_CODE 권한 필요)
    */
   async regenerateInviteCode(groupId: string, userId: string) {
-    await this.checkPermission(groupId, userId, ['OWNER', 'ADMIN']);
+    await this.checkPermissions(groupId, userId, ['REGENERATE_INVITE_CODE']);
 
     const newInviteCode = await this.generateUniqueInviteCode();
 
@@ -416,46 +556,19 @@ export class GroupService {
   }
 
   /**
-   * 권한 체크 헬퍼 메서드
+   * 개인 그룹 색상 설정
    */
-  private async checkPermission(
-    groupId: string,
-    userId: string,
-    allowedRoles: PrismaGroupMemberRole[],
-  ) {
-    const member = await this.prisma.groupMember.findUnique({
-      where: {
-        groupId_userId: {
-          groupId,
-          userId,
-        },
-      },
+  async updateMyColor(groupId: string, userId: string, customColor: string) {
+    const member = await this.checkMembership(groupId, userId);
+
+    const updatedMember = await this.prisma.groupMember.update({
+      where: { id: member.id },
+      data: { customColor },
     });
 
-    if (!member) {
-      throw new NotFoundException('그룹 멤버를 찾을 수 없습니다');
-    }
-
-    if (!allowedRoles.includes(member.role)) {
-      throw new ForbiddenException('이 작업을 수행할 권한이 없습니다');
-    }
-  }
-
-  /**
-   * 멤버십 체크 헬퍼 메서드
-   */
-  private async checkMembership(groupId: string, userId: string) {
-    const member = await this.prisma.groupMember.findUnique({
-      where: {
-        groupId_userId: {
-          groupId,
-          userId,
-        },
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다');
-    }
+    return {
+      message: '그룹 색상이 설정되었습니다',
+      customColor: updatedMember.customColor,
+    };
   }
 }
