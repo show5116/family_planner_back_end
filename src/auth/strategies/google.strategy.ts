@@ -8,7 +8,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback',
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL ||
+        'http://localhost:3000/auth/google/callback',
       scope: ['email', 'profile'],
     });
   }
@@ -22,9 +24,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const { id, name, emails, photos } = profile;
 
     // 한국식 이름 형식: 성(familyName) + 이름(givenName)
-    const fullName = name.familyName && name.givenName
-      ? `${name.familyName}${name.givenName}`
-      : name.givenName || name.familyName || emails[0].value.split('@')[0];
+    const fullName =
+      name.familyName && name.givenName
+        ? `${name.familyName}${name.givenName}`
+        : name.givenName || name.familyName || emails[0].value.split('@')[0];
 
     const user = {
       provider: 'GOOGLE',

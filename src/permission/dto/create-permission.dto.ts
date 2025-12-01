@@ -1,4 +1,10 @@
-import { IsString, IsEnum, IsBoolean, IsOptional, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsBoolean,
+  IsOptional,
+  MaxLength,
+} from 'class-validator';
 import { PermissionCategory } from '@prisma/client';
 
 export class CreatePermissionDto {

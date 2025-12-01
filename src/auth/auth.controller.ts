@@ -1,4 +1,13 @@
-import { Body, Controller, Post, UseGuards, Get, Request, Res, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Get,
+  Request,
+  Res,
+  Patch,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import {
   ApiTags,
@@ -34,7 +43,10 @@ export class AuthController {
 
   @Post('login')
   @ApiOperation({ summary: '로그인' })
-  @ApiResponse({ status: 200, description: '로그인 성공, Access Token과 Refresh Token 반환' })
+  @ApiResponse({
+    status: 200,
+    description: '로그인 성공, Access Token과 Refresh Token 반환',
+  })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -46,7 +58,10 @@ export class AuthController {
     status: 200,
     description: '토큰 갱신 성공, 새로운 Access Token과 Refresh Token 반환',
   })
-  @ApiResponse({ status: 401, description: '유효하지 않거나 만료된 Refresh Token' })
+  @ApiResponse({
+    status: 401,
+    description: '유효하지 않거나 만료된 Refresh Token',
+  })
   async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refresh(refreshTokenDto.refreshToken);
   }
@@ -70,7 +85,10 @@ export class AuthController {
   @Post('resend-verification')
   @ApiOperation({ summary: '인증 이메일 재전송' })
   @ApiResponse({ status: 200, description: '인증 이메일 재전송 성공' })
-  @ApiResponse({ status: 400, description: '이미 인증된 이메일이거나 요청 실패' })
+  @ApiResponse({
+    status: 400,
+    description: '이미 인증된 이메일이거나 요청 실패',
+  })
   @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
   async resendVerification(@Body() resendDto: ResendVerificationDto) {
     return this.authService.resendVerificationEmail(resendDto.email);
@@ -80,7 +98,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '현재 로그인한 사용자 정보 조회' })
-  @ApiResponse({ status: 200, description: '사용자 정보 반환 (isAdmin, profileImage 포함)' })
+  @ApiResponse({
+    status: 200,
+    description: '사용자 정보 반환 (isAdmin, profileImage 포함)',
+  })
   @ApiResponse({ status: 401, description: '인증되지 않음' })
   async getProfile(@Request() req) {
     return this.authService.getMe(req.user.userId);
@@ -110,17 +131,32 @@ export class AuthController {
   @Patch('update-profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: '프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)' })
+  @ApiOperation({
+    summary: '프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)',
+  })
   @ApiResponse({ status: 200, description: '프로필 업데이트 성공' })
-  @ApiResponse({ status: 400, description: '업데이트할 정보가 없거나 비밀번호가 설정되지 않음' })
-  @ApiResponse({ status: 401, description: '현재 비밀번호가 올바르지 않거나 인증되지 않음' })
-  async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
-    return this.authService.updateProfile(req.user.userId, updateProfileDto.currentPassword, {
-      name: updateProfileDto.name,
-      profileImage: updateProfileDto.profileImage,
-      phoneNumber: updateProfileDto.phoneNumber,
-      newPassword: updateProfileDto.newPassword,
-    });
+  @ApiResponse({
+    status: 400,
+    description: '업데이트할 정보가 없거나 비밀번호가 설정되지 않음',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '현재 비밀번호가 올바르지 않거나 인증되지 않음',
+  })
+  async updateProfile(
+    @Request() req,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(
+      req.user.userId,
+      updateProfileDto.currentPassword,
+      {
+        name: updateProfileDto.name,
+        profileImage: updateProfileDto.profileImage,
+        phoneNumber: updateProfileDto.phoneNumber,
+        newPassword: updateProfileDto.newPassword,
+      },
+    );
   }
 
   // ===== 소셜 로그인 =====

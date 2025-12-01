@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PermissionCategory } from '@prisma/client';
@@ -14,6 +15,22 @@ export class PermissionService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * 운영자 권한 확인 (공통 메서드)
+   * @param userId - 확인할 사용자 ID
+   * @throws ForbiddenException - 운영자가 아닌 경우
+   */
+  private async verifyAdminPermission(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+
+    if (!user || !user.isAdmin) {
+      throw new ForbiddenException('운영자 권한이 필요합니다.');
+    }
+  }
+
+  /**
    * 전체 권한 목록 조회
    * @param category - 필터링할 카테고리 (optional)
    * @returns 권한 목록 (카테고리별로 그룹화)
@@ -23,16 +40,16 @@ export class PermissionService {
       isActive: true, // 활성화된 권한만 조회
     };
 
-    if (category && Object.values(PermissionCategory).includes(category as PermissionCategory)) {
+    if (
+      category &&
+      Object.values(PermissionCategory).includes(category as PermissionCategory)
+    ) {
       where.category = category;
     }
 
     const permissions = await this.prisma.permission.findMany({
       where,
-      orderBy: [
-        { category: 'asc' },
-        { code: 'asc' },
-      ],
+      orderBy: [{ category: 'asc' }, { code: 'asc' }],
       select: {
         id: true,
         code: true,
@@ -43,14 +60,17 @@ export class PermissionService {
     });
 
     // 카테고리별로 그룹화
-    const groupedByCategory = permissions.reduce((acc, permission) => {
-      const cat = permission.category;
-      if (!acc[cat]) {
-        acc[cat] = [];
-      }
-      acc[cat].push(permission);
-      return acc;
-    }, {} as Record<string, typeof permissions>);
+    const groupedByCategory = permissions.reduce(
+      (acc, permission) => {
+        const cat = permission.category;
+        if (!acc[cat]) {
+          acc[cat] = [];
+        }
+        acc[cat].push(permission);
+        return acc;
+      },
+      {} as Record<string, typeof permissions>,
+    );
 
     return {
       permissions,
@@ -96,9 +116,16 @@ export class PermissionService {
   /**
    * 권한 생성 (운영자 전용)
    * @param createPermissionDto - 생성할 권한 정보
+   * @param userId - 요청자의 사용자 ID
    * @returns 생성된 권한
    */
-  async createPermission(createPermissionDto: CreatePermissionDto) {
+  async createPermission(
+    createPermissionDto: CreatePermissionDto,
+    userId: string,
+  ) {
+    // 운영자 권한 확인
+    await this.verifyAdminPermission(userId);
+
     // 권한 코드 중복 확인
     const existingPermission = await this.prisma.permission.findUnique({
       where: { code: createPermissionDto.code },
@@ -130,9 +157,17 @@ export class PermissionService {
    * 권한 수정 (운영자 전용)
    * @param id - 권한 ID
    * @param updatePermissionDto - 수정할 권한 정보
+   * @param userId - 요청자의 사용자 ID
    * @returns 수정된 권한
    */
-  async updatePermission(id: string, updatePermissionDto: UpdatePermissionDto) {
+  async updatePermission(
+    id: string,
+    updatePermissionDto: UpdatePermissionDto,
+    userId: string,
+  ) {
+    // 운영자 권한 확인
+    await this.verifyAdminPermission(userId);
+
     // 권한 존재 확인
     const permission = await this.prisma.permission.findUnique({
       where: { id },
@@ -143,7 +178,10 @@ export class PermissionService {
     }
 
     // 권한 코드 변경 시 중복 확인
-    if (updatePermissionDto.code && updatePermissionDto.code !== permission.code) {
+    if (
+      updatePermissionDto.code &&
+      updatePermissionDto.code !== permission.code
+    ) {
       const existingPermission = await this.prisma.permission.findUnique({
         where: { code: updatePermissionDto.code },
       });
@@ -169,9 +207,13 @@ export class PermissionService {
   /**
    * 권한 삭제 (소프트 삭제 - isActive=false)
    * @param id - 권한 ID
+   * @param userId - 요청자의 사용자 ID
    * @returns 삭제된 권한
    */
-  async deletePermission(id: string) {
+  async deletePermission(id: string, userId: string) {
+    // 운영자 권한 확인
+    await this.verifyAdminPermission(userId);
+
     // 권한 존재 확인
     const permission = await this.prisma.permission.findUnique({
       where: { id },
@@ -197,9 +239,13 @@ export class PermissionService {
    * 권한 완전 삭제 (하드 삭제 - DB에서 완전 제거)
    * 주의: 이 권한을 사용하는 역할이 있을 수 있으므로 신중히 사용
    * @param id - 권한 ID
+   * @param userId - 요청자의 사용자 ID
    * @returns 삭제 결과
    */
-  async hardDeletePermission(id: string) {
+  async hardDeletePermission(id: string, userId: string) {
+    // 운영자 권한 확인
+    await this.verifyAdminPermission(userId);
+
     // 권한 존재 확인
     const permission = await this.prisma.permission.findUnique({
       where: { id },

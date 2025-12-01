@@ -8,6 +8,8 @@ export class UpdateMyColorDto {
     pattern: '^#[0-9A-Fa-f]{6}$',
   })
   @IsString()
-  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: '유효한 HEX 색상 코드를 입력해주세요 (예: #FF5733)' })
+  @Matches(/^#[0-9A-Fa-f]{6}$/, {
+    message: '유효한 HEX 색상 코드를 입력해주세요 (예: #FF5733)',
+  })
   customColor: string;
 }

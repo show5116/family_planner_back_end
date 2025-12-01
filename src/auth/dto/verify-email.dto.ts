@@ -4,7 +4,7 @@ import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 export class VerifyEmailDto {
   @ApiProperty({
     description: '이메일 인증 코드 (6자리 숫자)',
-    example: '123456'
+    example: '123456',
   })
   @IsString()
   @IsNotEmpty()

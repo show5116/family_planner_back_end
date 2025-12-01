@@ -145,7 +145,10 @@ export class GroupController {
   @Delete(':id/members/:userId')
   @ApiOperation({ summary: '멤버 삭제 (REMOVE_MEMBER 권한 필요)' })
   @ApiResponse({ status: 200, description: '멤버 삭제 성공' })
-  @ApiResponse({ status: 400, description: '자신은 삭제 불가 또는 OWNER 삭제 불가' })
+  @ApiResponse({
+    status: 400,
+    description: '자신은 삭제 불가 또는 OWNER 삭제 불가',
+  })
   @ApiResponse({ status: 403, description: '권한 없음' })
   @ApiResponse({ status: 404, description: '멤버를 찾을 수 없음' })
   removeMember(
@@ -157,7 +160,9 @@ export class GroupController {
   }
 
   @Post(':id/regenerate-code')
-  @ApiOperation({ summary: '초대 코드 재생성 (REGENERATE_INVITE_CODE 권한 필요)' })
+  @ApiOperation({
+    summary: '초대 코드 재생성 (REGENERATE_INVITE_CODE 권한 필요)',
+  })
   @ApiResponse({ status: 200, description: '초대 코드 재생성 성공' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   regenerateInviteCode(@Param('id') id: string, @Request() req) {

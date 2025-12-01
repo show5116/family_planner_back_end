@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -37,8 +38,14 @@ export class PermissionController {
    */
   @Post()
   @UseGuards(JwtAuthGuard, AdminGuard)
-  async createPermission(@Body() createPermissionDto: CreatePermissionDto) {
-    return this.permissionService.createPermission(createPermissionDto);
+  async createPermission(
+    @Request() req,
+    @Body() createPermissionDto: CreatePermissionDto,
+  ) {
+    return this.permissionService.createPermission(
+      createPermissionDto,
+      req.user.userId,
+    );
   }
 
   /**
@@ -48,10 +55,15 @@ export class PermissionController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   async updatePermission(
+    @Request() req,
     @Param('id') id: string,
     @Body() updatePermissionDto: UpdatePermissionDto,
   ) {
-    return this.permissionService.updatePermission(id, updatePermissionDto);
+    return this.permissionService.updatePermission(
+      id,
+      updatePermissionDto,
+      req.user.userId,
+    );
   }
 
   /**
@@ -61,8 +73,8 @@ export class PermissionController {
    */
   @Delete(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  async deletePermission(@Param('id') id: string) {
-    return this.permissionService.deletePermission(id);
+  async deletePermission(@Request() req, @Param('id') id: string) {
+    return this.permissionService.deletePermission(id, req.user.userId);
   }
 
   /**
@@ -71,7 +83,7 @@ export class PermissionController {
    */
   @Delete(':id/hard')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  async hardDeletePermission(@Param('id') id: string) {
-    return this.permissionService.hardDeletePermission(id);
+  async hardDeletePermission(@Request() req, @Param('id') id: string) {
+    return this.permissionService.hardDeletePermission(id, req.user.userId);
   }
 }

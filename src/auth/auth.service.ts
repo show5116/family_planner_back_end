@@ -43,7 +43,9 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 이메일 인증 코드 생성 (6자리 숫자, 24시간 유효)
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
     const verificationExpires = new Date();
     verificationExpires.setHours(verificationExpires.getHours() + 24);
 
@@ -69,11 +71,16 @@ export class AuthService {
 
     // 이메일 인증 메일 발송
     try {
-      await this.emailService.sendVerificationEmail(email, verificationCode, name);
+      await this.emailService.sendVerificationEmail(
+        email,
+        verificationCode,
+        name,
+      );
     } catch (error) {
       // 이메일 전송 실패 시 사용자에게 알림 (하지만 회원가입은 완료)
       return {
-        message: '회원가입이 완료되었지만, 인증 이메일 전송에 실패했습니다. 인증 이메일 재전송을 요청해주세요.',
+        message:
+          '회원가입이 완료되었지만, 인증 이메일 전송에 실패했습니다. 인증 이메일 재전송을 요청해주세요.',
         user,
       };
     }
@@ -96,7 +103,9 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다');
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 올바르지 않습니다',
+      );
     }
 
     // 비밀번호 확인
@@ -112,12 +121,16 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다');
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 올바르지 않습니다',
+      );
     }
 
     // 이메일 인증 확인 (LOCAL 로그인 사용자만)
     if (user.provider === 'LOCAL' && !user.isEmailVerified) {
-      throw new ForbiddenException('이메일 인증이 필요합니다. 이메일을 확인해주세요');
+      throw new ForbiddenException(
+        '이메일 인증이 필요합니다. 이메일을 확인해주세요',
+      );
     }
 
     // 공통 로그인 처리 함수 호출
@@ -188,8 +201,10 @@ export class AuthService {
   private async generateTokens(userId: string) {
     const payload = { sub: userId };
 
-    const accessSecret = process.env.JWT_ACCESS_SECRET || 'default-access-secret';
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || 'default-refresh-secret';
+    const accessSecret =
+      process.env.JWT_ACCESS_SECRET || 'default-access-secret';
+    const refreshSecret =
+      process.env.JWT_REFRESH_SECRET || 'default-refresh-secret';
     const accessExpiration = process.env.JWT_ACCESS_EXPIRATION || '15m';
     const refreshExpiration = process.env.JWT_REFRESH_EXPIRATION || '7d';
 
@@ -270,8 +285,13 @@ export class AuthService {
       throw new BadRequestException('이미 인증된 이메일입니다');
     }
 
-    if (!user.emailVerificationExpires || user.emailVerificationExpires < new Date()) {
-      throw new BadRequestException('인증 코드가 만료되었습니다. 인증 이메일을 재전송해주세요');
+    if (
+      !user.emailVerificationExpires ||
+      user.emailVerificationExpires < new Date()
+    ) {
+      throw new BadRequestException(
+        '인증 코드가 만료되었습니다. 인증 이메일을 재전송해주세요',
+      );
     }
 
     // 이메일 인증 완료
@@ -304,11 +324,15 @@ export class AuthService {
     }
 
     if (user.provider !== 'LOCAL') {
-      throw new BadRequestException('소셜 로그인 사용자는 이메일 인증이 필요하지 않습니다');
+      throw new BadRequestException(
+        '소셜 로그인 사용자는 이메일 인증이 필요하지 않습니다',
+      );
     }
 
     // 새로운 인증 코드 생성 (6자리 숫자)
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
     const verificationExpires = new Date();
     verificationExpires.setHours(verificationExpires.getHours() + 24);
 
@@ -322,7 +346,11 @@ export class AuthService {
 
     // 이메일 발송
     try {
-      await this.emailService.sendVerificationEmail(email, verificationCode, user.name);
+      await this.emailService.sendVerificationEmail(
+        email,
+        verificationCode,
+        user.name,
+      );
     } catch {
       throw new BadRequestException('이메일 전송에 실패했습니다');
     }
@@ -377,7 +405,11 @@ export class AuthService {
 
     // 이메일 발송
     try {
-      await this.emailService.sendPasswordResetEmail(email, resetCode, user.name);
+      await this.emailService.sendPasswordResetEmail(
+        email,
+        resetCode,
+        user.name,
+      );
     } catch {
       throw new BadRequestException('이메일 전송에 실패했습니다');
     }
@@ -397,11 +429,15 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('유효하지 않은 이메일 또는 인증 코드입니다');
+      throw new BadRequestException(
+        '유효하지 않은 이메일 또는 인증 코드입니다',
+      );
     }
 
     if (!user.passwordResetExpires || user.passwordResetExpires < new Date()) {
-      throw new BadRequestException('인증 코드가 만료되었습니다. 비밀번호 재설정을 다시 요청해주세요');
+      throw new BadRequestException(
+        '인증 코드가 만료되었습니다. 비밀번호 재설정을 다시 요청해주세요',
+      );
     }
 
     // 새 비밀번호 해싱
@@ -495,7 +531,10 @@ export class AuthService {
         data: { lastLoginAt: new Date() },
       })
       .catch((error) => {
-        this.logger.error(`Failed to update lastLoginAt for user ${userId}`, error);
+        this.logger.error(
+          `Failed to update lastLoginAt for user ${userId}`,
+          error,
+        );
       });
 
     return {
@@ -542,7 +581,10 @@ export class AuthService {
       throw new BadRequestException('비밀번호가 설정되어 있지 않습니다');
     }
 
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('현재 비밀번호가 올바르지 않습니다');
     }

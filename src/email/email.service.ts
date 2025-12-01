@@ -25,7 +25,9 @@ export class EmailService {
   async sendVerificationEmail(to: string, code: string, userName: string) {
     try {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || `"Family Planner" <${process.env.SMTP_USER}>`,
+        from:
+          process.env.SMTP_FROM ||
+          `"Family Planner" <${process.env.SMTP_USER}>`,
         to,
         subject: '이메일 인증 코드입니다',
         html: this.getVerificationEmailTemplate(userName, code),
@@ -44,7 +46,9 @@ export class EmailService {
   async sendPasswordResetEmail(to: string, code: string, userName: string) {
     try {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || `"Family Planner" <${process.env.SMTP_USER}>`,
+        from:
+          process.env.SMTP_FROM ||
+          `"Family Planner" <${process.env.SMTP_USER}>`,
         to,
         subject: '비밀번호 재설정 인증 코드입니다',
         html: this.getPasswordResetEmailTemplate(userName, code),
@@ -162,7 +166,10 @@ export class EmailService {
   /**
    * 비밀번호 재설정 이메일 템플릿
    */
-  private getPasswordResetEmailTemplate(userName: string, code: string): string {
+  private getPasswordResetEmailTemplate(
+    userName: string,
+    code: string,
+  ): string {
     return `
       <!DOCTYPE html>
       <html>

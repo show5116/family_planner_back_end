@@ -27,6 +27,8 @@ export class UpdateGroupDto {
   })
   @IsString()
   @IsOptional()
-  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: '유효한 HEX 색상 코드를 입력해주세요 (예: #6366F1)' })
+  @Matches(/^#[0-9A-Fa-f]{6}$/, {
+    message: '유효한 HEX 색상 코드를 입력해주세요 (예: #6366F1)',
+  })
   defaultColor?: string;
 }

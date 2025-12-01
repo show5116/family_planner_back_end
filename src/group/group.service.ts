@@ -17,7 +17,8 @@ export class GroupService {
    * 초대 코드 생성 (8자리 랜덤 영문 대소문자 + 숫자)
    */
   private generateInviteCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let code = '';
     for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -57,7 +58,9 @@ export class GroupService {
     });
 
     if (!ownerRole) {
-      throw new Error('OWNER 역할을 찾을 수 없습니다. 데이터베이스 시드를 실행해주세요.');
+      throw new Error(
+        'OWNER 역할을 찾을 수 없습니다. 데이터베이스 시드를 실행해주세요.',
+      );
     }
 
     return ownerRole;
@@ -75,7 +78,9 @@ export class GroupService {
     });
 
     if (!defaultRole) {
-      throw new Error('기본 역할을 찾을 수 없습니다. 데이터베이스 시드를 실행해주세요.');
+      throw new Error(
+        '기본 역할을 찾을 수 없습니다. 데이터베이스 시드를 실행해주세요.',
+      );
     }
 
     return defaultRole;
@@ -109,8 +114,12 @@ export class GroupService {
     }
 
     // 권한 체크
-    const userPermissions = JSON.parse(member.role.permissions as string) as string[];
-    const hasPermission = requiredPermissions.every((perm) => userPermissions.includes(perm));
+    const userPermissions = JSON.parse(
+      member.role.permissions as string,
+    ) as string[];
+    const hasPermission = requiredPermissions.every((perm) =>
+      userPermissions.includes(perm),
+    );
 
     if (!hasPermission) {
       throw new ForbiddenException('이 작업을 수행할 권한이 없습니다');
@@ -264,7 +273,11 @@ export class GroupService {
   /**
    * 그룹 정보 수정 (UPDATE 권한 필요)
    */
-  async update(groupId: string, userId: string, updateGroupDto: UpdateGroupDto) {
+  async update(
+    groupId: string,
+    userId: string,
+    updateGroupDto: UpdateGroupDto,
+  ) {
     await this.checkPermissions(groupId, userId, ['UPDATE']);
 
     const group = await this.prisma.group.update({
@@ -464,7 +477,9 @@ export class GroupService {
 
     // OWNER 역할은 양도만 가능 (변경 불가)
     if (member.role.name === 'OWNER') {
-      throw new BadRequestException('OWNER 역할은 변경할 수 없습니다. 그룹장 양도 기능을 사용해주세요');
+      throw new BadRequestException(
+        'OWNER 역할은 변경할 수 없습니다. 그룹장 양도 기능을 사용해주세요',
+      );
     }
 
     // 새 역할 확인
@@ -478,7 +493,9 @@ export class GroupService {
 
     // OWNER 역할로는 변경할 수 없음
     if (newRole.name === 'OWNER') {
-      throw new BadRequestException('OWNER 역할은 할당할 수 없습니다. 그룹장 양도 기능을 사용해주세요');
+      throw new BadRequestException(
+        'OWNER 역할은 할당할 수 없습니다. 그룹장 양도 기능을 사용해주세요',
+      );
     }
 
     const updatedMember = await this.prisma.groupMember.update({
@@ -508,7 +525,9 @@ export class GroupService {
 
     // 자기 자신은 삭제할 수 없음 (나가기 사용)
     if (userId === targetUserId) {
-      throw new BadRequestException('자신은 삭제할 수 없습니다. 그룹 나가기를 사용해주세요');
+      throw new BadRequestException(
+        '자신은 삭제할 수 없습니다. 그룹 나가기를 사용해주세요',
+      );
     }
 
     const targetMember = await this.prisma.groupMember.findUnique({

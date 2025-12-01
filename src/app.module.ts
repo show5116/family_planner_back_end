@@ -8,7 +8,13 @@ import { GroupModule } from './group/group.module';
 import { PermissionModule } from './permission/permission.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, EmailModule, GroupModule, PermissionModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    EmailModule,
+    GroupModule,
+    PermissionModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
