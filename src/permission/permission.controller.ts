@@ -19,11 +19,18 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { PermissionService } from './permission.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AdminGuard } from '../auth/admin.guard';
-import { CreatePermissionDto } from './dto/create-permission.dto';
-import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { PermissionService } from '@/permission/permission.service';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { AdminGuard } from '@/auth/admin.guard';
+import { CreatePermissionDto } from '@/permission/dto/create-permission.dto';
+import { UpdatePermissionDto } from '@/permission/dto/update-permission.dto';
+import {
+  GetAllPermissionsResponseDto,
+  CreatePermissionResponseDto,
+  UpdatePermissionResponseDto,
+  DeletePermissionResponseDto,
+  HardDeletePermissionResponseDto,
+} from '@/permission/dto/permission-response.dto';
 
 @ApiTags('permissions')
 @Controller('permissions')
@@ -53,6 +60,7 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: '권한 목록 조회 성공',
+    type: GetAllPermissionsResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -77,6 +85,7 @@ export class PermissionController {
   @ApiResponse({
     status: 201,
     description: '권한 생성 성공',
+    type: CreatePermissionResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -85,6 +94,10 @@ export class PermissionController {
   @ApiResponse({
     status: 403,
     description: '권한 없음 (운영자 전용)',
+  })
+  @ApiResponse({
+    status: 409,
+    description: '권한 코드 중복',
   })
   async createPermission(
     @Request() req,
@@ -116,6 +129,7 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: '권한 수정 성공',
+    type: UpdatePermissionResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -128,6 +142,10 @@ export class PermissionController {
   @ApiResponse({
     status: 404,
     description: '권한을 찾을 수 없음',
+  })
+  @ApiResponse({
+    status: 409,
+    description: '권한 코드 중복',
   })
   async updatePermission(
     @Request() req,
@@ -161,6 +179,7 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: '권한 삭제 성공',
+    type: DeletePermissionResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -198,6 +217,11 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: '권한 완전 삭제 성공',
+    type: HardDeletePermissionResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '권한을 사용하는 역할이 존재함',
   })
   @ApiResponse({
     status: 401,

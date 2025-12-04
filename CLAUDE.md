@@ -8,11 +8,35 @@
 
 ## 개발 가이드
 
-### TODO.md 참조
-- **중요**: 이 프로젝트의 모든 개발은 `TODO.md` 파일의 기능 명세를 기반으로 진행합니다
-- 새로운 기능을 개발하거나 작업을 시작하기 전에 반드시 `TODO.md` 파일을 확인하세요
-- `TODO.md`에는 프로젝트의 전체 기능 요구사항, 상태, 우선순위가 정의되어 있습니다
-- 작업 완료 시 `TODO.md`의 해당 항목 상태를 업데이트하세요 (⬜ → 🟨 → ✅)
+### 문서 구조
+이 프로젝트는 체계적인 문서 관리를 위해 다음과 같은 구조를 사용합니다:
+
+- **[TODO.md](TODO.md)**: 프로젝트 전체 개요 및 기능별 문서 인덱스
+- **[ROADMAP.md](ROADMAP.md)**: Phase별 전체 프로젝트 로드맵
+- **[STATUS.md](STATUS.md)**: 현재 개발 진행 상황 및 최근 작업 내역
+- **[docs/features/](docs/features/)**: 기능별 상세 문서 (요구사항, API 명세, DB 스키마)
+
+### 개발 워크플로우
+1. **작업 시작 전**:
+   - [ROADMAP.md](ROADMAP.md)에서 전체 Phase 및 우선순위 확인
+   - [STATUS.md](STATUS.md)에서 현재 진행 상황 파악
+   - [docs/features/](docs/features/)에서 해당 기능 문서 확인
+
+2. **개발 중**:
+   - Prisma 스키마 설계 및 마이그레이션
+   - NestJS 모듈/컨트롤러/서비스 구현
+   - Swagger 문서화 (`@ApiOperation`, `@ApiResponse` 등)
+   - 단위 테스트 작성
+
+3. **작업 완료 후**:
+   - 기능 문서의 체크박스 상태 업데이트 (⬜ → 🟨 → ✅)
+   - [STATUS.md](STATUS.md)의 "최근 완료된 작업" 섹션 업데이트
+   - Phase 진행 시 [ROADMAP.md](ROADMAP.md) 진행률 업데이트
+
+### Import 경로 규칙
+- **절대 경로 사용**: 모든 import는 `@/` 접두사를 사용한 절대 경로로 작성
+- 예: `import { PrismaService } from '@/prisma/prisma.service';`
+- tsconfig.json의 path alias 설정: `"@/*": ["src/*"]`
 
 ## 개발 명령어
 
@@ -69,11 +93,13 @@ Prisma 스키마 파일은 `prisma/schema.prisma`에 위치합니다. 데이터�
 - 진입점: `src/main.ts`는 `AppModule`로부터 NestJS 애플리케이션 인스턴스를 생성하여 애플리케이션을 부트스트랩합니다
 
 ### TypeScript 설정
-- 현대적인 모듈 해석(`nodenext`) 사용 및 ES 모듈 상호 운용
+- 모듈 시스템: `commonjs` (NestJS 최적화)
+- 모듈 해석: `bundler` (path alias 지원)
 - Target: ES2023
 - 데코레이터 활성화 (NestJS에 필수)
 - 엄격한 null 체크 활성화, 단 `noImplicitAny`는 비활성화
 - 출력 디렉토리: `./dist`
+- Path Alias: `@/*` → `src/*`
 
 ### 코드 스타일
 - **ESLint**: TypeScript-ESLint 권장 타입 체크 규칙 적용

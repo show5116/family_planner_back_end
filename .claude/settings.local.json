@@ -9,7 +9,8 @@
       "Bash(npx prisma generate:*)",
       "Bash($env:PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=\"1\")",
       "Bash(PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 npx prisma generate:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

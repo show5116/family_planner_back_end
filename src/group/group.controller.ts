@@ -15,13 +15,13 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { GroupService } from './group.service';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { UpdateGroupDto } from './dto/update-group.dto';
-import { JoinGroupDto } from './dto/join-group.dto';
-import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
-import { UpdateMyColorDto } from './dto/update-my-color.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { GroupService } from '@/group/group.service';
+import { CreateGroupDto } from '@/group/dto/create-group.dto';
+import { UpdateGroupDto } from '@/group/dto/update-group.dto';
+import { JoinGroupDto } from '@/group/dto/join-group.dto';
+import { UpdateMemberRoleDto } from '@/group/dto/update-member-role.dto';
+import { UpdateMyColorDto } from '@/group/dto/update-my-color.dto';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 
 @ApiTags('그룹')
 @Controller('groups')

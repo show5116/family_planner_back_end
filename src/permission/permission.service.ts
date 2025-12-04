@@ -5,10 +5,10 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { PermissionCategory } from '@prisma/client';
-import { CreatePermissionDto } from './dto/create-permission.dto';
-import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { CreatePermissionDto } from '@/permission/dto/create-permission.dto';
+import { UpdatePermissionDto } from '@/permission/dto/update-permission.dto';
 
 @Injectable()
 export class PermissionService {

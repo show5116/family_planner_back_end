@@ -15,18 +15,30 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { SignupDto } from './dto/signup.dto';
-import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { VerifyEmailDto } from './dto/verify-email.dto';
-import { ResendVerificationDto } from './dto/resend-verification.dto';
-import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { KakaoAuthGuard } from './guards/kakao-auth.guard';
+import { AuthService } from '@/auth/auth.service';
+import { SignupDto } from '@/auth/dto/signup.dto';
+import { LoginDto } from '@/auth/dto/login.dto';
+import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto';
+import { VerifyEmailDto } from '@/auth/dto/verify-email.dto';
+import { ResendVerificationDto } from '@/auth/dto/resend-verification.dto';
+import { RequestPasswordResetDto } from '@/auth/dto/request-password-reset.dto';
+import { ResetPasswordDto } from '@/auth/dto/reset-password.dto';
+import { UpdateProfileDto } from '@/auth/dto/update-profile.dto';
+import {
+  SignupResponseDto,
+  LoginResponseDto,
+  TokenResponseDto,
+  LogoutResponseDto,
+  VerifyEmailResponseDto,
+  ResendVerificationResponseDto,
+  GetMeResponseDto,
+  RequestPasswordResetResponseDto,
+  ResetPasswordResponseDto,
+  UpdateProfileResponseDto,
+} from '@/auth/dto/auth-response.dto';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
+import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
 
 @ApiTags('인증')
 @Controller('auth')
@@ -35,7 +47,11 @@ export class AuthController {
 
   @Post('signup')
   @ApiOperation({ summary: '회원가입' })
-  @ApiResponse({ status: 201, description: '회원가입 성공' })
+  @ApiResponse({
+    status: 201,
+    description: '회원가입 성공',
+    type: SignupResponseDto,
+  })
   @ApiResponse({ status: 409, description: '이미 사용 중인 이메일' })
   async signup(@Body() signupDto: SignupDto) {
     return this.authService.signup(signupDto);
@@ -46,6 +62,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: '로그인 성공, Access Token과 Refresh Token 반환',
+    type: LoginResponseDto,
   })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async login(@Body() loginDto: LoginDto) {
@@ -57,6 +74,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: '토큰 갱신 성공, 새로운 Access Token과 Refresh Token 반환',
+    type: TokenResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -68,7 +86,11 @@ export class AuthController {
 
   @Post('logout')
   @ApiOperation({ summary: '로그아웃' })
-  @ApiResponse({ status: 200, description: '로그아웃 성공' })
+  @ApiResponse({
+    status: 200,
+    description: '로그아웃 성공',
+    type: LogoutResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Refresh Token을 찾을 수 없음' })
   async logout(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.logout(refreshTokenDto.refreshToken);
@@ -76,7 +98,11 @@ export class AuthController {
 
   @Post('verify-email')
   @ApiOperation({ summary: '이메일 인증' })
-  @ApiResponse({ status: 200, description: '이메일 인증 성공' })
+  @ApiResponse({
+    status: 200,
+    description: '이메일 인증 성공',
+    type: VerifyEmailResponseDto,
+  })
   @ApiResponse({ status: 400, description: '유효하지 않거나 만료된 인증 코드' })
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
     return this.authService.verifyEmail(verifyEmailDto.code);
@@ -84,7 +110,11 @@ export class AuthController {
 
   @Post('resend-verification')
   @ApiOperation({ summary: '인증 이메일 재전송' })
-  @ApiResponse({ status: 200, description: '인증 이메일 재전송 성공' })
+  @ApiResponse({
+    status: 200,
+    description: '인증 이메일 재전송 성공',
+    type: ResendVerificationResponseDto,
+  })
   @ApiResponse({
     status: 400,
     description: '이미 인증된 이메일이거나 요청 실패',
@@ -101,6 +131,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: '사용자 정보 반환 (isAdmin, profileImage 포함)',
+    type: GetMeResponseDto,
   })
   @ApiResponse({ status: 401, description: '인증되지 않음' })
   async getProfile(@Request() req) {
@@ -109,7 +140,11 @@ export class AuthController {
 
   @Post('request-password-reset')
   @ApiOperation({ summary: '비밀번호 재설정 요청' })
-  @ApiResponse({ status: 200, description: '인증 코드가 이메일로 전송됨' })
+  @ApiResponse({
+    status: 200,
+    description: '인증 코드가 이메일로 전송됨',
+    type: RequestPasswordResetResponseDto,
+  })
   @ApiResponse({ status: 400, description: '요청 실패' })
   @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
   async requestPasswordReset(@Body() requestDto: RequestPasswordResetDto) {
@@ -118,7 +153,11 @@ export class AuthController {
 
   @Post('reset-password')
   @ApiOperation({ summary: '비밀번호 재설정' })
-  @ApiResponse({ status: 200, description: '비밀번호 재설정 성공' })
+  @ApiResponse({
+    status: 200,
+    description: '비밀번호 재설정 성공',
+    type: ResetPasswordResponseDto,
+  })
   @ApiResponse({ status: 400, description: '유효하지 않거나 만료된 인증 코드' })
   async resetPassword(@Body() resetDto: ResetPasswordDto) {
     return this.authService.resetPassword(
@@ -134,7 +173,11 @@ export class AuthController {
   @ApiOperation({
     summary: '프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)',
   })
-  @ApiResponse({ status: 200, description: '프로필 업데이트 성공' })
+  @ApiResponse({
+    status: 200,
+    description: '프로필 업데이트 성공',
+    type: UpdateProfileResponseDto,
+  })
   @ApiResponse({
     status: 400,
     description: '업데이트할 정보가 없거나 비밀번호가 설정되지 않음',
@@ -172,7 +215,11 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google 로그인 콜백' })
-  @ApiResponse({ status: 200, description: 'Google 로그인 성공, 토큰 반환' })
+  @ApiResponse({
+    status: 200,
+    description: 'Google 로그인 성공, 토큰 반환',
+    type: TokenResponseDto,
+  })
   async googleCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
 
@@ -199,7 +246,11 @@ export class AuthController {
   @Get('kakao/callback')
   @UseGuards(KakaoAuthGuard)
   @ApiOperation({ summary: 'Kakao 로그인 콜백' })
-  @ApiResponse({ status: 200, description: 'Kakao 로그인 성공, 토큰 반환' })
+  @ApiResponse({
+    status: 200,
+    description: 'Kakao 로그인 성공, 토큰 반환',
+    type: TokenResponseDto,
+  })
   async kakaoCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
 
