@@ -22,6 +22,7 @@ import { JoinGroupDto } from '@/group/dto/join-group.dto';
 import { UpdateMemberRoleDto } from '@/group/dto/update-member-role.dto';
 import { UpdateMyColorDto } from '@/group/dto/update-my-color.dto';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { ApiAuthResponses } from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('그룹')
 @Controller('groups')
@@ -33,7 +34,7 @@ export class GroupController {
   @Post()
   @ApiOperation({ summary: '그룹 생성' })
   @ApiResponse({ status: 201, description: '그룹 생성 성공' })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
+  @ApiAuthResponses()
   create(@Request() req, @Body() createGroupDto: CreateGroupDto) {
     return this.groupService.create(req.user.userId, createGroupDto);
   }
@@ -41,7 +42,7 @@ export class GroupController {
   @Get()
   @ApiOperation({ summary: '내가 속한 그룹 목록 조회' })
   @ApiResponse({ status: 200, description: '그룹 목록 반환' })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
+  @ApiAuthResponses()
   findMyGroups(@Request() req) {
     return this.groupService.findMyGroups(req.user.userId);
   }

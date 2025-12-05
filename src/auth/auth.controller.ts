@@ -40,6 +40,7 @@ import {
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
 import { Public } from '@/auth/decorators/public.decorator';
+import { ApiAuthResponses } from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('인증')
 @Controller('auth')
@@ -142,7 +143,7 @@ export class AuthController {
     description: '사용자 정보 반환 (isAdmin, profileImage 포함)',
     type: GetMeResponseDto,
   })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
+  @ApiAuthResponses()
   async getProfile(@Request() req) {
     return this.authService.getMe(req.user.userId);
   }
@@ -192,10 +193,7 @@ export class AuthController {
     status: 400,
     description: '업데이트할 정보가 없거나 비밀번호가 설정되지 않음',
   })
-  @ApiResponse({
-    status: 401,
-    description: '현재 비밀번호가 올바르지 않거나 인증되지 않음',
-  })
+  @ApiAuthResponses()
   async updateProfile(
     @Request() req,
     @Body() updateProfileDto: UpdateProfileDto,

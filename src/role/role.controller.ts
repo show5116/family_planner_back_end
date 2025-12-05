@@ -29,6 +29,13 @@ import {
 } from '@/role/dto/role-response.dto';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { AdminGuard } from '@/auth/admin.guard';
+import {
+  ApiAdminResponses,
+  ApiCreateResponses,
+  ApiGetOneResponses,
+  ApiUpdateResponses,
+  ApiDeleteResponses,
+} from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('역할(Role)')
 @Controller('roles')
@@ -55,8 +62,7 @@ export class RoleController {
     description: '역할 목록 반환',
     type: GetAllRolesResponseDto,
   })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  @ApiResponse({ status: 403, description: '운영자 권한 필요' })
+  @ApiAdminResponses()
   async findAll(
     @Request() req,
     @Query('type') type?: 'common',
@@ -67,44 +73,22 @@ export class RoleController {
 
   @Get(':id')
   @ApiOperation({ summary: '역할 단건 조회 (운영자 전용)' })
-  @ApiResponse({
-    status: 200,
-    description: '역할 정보 반환',
-    type: RoleDto,
-  })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  @ApiResponse({ status: 403, description: '운영자 권한 필요' })
-  @ApiResponse({ status: 404, description: '역할을 찾을 수 없음' })
+  @ApiGetOneResponses(RoleDto)
   async findOne(@Param('id') id: string, @Request() req) {
     return this.roleService.findOne(req.user.userId, id);
   }
 
   @Post()
   @ApiOperation({ summary: '역할 생성 (운영자 전용)' })
-  @ApiResponse({
-    status: 201,
-    description: '역할 생성 성공',
-    type: CreateRoleResponseDto,
-  })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  @ApiResponse({ status: 403, description: '운영자 권한 필요' })
-  @ApiResponse({ status: 409, description: '역할명 중복' })
+  @ApiCreateResponses(CreateRoleResponseDto, '역할명 중복')
   async create(@Request() req, @Body() createRoleDto: CreateRoleDto) {
     return this.roleService.create(req.user.userId, createRoleDto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: '역할 수정 (운영자 전용)' })
-  @ApiResponse({
-    status: 200,
-    description: '역할 수정 성공',
-    type: UpdateRoleResponseDto,
-  })
   @ApiResponse({ status: 400, description: 'OWNER 역할은 수정 불가' })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  @ApiResponse({ status: 403, description: '운영자 권한 필요' })
-  @ApiResponse({ status: 404, description: '역할을 찾을 수 없음' })
-  @ApiResponse({ status: 409, description: '역할명 중복' })
+  @ApiUpdateResponses(UpdateRoleResponseDto, '역할명 중복')
   async update(
     @Param('id') id: string,
     @Request() req,
@@ -116,17 +100,10 @@ export class RoleController {
   @Delete(':id')
   @ApiOperation({ summary: '역할 삭제 (운영자 전용)' })
   @ApiResponse({
-    status: 200,
-    description: '역할 삭제 성공',
-    type: DeleteRoleResponseDto,
-  })
-  @ApiResponse({
     status: 400,
     description: 'OWNER 역할은 삭제 불가 또는 사용 중인 역할',
   })
-  @ApiResponse({ status: 401, description: '인증되지 않음' })
-  @ApiResponse({ status: 403, description: '운영자 권한 필요' })
-  @ApiResponse({ status: 404, description: '역할을 찾을 수 없음' })
+  @ApiDeleteResponses(DeleteRoleResponseDto)
   async remove(@Param('id') id: string, @Request() req) {
     return this.roleService.remove(req.user.userId, id);
   }

@@ -32,11 +32,7 @@ export class RoleService {
    * @param type - 'common' (공통 역할만) 또는 undefined (전체)
    * @param groupId - 특정 그룹 역할만 조회
    */
-  async findAll(
-    userId: string,
-    type?: 'common',
-    groupId?: string,
-  ) {
+  async findAll(userId: string, type?: 'common', groupId?: string) {
     await this.checkAdminPermission(userId);
 
     const where: any = {};
@@ -116,11 +112,7 @@ export class RoleService {
   /**
    * 역할 수정
    */
-  async update(
-    userId: string,
-    id: string,
-    updateRoleDto: UpdateRoleDto,
-  ) {
+  async update(userId: string, id: string, updateRoleDto: UpdateRoleDto) {
     await this.checkAdminPermission(userId);
 
     const role = await this.prisma.role.findUnique({

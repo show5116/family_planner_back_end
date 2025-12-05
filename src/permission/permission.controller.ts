@@ -31,6 +31,13 @@ import {
   DeletePermissionResponseDto,
   HardDeletePermissionResponseDto,
 } from '@/permission/dto/permission-response.dto';
+import {
+  ApiAuthResponses,
+  ApiCreateResponses,
+  ApiUpdateResponses,
+  ApiDeleteResponses,
+  ApiHardDeleteResponses,
+} from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('permissions')
 @Controller('permissions')
@@ -62,10 +69,7 @@ export class PermissionController {
     description: '권한 목록 조회 성공',
     type: GetAllPermissionsResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: '인증 실패',
-  })
+  @ApiAuthResponses()
   async getAllPermissions(@Query('category') category?: string) {
     return this.permissionService.getAllPermissions(category);
   }
@@ -82,23 +86,7 @@ export class PermissionController {
     description: '새로운 권한을 생성합니다. 운영자 전용 API',
   })
   @ApiBody({ type: CreatePermissionDto })
-  @ApiResponse({
-    status: 201,
-    description: '권한 생성 성공',
-    type: CreatePermissionResponseDto,
-  })
-  @ApiResponse({
-    status: 401,
-    description: '인증 실패',
-  })
-  @ApiResponse({
-    status: 403,
-    description: '권한 없음 (운영자 전용)',
-  })
-  @ApiResponse({
-    status: 409,
-    description: '권한 코드 중복',
-  })
+  @ApiCreateResponses(CreatePermissionResponseDto, '권한 코드 중복')
   async createPermission(
     @Request() req,
     @Body() createPermissionDto: CreatePermissionDto,
@@ -126,27 +114,7 @@ export class PermissionController {
     example: 'perm_123',
   })
   @ApiBody({ type: UpdatePermissionDto })
-  @ApiResponse({
-    status: 200,
-    description: '권한 수정 성공',
-    type: UpdatePermissionResponseDto,
-  })
-  @ApiResponse({
-    status: 401,
-    description: '인증 실패',
-  })
-  @ApiResponse({
-    status: 403,
-    description: '권한 없음 (운영자 전용)',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '권한을 찾을 수 없음',
-  })
-  @ApiResponse({
-    status: 409,
-    description: '권한 코드 중복',
-  })
+  @ApiUpdateResponses(UpdatePermissionResponseDto, '권한 코드 중복')
   async updatePermission(
     @Request() req,
     @Param('id') id: string,
@@ -176,23 +144,7 @@ export class PermissionController {
     description: '권한 ID',
     example: 'perm_123',
   })
-  @ApiResponse({
-    status: 200,
-    description: '권한 삭제 성공',
-    type: DeletePermissionResponseDto,
-  })
-  @ApiResponse({
-    status: 401,
-    description: '인증 실패',
-  })
-  @ApiResponse({
-    status: 403,
-    description: '권한 없음 (운영자 전용)',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '권한을 찾을 수 없음',
-  })
+  @ApiDeleteResponses(DeletePermissionResponseDto)
   async deletePermission(@Request() req, @Param('id') id: string) {
     return this.permissionService.deletePermission(id, req.user.userId);
   }
@@ -214,27 +166,10 @@ export class PermissionController {
     description: '권한 ID',
     example: 'perm_123',
   })
-  @ApiResponse({
-    status: 200,
-    description: '권한 완전 삭제 성공',
-    type: HardDeletePermissionResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: '권한을 사용하는 역할이 존재함',
-  })
-  @ApiResponse({
-    status: 401,
-    description: '인증 실패',
-  })
-  @ApiResponse({
-    status: 403,
-    description: '권한 없음 (운영자 전용)',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '권한을 찾을 수 없음',
-  })
+  @ApiHardDeleteResponses(
+    HardDeletePermissionResponseDto,
+    '권한을 사용하는 역할이 존재함',
+  )
   async hardDeletePermission(@Request() req, @Param('id') id: string) {
     return this.permissionService.hardDeletePermission(id, req.user.userId);
   }
