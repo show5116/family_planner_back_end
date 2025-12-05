@@ -84,10 +84,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.login(loginDto);
-    const userAgent = req.headers['user-agent'];
 
-    // User-Agent를 통해 웹 브라우저인지 판별
-    const isWeb = this.isWebClient(userAgent);
+    // Cookie 또는 User-Agent를 통해 웹 브라우저인지 판별
+    const isWeb = this.isWebClient(req);
 
     if (isWeb) {
       // 웹 브라우저: HttpOnly Cookie로 Refresh Token 설정
@@ -109,40 +108,58 @@ export class AuthController {
   }
 
   /**
-   * User-Agent 헤더로부터 웹 브라우저인지 판별
+   * Cookie에 refreshToken이 있는지 또는 User-Agent로 웹 브라우저인지 판별
+   * - Cookie에 refreshToken이 있으면 웹 클라이언트로 간주
+   * - Cookie가 없으면 User-Agent로 판별 (첫 로그인 시)
+   * - 모바일 앱 패턴이 우선 (Flutter 등은 Mozilla를 포함할 수 있음)
    */
-  private isWebClient(userAgent?: string): boolean {
+  private isWebClient(req: any): boolean {
+    // 1. Cookie에 refreshToken이 있으면 웹 클라이언트
+    if (req.cookies?.refreshToken) {
+      return true;
+    }
+
+    // 2. Cookie가 없으면 User-Agent로 판별 (첫 로그인 시)
+    const userAgent = req.headers['user-agent'];
     if (!userAgent) {
+      // User-Agent가 없으면 모바일 앱으로 간주
       return false;
     }
 
-    const webBrowserPatterns = [
-      /Mozilla/i,
-      /Chrome/i,
-      /Safari/i,
-      /Firefox/i,
-      /Edge/i,
-      /Opera/i,
-    ];
-
+    // 모바일 앱 식별 패턴 (커스텀 User-Agent 또는 Flutter/Dart 등)
     const mobileAppPatterns = [
       /FamilyPlanner-iOS/i,
       /FamilyPlanner-Android/i,
       /FamilyPlannerApp/i,
+      /Dart\//i, // Flutter HTTP 클라이언트
+      /Flutter/i, // Flutter WebView
     ];
 
+    // 먼저 모바일 앱 패턴 확인 (우선순위)
     for (const pattern of mobileAppPatterns) {
       if (pattern.test(userAgent)) {
         return false;
       }
     }
 
-    for (const pattern of webBrowserPatterns) {
+    // 웹 브라우저 패턴 확인
+    // 단, Mozilla만으로는 판단하지 않고 실제 브라우저 이름이 있는지 확인
+    const realBrowserPatterns = [
+      /Chrome\/[\d.]+/i, // Chrome 버전 포함
+      /Safari\/[\d.]+/i, // Safari 버전 포함
+      /Firefox\/[\d.]+/i, // Firefox 버전 포함
+      /Edge\/[\d.]+/i, // Edge 버전 포함
+      /Edg\/[\d.]+/i, // Edge (Chromium) 버전 포함
+      /OPR\/[\d.]+/i, // Opera 버전 포함
+    ];
+
+    for (const pattern of realBrowserPatterns) {
       if (pattern.test(userAgent)) {
         return true;
       }
     }
 
+    // 패턴에 매칭되지 않으면 모바일 앱으로 간주
     return false;
   }
 
@@ -168,8 +185,7 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const userAgent = req.headers['user-agent'];
-    const isWeb = this.isWebClient(userAgent);
+    const isWeb = this.isWebClient(req);
 
     let refreshToken: string | undefined;
 
@@ -225,8 +241,7 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const userAgent = req.headers['user-agent'];
-    const isWeb = this.isWebClient(userAgent);
+    const isWeb = this.isWebClient(req);
 
     let refreshToken: string | undefined;
 
@@ -384,8 +399,7 @@ export class AuthController {
   async googleCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
     const frontendUrl = this.configService.get<string>('app.frontendUrl');
-    const userAgent = req.headers['user-agent'];
-    const isWeb = this.isWebClient(userAgent);
+    const isWeb = this.isWebClient(req);
 
     if (isWeb) {
       // 웹 브라우저: HttpOnly Cookie로 Refresh Token 설정
@@ -432,8 +446,7 @@ export class AuthController {
   async kakaoCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
     const frontendUrl = this.configService.get<string>('app.frontendUrl');
-    const userAgent = req.headers['user-agent'];
-    const isWeb = this.isWebClient(userAgent);
+    const isWeb = this.isWebClient(req);
 
     if (isWeb) {
       // 웹 브라우저: HttpOnly Cookie로 Refresh Token 설정
