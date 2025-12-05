@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from '@/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const configService = app.get(ConfigService);
 
   // 정적 파일 서빙 (Universal Links/App Links 검증 파일용)
   app.useStaticAssets(join(__dirname, '..', 'public'), {
@@ -14,13 +16,7 @@ async function bootstrap() {
   });
 
   // CORS 설정
-  const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',')
-    : [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'https://family-planner-web.netlify.app',
-      ];
+  const allowedOrigins = configService.get<string[]>('app.corsOrigins');
 
   app.enableCors({
     origin: allowedOrigins,
@@ -50,6 +46,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = configService.get<number>('app.port');
+  await app.listen(port);
 }
 bootstrap();

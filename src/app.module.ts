@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -7,9 +8,18 @@ import { EmailModule } from '@/email/email.module';
 import { GroupModule } from '@/group/group.module';
 import { PermissionModule } from '@/permission/permission.module';
 import { RoleModule } from './role/role.module';
+import appConfig from '@/config/app.config';
+import jwtConfig from '@/config/jwt.config';
+import smtpConfig from '@/config/smtp.config';
+import oauthConfig from '@/config/oauth.config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig, jwtConfig, smtpConfig, oauthConfig],
+      envFilePath: '.env',
+    }),
     PrismaModule,
     AuthModule,
     EmailModule,

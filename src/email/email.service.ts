@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
 
@@ -6,17 +7,21 @@ import { Transporter } from 'nodemailer';
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: Transporter;
+  private readonly smtpFrom: string;
 
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
+  constructor(private readonly configService: ConfigService) {
+    const smtpConfig = {
+      host: this.configService.get<string>('smtp.host'),
+      port: this.configService.get<number>('smtp.port'),
       secure: false, // true for 465, false for other ports
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
+        user: this.configService.get<string>('smtp.user'),
+        pass: this.configService.get<string>('smtp.password'),
       },
-    });
+    };
+
+    this.transporter = nodemailer.createTransport(smtpConfig);
+    this.smtpFrom = this.configService.get<string>('smtp.from');
   }
 
   /**
@@ -25,9 +30,7 @@ export class EmailService {
   async sendVerificationEmail(to: string, code: string, userName: string) {
     try {
       await this.transporter.sendMail({
-        from:
-          process.env.SMTP_FROM ||
-          `"Family Planner" <${process.env.SMTP_USER}>`,
+        from: this.smtpFrom,
         to,
         subject: '이메일 인증 코드입니다',
         html: this.getVerificationEmailTemplate(userName, code),
@@ -46,9 +49,7 @@ export class EmailService {
   async sendPasswordResetEmail(to: string, code: string, userName: string) {
     try {
       await this.transporter.sendMail({
-        from:
-          process.env.SMTP_FROM ||
-          `"Family Planner" <${process.env.SMTP_USER}>`,
+        from: this.smtpFrom,
         to,
         subject: '비밀번호 재설정 인증 코드입니다',
         html: this.getPasswordResetEmailTemplate(userName, code),

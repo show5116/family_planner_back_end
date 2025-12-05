@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao';
 
 @Injectable()
 export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
-  constructor() {
+  constructor(private configService: ConfigService) {
     super({
-      clientID: process.env.KAKAO_CLIENT_ID || '',
-      clientSecret: process.env.KAKAO_CLIENT_SECRET || '', // Kakao는 선택적
-      callbackURL:
-        process.env.KAKAO_CALLBACK_URL ||
-        'http://localhost:3000/auth/kakao/callback',
+      clientID: configService.get<string>('oauth.kakao.clientId'),
+      clientSecret: configService.get<string>('oauth.kakao.clientSecret'),
+      callbackURL: configService.get<string>('oauth.kakao.callbackUrl'),
     });
   }
 

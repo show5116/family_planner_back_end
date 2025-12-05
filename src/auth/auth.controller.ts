@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from '@/auth/auth.service';
 import { SignupDto } from '@/auth/dto/signup.dto';
 import { LoginDto } from '@/auth/dto/login.dto';
@@ -43,7 +44,10 @@ import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
 @ApiTags('인증')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('signup')
   @ApiOperation({ summary: '회원가입' })
@@ -223,7 +227,7 @@ export class AuthController {
   async googleCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    const frontendUrl = this.configService.get<string>('app.frontendUrl');
 
     // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
     // Universal Links/App Links를 통해 웹앱 및 모바일 앱 모두 지원
@@ -254,7 +258,7 @@ export class AuthController {
   async kakaoCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    const frontendUrl = this.configService.get<string>('app.frontendUrl');
 
     // 프론트엔드로 리다이렉트 (토큰을 쿼리 파라미터로 전달)
     // Universal Links/App Links를 통해 웹앱 및 모바일 앱 모두 지원

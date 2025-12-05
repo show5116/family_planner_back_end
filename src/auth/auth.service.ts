@@ -8,6 +8,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EmailService } from '@/email/email.service';
@@ -22,6 +23,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private configService: ConfigService,
   ) {}
 
   /**
@@ -201,12 +203,14 @@ export class AuthService {
   private async generateTokens(userId: string) {
     const payload = { sub: userId };
 
-    const accessSecret =
-      process.env.JWT_ACCESS_SECRET || 'default-access-secret';
-    const refreshSecret =
-      process.env.JWT_REFRESH_SECRET || 'default-refresh-secret';
-    const accessExpiration = process.env.JWT_ACCESS_EXPIRATION || '15m';
-    const refreshExpiration = process.env.JWT_REFRESH_EXPIRATION || '7d';
+    const accessSecret = this.configService.get<string>('jwt.accessSecret');
+    const refreshSecret = this.configService.get<string>('jwt.refreshSecret');
+    const accessExpiration = this.configService.get<string>(
+      'jwt.accessExpiration',
+    );
+    const refreshExpiration = this.configService.get<string>(
+      'jwt.refreshExpiration',
+    );
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
