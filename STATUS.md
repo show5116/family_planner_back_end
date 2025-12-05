@@ -20,12 +20,14 @@
 ### 그룹 관리 시스템
 - ✅ 기본 CRUD 완료
 - ✅ 초대 코드 시스템 완료
-- 🟨 역할/권한 시스템 구현 중
+- ✅ 역할(Role) CRUD 완료 (운영자 전용)
+- ⬜ 그룹별 커스텀 역할 생성 대기
 - ⬜ 그룹장 양도 기능 대기
 - ⬜ 이메일 초대 기능 대기
 
 ### 권한 관리 시스템
-- ✅ 권한 CRUD 완료 (운영자 전용)
+- ✅ 권한(Permission) CRUD 완료 (운영자 전용)
+- ✅ 역할(Role) CRUD 완료 (운영자 전용)
 - ✅ Swagger 문서화 완료
 - ⬜ 그룹별 권한 적용 대기
 
@@ -34,9 +36,13 @@
 ## ✅ 최근 완료된 작업
 
 ### 2025-12-04
+- ✅ 역할(Role) CRUD API 구현 (운영자 전용)
+- ✅ 역할 Swagger 문서화 완료
+- ✅ 공통 역할/그룹별 역할 필터 기능
+- ✅ 역할 삭제 시 사용 중 체크 로직
 - ✅ 절대 경로 import 시스템 적용 (`@/` 접두사)
 - ✅ Swagger Response DTO 추가
-- ✅ TypeScript 설정 최적화 (`moduleResolution: bundler`)
+- ✅ TypeScript 설정 최적화 (`moduleResolution: node`)
 - ✅ 프로젝트 문서 구조화 (ROADMAP.md, STATUS.md, docs/features/)
 
 ### 2025-11-25

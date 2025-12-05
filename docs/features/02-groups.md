@@ -240,20 +240,44 @@
 
 ## 🟨 역할(Role) 체계
 
-### 공통 역할 (group_id = null)
+### 🟨 공통 역할 관리 (group_id = null) - 운영자 전용
+공통 역할은 모든 그룹에서 사용할 수 있는 기본 역할입니다. 운영자만 CRUD 가능합니다.
+
+#### 역할 전체 조회 (`GET /roles`)
+- 🟨 운영자(isAdmin=true) 권한 필요
+- 🟨 공통 역할 및 그룹별 역할 조회
+- 🟨 필터: `?type=common` (공통 역할만), `?groupId=uuid` (특정 그룹 역할만)
+
+#### 역할 생성 (`POST /roles`)
+- 🟨 운영자 권한 필요
+- 🟨 역할명, 권한 배열, 기본 역할 여부 설정
+- 🟨 공통 역할은 `groupId: null`
+
+#### 역할 수정 (`PATCH /roles/:id`)
+- 🟨 운영자 권한 필요
+- 🟨 역할명, 권한, 기본 역할 여부 수정
+
+#### 역할 삭제 (`DELETE /roles/:id`)
+- 🟨 운영자 권한 필요
+- 🟨 OWNER 역할은 삭제 불가
+- 🟨 사용 중인 역할 삭제 시 에러
+
+#### 기본 공통 역할
 - ✅ **OWNER**: 그룹장, 모든 권한 (그룹 생성 시 자동 부여, 삭제 불가, 양도만 가능)
 - ✅ **ADMIN**: 관리자, 초대 권한 포함
 - ✅ **MEMBER**: 일반 멤버, 조회만 가능
 
 ### ⬜ 그룹별 커스텀 역할 (group_id 지정)
 - ⬜ 각 그룹마다 고유한 역할 생성 가능
+- ⬜ 그룹 OWNER만 생성/수정/삭제 가능
 - ⬜ `is_default_role` 플래그로 초대 시 자동 부여 역할 지정
 - ⬜ 예: "가족" 그룹의 "부모", "자녀" 역할
 - ⬜ 예: "회사" 그룹의 "팀장", "팀원" 역할
 
-### ⬜ 권한 설정
-- ⬜ 역할별 세부 권한 정의 (조회, 생성, 수정, 삭제, 초대 등)
-- ⬜ 그룹장(OWNER)은 역할 생성 및 권한 편집 가능
+### 권한 설정
+- 🟨 역할별 세부 권한 정의 (JSON 배열)
+- 🟨 권한 코드 예시: `["group:read", "group:update", "member:read", "invite"]`
+- ⬜ 그룹장(OWNER)은 그룹별 역할 생성 및 권한 편집 가능
 
 ---
 
@@ -338,6 +362,7 @@ private async checkPermissions(
 
 ## 📝 API 엔드포인트
 
+### 그룹 관리
 | Method | Endpoint | 설명 | 권한 |
 |--------|----------|------|------|
 | POST | `/groups` | 그룹 생성 | JWT |
@@ -352,6 +377,17 @@ private async checkPermissions(
 | PATCH | `/groups/:id/members/:userId/role` | 멤버 역할 변경 | JWT, ASSIGN_ROLE |
 | DELETE | `/groups/:id/members/:userId` | 멤버 삭제 | JWT, REMOVE_MEMBER |
 | PATCH | `/groups/:id/my-color` | 내 색상 설정 | JWT, Member |
+
+### 역할(Role) 관리 - 운영자 전용
+| Method | Endpoint | 설명 | 권한 |
+|--------|----------|------|------|
+| GET | `/roles` | 역할 전체 조회 | JWT, Admin |
+| GET | `/roles?type=common` | 공통 역할만 조회 | JWT, Admin |
+| GET | `/roles?groupId=uuid` | 특정 그룹 역할 조회 | JWT, Admin |
+| GET | `/roles/:id` | 역할 단건 조회 | JWT, Admin |
+| POST | `/roles` | 역할 생성 | JWT, Admin |
+| PATCH | `/roles/:id` | 역할 수정 | JWT, Admin |
+| DELETE | `/roles/:id` | 역할 삭제 | JWT, Admin |
 
 ---
 
