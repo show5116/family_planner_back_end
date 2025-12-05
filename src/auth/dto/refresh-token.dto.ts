@@ -1,9 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class RefreshTokenDto {
-  @ApiProperty({ description: 'Refresh Token' })
+  @ApiProperty({
+    description:
+      'Refresh Token (웹 브라우저는 Cookie에서 자동으로 읽음, 모바일 앱은 필수)',
+    required: false,
+  })
   @IsString()
-  @IsNotEmpty()
-  refreshToken: string;
+  @IsOptional()
+  refreshToken?: string;
 }

@@ -5,10 +5,14 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from '@/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+
+  // Cookie 파서 미들웨어 설정
+  app.use(cookieParser());
 
   // 정적 파일 서빙 (Universal Links/App Links 검증 파일용)
   app.useStaticAssets(join(__dirname, '..', 'public'), {
