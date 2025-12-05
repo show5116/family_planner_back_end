@@ -15,22 +15,6 @@ export class PermissionService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * 운영자 권한 확인 (공통 메서드)
-   * @param userId - 확인할 사용자 ID
-   * @throws ForbiddenException - 운영자가 아닌 경우
-   */
-  private async verifyAdminPermission(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-
-    if (!user || !user.isAdmin) {
-      throw new ForbiddenException('운영자 권한이 필요합니다.');
-    }
-  }
-
-  /**
    * 전체 권한 목록 조회
    * @param category - 필터링할 카테고리 (optional)
    * @returns 권한 목록 (카테고리별로 그룹화)
@@ -123,9 +107,6 @@ export class PermissionService {
     createPermissionDto: CreatePermissionDto,
     userId: string,
   ) {
-    // 운영자 권한 확인
-    await this.verifyAdminPermission(userId);
-
     // 권한 코드 중복 확인
     const existingPermission = await this.prisma.permission.findUnique({
       where: { code: createPermissionDto.code },
@@ -165,9 +146,6 @@ export class PermissionService {
     updatePermissionDto: UpdatePermissionDto,
     userId: string,
   ) {
-    // 운영자 권한 확인
-    await this.verifyAdminPermission(userId);
-
     // 권한 존재 확인
     const permission = await this.prisma.permission.findUnique({
       where: { id },
@@ -211,9 +189,6 @@ export class PermissionService {
    * @returns 삭제된 권한
    */
   async deletePermission(id: string, userId: string) {
-    // 운영자 권한 확인
-    await this.verifyAdminPermission(userId);
-
     // 권한 존재 확인
     const permission = await this.prisma.permission.findUnique({
       where: { id },
@@ -243,9 +218,6 @@ export class PermissionService {
    * @returns 삭제 결과
    */
   async hardDeletePermission(id: string, userId: string) {
-    // 운영자 권한 확인
-    await this.verifyAdminPermission(userId);
-
     // 권한 존재 확인
     const permission = await this.prisma.permission.findUnique({
       where: { id },
