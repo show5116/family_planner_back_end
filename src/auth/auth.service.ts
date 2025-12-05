@@ -14,6 +14,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { EmailService } from '@/email/email.service';
 import { SignupDto } from '@/auth/dto/signup.dto';
 import { LoginDto } from '@/auth/dto/login.dto';
+import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -201,7 +202,25 @@ export class AuthService {
    * Access Token과 Refresh Token 생성
    */
   private async generateTokens(userId: string) {
-    const payload = { sub: userId };
+    // 사용자 정보 조회
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email || '',
+      name: user.name,
+    };
 
     const accessSecret = this.configService.get<string>('jwt.accessSecret');
     const refreshSecret = this.configService.get<string>('jwt.refreshSecret');

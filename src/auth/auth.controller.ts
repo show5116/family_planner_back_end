@@ -37,9 +37,9 @@ import {
   ResetPasswordResponseDto,
   UpdateProfileResponseDto,
 } from '@/auth/dto/auth-response.dto';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
+import { Public } from '@/auth/decorators/public.decorator';
 
 @ApiTags('인증')
 @Controller('auth')
@@ -49,6 +49,7 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  @Public()
   @Post('signup')
   @ApiOperation({ summary: '회원가입' })
   @ApiResponse({
@@ -61,6 +62,7 @@ export class AuthController {
     return this.authService.signup(signupDto);
   }
 
+  @Public()
   @Post('login')
   @ApiOperation({ summary: '로그인' })
   @ApiResponse({
@@ -73,6 +75,7 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Public()
   @Post('refresh')
   @ApiOperation({ summary: 'Access Token 갱신 (RTR)' })
   @ApiResponse({
@@ -88,6 +91,7 @@ export class AuthController {
     return this.authService.refresh(refreshTokenDto.refreshToken);
   }
 
+  @Public()
   @Post('logout')
   @ApiOperation({ summary: '로그아웃' })
   @ApiResponse({
@@ -100,6 +104,7 @@ export class AuthController {
     return this.authService.logout(refreshTokenDto.refreshToken);
   }
 
+  @Public()
   @Post('verify-email')
   @ApiOperation({ summary: '이메일 인증' })
   @ApiResponse({
@@ -112,6 +117,7 @@ export class AuthController {
     return this.authService.verifyEmail(verifyEmailDto.code);
   }
 
+  @Public()
   @Post('resend-verification')
   @ApiOperation({ summary: '인증 이메일 재전송' })
   @ApiResponse({
@@ -129,7 +135,6 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '현재 로그인한 사용자 정보 조회' })
   @ApiResponse({
@@ -142,6 +147,7 @@ export class AuthController {
     return this.authService.getMe(req.user.userId);
   }
 
+  @Public()
   @Post('request-password-reset')
   @ApiOperation({ summary: '비밀번호 재설정 요청' })
   @ApiResponse({
@@ -155,6 +161,7 @@ export class AuthController {
     return this.authService.requestPasswordReset(requestDto.email);
   }
 
+  @Public()
   @Post('reset-password')
   @ApiOperation({ summary: '비밀번호 재설정' })
   @ApiResponse({
@@ -172,7 +179,6 @@ export class AuthController {
   }
 
   @Patch('update-profile')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)',
@@ -208,6 +214,7 @@ export class AuthController {
 
   // ===== 소셜 로그인 =====
 
+  @Public()
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google 로그인 시작' })
@@ -216,6 +223,7 @@ export class AuthController {
     // Guard가 자동으로 Google OAuth로 리다이렉트
   }
 
+  @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google 로그인 콜백' })
@@ -239,6 +247,7 @@ export class AuthController {
     );
   }
 
+  @Public()
   @Get('kakao')
   @UseGuards(KakaoAuthGuard)
   @ApiOperation({ summary: 'Kakao 로그인 시작' })
@@ -247,6 +256,7 @@ export class AuthController {
     // Guard가 자동으로 Kakao OAuth로 리다이렉트
   }
 
+  @Public()
   @Get('kakao/callback')
   @UseGuards(KakaoAuthGuard)
   @ApiOperation({ summary: 'Kakao 로그인 콜백' })
