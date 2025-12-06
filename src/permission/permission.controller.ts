@@ -20,7 +20,6 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { PermissionService } from '@/permission/permission.service';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { AdminGuard } from '@/auth/admin.guard';
 import { CreatePermissionDto } from '@/permission/dto/create-permission.dto';
 import { UpdatePermissionDto } from '@/permission/dto/update-permission.dto';
@@ -51,7 +50,6 @@ export class PermissionController {
    * 인증 필요
    */
   @Get()
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '전체 권한 목록 조회',
@@ -79,7 +77,7 @@ export class PermissionController {
    * POST /permissions
    */
   @Post()
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '권한 생성',
@@ -102,7 +100,7 @@ export class PermissionController {
    * PATCH /permissions/:id
    */
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '권한 수정',
@@ -133,7 +131,7 @@ export class PermissionController {
    * 주의: 실제로 삭제하지 않고 isActive=false로 변경 (소프트 삭제)
    */
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '권한 삭제 (소프트 삭제)',
@@ -154,7 +152,7 @@ export class PermissionController {
    * DELETE /permissions/:id/hard
    */
   @Delete(':id/hard')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: '권한 완전 삭제 (하드 삭제)',

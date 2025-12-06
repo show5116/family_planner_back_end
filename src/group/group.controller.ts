@@ -21,15 +21,20 @@ import { UpdateGroupDto } from '@/group/dto/update-group.dto';
 import { JoinGroupDto } from '@/group/dto/join-group.dto';
 import { UpdateMemberRoleDto } from '@/group/dto/update-member-role.dto';
 import { UpdateMyColorDto } from '@/group/dto/update-my-color.dto';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { ApiAuthResponses } from '@/common/decorators/api-responses.decorator';
+import { RoleService } from '@/role/role.service';
+import { CreateRoleDto } from '@/role/dto/create-role.dto';
+import { UpdateRoleDto } from '@/role/dto/update-role.dto';
+import { GroupOwnerGuard } from '@/group/group-owner.guard';
 
 @ApiTags('그룹')
 @Controller('groups')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class GroupController {
-  constructor(private readonly groupService: GroupService) {}
+  constructor(
+    private readonly groupService: GroupService,
+    private readonly roleService: RoleService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: '그룹 생성' })
@@ -168,5 +173,78 @@ export class GroupController {
   @ApiResponse({ status: 403, description: '권한 없음' })
   regenerateInviteCode(@Param('id') id: string, @Request() req) {
     return this.groupService.regenerateInviteCode(id, req.user.userId);
+  }
+
+  // ==================== 그룹별 역할 관리 (그룹 OWNER 전용) ====================
+
+  @Get(':groupId/roles')
+  @ApiOperation({
+    summary: '그룹별 역할 전체 조회 (그룹 멤버 전용)',
+    description: '공통 역할 + 해당 그룹의 커스텀 역할 조회',
+  })
+  @ApiResponse({ status: 200, description: '역할 목록 반환' })
+  @ApiResponse({ status: 403, description: '그룹 멤버가 아님' })
+  findAllRolesByGroup(@Param('groupId') groupId: string, @Request() req) {
+    return this.roleService.findAllByGroup(req.user.userId, groupId);
+  }
+
+  @Post(':groupId/roles')
+  @UseGuards(GroupOwnerGuard)
+  @ApiOperation({
+    summary: '그룹별 커스텀 역할 생성 (그룹 OWNER 전용)',
+  })
+  @ApiResponse({ status: 201, description: '역할 생성 성공' })
+  @ApiResponse({ status: 403, description: 'OWNER 권한 없음' })
+  @ApiResponse({ status: 409, description: '역할명 중복' })
+  createRoleForGroup(
+    @Param('groupId') groupId: string,
+    @Request() req,
+    @Body() createRoleDto: CreateRoleDto,
+  ) {
+    return this.roleService.createForGroup(
+      req.user.userId,
+      groupId,
+      createRoleDto,
+    );
+  }
+
+  @Patch(':groupId/roles/:id')
+  @UseGuards(GroupOwnerGuard)
+  @ApiOperation({
+    summary: '그룹별 커스텀 역할 수정 (그룹 OWNER 전용)',
+  })
+  @ApiResponse({ status: 200, description: '역할 수정 성공' })
+  @ApiResponse({ status: 403, description: 'OWNER 권한 없음' })
+  @ApiResponse({ status: 404, description: '역할을 찾을 수 없음' })
+  @ApiResponse({ status: 409, description: '역할명 중복' })
+  updateRoleForGroup(
+    @Param('groupId') groupId: string,
+    @Param('id') id: string,
+    @Request() req,
+    @Body() updateRoleDto: UpdateRoleDto,
+  ) {
+    return this.roleService.updateForGroup(
+      req.user.userId,
+      groupId,
+      id,
+      updateRoleDto,
+    );
+  }
+
+  @Delete(':groupId/roles/:id')
+  @UseGuards(GroupOwnerGuard)
+  @ApiOperation({
+    summary: '그룹별 커스텀 역할 삭제 (그룹 OWNER 전용)',
+  })
+  @ApiResponse({ status: 200, description: '역할 삭제 성공' })
+  @ApiResponse({ status: 400, description: '사용 중인 역할' })
+  @ApiResponse({ status: 403, description: 'OWNER 권한 없음' })
+  @ApiResponse({ status: 404, description: '역할을 찾을 수 없음' })
+  removeRoleForGroup(
+    @Param('groupId') groupId: string,
+    @Param('id') id: string,
+    @Request() req,
+  ) {
+    return this.roleService.removeForGroup(req.user.userId, groupId, id);
   }
 }

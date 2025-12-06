@@ -8,14 +8,12 @@ import {
   Delete,
   UseGuards,
   Request,
-  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { RoleService } from '@/role/role.service';
 import { CreateRoleDto } from '@/role/dto/create-role.dto';
@@ -25,69 +23,64 @@ import {
   CreateRoleResponseDto,
   UpdateRoleResponseDto,
   DeleteRoleResponseDto,
-  RoleDto,
 } from '@/role/dto/role-response.dto';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { AdminGuard } from '@/auth/admin.guard';
 import {
   ApiAdminResponses,
   ApiCreateResponses,
-  ApiGetOneResponses,
   ApiUpdateResponses,
   ApiDeleteResponses,
 } from '@/common/decorators/api-responses.decorator';
 
-@ApiTags('역할(Role)')
+@ApiTags('역할(Role) - 공통 역할 관리')
 @Controller('roles')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(AdminGuard)
 @ApiBearerAuth()
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Get()
-  @ApiOperation({ summary: '역할 전체 조회 (운영자 전용)' })
-  @ApiQuery({
-    name: 'type',
-    required: false,
-    enum: ['common'],
-    description: 'common: 공통 역할만 조회',
-  })
-  @ApiQuery({
-    name: 'groupId',
-    required: false,
-    description: '특정 그룹의 역할만 조회',
+  @ApiOperation({
+    summary: '공통 역할 전체 조회 (운영자 전용)',
+    description:
+      '⚠️ groupId=null인 공통 역할만 조회합니다. 그룹별 역할은 GET /groups/:groupId/roles 사용',
   })
   @ApiResponse({
     status: 200,
-    description: '역할 목록 반환',
+    description: '공통 역할 목록 반환 (groupId=null)',
     type: GetAllRolesResponseDto,
   })
   @ApiAdminResponses()
-  async findAll(
-    @Request() req,
-    @Query('type') type?: 'common',
-    @Query('groupId') groupId?: string,
-  ) {
-    return this.roleService.findAll(req.user.userId, type, groupId);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: '역할 단건 조회 (운영자 전용)' })
-  @ApiGetOneResponses(RoleDto)
-  async findOne(@Param('id') id: string, @Request() req) {
-    return this.roleService.findOne(req.user.userId, id);
+  async findAll(@Request() req) {
+    return this.roleService.findAllCommon(req.user.userId);
   }
 
   @Post()
-  @ApiOperation({ summary: '역할 생성 (운영자 전용)' })
+  @ApiOperation({
+    summary: '공통 역할 생성 (운영자 전용)',
+    description:
+      '⚠️ 이 엔드포인트는 공통 역할(groupId=null)만 생성합니다. 그룹별 역할은 POST /groups/:groupId/roles 사용',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'groupId가 제공된 경우 (그룹별 역할은 다른 엔드포인트 사용)',
+  })
   @ApiCreateResponses(CreateRoleResponseDto, '역할명 중복')
   async create(@Request() req, @Body() createRoleDto: CreateRoleDto) {
     return this.roleService.create(req.user.userId, createRoleDto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: '역할 수정 (운영자 전용)' })
-  @ApiResponse({ status: 400, description: 'OWNER 역할은 수정 불가' })
+  @ApiOperation({
+    summary: '공통 역할 수정 (운영자 전용)',
+    description:
+      '⚠️ 이 엔드포인트는 공통 역할(groupId=null)만 수정합니다. 그룹별 역할은 PATCH /groups/:groupId/roles/:id 사용',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'OWNER 역할은 수정 불가 또는 groupId가 null이 아닌 경우 (그룹별 역할은 다른 엔드포인트 사용)',
+  })
   @ApiUpdateResponses(UpdateRoleResponseDto, '역할명 중복')
   async update(
     @Param('id') id: string,
@@ -98,10 +91,15 @@ export class RoleController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: '역할 삭제 (운영자 전용)' })
+  @ApiOperation({
+    summary: '공통 역할 삭제 (운영자 전용)',
+    description:
+      '⚠️ 이 엔드포인트는 공통 역할(groupId=null)만 삭제합니다. 그룹별 역할은 DELETE /groups/:groupId/roles/:id 사용',
+  })
   @ApiResponse({
     status: 400,
-    description: 'OWNER 역할은 삭제 불가 또는 사용 중인 역할',
+    description:
+      'OWNER 역할은 삭제 불가 또는 사용 중인 역할 또는 groupId가 null이 아닌 경우 (그룹별 역할은 다른 엔드포인트 사용)',
   })
   @ApiDeleteResponses(DeleteRoleResponseDto)
   async remove(@Param('id') id: string, @Request() req) {

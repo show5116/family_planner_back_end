@@ -238,46 +238,84 @@
 
 ---
 
-## 🟨 역할(Role) 체계
+## ✅ 역할(Role) 체계
 
-### 🟨 공통 역할 관리 (group_id = null) - 운영자 전용
+### ✅ 공통 역할 관리 (group_id = null) - 운영자 전용
 공통 역할은 모든 그룹에서 사용할 수 있는 기본 역할입니다. 운영자만 CRUD 가능합니다.
 
 #### 역할 전체 조회 (`GET /roles`)
-- 🟨 운영자(isAdmin=true) 권한 필요
-- 🟨 공통 역할 및 그룹별 역할 조회
-- 🟨 필터: `?type=common` (공통 역할만), `?groupId=uuid` (특정 그룹 역할만)
+- ✅ 운영자(isAdmin=true) 권한 필요
+- ✅ 공통 역할 및 그룹별 역할 조회
+- ✅ 필터: `?type=common` (공통 역할만), `?groupId=uuid` (특정 그룹 역할만)
 
 #### 역할 생성 (`POST /roles`)
-- 🟨 운영자 권한 필요
-- 🟨 역할명, 권한 배열, 기본 역할 여부 설정
-- 🟨 공통 역할은 `groupId: null`
+- ✅ 운영자 권한 필요
+- ✅ 역할명, 권한 배열, 기본 역할 여부 설정
+- ✅ 공통 역할은 `groupId: null` (자동 설정)
+- ✅ `groupId`가 제공된 경우 에러 (그룹별 역할은 다른 엔드포인트 사용)
 
 #### 역할 수정 (`PATCH /roles/:id`)
-- 🟨 운영자 권한 필요
-- 🟨 역할명, 권한, 기본 역할 여부 수정
+- ✅ 운영자 권한 필요
+- ✅ 역할명, 권한, 기본 역할 여부 수정
+- ✅ 공통 역할(`groupId=null`)만 수정 가능
+- ✅ OWNER 역할은 수정 불가
 
 #### 역할 삭제 (`DELETE /roles/:id`)
-- 🟨 운영자 권한 필요
-- 🟨 OWNER 역할은 삭제 불가
-- 🟨 사용 중인 역할 삭제 시 에러
+- ✅ 운영자 권한 필요
+- ✅ 공통 역할(`groupId=null`)만 삭제 가능
+- ✅ OWNER 역할은 삭제 불가
+- ✅ 사용 중인 역할 삭제 시 에러
 
 #### 기본 공통 역할
 - ✅ **OWNER**: 그룹장, 모든 권한 (그룹 생성 시 자동 부여, 삭제 불가, 양도만 가능)
 - ✅ **ADMIN**: 관리자, 초대 권한 포함
 - ✅ **MEMBER**: 일반 멤버, 조회만 가능
 
-### ⬜ 그룹별 커스텀 역할 (group_id 지정)
-- ⬜ 각 그룹마다 고유한 역할 생성 가능
-- ⬜ 그룹 OWNER만 생성/수정/삭제 가능
-- ⬜ `is_default_role` 플래그로 초대 시 자동 부여 역할 지정
-- ⬜ 예: "가족" 그룹의 "부모", "자녀" 역할
-- ⬜ 예: "회사" 그룹의 "팀장", "팀원" 역할
+**관련 파일**:
+- [src/role/role.controller.ts](../../src/role/role.controller.ts)
+- [src/role/role.service.ts](../../src/role/role.service.ts)
+- [src/auth/admin.guard.ts](../../src/auth/admin.guard.ts)
+
+---
+
+### ✅ 그룹별 커스텀 역할 (group_id 지정) - 그룹 OWNER 전용
+- ✅ 각 그룹마다 고유한 역할 생성 가능
+- ✅ 그룹 OWNER만 생성/수정/삭제 가능
+- ✅ `is_default_role` 플래그로 초대 시 자동 부여 역할 지정
+- ✅ 예: "가족" 그룹의 "부모", "자녀" 역할
+- ✅ 예: "회사" 그룹의 "팀장", "팀원" 역할
+
+#### 그룹별 역할 전체 조회 (`GET /groups/:groupId/roles`)
+- ✅ 그룹 멤버만 조회 가능
+- ✅ 공통 역할 + 해당 그룹의 커스텀 역할 모두 조회
+- ✅ 역할 배정 시 사용할 수 있는 모든 역할 목록 제공
+
+#### 그룹별 역할 생성 (`POST /groups/:groupId/roles`)
+- ✅ 그룹 OWNER 권한 필요
+- ✅ 역할명 중복 체크 (같은 그룹 내에서)
+- ✅ 해당 그룹에만 적용되는 커스텀 역할 생성
+
+#### 그룹별 역할 수정 (`PATCH /groups/:groupId/roles/:id`)
+- ✅ 그룹 OWNER 권한 필요
+- ✅ 해당 그룹의 역할인지 확인
+- ✅ 역할명, 권한, 기본 역할 여부 수정
+
+#### 그룹별 역할 삭제 (`DELETE /groups/:groupId/roles/:id`)
+- ✅ 그룹 OWNER 권한 필요
+- ✅ 해당 그룹의 역할인지 확인
+- ✅ 사용 중인 역할 삭제 시 에러
+
+**관련 파일**:
+- [src/group/group.controller.ts](../../src/group/group.controller.ts#L178-L249)
+- [src/role/role.service.ts](../../src/role/role.service.ts#L278-L426)
+- [src/group/group-owner.guard.ts](../../src/group/group-owner.guard.ts)
+
+---
 
 ### 권한 설정
-- 🟨 역할별 세부 권한 정의 (JSON 배열)
-- 🟨 권한 코드 예시: `["group:read", "group:update", "member:read", "invite"]`
-- ⬜ 그룹장(OWNER)은 그룹별 역할 생성 및 권한 편집 가능
+- ✅ 역할별 세부 권한 정의 (JSON 배열)
+- ✅ 권한 코드 예시: `["group:read", "group:update", "member:read", "invite"]`
+- ✅ 그룹장(OWNER)은 그룹별 역할 생성 및 권한 편집 가능
 
 ---
 
@@ -378,16 +416,26 @@ private async checkPermissions(
 | DELETE | `/groups/:id/members/:userId` | 멤버 삭제 | JWT, REMOVE_MEMBER |
 | PATCH | `/groups/:id/my-color` | 내 색상 설정 | JWT, Member |
 
-### 역할(Role) 관리 - 운영자 전용
+### 역할(Role) 관리
+
+#### 공통 역할 관리 - 운영자 전용
 | Method | Endpoint | 설명 | 권한 |
 |--------|----------|------|------|
-| GET | `/roles` | 역할 전체 조회 | JWT, Admin |
+| GET | `/roles` | 공통 역할 전체 조회 | JWT, Admin |
 | GET | `/roles?type=common` | 공통 역할만 조회 | JWT, Admin |
 | GET | `/roles?groupId=uuid` | 특정 그룹 역할 조회 | JWT, Admin |
 | GET | `/roles/:id` | 역할 단건 조회 | JWT, Admin |
-| POST | `/roles` | 역할 생성 | JWT, Admin |
-| PATCH | `/roles/:id` | 역할 수정 | JWT, Admin |
-| DELETE | `/roles/:id` | 역할 삭제 | JWT, Admin |
+| POST | `/roles` | 공통 역할 생성 (`groupId=null`) | JWT, Admin |
+| PATCH | `/roles/:id` | 공통 역할 수정 | JWT, Admin |
+| DELETE | `/roles/:id` | 공통 역할 삭제 | JWT, Admin |
+
+#### 그룹별 역할 관리 - 그룹 OWNER 전용
+| Method | Endpoint | 설명 | 권한 |
+|--------|----------|------|------|
+| GET | `/groups/:groupId/roles` | 그룹별 역할 전체 조회 (공통+커스텀) | JWT, Member |
+| POST | `/groups/:groupId/roles` | 그룹별 커스텀 역할 생성 | JWT, OWNER |
+| PATCH | `/groups/:groupId/roles/:id` | 그룹별 커스텀 역할 수정 | JWT, OWNER |
+| DELETE | `/groups/:groupId/roles/:id` | 그룹별 커스텀 역할 삭제 | JWT, OWNER |
 
 ---
 
