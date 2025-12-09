@@ -40,6 +40,7 @@ import {
 } from '@/auth/dto/auth-response.dto';
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
+import { LocalAuthGuard } from '@/auth/guards/local-auth.guard';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiSuccess } from '@/common/decorators/api-responses.decorator';
 
@@ -65,6 +66,7 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(LocalAuthGuard)
   @Post('login')
   @ApiOperation({
     summary: '로그인',
@@ -78,12 +80,9 @@ export class AuthController {
     type: LoginResponseDto,
   })
   @ApiResponse({ status: 401, description: '인증 실패' })
-  async login(
-    @Request() req,
-    @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const result = await this.authService.login(loginDto);
+  async login(@Request() req, @Res({ passthrough: true }) res: Response) {
+    // LocalAuthGuard에서 인증된 사용자 정보는 req.user에 저장됨
+    const result = await this.authService.handleLoginSuccess(req.user);
 
     // Cookie 또는 User-Agent를 통해 웹 브라우저인지 판별
     const isWeb = this.isWebClient(req);

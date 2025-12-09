@@ -13,7 +13,6 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EmailService } from '@/email/email.service';
 import { SignupDto } from '@/auth/dto/signup.dto';
-import { LoginDto } from '@/auth/dto/login.dto';
 import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -95,38 +94,27 @@ export class AuthService {
   }
 
   /**
-   * 로그인
+   * 사용자 인증 (Local Strategy에서 사용)
    */
-  async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
-
+  async validateUser(email: string, password: string) {
     // 사용자 조회
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      throw new UnauthorizedException(
-        '이메일 또는 비밀번호가 올바르지 않습니다',
-      );
+      return null;
     }
 
     // 비밀번호 확인
     if (!user.password) {
       // 소셜 로그인 사용자가 비밀번호를 설정하지 않은 경우
-      if (user.provider !== 'LOCAL') {
-        throw new UnauthorizedException(
-          `이 계정은 ${user.provider} 로그인을 사용합니다. 먼저 비밀번호를 설정해주세요`,
-        );
-      }
-      throw new UnauthorizedException('비밀번호가 설정되지 않은 계정입니다');
+      return null;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException(
-        '이메일 또는 비밀번호가 올바르지 않습니다',
-      );
+      return null;
     }
 
     // 이메일 인증 확인 (LOCAL 로그인 사용자만)
@@ -136,15 +124,14 @@ export class AuthService {
       );
     }
 
-    // 공통 로그인 처리 함수 호출
-    return this.handleLoginSuccess({
+    return {
       id: user.id,
       email: user.email,
       name: user.name,
       profileImage: user.profileImage,
       isAdmin: user.isAdmin,
       hasPassword: user.password !== null,
-    });
+    };
   }
 
   /**
@@ -249,7 +236,7 @@ export class AuthService {
    * 로그인 처리 공통 함수
    * Refresh Token 저장 및 마지막 로그인 시간 업데이트
    */
-  private async handleLoginSuccess(user: {
+  async handleLoginSuccess(user: {
     id: string;
     email: string | null;
     name: string;
