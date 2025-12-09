@@ -23,10 +23,17 @@ enum Provider {
 
 // 권한 카테고리
 enum PermissionCategory {
-  BASIC   // 기본 (조회, 생성, 수정, 삭제)
-  MEMBER  // 멤버 관리
-  ROLE    // 역할 관리
-  INVITE  // 초대 관리
+  GROUP   // 그룹
+}
+
+// 권한 코드
+enum PermissionCode {
+  // GROUP 카테고리
+  INVITE_MEMBER
+  DELETE_GROUP
+  UPDATE_GROUP
+  MANAGE_ROLE
+  MANAGE_MEMBER
 }
 
 // 그룹 가입 요청 타입
@@ -159,10 +166,10 @@ model GroupJoinRequest {
 // 권한 정의 테이블 (UI 표시 및 메타데이터용)
 model Permission {
   id          String             @id @default(uuid())
-  code        String             @unique @db.VarChar(50) // 권한 코드 (예: VIEW, CREATE, UPDATE, DELETE 등)
+  code        PermissionCode     @unique // 권한 코드 
   name        String             @db.VarChar(100) // 권한 이름 (예: "조회", "생성", "수정", "삭제")
   description String?            @db.Text // 권한 설명
-  category    PermissionCategory @default(BASIC) // 권한 카테고리
+  category    PermissionCategory @default(GROUP) // 권한 카테고리
   isActive    Boolean            @default(true) // 활성화 여부
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt

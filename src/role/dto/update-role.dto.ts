@@ -5,7 +5,9 @@ import {
   IsBoolean,
   IsArray,
   MaxLength,
+  IsEnum,
 } from 'class-validator';
+import { PermissionCode } from '@prisma/client';
 
 export class UpdateRoleDto {
   @ApiProperty({
@@ -30,12 +32,13 @@ export class UpdateRoleDto {
 
   @ApiProperty({
     description: '권한 배열',
-    example: ['group:read', 'group:update', 'member:read'],
-    type: [String],
+    example: ['VIEW', 'CREATE', 'UPDATE'],
+    enum: PermissionCode,
+    isArray: true,
     required: false,
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  permissions?: string[];
+  @IsEnum(PermissionCode, { each: true })
+  permissions?: PermissionCode[];
 }

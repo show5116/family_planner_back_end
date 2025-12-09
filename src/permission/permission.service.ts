@@ -6,7 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PermissionCategory } from '@prisma/client';
+import { PermissionCategory, PermissionCode } from '@prisma/client';
 import { CreatePermissionDto } from '@/permission/dto/create-permission.dto';
 import { UpdatePermissionDto } from '@/permission/dto/update-permission.dto';
 
@@ -68,7 +68,9 @@ export class PermissionService {
    * @param permissionCodes - 검증할 권한 코드 배열
    * @returns 유효 여부
    */
-  async validatePermissions(permissionCodes: string[]): Promise<boolean> {
+  async validatePermissions(
+    permissionCodes: PermissionCode[],
+  ): Promise<boolean> {
     const validPermissions = await this.prisma.permission.findMany({
       where: {
         code: { in: permissionCodes },
@@ -85,7 +87,9 @@ export class PermissionService {
    * @param permissionCodes - 권한 코드 배열
    * @returns 권한 이름 배열
    */
-  async getPermissionNames(permissionCodes: string[]): Promise<string[]> {
+  async getPermissionNames(
+    permissionCodes: PermissionCode[],
+  ): Promise<string[]> {
     const permissions = await this.prisma.permission.findMany({
       where: {
         code: { in: permissionCodes },
@@ -111,7 +115,6 @@ export class PermissionService {
     const existingPermission = await this.prisma.permission.findUnique({
       where: { code: createPermissionDto.code },
     });
-
     if (existingPermission) {
       throw new ConflictException(
         `권한 코드 '${createPermissionDto.code}'가 이미 존재합니다.`,

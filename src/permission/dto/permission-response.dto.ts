@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PermissionCategory } from '@prisma/client';
+import { PermissionCategory, PermissionCode } from '@prisma/client';
 
 /**
  * 권한 정보 DTO
@@ -13,9 +13,10 @@ export class PermissionDto {
 
   @ApiProperty({
     description: '권한 코드',
-    example: 'group:read',
+    example: 'VIEW',
+    enum: PermissionCode,
   })
-  code: string;
+  code: PermissionCode;
 
   @ApiProperty({
     description: '권한 이름',

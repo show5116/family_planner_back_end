@@ -41,7 +41,7 @@ import {
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
 import { Public } from '@/auth/decorators/public.decorator';
-import { ApiAuthResponses } from '@/common/decorators/api-responses.decorator';
+import { ApiSuccess } from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('인증')
 @Controller('auth')
@@ -304,12 +304,7 @@ export class AuthController {
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: '현재 로그인한 사용자 정보 조회' })
-  @ApiResponse({
-    status: 200,
-    description: '사용자 정보 반환 (isAdmin, profileImage 포함)',
-    type: GetMeResponseDto,
-  })
-  @ApiAuthResponses()
+  @ApiSuccess(GetMeResponseDto, '사용자 정보 반환 (isAdmin, profileImage 포함)')
   async getProfile(@Request() req) {
     return this.authService.getMe(req.user.userId);
   }
@@ -350,16 +345,11 @@ export class AuthController {
   @ApiOperation({
     summary: '프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)',
   })
-  @ApiResponse({
-    status: 200,
-    description: '프로필 업데이트 성공',
-    type: UpdateProfileResponseDto,
-  })
+  @ApiSuccess(UpdateProfileResponseDto, '프로필 업데이트 성공')
   @ApiResponse({
     status: 400,
     description: '업데이트할 정보가 없거나 비밀번호가 설정되지 않음',
   })
-  @ApiAuthResponses()
   async updateProfile(
     @Request() req,
     @Body() updateProfileDto: UpdateProfileDto,

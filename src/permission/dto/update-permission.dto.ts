@@ -6,19 +6,18 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { PermissionCategory } from '@prisma/client';
+import { PermissionCategory, PermissionCode } from '@prisma/client';
 
 export class UpdatePermissionDto {
   @ApiProperty({
     description: '권한 코드 (고유값)',
-    example: 'group:read',
-    maxLength: 50,
+    example: 'VIEW',
+    enum: PermissionCode,
     required: false,
   })
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  code?: string;
+  @IsEnum(PermissionCode)
+  code?: PermissionCode;
 
   @ApiProperty({
     description: '권한 이름',

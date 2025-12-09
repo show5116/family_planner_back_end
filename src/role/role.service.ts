@@ -14,53 +14,10 @@ export class RoleService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * 운영자 권한 확인 (공통 메서드)
-   */
-  private async checkAdminPermission(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-
-    if (!user || !user.isAdmin) {
-      throw new ForbiddenException('운영자 권한이 필요합니다.');
-    }
-  }
-
-  /**
-   * 그룹 멤버십 및 OWNER 역할 확인
-   */
-  private async checkGroupOwnerPermission(userId: string, groupId: string) {
-    const member = await this.prisma.groupMember.findUnique({
-      where: {
-        groupId_userId: {
-          groupId,
-          userId,
-        },
-      },
-      include: {
-        role: true,
-      },
-    });
-
-    if (!member) {
-      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다.');
-    }
-
-    if (member.role.name !== 'OWNER') {
-      throw new ForbiddenException(
-        '그룹 OWNER 권한이 필요합니다. 현재 역할: ' + member.role.name,
-      );
-    }
-  }
-
-  /**
    * 공통 역할 전체 조회 (운영자 전용)
    * groupId=null인 공통 역할만 조회
    */
   async findAllCommon(userId: string) {
-    await this.checkAdminPermission(userId);
-
     const roles = await this.prisma.role.findMany({
       where: {
         groupId: null,
@@ -110,8 +67,6 @@ export class RoleService {
    * 역할 생성 (운영자 전용 - 공통 역할만)
    */
   async create(userId: string, createRoleDto: CreateRoleDto) {
-    await this.checkAdminPermission(userId);
-
     // groupId가 제공된 경우 에러 (그룹별 역할은 다른 엔드포인트 사용)
     if (createRoleDto.groupId) {
       throw new BadRequestException(
@@ -152,8 +107,6 @@ export class RoleService {
    * 역할 수정 (운영자 전용 - 공통 역할만)
    */
   async update(userId: string, id: string, updateRoleDto: UpdateRoleDto) {
-    await this.checkAdminPermission(userId);
-
     const role = await this.prisma.role.findUnique({
       where: { id },
     });
@@ -167,11 +120,6 @@ export class RoleService {
       throw new BadRequestException(
         '공통 역할만 수정할 수 있습니다. 그룹별 역할은 /groups/:groupId/roles 엔드포인트를 사용하세요.',
       );
-    }
-
-    // OWNER 역할은 수정 불가
-    if (role.name === 'OWNER') {
-      throw new BadRequestException('OWNER 역할은 수정할 수 없습니다.');
     }
 
     // 역할명 변경 시 중복 체크
@@ -213,8 +161,6 @@ export class RoleService {
    * 역할 삭제 (운영자 전용 - 공통 역할만)
    */
   async remove(userId: string, id: string) {
-    await this.checkAdminPermission(userId);
-
     const role = await this.prisma.role.findUnique({
       where: { id },
       include: {
@@ -272,9 +218,6 @@ export class RoleService {
     groupId: string,
     createRoleDto: CreateRoleDto,
   ) {
-    // 그룹 OWNER 권한 확인
-    await this.checkGroupOwnerPermission(userId, groupId);
-
     // 역할명 중복 체크 (같은 그룹 내에서)
     const existingRole = await this.prisma.role.findFirst({
       where: {
@@ -313,9 +256,6 @@ export class RoleService {
     id: string,
     updateRoleDto: UpdateRoleDto,
   ) {
-    // 그룹 OWNER 권한 확인
-    await this.checkGroupOwnerPermission(userId, groupId);
-
     const role = await this.prisma.role.findUnique({
       where: { id },
     });
@@ -368,9 +308,6 @@ export class RoleService {
    * 그룹별 역할 삭제 (그룹 OWNER 전용)
    */
   async removeForGroup(userId: string, groupId: string, id: string) {
-    // 그룹 OWNER 권한 확인
-    await this.checkGroupOwnerPermission(userId, groupId);
-
     const role = await this.prisma.role.findUnique({
       where: { id },
       include: {

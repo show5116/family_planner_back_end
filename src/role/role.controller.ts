@@ -9,12 +9,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RoleService } from '@/role/role.service';
 import { CreateRoleDto } from '@/role/dto/create-role.dto';
 import { UpdateRoleDto } from '@/role/dto/update-role.dto';
@@ -25,17 +20,19 @@ import {
   DeleteRoleResponseDto,
 } from '@/role/dto/role-response.dto';
 import { AdminGuard } from '@/auth/admin.guard';
+import { ApiCommonAdminResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
-  ApiAdminResponses,
-  ApiCreateResponses,
-  ApiUpdateResponses,
-  ApiDeleteResponses,
+  ApiSuccess,
+  ApiCreated,
+  ApiNotFound,
+  ApiConflict,
+  ApiBadRequest,
 } from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('역할(Role) - 공통 역할 관리')
 @Controller('roles')
 @UseGuards(AdminGuard)
-@ApiBearerAuth()
+@ApiCommonAdminResponses()
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
@@ -45,12 +42,7 @@ export class RoleController {
     description:
       '⚠️ groupId=null인 공통 역할만 조회합니다. 그룹별 역할은 GET /groups/:groupId/roles 사용',
   })
-  @ApiResponse({
-    status: 200,
-    description: '공통 역할 목록 반환 (groupId=null)',
-    type: GetAllRolesResponseDto,
-  })
-  @ApiAdminResponses()
+  @ApiSuccess(GetAllRolesResponseDto, '공통 역할 목록 반환 (groupId=null)')
   async findAll(@Request() req) {
     return this.roleService.findAllCommon(req.user.userId);
   }
@@ -61,11 +53,9 @@ export class RoleController {
     description:
       '⚠️ 이 엔드포인트는 공통 역할(groupId=null)만 생성합니다. 그룹별 역할은 POST /groups/:groupId/roles 사용',
   })
-  @ApiResponse({
-    status: 400,
-    description: 'groupId가 제공된 경우 (그룹별 역할은 다른 엔드포인트 사용)',
-  })
-  @ApiCreateResponses(CreateRoleResponseDto, '역할명 중복')
+  @ApiCreated(CreateRoleResponseDto)
+  @ApiBadRequest('groupId가 제공된 경우 (그룹별 역할은 다른 엔드포인트 사용)')
+  @ApiConflict('역할명 중복')
   async create(@Request() req, @Body() createRoleDto: CreateRoleDto) {
     return this.roleService.create(req.user.userId, createRoleDto);
   }
@@ -76,12 +66,12 @@ export class RoleController {
     description:
       '⚠️ 이 엔드포인트는 공통 역할(groupId=null)만 수정합니다. 그룹별 역할은 PATCH /groups/:groupId/roles/:id 사용',
   })
-  @ApiResponse({
-    status: 400,
-    description:
-      'OWNER 역할은 수정 불가 또는 groupId가 null이 아닌 경우 (그룹별 역할은 다른 엔드포인트 사용)',
-  })
-  @ApiUpdateResponses(UpdateRoleResponseDto, '역할명 중복')
+  @ApiSuccess(UpdateRoleResponseDto, '역할 수정 성공')
+  @ApiBadRequest(
+    'OWNER 역할은 수정 불가 또는 groupId가 null이 아닌 경우 (그룹별 역할은 다른 엔드포인트 사용)',
+  )
+  @ApiNotFound()
+  @ApiConflict('역할명 중복')
   async update(
     @Param('id') id: string,
     @Request() req,
@@ -96,12 +86,11 @@ export class RoleController {
     description:
       '⚠️ 이 엔드포인트는 공통 역할(groupId=null)만 삭제합니다. 그룹별 역할은 DELETE /groups/:groupId/roles/:id 사용',
   })
-  @ApiResponse({
-    status: 400,
-    description:
-      'OWNER 역할은 삭제 불가 또는 사용 중인 역할 또는 groupId가 null이 아닌 경우 (그룹별 역할은 다른 엔드포인트 사용)',
-  })
-  @ApiDeleteResponses(DeleteRoleResponseDto)
+  @ApiSuccess(DeleteRoleResponseDto, '역할 삭제 성공')
+  @ApiBadRequest(
+    'OWNER 역할은 삭제 불가 또는 사용 중인 역할 또는 groupId가 null이 아닌 경우 (그룹별 역할은 다른 엔드포인트 사용)',
+  )
+  @ApiNotFound()
   async remove(@Param('id') id: string, @Request() req) {
     return this.roleService.remove(req.user.userId, id);
   }

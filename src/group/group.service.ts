@@ -590,4 +590,106 @@ export class GroupService {
       customColor: updatedMember.customColor,
     };
   }
+
+  /**
+   * OWNER 권한 양도
+   * @param groupId - 그룹 ID
+   * @param currentOwnerId - 현재 OWNER의 사용자 ID
+   * @param newOwnerId - 새로운 OWNER가 될 사용자 ID
+   */
+  async transferOwnership(
+    groupId: string,
+    currentOwnerId: string,
+    newOwnerId: string,
+  ) {
+    // 1. 현재 사용자가 OWNER인지 확인
+    const currentOwnerMember = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId: currentOwnerId,
+        },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    if (!currentOwnerMember) {
+      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다');
+    }
+
+    if (currentOwnerMember.role.name !== 'OWNER') {
+      throw new ForbiddenException(
+        'OWNER 권한 양도는 현재 OWNER만 수행할 수 있습니다',
+      );
+    }
+
+    // 2. 자기 자신에게는 양도할 수 없음
+    if (currentOwnerId === newOwnerId) {
+      throw new BadRequestException('자기 자신에게는 권한을 양도할 수 없습니다');
+    }
+
+    // 3. 새로운 OWNER가 될 사용자가 그룹 멤버인지 확인
+    const newOwnerMember = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId: newOwnerId,
+        },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    if (!newOwnerMember) {
+      throw new NotFoundException(
+        '새로운 OWNER가 될 사용자를 그룹에서 찾을 수 없습니다',
+      );
+    }
+
+    // 4. OWNER 역할과 기본 역할 조회
+    const ownerRole = await this.getOwnerRole();
+    const defaultRole = await this.getDefaultRole();
+
+    // 5. 트랜잭션으로 역할 변경
+    await this.prisma.$transaction([
+      // 현재 OWNER를 기본 역할(MEMBER)로 변경
+      this.prisma.groupMember.update({
+        where: { id: currentOwnerMember.id },
+        data: { roleId: defaultRole.id },
+      }),
+      // 새로운 사용자를 OWNER로 변경
+      this.prisma.groupMember.update({
+        where: { id: newOwnerMember.id },
+        data: { roleId: ownerRole.id },
+      }),
+    ]);
+
+    // 6. 업데이트된 멤버 정보 반환
+    const updatedMembers = await this.prisma.groupMember.findMany({
+      where: {
+        groupId,
+        userId: { in: [currentOwnerId, newOwnerId] },
+      },
+      include: {
+        role: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            profileImage: true,
+          },
+        },
+      },
+    });
+
+    return {
+      message: 'OWNER 권한이 성공적으로 양도되었습니다',
+      previousOwner: updatedMembers.find((m) => m.userId === currentOwnerId),
+      newOwner: updatedMembers.find((m) => m.userId === newOwnerId),
+    };
+  }
 }

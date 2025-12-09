@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PermissionCode } from '@prisma/client';
 
 export class RoleDto {
   @ApiProperty({ description: '역할 ID', example: 'uuid' })
@@ -22,9 +23,11 @@ export class RoleDto {
 
   @ApiProperty({
     description: '권한 배열',
-    example: ['group:read', 'group:update'],
+    example: ['VIEW', 'CREATE', 'UPDATE'],
+    enum: PermissionCode,
+    isArray: true,
   })
-  permissions: string[];
+  permissions: PermissionCode[];
 
   @ApiProperty({ description: '생성일', example: '2025-12-04T00:00:00Z' })
   createdAt: Date;
