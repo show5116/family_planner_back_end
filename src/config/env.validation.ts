@@ -12,7 +12,6 @@ export const validationSchema = Joi.object({
 
   // 애플리케이션 설정
   PORT: Joi.number().default(3000),
-  APP_URL: Joi.string().uri().required(),
   FRONTEND_URL: Joi.string().uri().required(),
 
   // 데이터베이스
@@ -56,6 +55,13 @@ export const validationSchema = Joi.object({
   // Sentry 설정 (선택적)
   SENTRY_DSN: Joi.string().uri().optional(),
   SENTRY_TRACES_SAMPLE_RATE: Joi.number().min(0).max(1).default(0.1),
+
+  // Cloudflare R2 설정
+  R2_ACCOUNT_ID: Joi.string().required(),
+  R2_ACCESS_KEY_ID: Joi.string().required(),
+  R2_SECRET_ACCESS_KEY: Joi.string().required(),
+  R2_BUCKET_NAME: Joi.string().required(),
+  R2_PUBLIC_URL: Joi.string().uri().optional(), // Custom domain이 있는 경우
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {

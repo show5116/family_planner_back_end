@@ -11,5 +11,4 @@ export default registerAs('app', () => ({
         'https://family-planner-web.netlify.app',
       ],
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
-  appUrl: process.env.APP_URL || 'http://localhost:3000',
 }));

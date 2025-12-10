@@ -16,14 +16,23 @@ import jwtConfig from '@/config/jwt.config';
 import smtpConfig from '@/config/smtp.config';
 import oauthConfig from '@/config/oauth.config';
 import axiomConfig from '@/config/axiom.config';
+import r2Config from '@/config/r2.config';
 import { validationSchema } from '@/config/env.validation';
 import { SentryModule } from '@/sentry/sentry.module';
+import { StorageModule } from '@/storage/storage.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, jwtConfig, smtpConfig, oauthConfig, axiomConfig],
+      load: [
+        appConfig,
+        jwtConfig,
+        smtpConfig,
+        oauthConfig,
+        axiomConfig,
+        r2Config,
+      ],
       envFilePath: '.env',
       validationSchema: validationSchema,
       validationOptions: {
@@ -91,6 +100,7 @@ import { SentryModule } from '@/sentry/sentry.module';
     GroupModule,
     PermissionModule,
     RoleModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [
