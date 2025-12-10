@@ -16,6 +16,7 @@ import jwtConfig from '@/config/jwt.config';
 import smtpConfig from '@/config/smtp.config';
 import oauthConfig from '@/config/oauth.config';
 import axiomConfig from '@/config/axiom.config';
+import { validationSchema } from '@/config/env.validation';
 import { SentryModule } from '@/sentry/sentry.module';
 
 @Module({
@@ -24,6 +25,11 @@ import { SentryModule } from '@/sentry/sentry.module';
       isGlobal: true,
       load: [appConfig, jwtConfig, smtpConfig, oauthConfig, axiomConfig],
       envFilePath: '.env',
+      validationSchema: validationSchema,
+      validationOptions: {
+        abortEarly: false, // 모든 에러를 한 번에 표시
+        allowUnknown: true, // 정의되지 않은 환경 변수 허용
+      },
     }),
     LoggerModule.forRootAsync({
       inject: [ConfigService],
