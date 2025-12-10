@@ -15,32 +15,51 @@ import appConfig from '@/config/app.config';
 import jwtConfig from '@/config/jwt.config';
 import smtpConfig from '@/config/smtp.config';
 import oauthConfig from '@/config/oauth.config';
+import axiomConfig from '@/config/axiom.config';
+import { SentryModule } from '@/sentry/sentry.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, jwtConfig, smtpConfig, oauthConfig],
+      load: [appConfig, jwtConfig, smtpConfig, oauthConfig, axiomConfig],
       envFilePath: '.env',
     }),
     LoggerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const isProduction = config.get('app.nodeEnv') === 'production';
+        const axiomToken = config.get<string>('axiom.token');
+        const axiomDataset = config.get<string>('axiom.dataset');
+
+        // Axiom transport 설정 (프로덕션 + Axiom 토큰이 있을 때)
+        const axiomTransport =
+          isProduction && axiomToken
+            ? {
+                target: '@axiomhq/pino',
+                options: {
+                  dataset: axiomDataset,
+                  token: axiomToken,
+                },
+              }
+            : undefined;
+
         return {
           pinoHttp: {
             level: isProduction ? 'info' : 'debug',
-            transport: isProduction
-              ? undefined
-              : {
-                  target: 'pino-pretty',
-                  options: {
-                    colorize: true,
-                    singleLine: true,
-                    translateTime: 'yyyy-mm-dd HH:MM:ss',
-                    ignore: 'pid,hostname',
-                  },
-                },
+            transport:
+              axiomTransport ||
+              (isProduction
+                ? undefined
+                : {
+                    target: 'pino-pretty',
+                    options: {
+                      colorize: true,
+                      singleLine: true,
+                      translateTime: 'yyyy-mm-dd HH:MM:ss',
+                      ignore: 'pid,hostname',
+                    },
+                  }),
             customProps: () => ({
               context: 'HTTP',
             }),
@@ -59,6 +78,7 @@ import oauthConfig from '@/config/oauth.config';
         };
       },
     }),
+    SentryModule,
     PrismaModule,
     AuthModule,
     EmailModule,
