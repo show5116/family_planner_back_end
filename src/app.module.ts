@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { LoggerModule } from 'nestjs-pino';
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -21,6 +22,42 @@ import oauthConfig from '@/config/oauth.config';
       isGlobal: true,
       load: [appConfig, jwtConfig, smtpConfig, oauthConfig],
       envFilePath: '.env',
+    }),
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const isProduction = config.get('app.nodeEnv') === 'production';
+        return {
+          pinoHttp: {
+            level: isProduction ? 'info' : 'debug',
+            transport: isProduction
+              ? undefined
+              : {
+                  target: 'pino-pretty',
+                  options: {
+                    colorize: true,
+                    singleLine: true,
+                    translateTime: 'yyyy-mm-dd HH:MM:ss',
+                    ignore: 'pid,hostname',
+                  },
+                },
+            customProps: () => ({
+              context: 'HTTP',
+            }),
+            serializers: {
+              req: (req) => ({
+                method: req.method,
+                url: req.url,
+                query: req.query,
+                params: req.params,
+              }),
+              res: (res) => ({
+                statusCode: res.statusCode,
+              }),
+            },
+          },
+        };
+      },
     }),
     PrismaModule,
     AuthModule,

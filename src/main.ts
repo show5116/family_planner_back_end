@@ -6,9 +6,15 @@ import { AppModule } from '@/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import cookieParser from 'cookie-parser';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Pino Logger 설정
+  app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService);
 
   // Cookie 파서 미들웨어 설정
