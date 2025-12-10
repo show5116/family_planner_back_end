@@ -80,14 +80,16 @@ export class StorageController {
     return this.storageService.uploadFile(file, folder);
   }
 
-  @Get('download/:key(*)')
+  @Get('download')
   @ApiOperation({
     summary: '파일 다운로드 URL 생성',
     description: '파일 다운로드를 위한 Presigned URL을 생성합니다.',
   })
-  @ApiParam({
+  @ApiQuery({
     name: 'key',
     description: '파일 키 (예: avatars/uuid-123.jpg)',
+    required: true,
+    type: String,
     example: 'avatars/uuid-123.jpg',
   })
   @ApiQuery({
@@ -111,38 +113,48 @@ export class StorageController {
     },
   })
   async getDownloadUrl(
-    @Param('key') key: string,
+    @Query('key') key: string,
     @Query('expiresIn', new ParseIntPipe({ optional: true }))
     expiresIn?: number,
   ) {
+    if (!key) {
+      throw new BadRequestException('File key is required');
+    }
     const url = await this.storageService.getDownloadUrl(key, expiresIn);
     return { url };
   }
 
-  @Delete(':key(*)')
+  @Delete()
   @ApiOperation({
     summary: '파일 삭제',
     description: 'R2에서 파일을 삭제합니다.',
   })
-  @ApiParam({
+  @ApiQuery({
     name: 'key',
     description: '삭제할 파일 키',
+    required: true,
+    type: String,
     example: 'avatars/uuid-123.jpg',
   })
   @ApiResponse({ status: 200, description: '파일 삭제 성공' })
-  async deleteFile(@Param('key') key: string) {
+  async deleteFile(@Query('key') key: string) {
+    if (!key) {
+      throw new BadRequestException('File key is required');
+    }
     await this.storageService.deleteFile(key);
     return { message: 'File deleted successfully' };
   }
 
-  @Get('exists/:key(*)')
+  @Get('exists')
   @ApiOperation({
     summary: '파일 존재 여부 확인',
     description: 'R2에 파일이 존재하는지 확인합니다.',
   })
-  @ApiParam({
+  @ApiQuery({
     name: 'key',
     description: '확인할 파일 키',
+    required: true,
+    type: String,
     example: 'avatars/uuid-123.jpg',
   })
   @ApiResponse({
@@ -155,7 +167,10 @@ export class StorageController {
       },
     },
   })
-  async fileExists(@Param('key') key: string) {
+  async fileExists(@Query('key') key: string) {
+    if (!key) {
+      throw new BadRequestException('File key is required');
+    }
     const exists = await this.storageService.fileExists(key);
     return { exists };
   }
