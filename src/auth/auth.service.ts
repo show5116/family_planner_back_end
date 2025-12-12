@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EmailService } from '@/email/email.service';
+import { StorageService } from '@/storage/storage.service';
 import { SignupDto } from '@/auth/dto/signup.dto';
 import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
 
@@ -24,6 +25,7 @@ export class AuthService {
     private jwtService: JwtService,
     private emailService: EmailService,
     private configService: ConfigService,
+    private storageService: StorageService,
   ) {}
 
   /**
@@ -128,7 +130,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
-      profileImage: user.profileImage,
+      profileImageKey: user.profileImageKey,
       isAdmin: user.isAdmin,
       hasPassword: user.password !== null,
     };
@@ -240,7 +242,7 @@ export class AuthService {
     id: string;
     email: string | null;
     name: string;
-    profileImage: string | null;
+    profileImageKey: string | null;
     isAdmin: boolean;
     hasPassword: boolean;
   }) {
@@ -272,7 +274,9 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        profileImage: user.profileImage,
+        profileImageUrl: user.profileImageKey
+          ? this.storageService.getPublicUrl(user.profileImageKey)
+          : null,
         isAdmin: user.isAdmin,
         hasPassword: user.hasPassword,
       },
@@ -489,17 +493,60 @@ export class AuthService {
 
     // 사용자가 없으면 자동 회원가입
     if (!user) {
+      let profileImageKey: string | undefined;
+
+      // 소셜 로그인 프로필 이미지가 있으면 R2에 저장
+      if (socialUser.profileImage) {
+        try {
+          const result = await this.storageService.uploadImageFromUrl(
+            socialUser.profileImage,
+            'profiles',
+            `${socialUser.provider}-${socialUser.providerId}`, // provider-providerId를 파일명으로 사용
+          );
+          profileImageKey = result.key;
+          this.logger.log(
+            `Social profile image uploaded to R2: ${profileImageKey}`,
+          );
+        } catch (error) {
+          // 프로필 이미지 업로드 실패해도 회원가입은 진행
+          this.logger.warn(
+            `Failed to upload social profile image: ${error.message}`,
+          );
+        }
+      }
+
       user = await this.prisma.user.create({
         data: {
           email: socialUser.email,
           name: socialUser.name,
-          profileImage: socialUser.profileImage,
+          profileImageKey, // R2에 저장된 이미지 키
           provider: socialUser.provider as any,
           providerId: socialUser.providerId,
           isEmailVerified: true, // 소셜 로그인은 이메일 인증 불필요
           password: null, // 소셜 로그인은 비밀번호 없음
         },
       });
+    } else if (!user.profileImageKey && socialUser.profileImage) {
+      // 기존 사용자인데 profileImageKey가 없는 경우 (첫 로그인 시 자동 저장)
+      try {
+        const result = await this.storageService.uploadImageFromUrl(
+          socialUser.profileImage,
+          'profiles',
+          `${socialUser.provider}-${socialUser.providerId}`,
+        );
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { profileImageKey: result.key },
+        });
+        user.profileImageKey = result.key;
+        this.logger.log(
+          `Profile image saved to R2 on first login: ${result.key}`,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `Failed to save profile image to R2: ${error.message}`,
+        );
+      }
     }
 
     // 공통 로그인 처리 함수 호출
@@ -507,7 +554,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
-      profileImage: user.profileImage,
+      profileImageKey: user.profileImageKey,
       isAdmin: user.isAdmin,
       hasPassword: user.password !== null,
     });
@@ -523,7 +570,7 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
-        profileImage: true,
+        profileImageKey: true,
         isAdmin: true,
         createdAt: true,
         password: true,
@@ -551,7 +598,9 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
-      profileImage: user.profileImage,
+      profileImageUrl: user.profileImageKey
+        ? this.storageService.getPublicUrl(user.profileImageKey)
+        : null,
       isAdmin: user.isAdmin,
       createdAt: user.createdAt,
       hasPassword: user.password !== null,
@@ -566,7 +615,6 @@ export class AuthService {
     currentPassword: string,
     updates: {
       name?: string;
-      profileImage?: string;
       phoneNumber?: string;
       newPassword?: string;
     },
@@ -606,10 +654,6 @@ export class AuthService {
       updateData.name = updates.name;
     }
 
-    if (updates.profileImage !== undefined) {
-      updateData.profileImage = updates.profileImage;
-    }
-
     if (updates.phoneNumber !== undefined) {
       updateData.phoneNumber = updates.phoneNumber;
     }
@@ -631,7 +675,7 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
-        profileImage: true,
+        profileImageKey: true,
         phoneNumber: true,
         isAdmin: true,
         createdAt: true,
@@ -642,5 +686,36 @@ export class AuthService {
       message: '프로필이 성공적으로 업데이트되었습니다',
       user: updatedUser,
     };
+  }
+
+  /**
+   * 사용자 ID로 사용자 조회 (profileImageKey 포함)
+   * @param userId - 사용자 ID
+   * @returns 사용자 정보
+   */
+  async findUserById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        profileImageKey: true,
+        phoneNumber: true,
+        isAdmin: true,
+      },
+    });
+  }
+
+  /**
+   * 프로필 이미지 키 업데이트
+   * @param userId - 사용자 ID
+   * @param profileImageKey - 프로필 이미지 키
+   */
+  async updateProfileImageKey(userId: string, profileImageKey: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { profileImageKey },
+    });
   }
 }

@@ -4,10 +4,29 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { StorageService } from '@/storage/storage.service';
 
 @Injectable()
 export class GroupMemberService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storageService: StorageService,
+  ) {}
+
+  /**
+   * 프로필 이미지 URL 변환 (Helper)
+   */
+  private transformUserWithImageUrl<
+    T extends { profileImageKey?: string | null },
+  >(user: T): Omit<T, 'profileImageKey'> & { profileImageUrl: string | null } {
+    const { profileImageKey, ...rest } = user;
+    return {
+      ...rest,
+      profileImageUrl: profileImageKey
+        ? this.storageService.getPublicUrl(profileImageKey)
+        : null,
+    } as Omit<T, 'profileImageKey'> & { profileImageUrl: string | null };
+  }
 
   /**
    * 기본 역할 조회 (is_default_role=true)
@@ -63,7 +82,7 @@ export class GroupMemberService {
             id: true,
             email: true,
             name: true,
-            profileImage: true,
+            profileImageKey: true,
           },
         },
       },
@@ -72,7 +91,11 @@ export class GroupMemberService {
       },
     });
 
-    return members;
+    // 프로필 이미지 URL 추가
+    return members.map((member) => ({
+      ...member,
+      user: this.transformUserWithImageUrl(member.user),
+    }));
   }
 
   /**
@@ -172,13 +195,17 @@ export class GroupMemberService {
             id: true,
             email: true,
             name: true,
-            profileImage: true,
+            profileImageKey: true,
           },
         },
       },
     });
 
-    return updatedMember;
+    // 프로필 이미지 URL 변환 (profileImageKey 제거)
+    return {
+      ...updatedMember,
+      user: this.transformUserWithImageUrl(updatedMember.user),
+    };
   }
 
   /**
@@ -336,16 +363,22 @@ export class GroupMemberService {
             id: true,
             email: true,
             name: true,
-            profileImage: true,
+            profileImageKey: true,
           },
         },
       },
     });
 
+    // 프로필 이미지 URL 추가
+    const membersWithUrls = updatedMembers.map((member) => ({
+      ...member,
+      user: this.transformUserWithImageUrl(member.user),
+    }));
+
     return {
       message: 'OWNER 권한이 성공적으로 양도되었습니다',
-      previousOwner: updatedMembers.find((m) => m.userId === currentOwnerId),
-      newOwner: updatedMembers.find((m) => m.userId === newOwnerId),
+      previousOwner: membersWithUrls.find((m) => m.userId === currentOwnerId),
+      newOwner: membersWithUrls.find((m) => m.userId === newOwnerId),
     };
   }
 }

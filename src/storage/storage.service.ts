@@ -9,6 +9,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
+import { ImageOptimizerService } from '@/storage/image-optimizer.service';
 
 @Injectable()
 export class StorageService {
@@ -17,7 +18,10 @@ export class StorageService {
   private readonly bucketName: string;
   private readonly publicUrl?: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private imageOptimizer: ImageOptimizerService,
+  ) {
     const accountId = this.configService.get<string>('r2.accountId');
     const accessKeyId = this.configService.get<string>('r2.accessKeyId');
     const secretAccessKey = this.configService.get<string>(
@@ -76,6 +80,113 @@ export class StorageService {
       return { key, url };
     } catch (error) {
       this.logger.error(`Failed to upload file: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * 이미지 업로드 (최적화 포함)
+   * @param file - 업로드할 이미지 파일
+   * @param folder - 저장할 폴더 경로
+   * @param filename - 파일명 (제공하지 않으면 UUID 생성)
+   * @returns 업로드된 파일의 키(key)와 URL
+   */
+  async uploadImage(
+    file: Express.Multer.File,
+    folder: string,
+    filename?: string,
+  ): Promise<{ key: string; url: string }> {
+    try {
+      // 이미지 유효성 검증
+      const isValid = await this.imageOptimizer.validateImage(file.buffer);
+      if (!isValid) {
+        throw new Error('Invalid image file');
+      }
+
+      // 이미지 최적화
+      const optimizedBuffer =
+        await this.imageOptimizer.optimizeProfileImage(file.buffer);
+
+      // 파일명 생성: UUID + .jpg (최적화된 이미지는 항상 JPEG)
+      const key = `${folder}/${filename || randomUUID()}.jpg`;
+
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: optimizedBuffer,
+          ContentType: 'image/jpeg',
+        }),
+      );
+
+      const url = this.getPublicUrl(key);
+      this.logger.log(`Image uploaded and optimized: ${key}`);
+
+      return { key, url };
+    } catch (error) {
+      this.logger.error(
+        `Failed to upload image: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * URL에서 이미지 다운로드 후 최적화하여 업로드
+   * @param imageUrl - 다운로드할 이미지 URL
+   * @param folder - 저장할 폴더 경로
+   * @param filename - 파일명 (제공하지 않으면 UUID 생성)
+   * @returns 업로드된 파일의 키(key)와 URL
+   */
+  async uploadImageFromUrl(
+    imageUrl: string,
+    folder: string,
+    filename?: string,
+  ): Promise<{ key: string; url: string }> {
+    try {
+      // URL에서 이미지 다운로드
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to download image from URL: ${response.statusText}`,
+        );
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // 이미지 유효성 검증
+      const isValid = await this.imageOptimizer.validateImage(buffer);
+      if (!isValid) {
+        throw new Error('Downloaded file is not a valid image');
+      }
+
+      // 이미지 최적화
+      const optimizedBuffer =
+        await this.imageOptimizer.optimizeProfileImage(buffer);
+
+      // 파일명 생성: UUID + .jpg
+      const key = `${folder}/${filename || randomUUID()}.jpg`;
+
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: optimizedBuffer,
+          ContentType: 'image/jpeg',
+        }),
+      );
+
+      const url = this.getPublicUrl(key);
+      this.logger.log(`Image downloaded from URL and uploaded: ${key}`);
+
+      return { key, url };
+    } catch (error) {
+      this.logger.error(
+        `Failed to upload image from URL: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -153,7 +264,7 @@ export class StorageService {
    * @param key - 파일 키
    * @returns Public URL (Custom domain 또는 R2 기본 URL)
    */
-  private getPublicUrl(key: string): string {
+  getPublicUrl(key: string): string {
     if (this.publicUrl) {
       return `${this.publicUrl}/${key}`;
     }

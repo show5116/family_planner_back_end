@@ -9,11 +9,13 @@ import { GoogleStrategy } from '@/auth/strategies/google.strategy';
 import { KakaoStrategy } from '@/auth/strategies/kakao.strategy';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { EmailModule } from '@/email/email.module';
+import { StorageModule } from '@/storage/storage.module';
 
 @Module({
   imports: [
     PrismaModule,
     EmailModule,
+    StorageModule,
     PassportModule,
     JwtModule.register({}), // 동적으로 secret을 설정하므로 빈 객체로 등록
   ],

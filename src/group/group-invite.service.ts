@@ -4,10 +4,29 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { StorageService } from '@/storage/storage.service';
 
 @Injectable()
 export class GroupInviteService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storageService: StorageService,
+  ) {}
+
+  /**
+   * 프로필 이미지 URL 변환 (Helper)
+   */
+  private transformUserWithImageUrl<
+    T extends { profileImageKey?: string | null },
+  >(user: T): Omit<T, 'profileImageKey'> & { profileImageUrl: string | null } {
+    const { profileImageKey, ...rest } = user;
+    return {
+      ...rest,
+      profileImageUrl: profileImageKey
+        ? this.storageService.getPublicUrl(profileImageKey)
+        : null,
+    } as Omit<T, 'profileImageKey'> & { profileImageUrl: string | null };
+  }
 
   /**
    * 초대 코드 생성 (8자리 랜덤 영문 대소문자 + 숫자)
@@ -110,7 +129,7 @@ export class GroupInviteService {
                     id: true,
                     email: true,
                     name: true,
-                    profileImage: true,
+                    profileImageKey: true,
                   },
                 },
               },
@@ -120,7 +139,14 @@ export class GroupInviteService {
       },
     });
 
-    return member.group;
+    // 프로필 이미지 URL 추가
+    return {
+      ...member.group,
+      members: member.group.members.map((m) => ({
+        ...m,
+        user: this.transformUserWithImageUrl(m.user),
+      })),
+    };
   }
 
   /**

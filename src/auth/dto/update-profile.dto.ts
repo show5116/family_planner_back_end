@@ -12,19 +12,11 @@ export class UpdateProfileDto {
   @ApiProperty({
     description: '이름',
     example: '홍길동',
-  })
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @ApiProperty({
-    description: '프로필 이미지 URL',
-    example: 'https://example.com/profile.jpg',
     required: false,
   })
   @IsOptional()
   @IsString()
-  profileImage?: string;
+  name?: string;
 
   @ApiProperty({
     description: '전화번호',

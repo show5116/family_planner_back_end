@@ -7,13 +7,30 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { CreateGroupDto } from '@/group/dto/create-group.dto';
 import { UpdateGroupDto } from '@/group/dto/update-group.dto';
 import { GroupInviteService } from '@/group/group-invite.service';
+import { StorageService } from '@/storage/storage.service';
 
 @Injectable()
 export class GroupService {
   constructor(
     private prisma: PrismaService,
     private groupInviteService: GroupInviteService,
+    private storageService: StorageService,
   ) {}
+
+  /**
+   * 프로필 이미지 URL 변환 (Helper)
+   */
+  private transformUserWithImageUrl<
+    T extends { profileImageKey?: string | null },
+  >(user: T): Omit<T, 'profileImageKey'> & { profileImageUrl: string | null } {
+    const { profileImageKey, ...rest } = user;
+    return {
+      ...rest,
+      profileImageUrl: profileImageKey
+        ? this.storageService.getPublicUrl(profileImageKey)
+        : null,
+    } as Omit<T, 'profileImageKey'> & { profileImageUrl: string | null };
+  }
 
   /**
    * OWNER 역할 조회 (공통 역할)
@@ -64,7 +81,7 @@ export class GroupService {
                 id: true,
                 email: true,
                 name: true,
-                profileImage: true,
+                profileImageKey: true,
               },
             },
           },
@@ -72,7 +89,14 @@ export class GroupService {
       },
     });
 
-    return group;
+    // 프로필 이미지 URL 추가
+    return {
+      ...group,
+      members: group.members.map((member) => ({
+        ...member,
+        user: this.transformUserWithImageUrl(member.user),
+      })),
+    };
   }
 
   /**
@@ -130,7 +154,7 @@ export class GroupService {
                 id: true,
                 email: true,
                 name: true,
-                profileImage: true,
+                profileImageKey: true,
               },
             },
           },
@@ -151,7 +175,14 @@ export class GroupService {
       throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다');
     }
 
-    return group;
+    // 프로필 이미지 URL 추가
+    return {
+      ...group,
+      members: group.members.map((member) => ({
+        ...member,
+        user: this.transformUserWithImageUrl(member.user),
+      })),
+    };
   }
 
   /**
@@ -178,7 +209,7 @@ export class GroupService {
                 id: true,
                 email: true,
                 name: true,
-                profileImage: true,
+                profileImageKey: true,
               },
             },
           },
@@ -186,7 +217,14 @@ export class GroupService {
       },
     });
 
-    return group;
+    // 프로필 이미지 URL 추가
+    return {
+      ...group,
+      members: group.members.map((member) => ({
+        ...member,
+        user: this.transformUserWithImageUrl(member.user),
+      })),
+    };
   }
 
   /**

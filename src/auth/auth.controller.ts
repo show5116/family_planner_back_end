@@ -366,7 +366,6 @@ export class AuthController {
       updateProfileDto.currentPassword,
       {
         name: updateProfileDto.name,
-        profileImage: updateProfileDto.profileImage,
         phoneNumber: updateProfileDto.phoneNumber,
         newPassword: updateProfileDto.newPassword,
       },
@@ -401,10 +400,6 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        profileImageKey: {
-          type: 'string',
-          example: 'profiles/uuid-123.jpg',
-        },
         profileImageUrl: {
           type: 'string',
           example: 'https://files.example.com/profiles/uuid-123.jpg',
@@ -412,7 +407,10 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: '파일이 제공되지 않았거나 유효하지 않은 이미지' })
+  @ApiResponse({
+    status: 400,
+    description: '파일이 제공되지 않았거나 유효하지 않은 이미지',
+  })
   async uploadProfilePhoto(
     @Request() req,
     @UploadedFile() photo: Express.Multer.File,
@@ -449,7 +447,6 @@ export class AuthController {
     await this.authService.updateProfileImageKey(userId, key);
 
     return {
-      profileImageKey: key,
       profileImageUrl: url,
     };
   }

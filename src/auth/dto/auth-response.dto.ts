@@ -53,11 +53,11 @@ export class UserDto {
   isAdmin: boolean;
 
   @ApiProperty({
-    description: '프로필 이미지 URL',
-    example: 'https://example.com/profile.jpg',
+    description: '프로필 이미지 URL (R2 public URL)',
+    example: 'https://r2.yourdomain.com/profiles/google-123456.jpg',
     required: false,
   })
-  profileImage?: string;
+  profileImageUrl?: string;
 
   @ApiProperty({
     description: '전화번호',

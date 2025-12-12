@@ -7,9 +7,10 @@ import { GroupInviteService } from '@/group/group-invite.service';
 import { GroupRoleController } from '@/group/group-role.controller';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { RoleService } from '@/role/role.service';
+import { StorageModule } from '@/storage/storage.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, StorageModule],
   controllers: [GroupController, GroupMemberController, GroupRoleController],
   providers: [
     GroupService,
