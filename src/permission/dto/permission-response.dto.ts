@@ -45,6 +45,12 @@ export class PermissionDto {
   isActive: boolean;
 
   @ApiProperty({
+    description: '정렬 순서 (낮을수록 먼저 표시)',
+    example: 0,
+  })
+  sortOrder: number;
+
+  @ApiProperty({
     description: '생성 일시',
     example: '2024-01-01T00:00:00.000Z',
   })

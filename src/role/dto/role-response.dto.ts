@@ -29,6 +29,12 @@ export class RoleDto {
   })
   permissions: PermissionCode[];
 
+  @ApiProperty({
+    description: '정렬 순서 (낮을수록 먼저 표시)',
+    example: 0,
+  })
+  sortOrder: number;
+
   @ApiProperty({ description: '생성일', example: '2025-12-04T00:00:00Z' })
   createdAt: Date;
 
