@@ -8,13 +8,19 @@ import {
   Res,
   Patch,
   UnauthorizedException,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '@/auth/auth.service';
@@ -43,12 +49,14 @@ import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
 import { LocalAuthGuard } from '@/auth/guards/local-auth.guard';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiSuccess } from '@/common/decorators/api-responses.decorator';
+import { StorageService } from '@/storage/storage.service';
 
 @ApiTags('인증')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly storageService: StorageService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -363,6 +371,87 @@ export class AuthController {
         newPassword: updateProfileDto.newPassword,
       },
     );
+  }
+
+  @Post('upload-profile-photo')
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('photo'))
+  @ApiOperation({
+    summary: '프로필 사진 업로드',
+    description:
+      '프로필 사진을 업로드합니다. 이미지는 자동으로 300x300px로 최적화되며, 기존 사진이 있으면 삭제됩니다.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        photo: {
+          type: 'string',
+          format: 'binary',
+          description: '프로필 사진 파일 (JPEG, PNG 등)',
+        },
+      },
+      required: ['photo'],
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: '프로필 사진 업로드 성공',
+    schema: {
+      type: 'object',
+      properties: {
+        profileImageKey: {
+          type: 'string',
+          example: 'profiles/uuid-123.jpg',
+        },
+        profileImageUrl: {
+          type: 'string',
+          example: 'https://files.example.com/profiles/uuid-123.jpg',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: '파일이 제공되지 않았거나 유효하지 않은 이미지' })
+  async uploadProfilePhoto(
+    @Request() req,
+    @UploadedFile() photo: Express.Multer.File,
+  ) {
+    if (!photo) {
+      throw new BadRequestException('Photo file is required');
+    }
+
+    const userId = req.user.userId;
+
+    // 기존 프로필 이미지 조회
+    const user = await this.authService.findUserById(userId);
+
+    // 이미지 업로드 (자동 최적화)
+    const { key, url } = await this.storageService.uploadImage(
+      photo,
+      'profiles',
+      userId, // 사용자 ID를 파일명으로 사용하여 덮어쓰기
+    );
+
+    // 기존 프로필 이미지 삭제 (새 이미지와 다른 경우)
+    if (user.profileImageKey && user.profileImageKey !== key) {
+      try {
+        await this.storageService.deleteFile(user.profileImageKey);
+      } catch (error) {
+        // 삭제 실패해도 계속 진행 (파일이 이미 없을 수 있음)
+        this.authService['logger'].warn(
+          `Failed to delete old profile image: ${error.message}`,
+        );
+      }
+    }
+
+    // DB 업데이트
+    await this.authService.updateProfileImageKey(userId, key);
+
+    return {
+      profileImageKey: key,
+      profileImageUrl: url,
+    };
   }
 
   // ===== 소셜 로그인 =====
