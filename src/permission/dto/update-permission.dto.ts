@@ -4,6 +4,8 @@ import {
   IsBoolean,
   IsOptional,
   MaxLength,
+  IsInt,
+  Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PermissionCategory, PermissionCode } from '@prisma/client';
@@ -57,4 +59,14 @@ export class UpdatePermissionDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiProperty({
+    description: '정렬 순서 (낮을수록 먼저 표시)',
+    example: 0,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
 }

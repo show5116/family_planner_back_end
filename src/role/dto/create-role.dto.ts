@@ -6,6 +6,8 @@ import {
   IsArray,
   MaxLength,
   IsEnum,
+  IsInt,
+  Min,
 } from 'class-validator';
 import { PermissionCode } from '@prisma/client';
 
@@ -47,4 +49,15 @@ export class CreateRoleDto {
   @IsArray()
   @IsEnum(PermissionCode, { each: true })
   permissions: PermissionCode[];
+
+  @ApiProperty({
+    description: '정렬 순서 (낮을수록 먼저 표시)',
+    example: 0,
+    default: 0,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
 }

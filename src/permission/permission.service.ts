@@ -33,7 +33,7 @@ export class PermissionService {
 
     const permissions = await this.prisma.permission.findMany({
       where,
-      orderBy: [{ category: 'asc' }, { code: 'asc' }],
+      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { code: 'asc' }],
       select: {
         id: true,
         code: true,
@@ -128,6 +128,7 @@ export class PermissionService {
         description: createPermissionDto.description,
         category: createPermissionDto.category,
         isActive: createPermissionDto.isActive ?? true,
+        sortOrder: createPermissionDto.sortOrder ?? 0,
       },
     });
 

@@ -22,7 +22,7 @@ export class RoleService {
       where: {
         groupId: null,
       },
-      orderBy: [{ name: 'asc' }],
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
 
     return roles.map((role) => ({
@@ -54,7 +54,7 @@ export class RoleService {
       where: {
         OR: [{ groupId: null }, { groupId }],
       },
-      orderBy: [{ groupId: 'asc' }, { name: 'asc' }],
+      orderBy: [{ groupId: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
     });
 
     return roles.map((role) => ({
@@ -88,12 +88,29 @@ export class RoleService {
       );
     }
 
+    // defaultRole을 true로 설정하려는 경우, 이미 defaultRole이 존재하는지 확인
+    if (createRoleDto.isDefaultRole) {
+      const existingDefaultRole = await this.prisma.role.findFirst({
+        where: {
+          groupId: null,
+          isDefaultRole: true,
+        },
+      });
+
+      if (existingDefaultRole) {
+        throw new ConflictException(
+          '공통 역할 중 이미 기본 역할이 존재합니다. 기본 역할은 하나만 설정할 수 있습니다.',
+        );
+      }
+    }
+
     const role = await this.prisma.role.create({
       data: {
         name: createRoleDto.name,
         groupId: null, // 공통 역할은 항상 null
         isDefaultRole: createRoleDto.isDefaultRole || false,
         permissions: JSON.stringify(createRoleDto.permissions),
+        sortOrder: createRoleDto.sortOrder ?? 0,
       },
     });
 
@@ -139,12 +156,31 @@ export class RoleService {
       }
     }
 
+    // defaultRole을 true로 변경하려는 경우, 이미 다른 defaultRole이 존재하는지 확인
+    if (updateRoleDto.isDefaultRole === true && role.isDefaultRole !== true) {
+      const existingDefaultRole = await this.prisma.role.findFirst({
+        where: {
+          groupId: null,
+          isDefaultRole: true,
+          id: { not: id },
+        },
+      });
+
+      if (existingDefaultRole) {
+        throw new ConflictException(
+          '공통 역할 중 이미 기본 역할이 존재합니다. 기본 역할은 하나만 설정할 수 있습니다.',
+        );
+      }
+    }
+
     const updateData: any = {};
     if (updateRoleDto.name) updateData.name = updateRoleDto.name;
     if (updateRoleDto.isDefaultRole !== undefined)
       updateData.isDefaultRole = updateRoleDto.isDefaultRole;
     if (updateRoleDto.permissions)
       updateData.permissions = JSON.stringify(updateRoleDto.permissions);
+    if (updateRoleDto.sortOrder !== undefined)
+      updateData.sortOrder = updateRoleDto.sortOrder;
 
     const updatedRole = await this.prisma.role.update({
       where: { id },
@@ -232,12 +268,29 @@ export class RoleService {
       );
     }
 
+    // defaultRole을 true로 설정하려는 경우, 이미 defaultRole이 존재하는지 확인
+    if (createRoleDto.isDefaultRole) {
+      const existingDefaultRole = await this.prisma.role.findFirst({
+        where: {
+          groupId,
+          isDefaultRole: true,
+        },
+      });
+
+      if (existingDefaultRole) {
+        throw new ConflictException(
+          '이 그룹에 이미 기본 역할이 존재합니다. 기본 역할은 하나만 설정할 수 있습니다.',
+        );
+      }
+    }
+
     const role = await this.prisma.role.create({
       data: {
         name: createRoleDto.name,
         groupId,
         isDefaultRole: createRoleDto.isDefaultRole || false,
         permissions: JSON.stringify(createRoleDto.permissions),
+        sortOrder: createRoleDto.sortOrder ?? 0,
       },
     });
 
@@ -286,12 +339,31 @@ export class RoleService {
       }
     }
 
+    // defaultRole을 true로 변경하려는 경우, 이미 다른 defaultRole이 존재하는지 확인
+    if (updateRoleDto.isDefaultRole === true && role.isDefaultRole !== true) {
+      const existingDefaultRole = await this.prisma.role.findFirst({
+        where: {
+          groupId,
+          isDefaultRole: true,
+          id: { not: id },
+        },
+      });
+
+      if (existingDefaultRole) {
+        throw new ConflictException(
+          '이 그룹에 이미 기본 역할이 존재합니다. 기본 역할은 하나만 설정할 수 있습니다.',
+        );
+      }
+    }
+
     const updateData: any = {};
     if (updateRoleDto.name) updateData.name = updateRoleDto.name;
     if (updateRoleDto.isDefaultRole !== undefined)
       updateData.isDefaultRole = updateRoleDto.isDefaultRole;
     if (updateRoleDto.permissions)
       updateData.permissions = JSON.stringify(updateRoleDto.permissions);
+    if (updateRoleDto.sortOrder !== undefined)
+      updateData.sortOrder = updateRoleDto.sortOrder;
 
     const updatedRole = await this.prisma.role.update({
       where: { id },

@@ -63,8 +63,25 @@ export class GroupInviteService {
 
   /**
    * 기본 역할 조회 (is_default_role=true)
+   * 1. 해당 groupId 내에서 defaultRole 조회
+   * 2. 없으면 공통 역할(groupId=null) 중 defaultRole 조회
    */
-  private async getDefaultRole() {
+  private async getDefaultRole(groupId?: string) {
+    // 1. groupId가 제공된 경우, 해당 그룹의 defaultRole 조회
+    if (groupId) {
+      const groupDefaultRole = await this.prisma.role.findFirst({
+        where: {
+          groupId,
+          isDefaultRole: true,
+        },
+      });
+
+      if (groupDefaultRole) {
+        return groupDefaultRole;
+      }
+    }
+
+    // 2. 그룹별 defaultRole이 없거나 groupId가 없는 경우, 공통 defaultRole 조회
     const defaultRole = await this.prisma.role.findFirst({
       where: {
         groupId: null, // 공통 역할
@@ -108,7 +125,7 @@ export class GroupInviteService {
     }
 
     // 기본 역할 조회
-    const defaultRole = await this.getDefaultRole();
+    const defaultRole = await this.getDefaultRole(group.id);
 
     // 멤버 추가
     const member = await this.prisma.groupMember.create({

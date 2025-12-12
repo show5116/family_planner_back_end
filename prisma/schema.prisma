@@ -118,12 +118,14 @@ model Role {
   isDefaultRole   Boolean       @default(false) // 초대 시 자동 부여 역할 여부
   isImmutable     Boolean       @default(false) // true이면 수정 불가능한 역할 (예: OWNER, ADMIN, MEMBER)
   permissions     Json          @default("[]") // 권한 목록 (JSON 배열: ["VIEW", "CREATE", "UPDATE", ...])
+  sortOrder       Int           @default(0) // 정렬 순서 (낮을수록 먼저 표시)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   groupMembers    GroupMember[] // 이 역할을 가진 멤버들
 
   @@unique([name, groupId]) // 같은 그룹(또는 공통)에서 역할명 중복 방지
   @@index([groupId])
+  @@index([sortOrder])
   @@map("roles")
 }
 
@@ -166,15 +168,17 @@ model GroupJoinRequest {
 // 권한 정의 테이블 (UI 표시 및 메타데이터용)
 model Permission {
   id          String             @id @default(uuid())
-  code        PermissionCode     @unique // 권한 코드 
+  code        PermissionCode     @unique // 권한 코드
   name        String             @db.VarChar(100) // 권한 이름 (예: "조회", "생성", "수정", "삭제")
   description String?            @db.Text // 권한 설명
   category    PermissionCategory @default(GROUP) // 권한 카테고리
   isActive    Boolean            @default(true) // 활성화 여부
+  sortOrder   Int                @default(0) // 정렬 순서 (낮을수록 먼저 표시)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
   @@index([category])
   @@index([isActive])
+  @@index([sortOrder])
   @@map("permissions")
 }
