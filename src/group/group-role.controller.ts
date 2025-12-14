@@ -13,6 +13,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RoleService } from '@/role/role.service';
 import { CreateRoleDto } from '@/role/dto/create-role.dto';
 import { UpdateRoleDto } from '@/role/dto/update-role.dto';
+import { BulkUpdateRoleSortOrderDto } from '@/role/dto/bulk-update-sort-order.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiSuccess,
@@ -108,5 +109,27 @@ export class GroupRoleController {
     @Request() req,
   ) {
     return this.roleService.removeForGroup(req.user.userId, groupId, id);
+  }
+
+  @Patch(':groupId/roles/bulk/sort-order')
+  @UseGuards(GroupPermissionGuard)
+  @RequirePermission(PermissionCode.MANAGE_ROLE)
+  @ApiOperation({
+    summary: '그룹별 역할 일괄 정렬 순서 업데이트 (MANAGE_ROLE 권한 필요)',
+    description:
+      '여러 역할의 정렬 순서를 한 번에 업데이트합니다. 드래그 앤 드롭 후 사용하세요.',
+  })
+  @ApiSuccess(Object, '정렬 순서 업데이트 성공')
+  @ApiForbidden('MANAGE_ROLE 권한 없음')
+  bulkUpdateSortOrderForGroup(
+    @Param('groupId') groupId: string,
+    @Request() req,
+    @Body() bulkUpdateDto: BulkUpdateRoleSortOrderDto,
+  ) {
+    return this.roleService.bulkUpdateSortOrderForGroup(
+      req.user.userId,
+      groupId,
+      bulkUpdateDto,
+    );
   }
 }

@@ -9,6 +9,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { PermissionCategory, PermissionCode } from '@prisma/client';
 import { CreatePermissionDto } from '@/permission/dto/create-permission.dto';
 import { UpdatePermissionDto } from '@/permission/dto/update-permission.dto';
+import { BulkUpdatePermissionSortOrderDto } from '@/permission/dto/bulk-update-sort-order.dto';
 
 @Injectable()
 export class PermissionService {
@@ -259,6 +260,31 @@ export class PermissionService {
     return {
       message: '권한이 완전히 삭제되었습니다.',
       deletedPermission: permission,
+    };
+  }
+
+  // ==================== 일괄 정렬 순서 업데이트 ====================
+
+  /**
+   * 권한 일괄 정렬 순서 업데이트 (운영자 전용)
+   */
+  async bulkUpdateSortOrder(
+    userId: string,
+    bulkUpdateDto: BulkUpdatePermissionSortOrderDto,
+  ) {
+    // 트랜잭션으로 일괄 업데이트
+    const updates = bulkUpdateDto.items.map((item) =>
+      this.prisma.permission.update({
+        where: { id: item.id },
+        data: { sortOrder: item.sortOrder },
+      }),
+    );
+
+    await this.prisma.$transaction(updates);
+
+    return {
+      message: '권한 정렬 순서가 업데이트되었습니다.',
+      updatedCount: bulkUpdateDto.items.length,
     };
   }
 }

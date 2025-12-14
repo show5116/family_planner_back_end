@@ -428,6 +428,7 @@ private async checkPermissions(
 | POST | `/roles` | 공통 역할 생성 (`groupId=null`) | JWT, Admin |
 | PATCH | `/roles/:id` | 공통 역할 수정 | JWT, Admin |
 | DELETE | `/roles/:id` | 공통 역할 삭제 | JWT, Admin |
+| **PATCH** | **`/roles/bulk/sort-order`** | **공통 역할 일괄 정렬 순서 업데이트** | **JWT, Admin** |
 
 #### 그룹별 역할 관리 - 그룹 OWNER 전용
 | Method | Endpoint | 설명 | 권한 |
@@ -436,6 +437,7 @@ private async checkPermissions(
 | POST | `/groups/:groupId/roles` | 그룹별 커스텀 역할 생성 | JWT, OWNER |
 | PATCH | `/groups/:groupId/roles/:id` | 그룹별 커스텀 역할 수정 | JWT, OWNER |
 | DELETE | `/groups/:groupId/roles/:id` | 그룹별 커스텀 역할 삭제 | JWT, OWNER |
+| **PATCH** | **`/groups/:groupId/roles/bulk/sort-order`** | **그룹별 역할 일괄 정렬 순서 업데이트** | **JWT, MANAGE_ROLE** |
 
 ---
 

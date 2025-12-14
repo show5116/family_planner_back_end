@@ -21,6 +21,7 @@ import { PermissionService } from '@/permission/permission.service';
 import { AdminGuard } from '@/auth/admin.guard';
 import { CreatePermissionDto } from '@/permission/dto/create-permission.dto';
 import { UpdatePermissionDto } from '@/permission/dto/update-permission.dto';
+import { BulkUpdatePermissionSortOrderDto } from '@/permission/dto/bulk-update-sort-order.dto';
 import {
   GetAllPermissionsResponseDto,
   CreatePermissionResponseDto,
@@ -140,5 +141,22 @@ export class PermissionController {
   @ApiNotFound()
   async hardDeletePermission(@Request() req, @Param('id') id: string) {
     return this.permissionService.hardDeletePermission(id, req.user.userId);
+  }
+
+  @Patch('bulk/sort-order')
+  @UseGuards(AdminGuard)
+  @ApiOperation({
+    summary: '권한 일괄 정렬 순서 업데이트 (운영자 전용)',
+    description:
+      '여러 권한의 정렬 순서를 한 번에 업데이트합니다. 드래그 앤 드롭 후 사용하세요.',
+  })
+  async bulkUpdateSortOrder(
+    @Request() req,
+    @Body() bulkUpdateDto: BulkUpdatePermissionSortOrderDto,
+  ) {
+    return this.permissionService.bulkUpdateSortOrder(
+      req.user.userId,
+      bulkUpdateDto,
+    );
   }
 }

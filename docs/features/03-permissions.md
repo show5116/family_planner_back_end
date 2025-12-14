@@ -155,9 +155,12 @@ model Permission {
   name        String
   description String?
   category    PermissionCategory
+  sortOrder   Int                 @default(0)
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
   deletedAt   DateTime?
+
+  @@index([sortOrder])
 }
 
 enum PermissionCategory {
@@ -178,6 +181,7 @@ enum PermissionCategory {
 
 - `code`: 고유한 권한 식별자 (예: `group:read`, `member:update`)
 - `category`: 권한을 기능별로 그룹핑
+- `sortOrder`: 권한 정렬 순서 (낮을수록 먼저 표시, 기본값: 0)
 - `deletedAt`: Soft Delete 지원
 
 **관련 파일**:
@@ -188,14 +192,15 @@ enum PermissionCategory {
 
 ## 📝 API 엔드포인트
 
-| Method | Endpoint                   | 설명             | 권한       |
-| ------ | -------------------------- | ---------------- | ---------- |
-| GET    | `/permissions`             | 권한 전체 조회   | JWT, Admin |
-| POST   | `/permissions`             | 권한 생성        | JWT, Admin |
-| PATCH  | `/permissions/:id`         | 권한 수정        | JWT, Admin |
-| DELETE | `/permissions/:id`         | 권한 삭제 (Soft) | JWT, Admin |
-| DELETE | `/permissions/:id/hard`    | 권한 영구 삭제   | JWT, Admin |
-| POST   | `/permissions/:id/restore` | 권한 복원        | JWT, Admin |
+| Method | Endpoint                        | 설명                         | 권한       |
+| ------ | ------------------------------- | ---------------------------- | ---------- |
+| GET    | `/permissions`                  | 권한 전체 조회               | JWT, Admin |
+| POST   | `/permissions`                  | 권한 생성                    | JWT, Admin |
+| PATCH  | `/permissions/:id`              | 권한 수정                    | JWT, Admin |
+| PATCH  | `/permissions/bulk/sort-order`  | 권한 일괄 정렬 순서 업데이트 | JWT, Admin |
+| DELETE | `/permissions/:id`              | 권한 삭제 (Soft)             | JWT, Admin |
+| DELETE | `/permissions/:id/hard`         | 권한 영구 삭제               | JWT, Admin |
+| POST   | `/permissions/:id/restore`      | 권한 복원                    | JWT, Admin |
 
 ---
 

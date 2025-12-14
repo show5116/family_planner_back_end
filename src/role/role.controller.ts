@@ -13,6 +13,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RoleService } from '@/role/role.service';
 import { CreateRoleDto } from '@/role/dto/create-role.dto';
 import { UpdateRoleDto } from '@/role/dto/update-role.dto';
+import { BulkUpdateRoleSortOrderDto } from '@/role/dto/bulk-update-sort-order.dto';
 import {
   GetAllRolesResponseDto,
   CreateRoleResponseDto,
@@ -93,5 +94,18 @@ export class RoleController {
   @ApiNotFound()
   async remove(@Param('id') id: string, @Request() req) {
     return this.roleService.remove(req.user.userId, id);
+  }
+
+  @Patch('bulk/sort-order')
+  @ApiOperation({
+    summary: '공통 역할 일괄 정렬 순서 업데이트 (운영자 전용)',
+    description:
+      '여러 역할의 정렬 순서를 한 번에 업데이트합니다. 드래그 앤 드롭 후 사용하세요.',
+  })
+  async bulkUpdateSortOrder(
+    @Request() req,
+    @Body() bulkUpdateDto: BulkUpdateRoleSortOrderDto,
+  ) {
+    return this.roleService.bulkUpdateSortOrder(req.user.userId, bulkUpdateDto);
   }
 }
