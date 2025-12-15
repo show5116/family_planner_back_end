@@ -19,6 +19,11 @@ import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly VERIFICATION_CODE_LENGTH = 6;
+  private readonly VERIFICATION_CODE_EXPIRY_HOURS = 24;
+  private readonly PASSWORD_RESET_CODE_EXPIRY_HOURS = 1;
+  private readonly REFRESH_TOKEN_EXPIRY_DAYS = 7;
+  private readonly BCRYPT_SALT_ROUNDS = 10;
 
   constructor(
     private prisma: PrismaService,
@@ -27,6 +32,50 @@ export class AuthService {
     private configService: ConfigService,
     private storageService: StorageService,
   ) {}
+
+  /**
+   * 인증 코드 생성 (6자리 숫자)
+   */
+  private generateVerificationCode(): string {
+    const min = Math.pow(10, this.VERIFICATION_CODE_LENGTH - 1);
+    const max = Math.pow(10, this.VERIFICATION_CODE_LENGTH) - 1;
+    return Math.floor(min + Math.random() * (max - min + 1)).toString();
+  }
+
+  /**
+   * 만료 날짜 계산
+   */
+  private calculateExpiryDate(hours: number): Date {
+    const expiryDate = new Date();
+    expiryDate.setHours(expiryDate.getHours() + hours);
+    return expiryDate;
+  }
+
+  /**
+   * Refresh Token 만료 날짜 계산
+   */
+  private calculateRefreshTokenExpiry(): Date {
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + this.REFRESH_TOKEN_EXPIRY_DAYS);
+    return expiryDate;
+  }
+
+  /**
+   * 비밀번호 해싱
+   */
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, this.BCRYPT_SALT_ROUNDS);
+  }
+
+  /**
+   * 비밀번호 검증
+   */
+  private async verifyPassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(plainPassword, hashedPassword);
+  }
 
   /**
    * 회원가입
@@ -44,14 +93,13 @@ export class AuthService {
     }
 
     // 비밀번호 해싱
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await this.hashPassword(password);
 
-    // 이메일 인증 코드 생성 (6자리 숫자, 24시간 유효)
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000,
-    ).toString();
-    const verificationExpires = new Date();
-    verificationExpires.setHours(verificationExpires.getHours() + 24);
+    // 이메일 인증 코드 생성
+    const verificationCode = this.generateVerificationCode();
+    const verificationExpires = this.calculateExpiryDate(
+      this.VERIFICATION_CODE_EXPIRY_HOURS,
+    );
 
     // 사용자 생성
     const user = await this.prisma.user.create({
@@ -114,7 +162,7 @@ export class AuthService {
       return null;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await this.verifyPassword(password, user.password);
     if (!isPasswordValid) {
       return null;
     }
@@ -170,14 +218,11 @@ export class AuthService {
     const tokens = await this.generateTokens(storedToken.userId);
 
     // 새로운 Refresh Token 저장
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7일
-
     await this.prisma.refreshToken.create({
       data: {
         token: tokens.refreshToken,
         userId: storedToken.userId,
-        expiresAt,
+        expiresAt: this.calculateRefreshTokenExpiry(),
       },
     });
 
@@ -250,15 +295,12 @@ export class AuthService {
     const tokens = await this.generateTokens(user.id);
 
     // Refresh Token 저장 (RTR) 및 마지막 로그인 시간 업데이트
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7일
-
     await Promise.all([
       this.prisma.refreshToken.create({
         data: {
           token: tokens.refreshToken,
           userId: user.id,
-          expiresAt,
+          expiresAt: this.calculateRefreshTokenExpiry(),
         },
       }),
       this.prisma.user.update({
@@ -343,12 +385,11 @@ export class AuthService {
       );
     }
 
-    // 새로운 인증 코드 생성 (6자리 숫자)
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000,
-    ).toString();
-    const verificationExpires = new Date();
-    verificationExpires.setHours(verificationExpires.getHours() + 24);
+    // 새로운 인증 코드 생성
+    const verificationCode = this.generateVerificationCode();
+    const verificationExpires = this.calculateExpiryDate(
+      this.VERIFICATION_CODE_EXPIRY_HOURS,
+    );
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -404,10 +445,11 @@ export class AuthService {
       throw new NotFoundException('사용자를 찾을 수 없습니다');
     }
 
-    // 6자리 인증 코드 생성 (1시간 유효)
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const resetExpires = new Date();
-    resetExpires.setHours(resetExpires.getHours() + 1);
+    // 인증 코드 생성
+    const resetCode = this.generateVerificationCode();
+    const resetExpires = this.calculateExpiryDate(
+      this.PASSWORD_RESET_CODE_EXPIRY_HOURS,
+    );
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -455,7 +497,7 @@ export class AuthService {
     }
 
     // 새 비밀번호 해싱
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await this.hashPassword(newPassword);
 
     // 비밀번호 업데이트 및 재설정 토큰 삭제
     await this.prisma.user.update({
@@ -639,7 +681,7 @@ export class AuthService {
       throw new BadRequestException('비밀번호가 설정되어 있지 않습니다');
     }
 
-    const isPasswordValid = await bcrypt.compare(
+    const isPasswordValid = await this.verifyPassword(
       currentPassword,
       user.password,
     );
@@ -659,7 +701,7 @@ export class AuthService {
     }
 
     if (updates.newPassword) {
-      updateData.password = await bcrypt.hash(updates.newPassword, 10);
+      updateData.password = await this.hashPassword(updates.newPassword);
     }
 
     // 업데이트할 내용이 없는 경우

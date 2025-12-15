@@ -54,6 +54,8 @@ import { StorageService } from '@/storage/storage.service';
 @ApiTags('인증')
 @Controller('auth')
 export class AuthController {
+  private readonly REFRESH_TOKEN_MAX_AGE_DAYS = 7;
+
   constructor(
     private readonly authService: AuthService,
     private readonly storageService: StorageService,
@@ -97,13 +99,7 @@ export class AuthController {
 
     if (isWeb) {
       // 웹 브라우저: HttpOnly Cookie로 Refresh Token 설정
-      const cookieMaxAge = 7 * 24 * 60 * 60 * 1000; // 7일
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get<string>('app.nodeEnv') === 'production',
-        sameSite: 'strict',
-        maxAge: cookieMaxAge,
-      });
+      this.setRefreshTokenCookie(res, result.refreshToken);
 
       // 응답에서 refreshToken 제거
       const { refreshToken, ...response } = result;
@@ -112,6 +108,97 @@ export class AuthController {
 
     // 모바일 앱: 응답 바디로 모든 토큰 반환
     return result;
+  }
+
+  /**
+   * HttpOnly Cookie로 Refresh Token 설정
+   */
+  private setRefreshTokenCookie(res: Response, refreshToken: string): void {
+    const cookieMaxAge = this.REFRESH_TOKEN_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: this.configService.get<string>('app.nodeEnv') === 'production',
+      sameSite: 'strict',
+      maxAge: cookieMaxAge,
+    });
+  }
+
+  /**
+   * HttpOnly Cookie에서 Refresh Token 삭제
+   */
+  private clearRefreshTokenCookie(res: Response): void {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: this.configService.get<string>('app.nodeEnv') === 'production',
+      sameSite: 'strict',
+    });
+  }
+
+  /**
+   * Request에서 Refresh Token 추출 (웹/모바일 구분)
+   */
+  private extractRefreshToken(
+    req: any,
+    refreshTokenDto: RefreshTokenDto,
+  ): string {
+    const isWeb = this.isWebClient(req);
+    const refreshToken = isWeb
+      ? req.cookies?.refreshToken
+      : refreshTokenDto.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh Token이 제공되지 않았습니다');
+    }
+
+    return refreshToken;
+  }
+
+  /**
+   * 토큰 응답 처리 (웹: Cookie 설정 + refreshToken 제거, 모바일: 전체 반환)
+   */
+  private handleTokenResponse(
+    req: any,
+    res: Response,
+    tokens: { accessToken: string; refreshToken: string },
+  ) {
+    const isWeb = this.isWebClient(req);
+
+    if (isWeb) {
+      this.setRefreshTokenCookie(res, tokens.refreshToken);
+      const { refreshToken, ...response } = tokens;
+      return response;
+    }
+
+    return tokens;
+  }
+
+  /**
+   * 소셜 로그인 콜백 처리 (웹: Cookie + 리다이렉트, 모바일: 토큰을 쿼리 파라미터로 전달)
+   */
+  private handleSocialLoginCallback(
+    req: any,
+    res: Response,
+    tokens: { accessToken: string; refreshToken: string },
+  ): void {
+    const frontendUrl = this.configService.get<string>('app.frontendUrl');
+    const isWeb = this.isWebClient(req);
+
+    if (isWeb) {
+      // 웹 브라우저: HttpOnly Cookie로 Refresh Token 설정
+      this.setRefreshTokenCookie(res, tokens.refreshToken);
+
+      // Access Token만 쿼리 파라미터로 전달
+      res.redirect(
+        `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}`,
+      );
+    } else {
+      // 모바일 앱: Universal Links/App Links를 통해 모든 토큰을 쿼리 파라미터로 전달
+      // - iOS: apple-app-site-association 설정 시 앱에서 인터셉트
+      // - Android: assetlinks.json 설정 시 앱에서 인터셉트
+      res.redirect(
+        `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
+      );
+    }
   }
 
   /**
@@ -192,41 +279,9 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const isWeb = this.isWebClient(req);
-
-    let refreshToken: string | undefined;
-
-    if (isWeb) {
-      // 웹 브라우저: Cookie에서 Refresh Token 읽기
-      refreshToken = req.cookies?.refreshToken;
-    } else {
-      // 모바일 앱: Body에서 Refresh Token 읽기
-      refreshToken = refreshTokenDto.refreshToken;
-    }
-
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh Token이 제공되지 않았습니다');
-    }
-
+    const refreshToken = this.extractRefreshToken(req, refreshTokenDto);
     const result = await this.authService.refresh(refreshToken);
-
-    if (isWeb) {
-      // 웹 브라우저: HttpOnly Cookie로 새 Refresh Token 설정
-      const cookieMaxAge = 7 * 24 * 60 * 60 * 1000; // 7일
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get<string>('app.nodeEnv') === 'production',
-        sameSite: 'strict',
-        maxAge: cookieMaxAge,
-      });
-
-      // 응답에서 refreshToken 제거
-      const { refreshToken: _, ...response } = result;
-      return response;
-    }
-
-    // 모바일 앱: 응답 바디로 모든 토큰 반환
-    return result;
+    return this.handleTokenResponse(req, res, result);
   }
 
   @Public()
@@ -248,31 +303,11 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const isWeb = this.isWebClient(req);
-
-    let refreshToken: string | undefined;
-
-    if (isWeb) {
-      // 웹 브라우저: Cookie에서 Refresh Token 읽기
-      refreshToken = req.cookies?.refreshToken;
-    } else {
-      // 모바일 앱: Body에서 Refresh Token 읽기
-      refreshToken = refreshTokenDto.refreshToken;
-    }
-
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh Token이 제공되지 않았습니다');
-    }
-
+    const refreshToken = this.extractRefreshToken(req, refreshTokenDto);
     const result = await this.authService.logout(refreshToken);
 
-    if (isWeb) {
-      // 웹 브라우저: Cookie 삭제
-      res.clearCookie('refreshToken', {
-        httpOnly: true,
-        secure: this.configService.get<string>('app.nodeEnv') === 'production',
-        sameSite: 'strict',
-      });
+    if (this.isWebClient(req)) {
+      this.clearRefreshTokenCookie(res);
     }
 
     return result;
@@ -473,31 +508,7 @@ export class AuthController {
   })
   async googleCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
-    const frontendUrl = this.configService.get<string>('app.frontendUrl');
-    const isWeb = this.isWebClient(req);
-
-    if (isWeb) {
-      // 웹 브라우저: HttpOnly Cookie로 Refresh Token 설정
-      const cookieMaxAge = 7 * 24 * 60 * 60 * 1000; // 7일
-      res.cookie('refreshToken', tokens.refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get<string>('app.nodeEnv') === 'production',
-        sameSite: 'strict',
-        maxAge: cookieMaxAge,
-      });
-
-      // Access Token만 쿼리 파라미터로 전달
-      res.redirect(
-        `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}`,
-      );
-    } else {
-      // 모바일 앱: Universal Links/App Links를 통해 모든 토큰을 쿼리 파라미터로 전달
-      // - iOS: apple-app-site-association 설정 시 앱에서 인터셉트
-      // - Android: assetlinks.json 설정 시 앱에서 인터셉트
-      res.redirect(
-        `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
-      );
-    }
+    this.handleSocialLoginCallback(req, res, tokens);
   }
 
   @Public()
@@ -520,30 +531,6 @@ export class AuthController {
   })
   async kakaoCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
-    const frontendUrl = this.configService.get<string>('app.frontendUrl');
-    const isWeb = this.isWebClient(req);
-
-    if (isWeb) {
-      // 웹 브라우저: HttpOnly Cookie로 Refresh Token 설정
-      const cookieMaxAge = 7 * 24 * 60 * 60 * 1000; // 7일
-      res.cookie('refreshToken', tokens.refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get<string>('app.nodeEnv') === 'production',
-        sameSite: 'strict',
-        maxAge: cookieMaxAge,
-      });
-
-      // Access Token만 쿼리 파라미터로 전달
-      res.redirect(
-        `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}`,
-      );
-    } else {
-      // 모바일 앱: Universal Links/App Links를 통해 모든 토큰을 쿼리 파라미터로 전달
-      // - iOS: apple-app-site-association 설정 시 앱에서 인터셉트
-      // - Android: assetlinks.json 설정 시 앱에서 인터셉트
-      res.redirect(
-        `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
-      );
-    }
+    this.handleSocialLoginCallback(req, res, tokens);
   }
 }
