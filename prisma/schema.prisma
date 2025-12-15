@@ -118,6 +118,7 @@ model Role {
   isDefaultRole   Boolean       @default(false) // 초대 시 자동 부여 역할 여부
   isImmutable     Boolean       @default(false) // true이면 수정 불가능한 역할 (예: OWNER, ADMIN, MEMBER)
   permissions     Json          @default("[]") // 권한 목록 (JSON 배열: ["VIEW", "CREATE", "UPDATE", ...])
+  color           String        @default("#6366F1") @db.VarChar(7) // 역할 색상 (HEX)
   sortOrder       Int           @default(0) // 정렬 순서 (낮을수록 먼저 표시)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt

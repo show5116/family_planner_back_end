@@ -30,6 +30,12 @@ export class RoleDto {
   permissions: PermissionCode[];
 
   @ApiProperty({
+    description: '역할 색상 (HEX 형식)',
+    example: '#6366F1',
+  })
+  color: string;
+
+  @ApiProperty({
     description: '정렬 순서 (낮을수록 먼저 표시)',
     example: 0,
   })
