@@ -111,6 +111,7 @@ export class RoleService {
         groupId: null, // 공통 역할은 항상 null
         isDefaultRole: createRoleDto.isDefaultRole || false,
         permissions: JSON.stringify(createRoleDto.permissions),
+        color: createRoleDto.color ?? '#6366F1',
         sortOrder: createRoleDto.sortOrder ?? 0,
       },
     });
@@ -180,6 +181,7 @@ export class RoleService {
       updateData.isDefaultRole = updateRoleDto.isDefaultRole;
     if (updateRoleDto.permissions)
       updateData.permissions = JSON.stringify(updateRoleDto.permissions);
+    if (updateRoleDto.color) updateData.color = updateRoleDto.color;
     if (updateRoleDto.sortOrder !== undefined)
       updateData.sortOrder = updateRoleDto.sortOrder;
 
@@ -291,6 +293,7 @@ export class RoleService {
         groupId,
         isDefaultRole: createRoleDto.isDefaultRole || false,
         permissions: JSON.stringify(createRoleDto.permissions),
+        color: createRoleDto.color ?? '#6366F1',
         sortOrder: createRoleDto.sortOrder ?? 0,
       },
     });
@@ -363,6 +366,7 @@ export class RoleService {
       updateData.isDefaultRole = updateRoleDto.isDefaultRole;
     if (updateRoleDto.permissions)
       updateData.permissions = JSON.stringify(updateRoleDto.permissions);
+    if (updateRoleDto.color) updateData.color = updateRoleDto.color;
     if (updateRoleDto.sortOrder !== undefined)
       updateData.sortOrder = updateRoleDto.sortOrder;
 
