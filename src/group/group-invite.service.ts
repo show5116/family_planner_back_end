@@ -43,6 +43,7 @@ export class GroupInviteService {
 
   /**
    * 고유한 초대 코드 생성 (중복 체크)
+   * 만료된 초대 코드는 재사용 가능
    */
   async generateUniqueInviteCode(): Promise<string> {
     let code = this.generateInviteCode();
@@ -50,8 +51,8 @@ export class GroupInviteService {
       where: { inviteCode: code },
     });
 
-    // 중복되면 다시 생성
-    while (exists) {
+    // 중복되면 다시 생성 (단, 만료된 코드는 중복으로 취급하지 않음)
+    while (exists && exists.inviteCodeExpiresAt > new Date()) {
       code = this.generateInviteCode();
       exists = await this.prisma.group.findUnique({
         where: { inviteCode: code },
@@ -108,6 +109,11 @@ export class GroupInviteService {
 
     if (!group) {
       throw new NotFoundException('유효하지 않은 초대 코드입니다');
+    }
+
+    // 초대 코드 만료 확인
+    if (group.inviteCodeExpiresAt <= new Date()) {
+      throw new NotFoundException('만료된 초대 코드입니다');
     }
 
     // 이미 멤버인지 확인
@@ -171,12 +177,20 @@ export class GroupInviteService {
    */
   async regenerateInviteCode(groupId: string) {
     const newInviteCode = await this.generateUniqueInviteCode();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7일 후 만료
 
     const group = await this.prisma.group.update({
       where: { id: groupId },
-      data: { inviteCode: newInviteCode },
+      data: {
+        inviteCode: newInviteCode,
+        inviteCodeExpiresAt: expiresAt,
+      },
     });
 
-    return { inviteCode: group.inviteCode };
+    return {
+      inviteCode: group.inviteCode,
+      inviteCodeExpiresAt: group.inviteCodeExpiresAt,
+    };
   }
 }

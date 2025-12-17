@@ -94,16 +94,17 @@ model RefreshToken {
 
 // 그룹 테이블
 model Group {
-  id           String             @id @default(uuid())
-  name         String             @db.VarChar(100) // 그룹명
-  description  String?            @db.Text // 그룹 설명
-  inviteCode   String             @unique @db.VarChar(8) // 초대 코드 (8자리 영문+숫자)
-  defaultColor String             @default("#6366F1") @db.VarChar(7) // 그룹 기본 색상 (HEX)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  members      GroupMember[]      // 그룹 멤버들
-  customRoles  Role[]             // 그룹별 커스텀 역할들
-  joinRequests GroupJoinRequest[] // 그룹 가입 요청들
+  id                  String             @id @default(uuid())
+  name                String             @db.VarChar(100) // 그룹명
+  description         String?            @db.Text // 그룹 설명
+  inviteCode          String             @unique @db.VarChar(8) // 초대 코드 (8자리 영문+숫자)
+  inviteCodeExpiresAt DateTime           // 초대 코드 만료 시간
+  defaultColor        String             @default("#6366F1") @db.VarChar(7) // 그룹 기본 색상 (HEX)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  members             GroupMember[]      // 그룹 멤버들
+  customRoles         Role[]             // 그룹별 커스텀 역할들
+  joinRequests        GroupJoinRequest[] // 그룹 가입 요청들
 
   @@index([inviteCode])
   @@map("groups")

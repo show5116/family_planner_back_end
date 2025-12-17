@@ -13,6 +13,11 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { GroupService } from '@/group/group.service';
 import { CreateGroupDto } from '@/group/dto/create-group.dto';
 import { UpdateGroupDto } from '@/group/dto/update-group.dto';
+import {
+  GroupDto,
+  MyGroupDto,
+  DeleteGroupResponseDto,
+} from '@/group/dto/group-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiSuccess,
@@ -35,14 +40,14 @@ export class GroupController {
 
   @Post()
   @ApiOperation({ summary: '그룹 생성' })
-  @ApiCreated(Object, '그룹 생성 성공')
+  @ApiCreated(GroupDto, '그룹 생성 성공')
   create(@Request() req, @Body() createGroupDto: CreateGroupDto) {
     return this.groupService.create(req.user.userId, createGroupDto);
   }
 
   @Get()
   @ApiOperation({ summary: '내가 속한 그룹 목록 조회' })
-  @ApiSuccess(Object, '그룹 목록 반환')
+  @ApiSuccess(MyGroupDto, '그룹 목록 반환', { isArray: true })
   findMyGroups(@Request() req) {
     return this.groupService.findMyGroups(req.user.userId);
   }
@@ -50,7 +55,7 @@ export class GroupController {
   @Get(':id')
   @UseGuards(GroupMembershipGuard)
   @ApiOperation({ summary: '그룹 상세 조회' })
-  @ApiSuccess(Object, '그룹 상세 정보 반환')
+  @ApiSuccess(GroupDto, '그룹 상세 정보 반환')
   @ApiForbidden('접근 권한 없음')
   @ApiNotFound('그룹을 찾을 수 없음')
   findOne(@Param('id') id: string, @Request() req) {
@@ -61,7 +66,7 @@ export class GroupController {
   @UseGuards(GroupPermissionGuard)
   @RequirePermission(PermissionCode.UPDATE_GROUP)
   @ApiOperation({ summary: '그룹 정보 수정 (UPDATE_GROUP 권한 필요)' })
-  @ApiSuccess(Object, '그룹 수정 성공')
+  @ApiSuccess(GroupDto, '그룹 수정 성공')
   @ApiForbidden('권한 없음')
   @ApiNotFound('그룹을 찾을 수 없음')
   update(
@@ -76,7 +81,7 @@ export class GroupController {
   @UseGuards(GroupPermissionGuard)
   @RequirePermission(PermissionCode.DELETE_GROUP)
   @ApiOperation({ summary: '그룹 삭제 (DELETE_GROUP 권한 필요)' })
-  @ApiSuccess(Object, '그룹 삭제 성공')
+  @ApiSuccess(DeleteGroupResponseDto, '그룹 삭제 성공')
   @ApiForbidden('권한 없음')
   @ApiNotFound('그룹을 찾을 수 없음')
   remove(@Param('id') id: string, @Request() req) {

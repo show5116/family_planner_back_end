@@ -59,12 +59,17 @@ export class GroupService {
     const inviteCode = await this.groupInviteService.generateUniqueInviteCode();
     const ownerRole = await this.getOwnerRole();
 
+    // 초대 코드 만료 시간 (7일 후)
+    const inviteCodeExpiresAt = new Date();
+    inviteCodeExpiresAt.setDate(inviteCodeExpiresAt.getDate() + 7);
+
     const group = await this.prisma.group.create({
       data: {
         name: createGroupDto.name,
         description: createGroupDto.description,
         defaultColor: createGroupDto.defaultColor || '#6366F1', // 기본 색상
         inviteCode,
+        inviteCodeExpiresAt,
         members: {
           create: {
             userId,

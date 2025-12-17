@@ -25,16 +25,19 @@ export function ApiCreated(
 
 /**
  * 조회/수정/삭제 성공 응답 (200)
- * @param responseDto 성공 시 응답 DTO
+ * @param responseDto 성공 시 응답 DTO (배열인 경우 isArray: true 옵션 사용)
  * @param description 응답 설명 (기본값: '성공')
+ * @param options 추가 옵션 (isArray: 배열 응답 여부)
  */
 export function ApiSuccess(
   responseDto: Type<unknown>,
   description = '성공',
+  options?: { isArray?: boolean },
 ) {
   return ApiOkResponse({
     description,
     type: responseDto,
+    isArray: options?.isArray,
   });
 }
 
