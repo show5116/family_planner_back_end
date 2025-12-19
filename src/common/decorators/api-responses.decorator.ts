@@ -76,6 +76,8 @@ export function ApiForbidden(description = '권한 없음') {
 /**
  * 여러 특수 응답을 한 번에 적용
  */
-export function ApiExtraResponses(...responses: ReturnType<typeof applyDecorators>[]) {
+export function ApiExtraResponses(
+  ...responses: ReturnType<typeof applyDecorators>[]
+) {
   return applyDecorators(...responses);
 }

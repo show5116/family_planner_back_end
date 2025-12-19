@@ -21,7 +21,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "gen:api": "ts-node -r tsconfig-paths/register scripts/generate-api-docs.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.948.0",

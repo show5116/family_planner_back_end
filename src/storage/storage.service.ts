@@ -24,9 +24,8 @@ export class StorageService {
   ) {
     const accountId = this.configService.get<string>('r2.accountId');
     const accessKeyId = this.configService.get<string>('r2.accessKeyId');
-    const secretAccessKey = this.configService.get<string>(
-      'r2.secretAccessKey',
-    );
+    const secretAccessKey =
+      this.configService.get<string>('r2.secretAccessKey');
     this.bucketName = this.configService.get<string>('r2.bucketName');
     this.publicUrl = this.configService.get<string>('r2.publicUrl');
 
@@ -104,8 +103,9 @@ export class StorageService {
       }
 
       // 이미지 최적화
-      const optimizedBuffer =
-        await this.imageOptimizer.optimizeProfileImage(file.buffer);
+      const optimizedBuffer = await this.imageOptimizer.optimizeProfileImage(
+        file.buffer,
+      );
 
       // 파일명 생성: UUID + .jpg (최적화된 이미지는 항상 JPEG)
       const key = `${folder}/${filename || randomUUID()}.jpg`;
