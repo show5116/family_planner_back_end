@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
+import { execSync } from 'child_process';
 
 interface DtoField {
   name: string;
@@ -553,6 +554,11 @@ class ApiDocGenerator {
     maxDepth: number = 2,
     currentDepth: number = 0,
   ): string {
+    // 빈 DTO인 경우 간단하게 표시
+    if (dto.fields.length === 0) {
+      return '```json\n{}\n```';
+    }
+
     let schema = '```json\n{\n';
     dto.fields.forEach((field, index) => {
       const comma = index < dto.fields.length - 1 ? ',' : '';
@@ -712,7 +718,6 @@ class ApiDocGenerator {
   public generateMarkdown(controllers: ControllerInfo[]): string {
     let markdown = `# API Documentation\n\n`;
     markdown += `> 자동 생성된 API 문서입니다. UI 개발 시 참고하세요.\n\n`;
-    markdown += `생성일: ${new Date().toISOString()}\n\n`;
     markdown += `---\n\n`;
 
     controllers.forEach((controller) => {
@@ -731,7 +736,7 @@ class ApiDocGenerator {
         }
 
         if (endpoint.guards && endpoint.guards.length > 0) {
-          markdown += `**인증/권한:**\n`;
+          markdown += `**인증/권한:**\n\n`;
           endpoint.guards.forEach((guard) => {
             markdown += `- ${guard}\n`;
           });
@@ -741,10 +746,15 @@ class ApiDocGenerator {
         // Path Parameters
         if (endpoint.pathParameters && endpoint.pathParameters.length > 0) {
           markdown += `**Path Parameters:**\n\n`;
-          markdown += `| Name | Type | Required | Description |\n`;
-          markdown += `|------|------|----------|-------------|\n`;
           endpoint.pathParameters.forEach((param) => {
-            markdown += `| ${param.name} | ${param.type} | ${param.required ? 'Yes' : 'No'} | ${param.description || '-'} |\n`;
+            markdown += `- \`${param.name}\` (\`${param.type}\`)`;
+            if (!param.required) {
+              markdown += ` - Optional`;
+            }
+            if (param.description) {
+              markdown += `: ${param.description}`;
+            }
+            markdown += `\n`;
           });
           markdown += `\n`;
         }
@@ -752,10 +762,15 @@ class ApiDocGenerator {
         // Query Parameters
         if (endpoint.queryParameters && endpoint.queryParameters.length > 0) {
           markdown += `**Query Parameters:**\n\n`;
-          markdown += `| Name | Type | Required | Description |\n`;
-          markdown += `|------|------|----------|-------------|\n`;
           endpoint.queryParameters.forEach((param) => {
-            markdown += `| ${param.name} | ${param.type} | ${param.required ? 'Yes' : 'No'} | ${param.description || '-'} |\n`;
+            markdown += `- \`${param.name}\` (\`${param.type}\`)`;
+            if (!param.required) {
+              markdown += ` - Optional`;
+            }
+            if (param.description) {
+              markdown += `: ${param.description}`;
+            }
+            markdown += `\n`;
           });
           markdown += `\n`;
         }
@@ -779,11 +794,13 @@ class ApiDocGenerator {
           });
         }
 
-        markdown += `---\n\n`;
+        markdown += `---\n`;
       });
+      markdown += `\n`;
     });
 
-    return markdown;
+    // 마지막 빈 줄 제거
+    return markdown.trimEnd() + '\n';
   }
 }
 
@@ -846,6 +863,17 @@ function main() {
   }
 
   console.log(`\nTotal controllers processed: ${controllers.length}`);
+
+  // Prettier 실행
+  console.log(`\nRunning Prettier on generated markdown files...`);
+  try {
+    execSync(`npx prettier --write "${outputDir}/**/*.md"`, {
+      stdio: 'inherit',
+    });
+    console.log('Prettier formatting completed successfully.');
+  } catch (error) {
+    console.error('Failed to run Prettier:', error);
+  }
 }
 
 main();

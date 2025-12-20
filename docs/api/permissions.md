@@ -2,8 +2,6 @@
 
 > 자동 생성된 API 문서입니다. UI 개발 시 참고하세요.
 
-생성일: 2025-12-19T15:05:41.964Z
-
 ---
 
 ## permissions
@@ -19,9 +17,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| category | string | No | - |
+- `category` (`string`) - Optional
 
 **Responses:**
 
@@ -42,8 +38,27 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
       "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
     }
   ], // 전체 권한 목록 (PermissionDto[])
-  "groupedByCategory": {"GROUP":[{"id":"perm_clxxx123","code":"group:read","name":"그룹 조회","description":"그룹 정보를 조회할 수 있는 권한","category":"GROUP"}],"SCHEDULE":[{"id":"perm_clxxx456","code":"schedule:read","name":"일정 조회","description":"일정 정보를 조회할 수 있는 권한","category":"SCHEDULE"}]}, // 카테고리별로 그룹화된 권한 (Record<string, PermissionDto[]>)
-  "categories": ["GROUP","SCHEDULE","TASK","BUDGET","PHOTO","ADMIN"] // 사용 가능한 카테고리 목록 (PermissionCategory[])
+  "groupedByCategory": {
+    "GROUP": [
+      {
+        "id": "perm_clxxx123",
+        "code": "group:read",
+        "name": "그룹 조회",
+        "description": "그룹 정보를 조회할 수 있는 권한",
+        "category": "GROUP"
+      }
+    ],
+    "SCHEDULE": [
+      {
+        "id": "perm_clxxx456",
+        "code": "schedule:read",
+        "name": "일정 조회",
+        "description": "일정 정보를 조회할 수 있는 권한",
+        "category": "SCHEDULE"
+      }
+    ]
+  }, // 카테고리별로 그룹화된 권한 (Record<string, PermissionDto[]>)
+  "categories": ["GROUP", "SCHEDULE", "TASK", "BUDGET", "PHOTO", "ADMIN"] // 사용 가능한 카테고리 목록 (PermissionCategory[])
 }
 ```
 
@@ -57,6 +72,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 새로운 권한을 생성합니다. 운영자 전용 API
 
 **인증/권한:**
+
 - AdminGuard
 
 **Request Body:**
@@ -74,7 +90,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Responses:**
 
-#### 201 - 
+#### 201 -
 
 ```json
 {
@@ -103,13 +119,12 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 기존 권한 정보를 수정합니다. 운영자 전용 API
 
 **인증/권한:**
+
 - AdminGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Request Body:**
 
@@ -155,13 +170,12 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 권한을 소프트 삭제합니다 (isActive=false). 운영자 전용 API
 
 **인증/권한:**
+
 - AdminGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -194,13 +208,12 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 권한을 데이터베이스에서 완전히 삭제합니다. 위험한 작업이므로 주의 필요. 운영자 전용 API
 
 **인증/권한:**
+
 - AdminGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -233,15 +246,19 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 여러 권한의 정렬 순서를 한 번에 업데이트합니다. 드래그 앤 드롭 후 사용하세요.
 
 **인증/권한:**
+
 - AdminGuard
 
 **Request Body:**
 
 ```json
 {
-  "items": [{"id":"perm-1","sortOrder":0},{"id":"perm-2","sortOrder":1},{"id":"perm-3","sortOrder":2}] // 권한 ID와 정렬 순서 배열 (PermissionSortOrderItem[])
+  "items": [
+    { "id": "perm-1", "sortOrder": 0 },
+    { "id": "perm-2", "sortOrder": 1 },
+    { "id": "perm-3", "sortOrder": 2 }
+  ] // 권한 ID와 정렬 순서 배열 (PermissionSortOrderItem[])
 }
 ```
 
 ---
-

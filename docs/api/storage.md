@@ -2,8 +2,6 @@
 
 > 자동 생성된 API 문서입니다. UI 개발 시 참고하세요.
 
-생성일: 2025-12-19T15:05:41.996Z
-
 ---
 
 ## Storage
@@ -19,9 +17,7 @@ Cloudflare R2에 파일을 업로드합니다.
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| folder | string | Yes | - |
+- `folder` (`string`)
 
 **Responses:**
 
@@ -40,10 +36,8 @@ Cloudflare R2에 파일을 업로드합니다.
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| key | string | Yes | - |
-| expiresIn | number | No | - |
+- `key` (`string`)
+- `expiresIn` (`number`) - Optional
 
 **Responses:**
 
@@ -60,9 +54,7 @@ R2에서 파일을 삭제합니다.
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| key | string | Yes | - |
+- `key` (`string`)
 
 **Responses:**
 
@@ -79,13 +71,10 @@ R2에 파일이 존재하는지 확인합니다.
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| key | string | Yes | - |
+- `key` (`string`)
 
 **Responses:**
 
 #### 200 - 파일 존재 여부
 
 ---
-

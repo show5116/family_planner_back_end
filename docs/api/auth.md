@@ -2,8 +2,6 @@
 
 > 자동 생성된 API 문서입니다. UI 개발 시 참고하세요.
 
-생성일: 2025-12-19T15:05:41.844Z
-
 ---
 
 ## 인증
@@ -55,6 +53,7 @@
 **요약:** 로그인
 
 **인증/권한:**
+
 - LocalAuthGuard
 
 **Responses:**
@@ -198,8 +197,7 @@
 #### 200 - 사용자 정보 반환 (isAdmin, profileImage 포함)
 
 ```json
-{
-}
+{}
 ```
 
 ---
@@ -321,6 +319,7 @@
 **요약:** Google 로그인 시작
 
 **인증/권한:**
+
 - GoogleAuthGuard
 
 **Responses:**
@@ -334,6 +333,7 @@
 **요약:** Google 로그인 콜백
 
 **인증/권한:**
+
 - GoogleAuthGuard
 
 **Responses:**
@@ -354,6 +354,7 @@
 **요약:** Kakao 로그인 시작
 
 **인증/권한:**
+
 - KakaoAuthGuard
 
 **Responses:**
@@ -367,6 +368,7 @@
 **요약:** Kakao 로그인 콜백
 
 **인증/권한:**
+
 - KakaoAuthGuard
 
 **Responses:**
@@ -381,4 +383,3 @@
 ```
 
 ---
-

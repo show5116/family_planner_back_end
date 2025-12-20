@@ -2,8 +2,6 @@
 
 > 자동 생성된 API 문서입니다. UI 개발 시 참고하세요.
 
-생성일: 2025-12-19T15:05:41.930Z
-
 ---
 
 ## 그룹
@@ -48,7 +46,7 @@
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "user_clxxx123",
@@ -94,7 +92,7 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // 내 역할 (RoleDto)
   "_count": 5 // 그룹 멤버 수 ({ members: number; })
 }
@@ -107,13 +105,12 @@
 **요약:** 그룹 상세 조회
 
 **인증/권한:**
+
 - GroupMembershipGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -139,7 +136,7 @@
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "user_clxxx123",
@@ -171,13 +168,12 @@
 **요약:** 그룹 정보 수정 (UPDATE_GROUP 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Request Body:**
 
@@ -213,7 +209,7 @@
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "user_clxxx123",
@@ -245,13 +241,12 @@
 **요약:** 그룹 삭제 (DELETE_GROUP 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -268,4 +263,3 @@
 #### 404 - 그룹을 찾을 수 없음
 
 ---
-

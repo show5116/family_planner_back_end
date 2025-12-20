@@ -2,11 +2,9 @@
 
 > 자동 생성된 API 문서입니다. UI 개발 시 참고하세요.
 
-생성일: 2025-12-19T15:05:41.997Z
-
 ---
 
-## 
+##
 
 **Base Path:** `/`
 
@@ -63,6 +61,7 @@
 **요약:** 로그인
 
 **인증/권한:**
+
 - LocalAuthGuard
 
 **Responses:**
@@ -206,8 +205,7 @@
 #### 200 - 사용자 정보 반환 (isAdmin, profileImage 포함)
 
 ```json
-{
-}
+{}
 ```
 
 ---
@@ -329,6 +327,7 @@
 **요약:** Google 로그인 시작
 
 **인증/권한:**
+
 - GoogleAuthGuard
 
 **Responses:**
@@ -342,6 +341,7 @@
 **요약:** Google 로그인 콜백
 
 **인증/권한:**
+
 - GoogleAuthGuard
 
 **Responses:**
@@ -362,6 +362,7 @@
 **요약:** Kakao 로그인 시작
 
 **인증/권한:**
+
 - KakaoAuthGuard
 
 **Responses:**
@@ -375,6 +376,7 @@
 **요약:** Kakao 로그인 콜백
 
 **인증/권한:**
+
 - KakaoAuthGuard
 
 **Responses:**
@@ -408,50 +410,64 @@
 
 **Responses:**
 
-#### 201 - 그룹 가입 성공
+#### 201 - 그룹 가입 성공 또는 가입 요청 성공
 
 ```json
 {
-  "id": "uuid", // 그룹 ID (string)
-  "name": "우리 가족", // 그룹명 (string)
-  "description": "가족 일정 관리", // 그룹 설명 (string | null)
-  "inviteCode": "AbC123Xy", // 초대 코드 (string)
-  "inviteCodeExpiresAt": "2025-12-24T00:00:00Z", // 초대 코드 만료 시간 (Date)
-  "defaultColor": "#6366F1", // 그룹 기본 색상 (HEX 형식) (string)
-  "createdAt": "2025-12-04T00:00:00Z", // 생성일 (Date)
-  "updatedAt": "2025-12-04T00:00:00Z", // 수정일 (Date)
-  "members": [
-    {
-      "id": "uuid", // 멤버십 ID (string)
-      "groupId": "uuid", // 그룹 ID (string)
-      "userId": "uuid", // 사용자 ID (string)
-      "roleId": "uuid", // 역할 ID (string)
-      "role": {
-        "id": "uuid",
-        "name": "OWNER",
-        "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
-      }, // RoleDto
-      "user": {
-        "id": "user_clxxx123",
-        "email": "user@example.com",
-        "name": "홍길동",
-        "isEmailVerified": true,
-        "isAdmin": false,
-        "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-        "phoneNumber": "010-1234-5678",
-        "socialProvider": "google",
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z"
-      }, // UserDto
-      "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
-      "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
-    }
-  ] // GroupMemberDto[]
+  "message": "그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요.", // 이메일 초대를 받은 경우: "그룹 가입이 완료되었습니다", 일반 요청: "그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요." (string)
+  "joinRequestId": "uuid", // 가입 요청 ID (일반 요청인 경우만) (string?)
+  "groupName": "우리 가족", // 그룹명 (일반 요청인 경우만) (string?)
+  "status": "PENDING", // 요청 상태 (일반 요청인 경우만) (string?)
+  "member": {
+    "id": "uuid", // 멤버십 ID (string)
+    "groupId": "uuid", // 그룹 ID (string)
+    "userId": "uuid", // 사용자 ID (string)
+    "roleId": "uuid", // 역할 ID (string)
+    "role": {
+      "id": "uuid",
+      "name": "OWNER",
+      "color": "#6366F1",
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
+    }, // RoleDto
+    "user": {
+      "id": "user_clxxx123",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "isEmailVerified": true,
+      "isAdmin": false,
+      "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
+      "phoneNumber": "010-1234-5678",
+      "socialProvider": "google",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }, // UserDto
+    "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
+    "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
+  }, // 생성된 멤버 정보 (이메일 초대받은 경우만) (GroupMemberDto?)
+  "group": {
+    "id": "uuid", // 그룹 ID (string)
+    "name": "우리 가족", // 그룹명 (string)
+    "description": "가족 일정 관리", // 그룹 설명 (string | null)
+    "inviteCode": "AbC123Xy", // 초대 코드 (string)
+    "inviteCodeExpiresAt": "2025-12-24T00:00:00Z", // 초대 코드 만료 시간 (Date)
+    "defaultColor": "#6366F1", // 그룹 기본 색상 (HEX 형식) (string)
+    "createdAt": "2025-12-04T00:00:00Z", // 생성일 (Date)
+    "updatedAt": "2025-12-04T00:00:00Z", // 수정일 (Date)
+    "members": {
+      "id": "uuid",
+      "groupId": "uuid",
+      "userId": "uuid",
+      "roleId": "uuid",
+      "role": "<RoleDto>",
+      "user": "<UserDto>",
+      "customColor": "#FF5733",
+      "joinedAt": "2025-12-04T00:00:00Z"
+    } // GroupMemberDto[]
+  } // 그룹 정보 (이메일 초대받은 경우만) (GroupDto?)
 }
 ```
 
-#### 404 - 유효하지 않은 초대 코드
+#### 404 - 유효하지 않은 초대 코드 또는 만료된 초대 코드
 
 ---
 
@@ -461,9 +477,7 @@
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -484,13 +498,12 @@
 **요약:** 그룹 멤버 목록 조회
 
 **인증/권한:**
+
 - GroupMembershipGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -506,7 +519,7 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // RoleDto
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
@@ -534,14 +547,13 @@
 **요약:** 멤버 역할 변경 (MANAGE_MEMBER 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
-| userId | string | Yes | - |
+- `id` (`string`)
+- `userId` (`string`)
 
 **Request Body:**
 
@@ -565,7 +577,7 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // RoleDto
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
@@ -595,13 +607,12 @@
 **요약:** 개인 그룹 색상 설정
 
 **인증/권한:**
+
 - GroupMembershipGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Request Body:**
 
@@ -631,14 +642,13 @@
 **요약:** 멤버 삭제 (MANAGE_MEMBER 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
-| userId | string | Yes | - |
+- `id` (`string`)
+- `userId` (`string`)
 
 **Responses:**
 
@@ -661,13 +671,12 @@
 **요약:** 초대 코드 재생성 (INVITE_MEMBER 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -684,6 +693,50 @@
 
 ---
 
+### POST `groups/:id/invite-by-email`
+
+**요약:** 이메일로 그룹 초대 (INVITE_MEMBER 권한 필요)
+
+**설명:**
+초대할 사용자의 이메일로 초대 코드가 포함된 이메일을 발송합니다. 해당 이메일로 가입된 사용자가 있어야 합니다.
+
+**인증/권한:**
+
+- GroupPermissionGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com" // 초대할 사용자의 이메일 (string)
+}
+```
+
+**Responses:**
+
+#### 200 - 초대 이메일 발송 성공
+
+```json
+{
+  "message": "초대 이메일이 발송되었습니다", // string
+  "email": "user@example.com", // 초대받은 사용자의 이메일 (string)
+  "groupName": "우리 가족", // 그룹명 (string)
+  "inviteCode": "AbC123Xy", // 초대 코드 (string)
+  "inviteCodeExpiresAt": "2025-12-24T00:00:00Z", // 초대 코드 만료 시간 (Date)
+  "joinRequestId": "uuid" // 가입 요청 ID (string)
+}
+```
+
+#### 403 - 권한 없음
+
+#### 404 - 그룹을 찾을 수 없음
+
+---
+
 ### POST `groups/:id/transfer-ownership`
 
 **요약:** OWNER 권한 양도 (현재 OWNER만 가능)
@@ -693,9 +746,7 @@
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Request Body:**
 
@@ -718,23 +769,23 @@
     "userId": "uuid", // 사용자 ID (string)
     "roleId": "uuid", // 역할 ID (string)
     "role": {
-        "id": "uuid",
-        "name": "OWNER",
-        "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
-      }, // RoleDto
+      "id": "uuid",
+      "name": "OWNER",
+      "color": "#6366F1",
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
+    }, // RoleDto
     "user": {
-        "id": "user_clxxx123",
-        "email": "user@example.com",
-        "name": "홍길동",
-        "isEmailVerified": true,
-        "isAdmin": false,
-        "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-        "phoneNumber": "010-1234-5678",
-        "socialProvider": "google",
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z"
-      }, // UserDto
+      "id": "user_clxxx123",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "isEmailVerified": true,
+      "isAdmin": false,
+      "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
+      "phoneNumber": "010-1234-5678",
+      "socialProvider": "google",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }, // UserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   }, // GroupMemberDto
@@ -744,23 +795,23 @@
     "userId": "uuid", // 사용자 ID (string)
     "roleId": "uuid", // 역할 ID (string)
     "role": {
-        "id": "uuid",
-        "name": "OWNER",
-        "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
-      }, // RoleDto
+      "id": "uuid",
+      "name": "OWNER",
+      "color": "#6366F1",
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
+    }, // RoleDto
     "user": {
-        "id": "user_clxxx123",
-        "email": "user@example.com",
-        "name": "홍길동",
-        "isEmailVerified": true,
-        "isAdmin": false,
-        "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-        "phoneNumber": "010-1234-5678",
-        "socialProvider": "google",
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z"
-      }, // UserDto
+      "id": "user_clxxx123",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "isEmailVerified": true,
+      "isAdmin": false,
+      "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
+      "phoneNumber": "010-1234-5678",
+      "socialProvider": "google",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }, // UserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   } // GroupMemberDto
@@ -770,6 +821,135 @@
 #### 403 - 현재 OWNER가 아니거나 그룹 멤버가 아님
 
 #### 404 - 새로운 OWNER가 될 사용자를 그룹에서 찾을 수 없음
+
+---
+
+### GET `groups/:id/join-requests`
+
+**요약:** 그룹 가입 요청 목록 조회 (INVITE_MEMBER 권한 필요)
+
+**설명:**
+status 쿼리 파라미터로 필터링 가능 (PENDING, ACCEPTED, REJECTED)
+
+**인증/권한:**
+
+- GroupPermissionGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Query Parameters:**
+
+- `status` (`string`) - Optional
+
+**Responses:**
+
+#### 200 - 가입 요청 목록 조회 성공
+
+```json
+{
+  "id": "uuid", // 가입 요청 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "type": "INVITE", // 요청 타입 (string)
+  "email": "user@example.com", // 이메일 (string)
+  "status": "PENDING", // 상태 (string)
+  "createdAt": "2025-12-04T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-04T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 403 - 권한 없음
+
+---
+
+### POST `groups/:id/join-requests/:requestId/accept`
+
+**요약:** 가입 요청 승인 (INVITE_MEMBER 권한 필요)
+
+**설명:**
+PENDING 상태의 가입 요청을 승인하고 그룹 멤버로 추가
+
+**인증/권한:**
+
+- GroupPermissionGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `requestId` (`string`)
+
+**Responses:**
+
+#### 200 - 가입 요청 승인 성공
+
+```json
+{
+  "message": "가입 요청이 승인되었습니다", // string
+  "member": {
+    "id": "uuid", // 멤버십 ID (string)
+    "groupId": "uuid", // 그룹 ID (string)
+    "userId": "uuid", // 사용자 ID (string)
+    "roleId": "uuid", // 역할 ID (string)
+    "role": {
+      "id": "uuid",
+      "name": "OWNER",
+      "color": "#6366F1",
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
+    }, // RoleDto
+    "user": {
+      "id": "user_clxxx123",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "isEmailVerified": true,
+      "isAdmin": false,
+      "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
+      "phoneNumber": "010-1234-5678",
+      "socialProvider": "google",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }, // UserDto
+    "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
+    "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
+  } // GroupMemberDto
+}
+```
+
+#### 403 - 권한 없음
+
+#### 404 - 가입 요청을 찾을 수 없음
+
+---
+
+### POST `groups/:id/join-requests/:requestId/reject`
+
+**요약:** 가입 요청 거부 (INVITE_MEMBER 권한 필요)
+
+**설명:**
+PENDING 상태의 가입 요청을 거부
+
+**인증/권한:**
+
+- GroupPermissionGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `requestId` (`string`)
+
+**Responses:**
+
+#### 200 - 가입 요청 거부 성공
+
+```json
+{
+  "message": "가입 요청이 거부되었습니다" // string
+}
+```
+
+#### 403 - 권한 없음
+
+#### 404 - 가입 요청을 찾을 수 없음
 
 ---
 
@@ -785,13 +965,12 @@
 공통 역할 + 해당 그룹의 커스텀 역할 조회
 
 **인증/권한:**
+
 - GroupMembershipGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| groupId | string | Yes | - |
+- `groupId` (`string`)
 
 **Responses:**
 
@@ -806,13 +985,12 @@
 **요약:** 그룹별 커스텀 역할 생성 (MANAGE_ROLE 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| groupId | string | Yes | - |
+- `groupId` (`string`)
 
 **Request Body:**
 
@@ -821,7 +999,7 @@
   "name": "ADMIN", // 역할명 (string)
   "groupId": null, // 그룹 ID (null이면 공통 역할) (string | null?)
   "isDefaultRole": false, // 기본 역할 여부 (초대 시 자동 부여) (boolean?)
-  "permissions": ["VIEW","CREATE","UPDATE"], // 권한 배열 (PermissionCode[])
+  "permissions": ["VIEW", "CREATE", "UPDATE"], // 권한 배열 (PermissionCode[])
   "color": "#6366F1", // 역할 색상 (HEX 형식) (string?)
   "sortOrder": 0 // 정렬 순서 (낮을수록 먼저 표시) (number?)
 }
@@ -840,14 +1018,13 @@
 **요약:** 그룹별 커스텀 역할 수정 (MANAGE_ROLE 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| groupId | string | Yes | - |
-| id | string | Yes | - |
+- `groupId` (`string`)
+- `id` (`string`)
 
 **Request Body:**
 
@@ -855,7 +1032,7 @@
 {
   "name": "ADMIN", // 역할명 (string?)
   "isDefaultRole": false, // 기본 역할 여부 (초대 시 자동 부여) (boolean?)
-  "permissions": ["VIEW","CREATE","UPDATE"], // 권한 배열 (PermissionCode[]?)
+  "permissions": ["VIEW", "CREATE", "UPDATE"], // 권한 배열 (PermissionCode[]?)
   "color": "#6366F1", // 역할 색상 (HEX 형식) (string?)
   "sortOrder": 0 // 정렬 순서 (낮을수록 먼저 표시) (number?)
 }
@@ -876,14 +1053,13 @@
 **요약:** 그룹별 커스텀 역할 삭제 (MANAGE_ROLE 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| groupId | string | Yes | - |
-| id | string | Yes | - |
+- `groupId` (`string`)
+- `id` (`string`)
 
 **Responses:**
 
@@ -903,19 +1079,22 @@
 여러 역할의 정렬 순서를 한 번에 업데이트합니다. 드래그 앤 드롭 후 사용하세요.
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| groupId | string | Yes | - |
+- `groupId` (`string`)
 
 **Request Body:**
 
 ```json
 {
-  "items": [{"id":"role-1","sortOrder":0},{"id":"role-2","sortOrder":1},{"id":"role-3","sortOrder":2}] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
+  "items": [
+    { "id": "role-1", "sortOrder": 0 },
+    { "id": "role-2", "sortOrder": 1 },
+    { "id": "role-3", "sortOrder": 2 }
+  ] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
 }
 ```
 
@@ -969,7 +1148,7 @@
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "user_clxxx123",
@@ -1015,7 +1194,7 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // 내 역할 (RoleDto)
   "_count": 5 // 그룹 멤버 수 ({ members: number; })
 }
@@ -1028,13 +1207,12 @@
 **요약:** 그룹 상세 조회
 
 **인증/권한:**
+
 - GroupMembershipGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -1060,7 +1238,7 @@
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "user_clxxx123",
@@ -1092,13 +1270,12 @@
 **요약:** 그룹 정보 수정 (UPDATE_GROUP 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Request Body:**
 
@@ -1134,7 +1311,7 @@
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "user_clxxx123",
@@ -1166,13 +1343,12 @@
 **요약:** 그룹 삭제 (DELETE_GROUP 권한 필요)
 
 **인증/권한:**
+
 - GroupPermissionGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -1203,9 +1379,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| category | string | No | - |
+- `category` (`string`) - Optional
 
 **Responses:**
 
@@ -1226,8 +1400,27 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
       "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
     }
   ], // 전체 권한 목록 (PermissionDto[])
-  "groupedByCategory": {"GROUP":[{"id":"perm_clxxx123","code":"group:read","name":"그룹 조회","description":"그룹 정보를 조회할 수 있는 권한","category":"GROUP"}],"SCHEDULE":[{"id":"perm_clxxx456","code":"schedule:read","name":"일정 조회","description":"일정 정보를 조회할 수 있는 권한","category":"SCHEDULE"}]}, // 카테고리별로 그룹화된 권한 (Record<string, PermissionDto[]>)
-  "categories": ["GROUP","SCHEDULE","TASK","BUDGET","PHOTO","ADMIN"] // 사용 가능한 카테고리 목록 (PermissionCategory[])
+  "groupedByCategory": {
+    "GROUP": [
+      {
+        "id": "perm_clxxx123",
+        "code": "group:read",
+        "name": "그룹 조회",
+        "description": "그룹 정보를 조회할 수 있는 권한",
+        "category": "GROUP"
+      }
+    ],
+    "SCHEDULE": [
+      {
+        "id": "perm_clxxx456",
+        "code": "schedule:read",
+        "name": "일정 조회",
+        "description": "일정 정보를 조회할 수 있는 권한",
+        "category": "SCHEDULE"
+      }
+    ]
+  }, // 카테고리별로 그룹화된 권한 (Record<string, PermissionDto[]>)
+  "categories": ["GROUP", "SCHEDULE", "TASK", "BUDGET", "PHOTO", "ADMIN"] // 사용 가능한 카테고리 목록 (PermissionCategory[])
 }
 ```
 
@@ -1241,6 +1434,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 새로운 권한을 생성합니다. 운영자 전용 API
 
 **인증/권한:**
+
 - AdminGuard
 
 **Request Body:**
@@ -1258,7 +1452,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Responses:**
 
-#### 201 - 
+#### 201 -
 
 ```json
 {
@@ -1287,13 +1481,12 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 기존 권한 정보를 수정합니다. 운영자 전용 API
 
 **인증/권한:**
+
 - AdminGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Request Body:**
 
@@ -1339,13 +1532,12 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 권한을 소프트 삭제합니다 (isActive=false). 운영자 전용 API
 
 **인증/권한:**
+
 - AdminGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -1378,13 +1570,12 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 권한을 데이터베이스에서 완전히 삭제합니다. 위험한 작업이므로 주의 필요. 운영자 전용 API
 
 **인증/권한:**
+
 - AdminGuard
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -1417,13 +1608,18 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 여러 권한의 정렬 순서를 한 번에 업데이트합니다. 드래그 앤 드롭 후 사용하세요.
 
 **인증/권한:**
+
 - AdminGuard
 
 **Request Body:**
 
 ```json
 {
-  "items": [{"id":"perm-1","sortOrder":0},{"id":"perm-2","sortOrder":1},{"id":"perm-3","sortOrder":2}] // 권한 ID와 정렬 순서 배열 (PermissionSortOrderItem[])
+  "items": [
+    { "id": "perm-1", "sortOrder": 0 },
+    { "id": "perm-2", "sortOrder": 1 },
+    { "id": "perm-3", "sortOrder": 2 }
+  ] // 권한 ID와 정렬 순서 배열 (PermissionSortOrderItem[])
 }
 ```
 
@@ -1451,7 +1647,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
       "id": "uuid", // 역할 ID (string)
       "name": "OWNER", // 역할명 (string)
       "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-      "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
     }
   ] // RoleDto[]
 }
@@ -1473,7 +1669,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
   "name": "ADMIN", // 역할명 (string)
   "groupId": null, // 그룹 ID (null이면 공통 역할) (string | null?)
   "isDefaultRole": false, // 기본 역할 여부 (초대 시 자동 부여) (boolean?)
-  "permissions": ["VIEW","CREATE","UPDATE"], // 권한 배열 (PermissionCode[])
+  "permissions": ["VIEW", "CREATE", "UPDATE"], // 권한 배열 (PermissionCode[])
   "color": "#6366F1", // 역할 색상 (HEX 형식) (string?)
   "sortOrder": 0 // 정렬 순서 (낮을수록 먼저 표시) (number?)
 }
@@ -1481,7 +1677,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Responses:**
 
-#### 201 - 
+#### 201 -
 
 ```json
 {
@@ -1489,7 +1685,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   } // RoleDto
 }
 ```
@@ -1505,9 +1701,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Request Body:**
 
@@ -1515,7 +1709,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 {
   "name": "ADMIN", // 역할명 (string?)
   "isDefaultRole": false, // 기본 역할 여부 (초대 시 자동 부여) (boolean?)
-  "permissions": ["VIEW","CREATE","UPDATE"], // 권한 배열 (PermissionCode[]?)
+  "permissions": ["VIEW", "CREATE", "UPDATE"], // 권한 배열 (PermissionCode[]?)
   "color": "#6366F1", // 역할 색상 (HEX 형식) (string?)
   "sortOrder": 0 // 정렬 순서 (낮을수록 먼저 표시) (number?)
 }
@@ -1531,7 +1725,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   } // RoleDto
 }
 ```
@@ -1547,9 +1741,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Path Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| id | string | Yes | - |
+- `id` (`string`)
 
 **Responses:**
 
@@ -1562,7 +1754,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   } // RoleDto
 }
 ```
@@ -1580,7 +1772,11 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 ```json
 {
-  "items": [{"id":"role-1","sortOrder":0},{"id":"role-2","sortOrder":1},{"id":"role-3","sortOrder":2}] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
+  "items": [
+    { "id": "role-1", "sortOrder": 0 },
+    { "id": "role-2", "sortOrder": 1 },
+    { "id": "role-3", "sortOrder": 2 }
+  ] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
 }
 ```
 
@@ -1599,9 +1795,7 @@ Cloudflare R2에 파일을 업로드합니다.
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| folder | string | Yes | - |
+- `folder` (`string`)
 
 **Responses:**
 
@@ -1620,10 +1814,8 @@ Cloudflare R2에 파일을 업로드합니다.
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| key | string | Yes | - |
-| expiresIn | number | No | - |
+- `key` (`string`)
+- `expiresIn` (`number`) - Optional
 
 **Responses:**
 
@@ -1640,9 +1832,7 @@ R2에서 파일을 삭제합니다.
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| key | string | Yes | - |
+- `key` (`string`)
 
 **Responses:**
 
@@ -1659,13 +1849,10 @@ R2에 파일이 존재하는지 확인합니다.
 
 **Query Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| key | string | Yes | - |
+- `key` (`string`)
 
 **Responses:**
 
 #### 200 - 파일 존재 여부
 
 ---
-
