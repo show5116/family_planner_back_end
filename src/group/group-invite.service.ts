@@ -335,6 +335,12 @@ export class GroupInviteService {
       throw new ConflictException('이미 처리된 요청입니다');
     }
 
+    if (joinRequest.type === 'INVITE') {
+      throw new BadRequestException(
+        'INVITE 타입은 사용자가 초대 코드로 가입 시 자동 승인됩니다',
+      );
+    }
+
     // 초대받은 사용자 조회
     const user = await this.prisma.user.findUnique({
       where: { email: joinRequest.email },
