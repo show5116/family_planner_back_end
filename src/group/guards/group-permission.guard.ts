@@ -48,7 +48,12 @@ export class GroupPermissionGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const userId = request.user?.userId;
-    const groupId = request.params?.groupId;
+
+    // groupId를 params, body, query 순서로 확인
+    const groupId =
+      request.params?.groupId ||
+      request.body?.groupId ||
+      request.query?.groupId;
 
     if (!userId || !groupId) {
       throw new ForbiddenException('인증 정보 또는 그룹 ID가 없습니다.');

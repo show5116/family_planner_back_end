@@ -8,9 +8,10 @@ import { GroupRoleController } from '@/group/group-role.controller';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { RoleService } from '@/role/role.service';
 import { StorageModule } from '@/storage/storage.module';
+import { EmailModule } from '@/email/email.module';
 
 @Module({
-  imports: [PrismaModule, StorageModule],
+  imports: [PrismaModule, StorageModule, EmailModule],
   controllers: [GroupController, GroupMemberController, GroupRoleController],
   providers: [
     GroupService,

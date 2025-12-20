@@ -840,16 +840,28 @@ function main() {
     const controllerInfo = generator.parseController(filePath);
     if (controllerInfo) {
       controllers.push(controllerInfo);
-
-      // 개별 controller별 문서 생성
-      const markdown = generator.generateMarkdown([controllerInfo]);
-      const outputFile = path.join(
-        outputDir,
-        `${controllerInfo.basePath || 'root'}.md`,
-      );
-      fs.writeFileSync(outputFile, markdown);
-      console.log(`Generated: ${path.relative(process.cwd(), outputFile)}`);
     }
+  });
+
+  // basePath별로 컨트롤러 그룹화
+  const controllersByBasePath = new Map<string, ControllerInfo[]>();
+  controllers.forEach((controller) => {
+    const basePath = controller.basePath || 'root';
+    if (!controllersByBasePath.has(basePath)) {
+      controllersByBasePath.set(basePath, []);
+    }
+    const group = controllersByBasePath.get(basePath);
+    if (group) {
+      group.push(controller);
+    }
+  });
+
+  // basePath별로 문서 생성
+  controllersByBasePath.forEach((controllersGroup, basePath) => {
+    const markdown = generator.generateMarkdown(controllersGroup);
+    const outputFile = path.join(outputDir, `${basePath}.md`);
+    fs.writeFileSync(outputFile, markdown);
+    console.log(`Generated: ${path.relative(process.cwd(), outputFile)}`);
   });
 
   // 전체 API 문서 생성
