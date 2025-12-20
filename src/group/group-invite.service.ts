@@ -2,15 +2,18 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
+import { EmailService } from '@/email/email.service';
 
 @Injectable()
 export class GroupInviteService {
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -43,7 +46,7 @@ export class GroupInviteService {
 
   /**
    * 고유한 초대 코드 생성 (중복 체크)
-   * 만료된 초대 코드는 재사용 가능
+   * 만료 여부와 관계없이 모든 코드를 유니크하게 생성
    */
   async generateUniqueInviteCode(): Promise<string> {
     let code = this.generateInviteCode();
@@ -51,8 +54,8 @@ export class GroupInviteService {
       where: { inviteCode: code },
     });
 
-    // 중복되면 다시 생성 (단, 만료된 코드는 중복으로 취급하지 않음)
-    while (exists && exists.inviteCodeExpiresAt > new Date()) {
+    // 중복되면 다시 생성 (만료된 코드도 중복으로 취급)
+    while (exists) {
       code = this.generateInviteCode();
       exists = await this.prisma.group.findUnique({
         where: { inviteCode: code },
@@ -60,6 +63,33 @@ export class GroupInviteService {
     }
 
     return code;
+  }
+
+  /**
+   * 초대 코드 유효성 확인 및 재생성
+   * 만료된 경우 자동으로 재생성하여 반환
+   */
+  private async ensureValidInviteCode(
+    groupId: string,
+  ): Promise<{ inviteCode: string; inviteCodeExpiresAt: Date }> {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      select: { inviteCode: true, inviteCodeExpiresAt: true },
+    });
+
+    if (!group) {
+      throw new NotFoundException('그룹을 찾을 수 없습니다');
+    }
+
+    // 초대 코드가 만료되었으면 재생성
+    if (group.inviteCodeExpiresAt <= new Date()) {
+      return await this.regenerateInviteCode(groupId);
+    }
+
+    return {
+      inviteCode: group.inviteCode,
+      inviteCodeExpiresAt: group.inviteCodeExpiresAt,
+    };
   }
 
   /**
@@ -100,11 +130,26 @@ export class GroupInviteService {
   }
 
   /**
-   * 초대 코드로 그룹 가입
+   * 초대 코드로 그룹 가입 요청
    */
   async joinByInviteCode(userId: string, inviteCode: string) {
     const group = await this.prisma.group.findUnique({
       where: { inviteCode },
+      include: {
+        members: {
+          include: {
+            role: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                profileImageKey: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!group) {
@@ -130,45 +175,101 @@ export class GroupInviteService {
       throw new ConflictException('이미 이 그룹의 멤버입니다');
     }
 
-    // 기본 역할 조회
-    const defaultRole = await this.getDefaultRole(group.id);
+    // 사용자 정보 조회 (이메일 필요)
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
 
-    // 멤버 추가
-    const member = await this.prisma.groupMember.create({
-      data: {
+    if (!user || !user.email) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    // 이메일 초대 여부 확인 (INVITE 타입의 PENDING 요청이 있는지)
+    const inviteRequest = await this.prisma.groupJoinRequest.findFirst({
+      where: {
         groupId: group.id,
-        userId,
-        roleId: defaultRole.id, // 기본 역할 부여
-      },
-      include: {
-        role: true,
-        group: {
-          include: {
-            members: {
-              include: {
-                role: true,
-                user: {
-                  select: {
-                    id: true,
-                    email: true,
-                    name: true,
-                    profileImageKey: true,
-                  },
-                },
-              },
-            },
-          },
-        },
+        email: user.email,
+        type: 'INVITE', // 이메일로 초대받은 경우
+        status: 'PENDING',
       },
     });
 
-    // 프로필 이미지 URL 추가
+    // 이메일로 초대받은 경우 즉시 승인 및 멤버 추가
+    if (inviteRequest) {
+      const defaultRole = await this.getDefaultRole(group.id);
+
+      // 트랜잭션: 요청 승인 + 멤버 추가
+      const [, member] = await this.prisma.$transaction([
+        this.prisma.groupJoinRequest.update({
+          where: { id: inviteRequest.id },
+          data: { status: 'ACCEPTED' },
+        }),
+        this.prisma.groupMember.create({
+          data: {
+            groupId: group.id,
+            userId,
+            roleId: defaultRole.id,
+          },
+          include: {
+            role: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                profileImageKey: true,
+              },
+            },
+          },
+        }),
+      ]);
+
+      // 프로필 이미지 URL 추가
+      return {
+        message: '그룹 가입이 완료되었습니다',
+        member: {
+          ...member,
+          user: this.transformUserWithImageUrl(member.user),
+        },
+        group: {
+          ...group,
+          members: group.members.map((m) => ({
+            ...m,
+            user: this.transformUserWithImageUrl(m.user),
+          })),
+        },
+      };
+    }
+
+    // 일반 가입 요청인 경우 (이메일 초대 없이 초대 코드만으로 가입)
+    // 이미 가입 요청이 있는지 확인
+    const existingRequest = await this.prisma.groupJoinRequest.findFirst({
+      where: {
+        groupId: group.id,
+        email: user.email,
+        status: 'PENDING',
+      },
+    });
+
+    if (existingRequest) {
+      throw new ConflictException('이미 가입 요청이 대기 중입니다');
+    }
+
+    // GroupJoinRequest 생성 (REQUEST 타입, PENDING 상태)
+    const joinRequest = await this.prisma.groupJoinRequest.create({
+      data: {
+        groupId: group.id,
+        email: user.email,
+        type: 'REQUEST', // 사용자가 초대 코드로 요청
+        status: 'PENDING', // 승인 대기
+      },
+    });
+
     return {
-      ...member.group,
-      members: member.group.members.map((m) => ({
-        ...m,
-        user: this.transformUserWithImageUrl(m.user),
-      })),
+      message: '그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요.',
+      joinRequestId: joinRequest.id,
+      groupName: group.name,
+      status: joinRequest.status,
     };
   }
 
@@ -191,6 +292,215 @@ export class GroupInviteService {
     return {
       inviteCode: group.inviteCode,
       inviteCodeExpiresAt: group.inviteCodeExpiresAt,
+    };
+  }
+
+  /**
+   * 그룹 가입 요청 목록 조회 (INVITE_MEMBER 권한 필요)
+   */
+  async getJoinRequests(groupId: string, status?: string) {
+    const where: any = { groupId };
+
+    if (status) {
+      where.status = status;
+    }
+
+    const joinRequests = await this.prisma.groupJoinRequest.findMany({
+      where,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return joinRequests;
+  }
+
+  /**
+   * 가입 요청 승인 (INVITE_MEMBER 권한 필요)
+   */
+  async acceptJoinRequest(groupId: string, requestId: string) {
+    const joinRequest = await this.prisma.groupJoinRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!joinRequest) {
+      throw new NotFoundException('가입 요청을 찾을 수 없습니다');
+    }
+
+    if (joinRequest.groupId !== groupId) {
+      throw new NotFoundException('해당 그룹의 가입 요청이 아닙니다');
+    }
+
+    if (joinRequest.status !== 'PENDING') {
+      throw new ConflictException('이미 처리된 요청입니다');
+    }
+
+    // 초대받은 사용자 조회
+    const user = await this.prisma.user.findUnique({
+      where: { email: joinRequest.email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('해당 이메일로 가입된 사용자가 없습니다');
+    }
+
+    // 이미 멤버인지 확인
+    const existingMember = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId: user.id,
+        },
+      },
+    });
+
+    if (existingMember) {
+      throw new ConflictException('이미 그룹 멤버입니다');
+    }
+
+    // 기본 역할 조회
+    const defaultRole = await this.getDefaultRole(groupId);
+
+    // 트랜잭션: 요청 승인 + 멤버 추가
+    const [updatedRequest, member] = await this.prisma.$transaction([
+      this.prisma.groupJoinRequest.update({
+        where: { id: requestId },
+        data: { status: 'ACCEPTED' },
+      }),
+      this.prisma.groupMember.create({
+        data: {
+          groupId,
+          userId: user.id,
+          roleId: defaultRole.id,
+        },
+        include: {
+          role: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              profileImageKey: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      message: '가입 요청이 승인되었습니다',
+      member: {
+        ...member,
+        user: this.transformUserWithImageUrl(member.user),
+      },
+    };
+  }
+
+  /**
+   * 가입 요청 거부 (INVITE_MEMBER 권한 필요)
+   */
+  async rejectJoinRequest(groupId: string, requestId: string) {
+    const joinRequest = await this.prisma.groupJoinRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!joinRequest) {
+      throw new NotFoundException('가입 요청을 찾을 수 없습니다');
+    }
+
+    if (joinRequest.groupId !== groupId) {
+      throw new NotFoundException('해당 그룹의 가입 요청이 아닙니다');
+    }
+
+    if (joinRequest.status !== 'PENDING') {
+      throw new ConflictException('이미 처리된 요청입니다');
+    }
+
+    await this.prisma.groupJoinRequest.update({
+      where: { id: requestId },
+      data: { status: 'REJECTED' },
+    });
+
+    return {
+      message: '가입 요청이 거부되었습니다',
+    };
+  }
+
+  /**
+   * 이메일로 그룹 초대 (INVITE_MEMBER 권한 필요)
+   */
+  async inviteByEmail(groupId: string, inviterUserId: string, email: string) {
+    // 그룹 조회
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      select: { id: true, name: true },
+    });
+
+    if (!group) {
+      throw new NotFoundException('그룹을 찾을 수 없습니다');
+    }
+
+    // 초대하는 사용자 정보 조회
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: inviterUserId },
+    });
+
+    if (!inviter) {
+      throw new NotFoundException('초대자를 찾을 수 없습니다');
+    }
+
+    // 초대받을 사용자 조회
+    const invitee = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!invitee) {
+      throw new BadRequestException('해당 이메일로 가입된 사용자가 없습니다');
+    }
+
+    // 이미 그룹 멤버인지 확인
+    const existingMember = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId: group.id,
+          userId: invitee.id,
+        },
+      },
+    });
+
+    if (existingMember) {
+      throw new ConflictException('이미 이 그룹의 멤버입니다');
+    }
+
+    // 초대 코드 유효성 확인 및 재생성 (만료된 경우)
+    const { inviteCode, inviteCodeExpiresAt } =
+      await this.ensureValidInviteCode(groupId);
+
+    // GroupJoinRequest 생성 (INVITE 타입)
+    const joinRequest = await this.prisma.groupJoinRequest.create({
+      data: {
+        groupId: group.id,
+        email,
+        type: 'INVITE', // 관리자가 초대
+        status: 'PENDING',
+      },
+    });
+
+    // 초대 이메일 발송
+    await this.emailService.sendGroupInviteEmail(
+      email,
+      group.name,
+      inviter.name,
+      inviteCode,
+    );
+
+    return {
+      message: '초대 이메일이 발송되었습니다',
+      email,
+      groupName: group.name,
+      inviteCode,
+      inviteCodeExpiresAt,
+      joinRequestId: joinRequest.id,
     };
   }
 }

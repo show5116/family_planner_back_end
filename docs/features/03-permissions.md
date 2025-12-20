@@ -20,22 +20,6 @@
 - ✅ 카테고리별 그룹핑
 - ✅ 삭제되지 않은 권한만 조회 (Soft Delete)
 
-**Response**:
-
-```json
-[
-  {
-    "id": "uuid",
-    "code": "group:read",
-    "name": "그룹 조회",
-    "description": "그룹 정보를 조회할 수 있습니다",
-    "category": "GROUP",
-    "createdAt": "2025-12-04T00:00:00Z",
-    "updatedAt": "2025-12-04T00:00:00Z"
-  }
-]
-```
-
 **관련 파일**:
 
 - [src/permission/permission.controller.ts](../../src/permission/permission.controller.ts#L34-L42)
@@ -48,17 +32,6 @@
 - ✅ 운영자 권한 필요
 - ✅ 권한 코드 중복 체크
 - ✅ 카테고리별 분류
-
-**Request Body**:
-
-```json
-{
-  "code": "group:update",
-  "name": "그룹 수정",
-  "description": "그룹 정보를 수정할 수 있습니다",
-  "category": "GROUP"
-}
-```
 
 **카테고리 목록**:
 
@@ -192,15 +165,15 @@ enum PermissionCategory {
 
 ## 📝 API 엔드포인트
 
-| Method | Endpoint                        | 설명                         | 권한       |
-| ------ | ------------------------------- | ---------------------------- | ---------- |
-| GET    | `/permissions`                  | 권한 전체 조회               | JWT, Admin |
-| POST   | `/permissions`                  | 권한 생성                    | JWT, Admin |
-| PATCH  | `/permissions/:id`              | 권한 수정                    | JWT, Admin |
-| PATCH  | `/permissions/bulk/sort-order`  | 권한 일괄 정렬 순서 업데이트 | JWT, Admin |
-| DELETE | `/permissions/:id`              | 권한 삭제 (Soft)             | JWT, Admin |
-| DELETE | `/permissions/:id/hard`         | 권한 영구 삭제               | JWT, Admin |
-| POST   | `/permissions/:id/restore`      | 권한 복원                    | JWT, Admin |
+| Method | Endpoint                       | 설명                         | 권한       |
+| ------ | ------------------------------ | ---------------------------- | ---------- |
+| GET    | `/permissions`                 | 권한 전체 조회               | JWT, Admin |
+| POST   | `/permissions`                 | 권한 생성                    | JWT, Admin |
+| PATCH  | `/permissions/:id`             | 권한 수정                    | JWT, Admin |
+| PATCH  | `/permissions/bulk/sort-order` | 권한 일괄 정렬 순서 업데이트 | JWT, Admin |
+| DELETE | `/permissions/:id`             | 권한 삭제 (Soft)             | JWT, Admin |
+| DELETE | `/permissions/:id/hard`        | 권한 영구 삭제               | JWT, Admin |
+| POST   | `/permissions/:id/restore`     | 권한 복원                    | JWT, Admin |
 
 ---
 
@@ -236,26 +209,6 @@ enum PermissionCategory {
 - ⬜ 권한 CRUD 플로우
 - ⬜ Soft Delete 및 복원 플로우
 - ⬜ 운영자 권한 검증
-
----
-
-## 🔮 향후 계획
-
-1. **권한 시드 데이터 작성**
-   - 기본 권한 목록 정의
-   - 시드 스크립트 작성
-
-2. **역할-권한 매핑**
-   - 역할 생성 시 권한 할당
-   - 권한 변경 시 역할 업데이트
-
-3. **권한 검증 데코레이터**
-   - `@RequirePermissions(['group:read'])` 커스텀 데코레이터
-   - 자동 권한 체크
-
-4. **권한 관리 UI 연동**
-   - 프론트엔드 권한 관리 화면
-   - 역할별 권한 매트릭스
 
 ---
 

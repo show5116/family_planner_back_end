@@ -230,8 +230,48 @@ export class RemoveMemberResponseDto {
 }
 
 export class JoinGroupResponseDto {
-  @ApiProperty({ type: GroupDto })
-  data: GroupDto;
+  @ApiProperty({
+    example: '그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요.',
+    description:
+      '이메일 초대를 받은 경우: "그룹 가입이 완료되었습니다", 일반 요청: "그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요."',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: '가입 요청 ID (일반 요청인 경우만)',
+    example: 'uuid',
+    required: false,
+  })
+  joinRequestId?: string;
+
+  @ApiProperty({
+    description: '그룹명 (일반 요청인 경우만)',
+    example: '우리 가족',
+    required: false,
+  })
+  groupName?: string;
+
+  @ApiProperty({
+    description: '요청 상태 (일반 요청인 경우만)',
+    example: 'PENDING',
+    enum: ['PENDING', 'ACCEPTED', 'REJECTED'],
+    required: false,
+  })
+  status?: string;
+
+  @ApiProperty({
+    type: GroupMemberDto,
+    description: '생성된 멤버 정보 (이메일 초대받은 경우만)',
+    required: false,
+  })
+  member?: GroupMemberDto;
+
+  @ApiProperty({
+    type: GroupDto,
+    description: '그룹 정보 (이메일 초대받은 경우만)',
+    required: false,
+  })
+  group?: GroupDto;
 }
 
 export class TransferOwnershipResponseDto {
@@ -243,4 +283,82 @@ export class TransferOwnershipResponseDto {
 
   @ApiProperty({ type: GroupMemberDto })
   newOwner: GroupMemberDto;
+}
+
+export class InviteByEmailResponseDto {
+  @ApiProperty({ example: '초대 이메일이 발송되었습니다' })
+  message: string;
+
+  @ApiProperty({
+    description: '초대받은 사용자의 이메일',
+    example: 'user@example.com',
+  })
+  email: string;
+
+  @ApiProperty({ description: '그룹명', example: '우리 가족' })
+  groupName: string;
+
+  @ApiProperty({ description: '초대 코드', example: 'AbC123Xy' })
+  inviteCode: string;
+
+  @ApiProperty({
+    description: '초대 코드 만료 시간',
+    example: '2025-12-24T00:00:00Z',
+  })
+  inviteCodeExpiresAt: Date;
+
+  @ApiProperty({ description: '가입 요청 ID', example: 'uuid' })
+  joinRequestId: string;
+}
+
+export class GroupJoinRequestDto {
+  @ApiProperty({ description: '가입 요청 ID', example: 'uuid' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid' })
+  groupId: string;
+
+  @ApiProperty({
+    description: '요청 타입',
+    example: 'INVITE',
+    enum: ['REQUEST', 'INVITE'],
+  })
+  type: string;
+
+  @ApiProperty({
+    description: '이메일',
+    example: 'user@example.com',
+  })
+  email: string;
+
+  @ApiProperty({
+    description: '상태',
+    example: 'PENDING',
+    enum: ['PENDING', 'ACCEPTED', 'REJECTED'],
+  })
+  status: string;
+
+  @ApiProperty({ description: '생성일', example: '2025-12-04T00:00:00Z' })
+  createdAt: Date;
+
+  @ApiProperty({ description: '수정일', example: '2025-12-04T00:00:00Z' })
+  updatedAt: Date;
+}
+
+export class GetJoinRequestsResponseDto {
+  @ApiProperty({ type: [GroupJoinRequestDto] })
+  data: GroupJoinRequestDto[];
+}
+
+export class AcceptJoinRequestResponseDto {
+  @ApiProperty({ example: '가입 요청이 승인되었습니다' })
+  message: string;
+
+  @ApiProperty({ type: GroupMemberDto })
+  member: GroupMemberDto;
+}
+
+export class RejectJoinRequestResponseDto {
+  @ApiProperty({ example: '가입 요청이 거부되었습니다' })
+  message: string;
 }

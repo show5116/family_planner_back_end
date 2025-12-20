@@ -41,16 +41,6 @@
 - ✅ 8자리 랜덤 초대 코드 자동 생성 (영문 대소문자 + 숫자)
 - ✅ 초대 코드 중복 체크
 
-**Request Body**:
-
-```json
-{
-  "name": "우리 가족",
-  "description": "가족 그룹입니다",
-  "defaultColor": "#FF5733"
-}
-```
-
 **관련 파일**:
 
 - [src/group/group.controller.ts](../../src/group/group.controller.ts#L33-L39)
@@ -64,29 +54,6 @@
 - ✅ 개인 커스텀 색상 포함
 - ✅ 내 역할 정보 포함
 - ✅ 멤버 수 포함
-
-**Response**:
-
-```json
-[
-  {
-    "id": "uuid",
-    "name": "우리 가족",
-    "description": "가족 그룹",
-    "defaultColor": "#FF5733",
-    "inviteCode": "aBc12XyZ",
-    "myColor": "#00FF00",
-    "myRole": {
-      "id": "uuid",
-      "name": "OWNER",
-      "permissions": ["ALL"]
-    },
-    "_count": {
-      "members": 4
-    }
-  }
-]
-```
 
 **관련 파일**:
 
@@ -149,7 +116,9 @@
 - ✅ 8자리 영문(대소문자 구분) + 숫자 조합 코드
 - ✅ 사용자가 직접 코드 입력
 - ✅ 중복 가입 방지
-- ✅ 가입 시 is_default_role=true인 역할 자동 부여
+- ✅ **이메일 초대를 받은 경우**: INVITE 타입 요청이 있으면 즉시 승인 및 멤버 추가
+- ✅ **일반 가입 요청**: REQUEST 타입으로 GroupJoinRequest 생성 (PENDING 상태)
+- ✅ 일반 요청은 관리자(INVITE_MEMBER 권한)의 승인 필요
 
 **Request Body**:
 
@@ -159,9 +128,44 @@
 }
 ```
 
+**Response (이메일 초대받은 경우)**:
+
+```json
+{
+  "message": "그룹 가입이 완료되었습니다",
+  "member": {
+    "id": "uuid",
+    "groupId": "uuid",
+    "userId": "uuid",
+    "roleId": "uuid",
+    "role": { ... },
+    "user": { ... },
+    "customColor": null,
+    "joinedAt": "2025-12-04T00:00:00Z"
+  },
+  "group": {
+    "id": "uuid",
+    "name": "우리 가족",
+    "members": [ ... ]
+  }
+}
+```
+
+**Response (일반 요청)**:
+
+```json
+{
+  "message": "그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요.",
+  "joinRequestId": "uuid",
+  "groupName": "우리 가족",
+  "status": "PENDING"
+}
+```
+
 **관련 파일**:
 
-- [src/group/group.service.ts](../../src/group/group.service.ts#L326-L382)
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L59-L75)
+- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L105-L247)
 
 ---
 
@@ -171,28 +175,70 @@
 - ✅ 백엔드에서 중복 검사 후 고유 코드 생성
 - ✅ 보안을 위해 코드 재발급 가능
 
-**Response**:
-
-```json
-{
-  "inviteCode": "NewCode1"
-}
-```
-
 **관련 파일**:
 
 - [src/group/group.service.ts](../../src/group/group.service.ts#L564-L575)
 
 ---
 
-### ⬜ 이메일 초대 방식
+### ✅ 이메일 초대 방식
 
 #### 이메일로 초대 (`POST /groups/:id/invite-by-email`)
 
-- ⬜ 초대 권한이 있는 역할만 가능
-- ⬜ 초대할 사용자 이메일 입력
-- ⬜ 시스템에서 초대 이메일 자동 발송 (초대 코드 포함)
-- ⬜ 수신자는 이메일의 초대 코드로 가입
+- ✅ INVITE_MEMBER 권한 필요
+- ✅ 초대할 사용자 이메일 입력
+- ✅ 해당 이메일로 가입된 사용자 확인
+- ✅ 이미 그룹 멤버인지 확인
+- ✅ 초대 코드가 만료된 경우 자동으로 재생성
+- ✅ 시스템에서 초대 이메일 자동 발송 (초대 코드 포함)
+- ✅ 수신자는 이메일의 초대 코드로 가입
+
+**관련 파일**:
+
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L156-L183)
+- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L352-L447)
+- [src/email/email.service.ts](../../src/email/email.service.ts#L65-L91)
+
+---
+
+### ✅ 가입 요청 관리
+
+#### 가입 요청 목록 조회 (`GET /groups/:id/join-requests`)
+
+- ✅ INVITE_MEMBER 권한 필요
+- ✅ 그룹의 모든 가입 요청 조회
+- ✅ status 쿼리 파라미터로 필터링 가능 (PENDING, ACCEPTED, REJECTED)
+
+**관련 파일**:
+
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L207-L220)
+- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L219-L237)
+
+---
+
+#### 가입 요청 승인 (`POST /groups/:id/join-requests/:requestId/accept`)
+
+- ✅ INVITE_MEMBER 권한 필요
+- ✅ PENDING 상태의 가입 요청을 승인
+- ✅ 그룹 멤버로 자동 추가
+- ✅ 기본 역할 부여
+
+**관련 파일**:
+
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L222-L236)
+- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L239-L320)
+
+---
+
+#### 가입 요청 거부 (`POST /groups/:id/join-requests/:requestId/reject`)
+
+- ✅ INVITE_MEMBER 권한 필요
+- ✅ PENDING 상태의 가입 요청을 거부
+
+**관련 파일**:
+
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L238-L251)
+- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L322-L350)
 
 ---
 
@@ -217,14 +263,6 @@
 - ⬜ 그룹의 기본 색상 대신 개인이 설정한 색상 사용
 - ⬜ 미설정 시 그룹 기본 색상 사용
 
-**Request Body**:
-
-```json
-{
-  "customColor": "#00FF00"
-}
-```
-
 **관련 파일**:
 
 - [src/group/group.service.ts](../../src/group/group.service.ts#L580-L592)
@@ -237,14 +275,6 @@
 - ✅ 자신의 역할은 변경 불가
 - ✅ OWNER 역할은 양도만 가능 (변경 불가)
 - ✅ OWNER 역할로는 변경할 수 없음
-
-**Request Body**:
-
-```json
-{
-  "roleId": "new-role-uuid"
-}
-```
 
 **관련 파일**:
 
@@ -425,6 +455,40 @@ model Role {
 }
 ```
 
+### GroupJoinRequest 테이블
+
+```prisma
+model GroupJoinRequest {
+  id        String            @id @default(uuid())
+  groupId   String
+  group     Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  type      JoinRequestType   @default(REQUEST) // REQUEST: 사용자 요청, INVITE: 관리자 초대
+  email     String            @db.VarChar(255) // 초대 대상 이메일
+  status    JoinRequestStatus @default(PENDING) // PENDING, ACCEPTED, REJECTED
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([groupId])
+  @@index([email])
+  @@index([status])
+}
+```
+
+**Enum Types**:
+
+```prisma
+enum JoinRequestType {
+  REQUEST // 사용자가 초대 코드로 가입 요청
+  INVITE  // 관리자가 이메일로 초대
+}
+
+enum JoinRequestStatus {
+  PENDING  // 대기 중
+  ACCEPTED // 승인됨
+  REJECTED // 거부됨
+}
+```
+
 **관련 파일**:
 
 - [prisma/schema.prisma](../../prisma/schema.prisma)
@@ -458,20 +522,25 @@ private async checkPermissions(
 
 ### 그룹 관리
 
-| Method | Endpoint                           | 설명             | 권한                        |
-| ------ | ---------------------------------- | ---------------- | --------------------------- |
-| POST   | `/groups`                          | 그룹 생성        | JWT                         |
-| GET    | `/groups`                          | 내 그룹 목록     | JWT                         |
-| GET    | `/groups/:id`                      | 그룹 상세        | JWT, Member                 |
-| PATCH  | `/groups/:id`                      | 그룹 수정        | JWT, UPDATE                 |
-| DELETE | `/groups/:id`                      | 그룹 삭제        | JWT, DELETE                 |
-| POST   | `/groups/join`                     | 초대 코드로 가입 | JWT                         |
-| POST   | `/groups/:id/regenerate-code`      | 초대 코드 재생성 | JWT, REGENERATE_INVITE_CODE |
-| POST   | `/groups/:id/leave`                | 그룹 나가기      | JWT                         |
-| GET    | `/groups/:id/members`              | 멤버 목록        | JWT, Member                 |
-| PATCH  | `/groups/:id/members/:userId/role` | 멤버 역할 변경   | JWT, ASSIGN_ROLE            |
-| DELETE | `/groups/:id/members/:userId`      | 멤버 삭제        | JWT, REMOVE_MEMBER          |
-| PATCH  | `/groups/:id/my-color`             | 내 색상 설정     | JWT, Member                 |
+| Method | Endpoint                                      | 설명                | 권한               |
+| ------ | --------------------------------------------- | ------------------- | ------------------ |
+| POST   | `/groups`                                     | 그룹 생성           | JWT                |
+| GET    | `/groups`                                     | 내 그룹 목록        | JWT                |
+| GET    | `/groups/:id`                                 | 그룹 상세           | JWT, Member        |
+| PATCH  | `/groups/:id`                                 | 그룹 수정           | JWT, UPDATE        |
+| DELETE | `/groups/:id`                                 | 그룹 삭제           | JWT, DELETE        |
+| POST   | `/groups/join`                                | 초대 코드로 가입    | JWT                |
+| POST   | `/groups/:id/regenerate-code`                 | 초대 코드 재생성    | JWT, INVITE_MEMBER |
+| POST   | `/groups/:id/invite-by-email`                 | 이메일로 초대       | JWT, INVITE_MEMBER |
+| GET    | `/groups/:id/join-requests`                   | 가입 요청 목록 조회 | JWT, INVITE_MEMBER |
+| POST   | `/groups/:id/join-requests/:requestId/accept` | 가입 요청 승인      | JWT, INVITE_MEMBER |
+| POST   | `/groups/:id/join-requests/:requestId/reject` | 가입 요청 거부      | JWT, INVITE_MEMBER |
+| POST   | `/groups/:id/leave`                           | 그룹 나가기         | JWT                |
+| GET    | `/groups/:id/members`                         | 멤버 목록           | JWT, Member        |
+| PATCH  | `/groups/:id/members/:userId/role`            | 멤버 역할 변경      | JWT, MANAGE_MEMBER |
+| DELETE | `/groups/:id/members/:userId`                 | 멤버 삭제           | JWT, MANAGE_MEMBER |
+| PATCH  | `/groups/:id/my-color`                        | 내 색상 설정        | JWT, Member        |
+| POST   | `/groups/:id/transfer-ownership`              | OWNER 권한 양도     | JWT, OWNER         |
 
 ### 역할(Role) 관리
 
@@ -513,16 +582,6 @@ private async checkPermissions(
 - ⬜ 그룹 생성 및 가입 플로우
 - ⬜ 멤버 관리 플로우
 - ⬜ 권한 검증 플로우
-
----
-
-## 🔮 향후 활용
-
-- **일정 관리**: 그룹 멤버와 일정 공유, 그룹별 필터링
-- **ToDoList**: 그룹 내 할일 공유 및 협업, 역할별 권한 관리
-- **육아 포인트**: 부모-자녀 역할 기반 포인트 관리
-- **메모**: 그룹 멤버와 메모 공유, 역할별 접근 권한
-- **가계부**: 가족 그룹 내 가계부 공유, 역할별 조회/수정 권한
 
 ---
 

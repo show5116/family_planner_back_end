@@ -63,6 +63,34 @@ export class EmailService {
   }
 
   /**
+   * 그룹 초대 이메일 발송
+   */
+  async sendGroupInviteEmail(
+    to: string,
+    groupName: string,
+    inviterName: string,
+    inviteCode: string,
+  ) {
+    try {
+      await this.transporter.sendMail({
+        from: this.smtpFrom,
+        to,
+        subject: `[Family Planner] ${groupName} 그룹에 초대되었습니다`,
+        html: this.getGroupInviteEmailTemplate(
+          groupName,
+          inviterName,
+          inviteCode,
+        ),
+      });
+
+      this.logger.log(`Group invite email sent to: ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send group invite email to ${to}`, error);
+      throw new Error('이메일 전송에 실패했습니다');
+    }
+  }
+
+  /**
    * 이메일 인증 템플릿
    */
   private getVerificationEmailTemplate(userName: string, code: string): string {
@@ -273,6 +301,146 @@ export class EmailService {
             <div class="footer">
               <p>본 메일은 비밀번호 재설정 요청 시 자동으로 발송되는 메일입니다.</p>
               <p>만약 비밀번호 재설정을 요청하지 않으셨다면 이 메일을 무시해주세요.</p>
+              <p>&copy; 2025 Family Planner. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  /**
+   * 그룹 초대 이메일 템플릿
+   */
+  private getGroupInviteEmailTemplate(
+    groupName: string,
+    inviterName: string,
+    inviteCode: string,
+  ): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: 'Arial', sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .container {
+              background-color: #f9f9f9;
+              border-radius: 10px;
+              padding: 30px;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .header h1 {
+              color: #6366F1;
+              margin: 0;
+            }
+            .content {
+              background-color: white;
+              padding: 25px;
+              border-radius: 8px;
+            }
+            .invite-box {
+              background-color: #f0f0ff;
+              border: 2px solid #6366F1;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 25px 0;
+              text-align: center;
+            }
+            .group-name {
+              font-size: 24px;
+              font-weight: bold;
+              color: #6366F1;
+              margin: 10px 0;
+            }
+            .code-box {
+              background-color: #fff;
+              border: 2px dashed #6366F1;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 25px 0;
+              text-align: center;
+            }
+            .code {
+              font-size: 32px;
+              font-weight: bold;
+              color: #6366F1;
+              letter-spacing: 4px;
+              font-family: 'Courier New', monospace;
+            }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
+            }
+            .info {
+              background-color: #e8f5e9;
+              border-left: 4px solid #4CAF50;
+              padding: 15px;
+              margin-top: 20px;
+              border-radius: 4px;
+            }
+            .steps {
+              margin: 20px 0;
+              padding-left: 20px;
+            }
+            .steps li {
+              margin: 10px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Family Planner</h1>
+              <p>그룹 초대</p>
+            </div>
+
+            <div class="content">
+              <h2>그룹 초대장이 도착했습니다!</h2>
+              <p><strong>${inviterName}</strong>님이 회원님을 그룹에 초대하였습니다.</p>
+
+              <div class="invite-box">
+                <div style="font-size: 14px; color: #666;">초대받은 그룹</div>
+                <div class="group-name">${groupName}</div>
+              </div>
+
+              <p>아래 초대 코드를 사용하여 그룹에 가입하실 수 있습니다.</p>
+
+              <div class="code-box">
+                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">초대 코드</div>
+                <div class="code">${inviteCode}</div>
+              </div>
+
+              <div class="info">
+                <strong>가입 방법:</strong>
+                <ol class="steps">
+                  <li>Family Planner 앱 또는 웹사이트에 로그인</li>
+                  <li>그룹 가입 메뉴 선택</li>
+                  <li>위의 초대 코드 입력</li>
+                </ol>
+              </div>
+
+              <p style="text-align: center; color: #666; margin-top: 20px;">
+                초대 코드는 7일간 유효합니다.
+              </p>
+            </div>
+
+            <div class="footer">
+              <p>본 메일은 그룹 초대 시 자동으로 발송되는 메일입니다.</p>
+              <p>만약 그룹 가입을 원하지 않으시면 이 메일을 무시해주세요.</p>
               <p>&copy; 2025 Family Planner. All rights reserved.</p>
             </div>
           </div>

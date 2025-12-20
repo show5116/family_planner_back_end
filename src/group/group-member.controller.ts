@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { GroupMemberService } from '@/group/group-member.service';
@@ -16,14 +17,19 @@ import { UpdateMemberRoleDto } from '@/group/dto/update-member-role.dto';
 import { UpdateMyColorDto } from '@/group/dto/update-my-color.dto';
 import { TransferOwnershipDto } from '@/group/dto/transfer-ownership.dto';
 import { JoinGroupDto } from '@/group/dto/join-group.dto';
+import { InviteByEmailDto } from '@/group/dto/invite-by-email.dto';
 import {
-  GroupDto,
   GroupMemberDto,
   LeaveGroupResponseDto,
   UpdateMyColorResponseDto,
   RemoveMemberResponseDto,
   InviteCodeResponseDto,
   TransferOwnershipResponseDto,
+  InviteByEmailResponseDto,
+  GroupJoinRequestDto,
+  AcceptJoinRequestResponseDto,
+  RejectJoinRequestResponseDto,
+  JoinGroupResponseDto,
 } from '@/group/dto/group-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
@@ -51,10 +57,16 @@ export class GroupMemberController {
   ) {}
 
   @Post('join')
-  @ApiOperation({ summary: '초대 코드로 그룹 가입' })
-  @ApiCreated(GroupDto, '그룹 가입 성공')
-  @ApiNotFound('유효하지 않은 초대 코드')
-  @ApiConflict('이미 그룹 멤버임')
+  @ApiOperation({
+    summary: '초대 코드로 그룹 가입',
+    description:
+      '초대 코드를 입력하여 그룹에 가입합니다.\n\n' +
+      '**이메일 초대를 받은 경우**: 즉시 그룹 멤버로 추가됩니다.\n' +
+      '**일반 가입 요청**: 관리자(INVITE_MEMBER 권한)의 승인이 필요합니다.',
+  })
+  @ApiCreated(JoinGroupResponseDto, '그룹 가입 성공 또는 가입 요청 성공')
+  @ApiNotFound('유효하지 않은 초대 코드 또는 만료된 초대 코드')
+  @ApiConflict('이미 그룹 멤버이거나 가입 요청이 대기 중')
   joinByInviteCode(@Request() req, @Body() joinGroupDto: JoinGroupDto) {
     return this.groupInviteService.joinByInviteCode(
       req.user.userId,
@@ -151,6 +163,31 @@ export class GroupMemberController {
     return this.groupInviteService.regenerateInviteCode(id);
   }
 
+  @Post(':id/invite-by-email')
+  @UseGuards(GroupPermissionGuard)
+  @RequirePermission(PermissionCode.INVITE_MEMBER)
+  @ApiOperation({
+    summary: '이메일로 그룹 초대 (INVITE_MEMBER 권한 필요)',
+    description:
+      '초대할 사용자의 이메일로 초대 코드가 포함된 이메일을 발송합니다. 해당 이메일로 가입된 사용자가 있어야 합니다.',
+  })
+  @ApiSuccess(InviteByEmailResponseDto, '초대 이메일 발송 성공')
+  @ApiBadRequest('해당 이메일로 가입된 사용자가 없음')
+  @ApiConflict('이미 그룹 멤버임')
+  @ApiForbidden('권한 없음')
+  @ApiNotFound('그룹을 찾을 수 없음')
+  inviteByEmail(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() inviteByEmailDto: InviteByEmailDto,
+  ) {
+    return this.groupInviteService.inviteByEmail(
+      id,
+      req.user.userId,
+      inviteByEmailDto.email,
+    );
+  }
+
   @Post(':id/transfer-ownership')
   @ApiOperation({
     summary: 'OWNER 권한 양도 (현재 OWNER만 가능)',
@@ -171,5 +208,58 @@ export class GroupMemberController {
       req.user.userId,
       transferOwnershipDto.newOwnerId,
     );
+  }
+
+  @Get(':id/join-requests')
+  @UseGuards(GroupPermissionGuard)
+  @RequirePermission(PermissionCode.INVITE_MEMBER)
+  @ApiOperation({
+    summary: '그룹 가입 요청 목록 조회 (INVITE_MEMBER 권한 필요)',
+    description:
+      'status 쿼리 파라미터로 필터링 가능 (PENDING, ACCEPTED, REJECTED)',
+  })
+  @ApiSuccess(GroupJoinRequestDto, '가입 요청 목록 조회 성공', {
+    isArray: true,
+  })
+  @ApiForbidden('권한 없음')
+  getJoinRequests(@Param('id') id: string, @Query('status') status?: string) {
+    return this.groupInviteService.getJoinRequests(id, status);
+  }
+
+  @Post(':id/join-requests/:requestId/accept')
+  @UseGuards(GroupPermissionGuard)
+  @RequirePermission(PermissionCode.INVITE_MEMBER)
+  @ApiOperation({
+    summary: '가입 요청 승인 (INVITE_MEMBER 권한 필요)',
+    description: 'PENDING 상태의 가입 요청을 승인하고 그룹 멤버로 추가',
+  })
+  @ApiSuccess(AcceptJoinRequestResponseDto, '가입 요청 승인 성공')
+  @ApiBadRequest('해당 이메일로 가입된 사용자가 없음')
+  @ApiConflict('이미 처리된 요청 또는 이미 그룹 멤버임')
+  @ApiForbidden('권한 없음')
+  @ApiNotFound('가입 요청을 찾을 수 없음')
+  acceptJoinRequest(
+    @Param('id') id: string,
+    @Param('requestId') requestId: string,
+  ) {
+    return this.groupInviteService.acceptJoinRequest(id, requestId);
+  }
+
+  @Post(':id/join-requests/:requestId/reject')
+  @UseGuards(GroupPermissionGuard)
+  @RequirePermission(PermissionCode.INVITE_MEMBER)
+  @ApiOperation({
+    summary: '가입 요청 거부 (INVITE_MEMBER 권한 필요)',
+    description: 'PENDING 상태의 가입 요청을 거부',
+  })
+  @ApiSuccess(RejectJoinRequestResponseDto, '가입 요청 거부 성공')
+  @ApiConflict('이미 처리된 요청')
+  @ApiForbidden('권한 없음')
+  @ApiNotFound('가입 요청을 찾을 수 없음')
+  rejectJoinRequest(
+    @Param('id') id: string,
+    @Param('requestId') requestId: string,
+  ) {
+    return this.groupInviteService.rejectJoinRequest(id, requestId);
   }
 }

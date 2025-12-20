@@ -15,12 +15,14 @@
 ## ⬜ 메모 등록
 
 ### 메모 정보
+
 - 제목
 - 본문 (Markdown/HTML)
 - 카테고리
 - 태그
 
 ### 에디터 지원
+
 - Markdown 에디터
 - HTML WYSIWYG 에디터
 - 코드 하이라이팅
@@ -31,11 +33,13 @@
 ## ⬜ 메모 공유
 
 ### 공유 대상
+
 - 본인만 보기
 - 그룹 전체 공유
 - 특정 멤버 선택 공유
 
 ### 권한 설정
+
 - 조회만 가능
 - 수정 가능
 - 댓글 작성 가능
@@ -45,6 +49,7 @@
 ## ⬜ 카테고리 및 태그
 
 ### 카테고리
+
 - 개인 메모
 - 회의록
 - 레시피
@@ -52,6 +57,7 @@
 - 기타
 
 ### 태그
+
 - 자유 태그 입력
 - 태그 검색
 - 태그별 필터링
@@ -130,17 +136,17 @@ model MemoAttachment {
 
 ## 📝 API 엔드포인트 (예상)
 
-| Method | Endpoint | 설명 | 권한 |
-|--------|----------|------|------|
-| POST | `/memos` | 메모 생성 | JWT |
-| GET | `/memos` | 메모 목록 | JWT |
-| GET | `/memos/:id` | 메모 상세 | JWT |
-| PATCH | `/memos/:id` | 메모 수정 | JWT, Owner or CanEdit |
-| DELETE | `/memos/:id` | 메모 삭제 | JWT, Owner |
-| POST | `/memos/:id/participants` | 참여자 추가 | JWT, Owner |
-| DELETE | `/memos/:id/participants/:userId` | 참여자 제거 | JWT, Owner |
-| POST | `/memos/:id/tags` | 태그 추가 | JWT, Owner or CanEdit |
-| POST | `/memos/:id/attachments` | 첨부파일 추가 | JWT, Owner or CanEdit |
+| Method | Endpoint                               | 설명          | 권한                  |
+| ------ | -------------------------------------- | ------------- | --------------------- |
+| POST   | `/memos`                               | 메모 생성     | JWT                   |
+| GET    | `/memos`                               | 메모 목록     | JWT                   |
+| GET    | `/memos/:id`                           | 메모 상세     | JWT                   |
+| PATCH  | `/memos/:id`                           | 메모 수정     | JWT, Owner or CanEdit |
+| DELETE | `/memos/:id`                           | 메모 삭제     | JWT, Owner            |
+| POST   | `/memos/:id/participants`              | 참여자 추가   | JWT, Owner            |
+| DELETE | `/memos/:id/participants/:userId`      | 참여자 제거   | JWT, Owner            |
+| POST   | `/memos/:id/tags`                      | 태그 추가     | JWT, Owner or CanEdit |
+| POST   | `/memos/:id/attachments`               | 첨부파일 추가 | JWT, Owner or CanEdit |
 | DELETE | `/memos/:id/attachments/:attachmentId` | 첨부파일 삭제 | JWT, Owner or CanEdit |
 
 ---
