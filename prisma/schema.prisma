@@ -107,7 +107,7 @@ model Group {
   joinRequests        GroupJoinRequest[] // 그룹 가입 요청들
 
   @@index([inviteCode])
-  @@map("groups")
+  @@map("member_groups")
 }
 
 // 역할 테이블 (공통 역할 + 그룹별 커스텀 역할)
