@@ -565,6 +565,75 @@ PENDING 상태의 가입 요청을 거부
 
 ---
 
+### DELETE `groups/:id/invites/:requestId`
+
+**요약:** 초대 취소 (INVITE_MEMBER 권한 필요)
+
+**설명:**
+INVITE 타입의 PENDING 상태 초대를 취소합니다
+
+**인증/권한:**
+
+- GroupPermissionGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `requestId` (`string`)
+
+**Responses:**
+
+#### 200 - 초대 취소 성공
+
+```json
+{
+  "message": "초대가 취소되었습니다" // string
+}
+```
+
+#### 403 - 권한 없음
+
+#### 404 - 초대 요청을 찾을 수 없음
+
+---
+
+### POST `groups/:id/invites/:requestId/resend`
+
+**요약:** 초대 재전송 (INVITE_MEMBER 권한 필요)
+
+**설명:**
+INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
+
+**인증/권한:**
+
+- GroupPermissionGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `requestId` (`string`)
+
+**Responses:**
+
+#### 200 - 초대 이메일 재전송 성공
+
+```json
+{
+  "message": "초대 이메일이 재전송되었습니다", // string
+  "email": "user@example.com", // 초대받은 사용자의 이메일 (string)
+  "groupName": "우리 가족", // 그룹명 (string)
+  "inviteCode": "AbC123Xy", // 초대 코드 (string)
+  "inviteCodeExpiresAt": "2025-12-24T00:00:00Z", // 초대 코드 만료 시간 (Date)
+  "joinRequestId": "uuid" // 가입 요청 ID (string)
+}
+```
+
+#### 403 - 권한 없음
+
+#### 404 - 초대 요청을 찾을 수 없음
+
+---
+
 ## 그룹 역할
 
 **Base Path:** `/groups`

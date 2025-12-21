@@ -30,6 +30,8 @@ import {
   AcceptJoinRequestResponseDto,
   RejectJoinRequestResponseDto,
   JoinGroupResponseDto,
+  CancelInviteResponseDto,
+  ResendInviteResponseDto,
 } from '@/group/dto/group-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
@@ -261,5 +263,41 @@ export class GroupMemberController {
     @Param('requestId') requestId: string,
   ) {
     return this.groupInviteService.rejectJoinRequest(id, requestId);
+  }
+
+  @Delete(':id/invites/:requestId')
+  @UseGuards(GroupPermissionGuard)
+  @RequirePermission(PermissionCode.INVITE_MEMBER)
+  @ApiOperation({
+    summary: '초대 취소 (INVITE_MEMBER 권한 필요)',
+    description: 'INVITE 타입의 PENDING 상태 초대를 취소합니다',
+  })
+  @ApiSuccess(CancelInviteResponseDto, '초대 취소 성공')
+  @ApiBadRequest('INVITE 타입의 요청만 취소 가능')
+  @ApiConflict('대기 중인 초대만 취소 가능')
+  @ApiForbidden('권한 없음')
+  @ApiNotFound('초대 요청을 찾을 수 없음')
+  cancelInvite(@Param('id') id: string, @Param('requestId') requestId: string) {
+    return this.groupInviteService.cancelInvite(id, requestId);
+  }
+
+  @Post(':id/invites/:requestId/resend')
+  @UseGuards(GroupPermissionGuard)
+  @RequirePermission(PermissionCode.INVITE_MEMBER)
+  @ApiOperation({
+    summary: '초대 재전송 (INVITE_MEMBER 권한 필요)',
+    description: 'INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다',
+  })
+  @ApiSuccess(ResendInviteResponseDto, '초대 이메일 재전송 성공')
+  @ApiBadRequest('INVITE 타입의 요청만 재전송 가능')
+  @ApiConflict('대기 중인 초대만 재전송 가능')
+  @ApiForbidden('권한 없음')
+  @ApiNotFound('초대 요청을 찾을 수 없음')
+  resendInvite(
+    @Param('id') id: string,
+    @Param('requestId') requestId: string,
+    @Request() req,
+  ) {
+    return this.groupInviteService.resendInvite(id, requestId, req.user.userId);
   }
 }

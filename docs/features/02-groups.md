@@ -195,9 +195,36 @@
 
 **관련 파일**:
 
-- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L156-L183)
-- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L352-L447)
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L166-L189)
+- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L435-L511)
 - [src/email/email.service.ts](../../src/email/email.service.ts#L65-L91)
+
+---
+
+#### 초대 취소 (`DELETE /groups/:id/invites/:requestId`)
+
+- ✅ INVITE_MEMBER 권한 필요
+- ✅ INVITE 타입의 PENDING 상태 초대만 취소 가능
+- ✅ 초대 요청 삭제
+
+**관련 파일**:
+
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L268-L282)
+- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L513-L548)
+
+---
+
+#### 초대 재전송 (`POST /groups/:id/invites/:requestId/resend`)
+
+- ✅ INVITE_MEMBER 권한 필요
+- ✅ INVITE 타입의 PENDING 상태 초대만 재전송 가능
+- ✅ 초대 코드가 만료된 경우 자동으로 재생성
+- ✅ 초대 이메일 재발송
+
+**관련 파일**:
+
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L284-L302)
+- [src/group/group-invite.service.ts](../../src/group/group-invite.service.ts#L550-L620)
 
 ---
 
@@ -532,6 +559,8 @@ private async checkPermissions(
 | POST   | `/groups/join`                                | 초대 코드로 가입    | JWT                |
 | POST   | `/groups/:id/regenerate-code`                 | 초대 코드 재생성    | JWT, INVITE_MEMBER |
 | POST   | `/groups/:id/invite-by-email`                 | 이메일로 초대       | JWT, INVITE_MEMBER |
+| DELETE | `/groups/:id/invites/:requestId`              | 초대 취소           | JWT, INVITE_MEMBER |
+| POST   | `/groups/:id/invites/:requestId/resend`       | 초대 재전송         | JWT, INVITE_MEMBER |
 | GET    | `/groups/:id/join-requests`                   | 가입 요청 목록 조회 | JWT, INVITE_MEMBER |
 | POST   | `/groups/:id/join-requests/:requestId/accept` | 가입 요청 승인      | JWT, INVITE_MEMBER |
 | POST   | `/groups/:id/join-requests/:requestId/reject` | 가입 요청 거부      | JWT, INVITE_MEMBER |

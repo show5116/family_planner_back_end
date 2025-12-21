@@ -509,4 +509,111 @@ export class GroupInviteService {
       joinRequestId: joinRequest.id,
     };
   }
+
+  /**
+   * 초대 취소 (INVITE_MEMBER 권한 필요)
+   * INVITE 타입의 PENDING 상태 요청만 취소 가능
+   */
+  async cancelInvite(groupId: string, requestId: string) {
+    const joinRequest = await this.prisma.groupJoinRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!joinRequest) {
+      throw new NotFoundException('초대 요청을 찾을 수 없습니다');
+    }
+
+    if (joinRequest.groupId !== groupId) {
+      throw new NotFoundException('해당 그룹의 초대 요청이 아닙니다');
+    }
+
+    if (joinRequest.type !== 'INVITE') {
+      throw new BadRequestException('INVITE 타입의 요청만 취소할 수 있습니다');
+    }
+
+    if (joinRequest.status !== 'PENDING') {
+      throw new ConflictException('대기 중인 초대만 취소할 수 있습니다');
+    }
+
+    // 초대 요청 삭제
+    await this.prisma.groupJoinRequest.delete({
+      where: { id: requestId },
+    });
+
+    return {
+      message: '초대가 취소되었습니다',
+    };
+  }
+
+  /**
+   * 초대 재전송 (INVITE_MEMBER 권한 필요)
+   * INVITE 타입의 PENDING 상태 요청에 대해 이메일 재전송
+   */
+  async resendInvite(
+    groupId: string,
+    requestId: string,
+    inviterUserId: string,
+  ) {
+    const joinRequest = await this.prisma.groupJoinRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!joinRequest) {
+      throw new NotFoundException('초대 요청을 찾을 수 없습니다');
+    }
+
+    if (joinRequest.groupId !== groupId) {
+      throw new NotFoundException('해당 그룹의 초대 요청이 아닙니다');
+    }
+
+    if (joinRequest.type !== 'INVITE') {
+      throw new BadRequestException(
+        'INVITE 타입의 요청만 재전송할 수 있습니다',
+      );
+    }
+
+    if (joinRequest.status !== 'PENDING') {
+      throw new ConflictException('대기 중인 초대만 재전송할 수 있습니다');
+    }
+
+    // 그룹 조회
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      select: { id: true, name: true },
+    });
+
+    if (!group) {
+      throw new NotFoundException('그룹을 찾을 수 없습니다');
+    }
+
+    // 초대하는 사용자 정보 조회
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: inviterUserId },
+    });
+
+    if (!inviter) {
+      throw new NotFoundException('초대자를 찾을 수 없습니다');
+    }
+
+    // 초대 코드 유효성 확인 및 재생성 (만료된 경우)
+    const { inviteCode, inviteCodeExpiresAt } =
+      await this.ensureValidInviteCode(groupId);
+
+    // 초대 이메일 재발송
+    await this.emailService.sendGroupInviteEmail(
+      joinRequest.email,
+      group.name,
+      inviter.name,
+      inviteCode,
+    );
+
+    return {
+      message: '초대 이메일이 재전송되었습니다',
+      email: joinRequest.email,
+      groupName: group.name,
+      inviteCode,
+      inviteCodeExpiresAt,
+      joinRequestId: joinRequest.id,
+    };
+  }
 }
