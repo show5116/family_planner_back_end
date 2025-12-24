@@ -1,8 +1,7 @@
 # Family Planner Backend - TODO
 
-### 전체 로드맵 및 진행 상황
+### 전체 로드맵
 - **[ROADMAP.md](ROADMAP.md)** - 전체 프로젝트 로드맵 및 Phase별 계획
-- **[STATUS.md](STATUS.md)** - 현재 개발 진행 상황 및 최근 작업 내역
 
 ### 기능별 상세 문서
 각 기능의 요구사항, 진행 상황, API 명세, 데이터베이스 스키마 등은 다음 문서에서 관리합니다:
@@ -10,8 +9,8 @@
 | 상태 | 기능 | 문서 | Phase |
 |------|------|------|-------|
 | ✅ | 인증/인가 | [01-auth.md](docs/features/01-auth.md) | Phase 1 |
-| 🟨 | 그룹 관리 | [02-groups.md](docs/features/02-groups.md) | Phase 2 |
-| 🟨 | 권한 관리 | [03-permissions.md](docs/features/03-permissions.md) | Phase 2 |
+| ✅ | 그룹 관리 | [02-groups.md](docs/features/02-groups.md) | Phase 2 |
+| ✅ | 권한 관리 | [03-permissions.md](docs/features/03-permissions.md) | Phase 2 |
 | ⬜ | 자산 관리 | [04-assets.md](docs/features/04-assets.md) | Phase 3 |
 | ⬜ | 가계부 관리 | [05-household.md](docs/features/05-household.md) | Phase 3 |
 | ⬜ | 일정 관리 | [06-schedule.md](docs/features/06-schedule.md) | Phase 4 |
@@ -25,8 +24,7 @@
 
 ### 빠른 시작
 1. **전체 그림 파악**: [ROADMAP.md](ROADMAP.md) 확인
-2. **현재 상황 확인**: [STATUS.md](STATUS.md) 확인
-3. **특정 기능 작업**: [docs/features/](docs/features/) 해당 문서 확인
+2. **특정 기능 작업**: [docs/features/](docs/features/) 해당 문서 확인
 
 ### 개발 워크플로우
 ```
@@ -37,13 +35,13 @@
   → Swagger 문서화
   → 테스트 작성
   → 기능 문서 상태 업데이트
-  → STATUS.md 업데이트
+  → ROADMAP.md 진행률 업데이트
 ```
 
 ### 문서 업데이트 규칙
 - 새로운 API 추가 시: 해당 기능 문서의 "API 엔드포인트" 섹션 업데이트
 - 데이터베이스 스키마 변경 시: 해당 기능 문서의 "데이터베이스 스키마" 섹션 업데이트
-- 기능 완료 시: STATUS.md의 "최근 완료된 작업" 섹션 업데이트
+- 기능 완료 시: 기능 문서 상태를 ✅로 업데이트하고 "구현 완료 요약" 섹션 작성
 - Phase 진행 시: ROADMAP.md의 진행률 업데이트
 
 자세한 내용은 [CLAUDE.md](CLAUDE.md)를 참고하세요.
@@ -109,24 +107,22 @@ npm run start:dev
 
 ### Phase별 진행 상황
 - ✅ **Phase 1 (기반 구축)**: 100% 완료
-- 🟨 **Phase 2 (핵심 기능)**: 60% 진행 중
+- ✅ **Phase 2 (핵심 기능)**: 100% 완료
 - ⬜ **Phase 3 (데이터 관리)**: 시작 안함
 - ⬜ **Phase 4 (협업 기능)**: 시작 안함
 - ⬜ **Phase 5 (특화 기능)**: 시작 안함
 - ⬜ **Phase 6 (최적화/배포)**: 시작 안함
 
+### Phase 2 완료 내역 (2025-12-24)
+- ✅ 그룹 관리 시스템 전체 완료
+- ✅ 권한 관리 시스템 전체 완료
+- ✅ 역할 기반 접근 제어 (RBAC) 구현 완료
+- ✅ 이메일 초대 시스템 완료
+
 ### 현재 우선순위
-1. 🔥 **High**: 그룹 역할/권한 시스템 완성
-2. 📌 **Medium**: 자산/가계부 API 설계
-3. 💡 **Low**: 최적화 및 테스트 보완
-
----
-
-## 🐛 알려진 이슈
-
-현재 알려진 이슈 없음
-
-이슈 발견 시 [STATUS.md](STATUS.md)의 "알려진 이슈" 섹션에 기록해주세요.
+1. 🔥 **High**: Phase 3 - 자산/가계부 API 설계 및 구현
+2. 📌 **Medium**: 테스트 코드 작성 (Phase 1-2 기능)
+3. 💡 **Low**: 최적화 및 성능 개선
 
 ---
 
@@ -144,4 +140,4 @@ npm run start:dev
 
 **상태 아이콘**: ⬜ 시작 안함 | 🟨 진행 중 | ✅ 완료 | ⏸️ 보류 | ❌ 취소
 
-**Last Updated**: 2025-12-04
+**Last Updated**: 2025-12-24

@@ -1,6 +1,6 @@
 # 02. 그룹 관리 (Groups Management)
 
-> **상태**: 🟨 진행 중
+> **상태**: ✅ 완료
 > **우선순위**: High
 > **담당 Phase**: Phase 2
 
@@ -99,11 +99,16 @@
 
 ---
 
-### ⬜ 그룹장 양도 (`POST /groups/:id/transfer-ownership`)
+### ✅ 그룹장 양도 (`POST /groups/:id/transfer-ownership`)
 
-- ⬜ 현재 OWNER만 가능
-- ⬜ 다른 멤버에게 OWNER 역할 이전
-- ⬜ 기존 OWNER는 다른 역할로 변경
+- ✅ 현재 OWNER만 가능
+- ✅ 다른 멤버에게 OWNER 역할 이전
+- ✅ 기존 OWNER는 ADMIN 역할로 자동 변경
+
+**관련 파일**:
+
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L193-L214)
+- [src/group/group-member.service.ts](../../src/group/group-member.service.ts#L298-L363)
 
 ---
 
@@ -119,48 +124,6 @@
 - ✅ **이메일 초대를 받은 경우**: INVITE 타입 요청이 있으면 즉시 승인 및 멤버 추가
 - ✅ **일반 가입 요청**: REQUEST 타입으로 GroupJoinRequest 생성 (PENDING 상태)
 - ✅ 일반 요청은 관리자(INVITE_MEMBER 권한)의 승인 필요
-
-**Request Body**:
-
-```json
-{
-  "inviteCode": "aBc12XyZ"
-}
-```
-
-**Response (이메일 초대받은 경우)**:
-
-```json
-{
-  "message": "그룹 가입이 완료되었습니다",
-  "member": {
-    "id": "uuid",
-    "groupId": "uuid",
-    "userId": "uuid",
-    "roleId": "uuid",
-    "role": { ... },
-    "user": { ... },
-    "customColor": null,
-    "joinedAt": "2025-12-04T00:00:00Z"
-  },
-  "group": {
-    "id": "uuid",
-    "name": "우리 가족",
-    "members": [ ... ]
-  }
-}
-```
-
-**Response (일반 요청)**:
-
-```json
-{
-  "message": "그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요.",
-  "joinRequestId": "uuid",
-  "groupName": "우리 가족",
-  "status": "PENDING"
-}
-```
 
 **관련 파일**:
 
@@ -284,15 +247,16 @@
 
 ---
 
-### ⬜ 개인 그룹 색상 설정 (`PATCH /groups/:id/my-color`)
+### ✅ 개인 그룹 색상 설정 (`PATCH /groups/:id/my-color`)
 
-- 🟨 멤버십 확인 (완료)
-- ⬜ 그룹의 기본 색상 대신 개인이 설정한 색상 사용
-- ⬜ 미설정 시 그룹 기본 색상 사용
+- ✅ 멤버십 확인
+- ✅ 그룹의 기본 색상 대신 개인이 설정한 색상 사용
+- ✅ 미설정 시 그룹 기본 색상 사용
 
 **관련 파일**:
 
-- [src/group/group.service.ts](../../src/group/group.service.ts#L580-L592)
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts#L119-L134)
+- [src/group/group-member.service.ts](../../src/group/group-member.service.ts)
 
 ---
 
@@ -602,15 +566,48 @@ private async checkPermissions(
 
 ### 단위 테스트
 
-- ⬜ GroupService 테스트
-- ⬜ GroupController 테스트
-- ⬜ 권한 체크 로직 테스트
+- ⬜ GroupService 테스트 (TODO)
+- ⬜ GroupMemberService 테스트 (TODO)
+- ⬜ GroupInviteService 테스트 (TODO)
+- ⬜ GroupController 테스트 (TODO)
+- ⬜ 권한 체크 로직 테스트 (TODO)
 
 ### E2E 테스트
 
-- ⬜ 그룹 생성 및 가입 플로우
-- ⬜ 멤버 관리 플로우
-- ⬜ 권한 검증 플로우
+- ⬜ 그룹 생성 및 가입 플로우 (TODO)
+- ⬜ 초대 시스템 플로우 (TODO)
+- ⬜ 멤버 관리 플로우 (TODO)
+- ⬜ 역할 관리 플로우 (TODO)
+- ⬜ 권한 검증 플로우 (TODO)
+
+---
+
+## 🎯 구현 완료 요약
+
+### ✅ 완료된 핵심 기능
+
+1. **그룹 CRUD**: 생성, 조회, 수정, 삭제
+2. **초대 시스템**:
+   - 초대 코드 방식 (8자리 랜덤 코드)
+   - 이메일 초대 방식 (초대 이메일 발송)
+   - 초대 취소 및 재전송
+   - 초대 코드 재생성
+3. **가입 요청 관리**: 요청 조회, 승인, 거부
+4. **멤버 관리**: 목록 조회, 역할 변경, 멤버 삭제, 그룹 나가기
+5. **그룹장 양도**: OWNER 권한 이전
+6. **개인 색상 설정**: 그룹별 커스텀 색상
+7. **역할 체계**:
+   - 공통 역할 (운영자 전용 CRUD)
+   - 그룹별 커스텀 역할 (OWNER 전용 CRUD)
+8. **권한 시스템**:
+   - Guard 기반 권한 검증 (GroupPermissionGuard, GroupOwnerGuard, GroupMembershipGuard)
+   - PermissionCode enum으로 타입 안전한 권한 관리
+
+### ⬜ 향후 개선 사항
+
+1. **테스트 코드 작성**: 단위 테스트 및 E2E 테스트
+2. **그룹 통계**: 활동 통계, 멤버 활동 내역
+3. **그룹 설정**: 공개/비공개 설정, 가입 승인 방식 설정
 
 ---
 
@@ -621,4 +618,4 @@ private async checkPermissions(
 
 ---
 
-**Last Updated**: 2025-12-04
+**Last Updated**: 2025-12-24

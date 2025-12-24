@@ -1,6 +1,6 @@
 # 03. 권한 관리 (Permissions Management)
 
-> **상태**: 🟨 진행 중
+> **상태**: ✅ 완료
 > **우선순위**: High
 > **담당 Phase**: Phase 2
 
@@ -101,19 +101,44 @@
 
 ---
 
-## ⬜ 그룹별 권한 적용
+## ✅ 그룹별 권한 적용
 
 ### 역할에 권한 할당
 
-- ⬜ 역할 생성 시 권한 배열 지정
-- ⬜ 권한 코드 배열로 관리
-- ⬜ 예: `["group:read", "group:update", "member:read"]`
+- ✅ 역할 생성 시 권한 배열 지정 (`PermissionCode[]`)
+- ✅ 권한 코드 enum으로 타입 안전하게 관리
+- ✅ 예: `[INVITE_MEMBER, UPDATE_GROUP, MANAGE_ROLE]`
+
+**관련 파일**:
+
+- [prisma/schema.prisma](../../prisma/schema.prisma) - Role 모델의 permissions 필드
 
 ### 권한 검증
 
-- ⬜ 각 API 엔드포인트에서 필요한 권한 체크
-- ⬜ 사용자의 역할에서 권한 추출
-- ⬜ 권한 없으면 `ForbiddenException` 발생
+- ✅ `GroupPermissionGuard` 구현
+- ✅ `@RequirePermission` 데코레이터로 필요한 권한 지정
+- ✅ 사용자의 역할에서 권한 추출 및 검증
+- ✅ 권한 없으면 `ForbiddenException` 발생
+
+**관련 파일**:
+
+- [src/group/guards/group-permission.guard.ts](../../src/group/guards/group-permission.guard.ts) - 권한 검증 가드
+- [src/group/guards/index.ts](../../src/group/guards/index.ts) - Guards 내보내기
+
+**사용 예시**:
+
+```typescript
+@UseGuards(JwtAuthGuard, GroupPermissionGuard)
+@RequirePermission(PermissionCode.INVITE_MEMBER)
+@Post(':groupId/members/invite')
+async inviteByEmail(...) { ... }
+```
+
+**실제 적용 사례**:
+
+- [src/group/group.controller.ts](../../src/group/group.controller.ts) - 그룹 수정/삭제
+- [src/group/group-member.controller.ts](../../src/group/group-member.controller.ts) - 멤버 초대/관리
+- [src/group/group-role.controller.ts](../../src/group/group-role.controller.ts) - 역할 관리
 
 ---
 
@@ -200,15 +225,17 @@ enum PermissionCategory {
 
 ### 단위 테스트
 
-- ⬜ PermissionService 테스트
-- ⬜ PermissionController 테스트
-- ⬜ AdminGuard 테스트
+- ⬜ PermissionService 테스트 (TODO)
+- ⬜ PermissionController 테스트 (TODO)
+- ⬜ AdminGuard 테스트 (TODO)
+- ⬜ GroupPermissionGuard 테스트 (TODO)
 
 ### E2E 테스트
 
-- ⬜ 권한 CRUD 플로우
-- ⬜ Soft Delete 및 복원 플로우
-- ⬜ 운영자 권한 검증
+- ⬜ 권한 CRUD 플로우 (TODO)
+- ⬜ Soft Delete 및 복원 플로우 (TODO)
+- ⬜ 운영자 권한 검증 (TODO)
+- ⬜ 그룹별 권한 검증 플로우 (TODO)
 
 ---
 
@@ -219,4 +246,24 @@ enum PermissionCategory {
 
 ---
 
-**Last Updated**: 2025-12-04
+## 🎯 구현 완료 요약
+
+### ✅ 완료된 기능
+
+1. **권한 CRUD API**: 전체 조회, 생성, 수정, 삭제(Soft/Hard), 복원, 일괄 정렬 순서 업데이트
+2. **운영자 권한 시스템**: `AdminGuard`를 통한 운영자 전용 API 보호
+3. **그룹별 권한 시스템**: `GroupPermissionGuard` + `@RequirePermission` 데코레이터
+4. **권한 카테고리**: 기능별 권한 그룹핑 (현재 GROUP 카테고리)
+5. **권한 코드 enum**: 타입 안전한 권한 관리 (INVITE_MEMBER, DELETE_GROUP 등)
+6. **Soft Delete**: 권한 삭제 후 복원 가능
+7. **Swagger 문서화**: 모든 API 엔드포인트 문서화 완료
+
+### ⬜ 향후 개선 사항
+
+1. **테스트 코드 작성**: 단위 테스트 및 E2E 테스트
+2. **추가 권한 카테고리**: SCHEDULE, TODO, MEMO 등 다른 기능의 권한 추가
+3. **권한 미리보기**: 역할 생성/수정 시 권한 설명 UI 개선
+
+---
+
+**Last Updated**: 2025-12-24

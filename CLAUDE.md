@@ -12,14 +12,12 @@
 이 프로젝트는 체계적인 문서 관리를 위해 다음과 같은 구조를 사용합니다:
 
 - **[TODO.md](TODO.md)**: 프로젝트 전체 개요 및 기능별 문서 인덱스
-- **[ROADMAP.md](ROADMAP.md)**: Phase별 전체 프로젝트 로드맵
-- **[STATUS.md](STATUS.md)**: 현재 개발 진행 상황 및 최근 작업 내역
+- **[ROADMAP.md](ROADMAP.md)**: Phase별 전체 프로젝트 로드맵 및 진행 상황
 - **[docs/features/](docs/features/)**: 기능별 상세 문서 (요구사항, API 명세, DB 스키마)
 
 ### 개발 워크플로우
 1. **작업 시작 전**:
    - [ROADMAP.md](ROADMAP.md)에서 전체 Phase 및 우선순위 확인
-   - [STATUS.md](STATUS.md)에서 현재 진행 상황 파악
    - [docs/features/](docs/features/)에서 해당 기능 문서 확인
 
 2. **개발 중**:
@@ -30,7 +28,7 @@
 
 3. **작업 완료 후**:
    - 기능 문서의 체크박스 상태 업데이트 (⬜ → 🟨 → ✅)
-   - [STATUS.md](STATUS.md)의 "최근 완료된 작업" 섹션 업데이트
+   - 기능 문서에 "구현 완료 요약" 섹션 작성
    - Phase 진행 시 [ROADMAP.md](ROADMAP.md) 진행률 업데이트
 
 ### Import 경로 규칙
