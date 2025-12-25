@@ -564,21 +564,76 @@ private async checkPermissions(
 
 ## 🧪 테스트
 
-### 단위 테스트
+### 단위 테스트 (Unit Tests)
 
-- ⬜ GroupService 테스트 (TODO)
-- ⬜ GroupMemberService 테스트 (TODO)
-- ⬜ GroupInviteService 테스트 (TODO)
-- ⬜ GroupController 테스트 (TODO)
-- ⬜ 권한 체크 로직 테스트 (TODO)
+- ✅ **GroupService 테스트** - 11개 테스트 통과
+  - 파일: [src/group/group.service.spec.ts](../../src/group/group.service.spec.ts)
+  - 그룹 생성 (OWNER 자동 부여, 기본 색상, 에러 처리)
+  - 내가 속한 그룹 목록 조회 (customColor 우선 순위)
+  - 그룹 상세 조회 (권한 검증 포함)
+  - 그룹 정보 수정/삭제
+
+- ✅ **GroupInviteService 테스트** - 22개 테스트 통과
+  - 파일: [src/group/group-invite.service.spec.ts](../../src/group/group-invite.service.spec.ts)
+  - 초대 코드 생성 및 중복 체크
+  - 초대 코드로 가입 (이메일 초대 vs 일반 요청 분기 처리)
+  - 초대 코드 재생성 (7일 만료)
+  - 가입 요청 조회/승인/거부
+  - 이메일 초대 (INVITE 타입)
+  - 초대 취소/재전송
+
+- ✅ **GroupController 테스트** - 6개 테스트 통과
+  - 파일: [src/group/group.controller.spec.ts](../../src/group/group.controller.spec.ts)
+  - Controller 레이어 메서드 호출 검증
+  - Guard 오버라이드를 통한 권한 검증 우회
+
+**실행 결과**:
+```bash
+npm run test -- group
+✅ Test Suites: 3 passed, 3 total
+✅ Tests: 39 passed, 39 total
+```
 
 ### E2E 테스트
 
-- ⬜ 그룹 생성 및 가입 플로우 (TODO)
-- ⬜ 초대 시스템 플로우 (TODO)
-- ⬜ 멤버 관리 플로우 (TODO)
-- ⬜ 역할 관리 플로우 (TODO)
-- ⬜ 권한 검증 플로우 (TODO)
+- ✅ **테스트 파일 작성 완료**
+  - 파일: [test/groups.e2e-spec.ts](../../test/groups.e2e-spec.ts)
+  - 17개 테스트 시나리오 작성
+
+- ✅ **테스트 시나리오**
+  - 그룹 생성 및 조회 플로우 (POST/GET/PATCH/DELETE)
+  - 초대 코드 가입 플로우 (일반 요청 → 승인)
+  - 이메일 초대 플로우 (INVITE → 즉시 가입)
+  - 멤버 관리 플로우 (목록 조회, 색상 설정, 멤버 삭제)
+
+- ✅ **테스트 인프라 설정**
+  - [.env.test.example](../../.env.test.example) - 테스트 환경 변수 템플릿
+  - [test/setup-e2e.ts](../../test/setup-e2e.ts) - E2E 테스트 환경 설정
+  - [test/test-db.utils.ts](../../test/test-db.utils.ts) - 테스트 DB 초기화 유틸리티
+  - [test/jest-e2e.json](../../test/jest-e2e.json) - Jest 설정 (timeout 30초, maxWorkers 1)
+
+**E2E 테스트 실행 방법**:
+
+1. 테스트 DB 설정:
+```bash
+# .env.test 파일 생성
+cp .env.test.example .env.test
+
+# DATABASE_URL을 테스트용 DB로 설정
+# 예: mysql://root:password@localhost:3306/family_planner_test
+```
+
+2. 테스트 DB 생성 (로컬 MySQL):
+```bash
+mysql -u root -p
+CREATE DATABASE family_planner_test;
+exit;
+```
+
+3. E2E 테스트 실행:
+```bash
+npm run test:e2e -- groups.e2e-spec.ts
+```
 
 ---
 
@@ -605,9 +660,9 @@ private async checkPermissions(
 
 ### ⬜ 향후 개선 사항
 
-1. **테스트 코드 작성**: 단위 테스트 및 E2E 테스트
-2. **그룹 통계**: 활동 통계, 멤버 활동 내역
-3. **그룹 설정**: 공개/비공개 설정, 가입 승인 방식 설정
+1. **그룹 통계**: 활동 통계, 멤버 활동 내역
+2. **그룹 설정**: 공개/비공개 설정, 가입 승인 방식 설정
+3. **테스트 커버리지 확장**: GroupMemberService 단위 테스트 추가
 
 ---
 
@@ -618,4 +673,4 @@ private async checkPermissions(
 
 ---
 
-**Last Updated**: 2025-12-24
+**Last Updated**: 2025-12-25 (테스트 코드 완성)

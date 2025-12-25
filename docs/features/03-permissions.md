@@ -223,19 +223,43 @@ enum PermissionCategory {
 
 ## 🧪 테스트
 
-### 단위 테스트
+### 단위 테스트 (Unit Tests)
 
-- ⬜ PermissionService 테스트 (TODO)
-- ⬜ PermissionController 테스트 (TODO)
-- ⬜ AdminGuard 테스트 (TODO)
-- ⬜ GroupPermissionGuard 테스트 (TODO)
+- ✅ **PermissionService 테스트** - 8개 테스트 통과
+  - 파일: [src/permission/permission.service.spec.ts](../../src/permission/permission.service.spec.ts)
+  - 권한 전체 조회 (카테고리별 그룹화)
+  - 카테고리 필터링 조회
+  - 권한 코드 유효성 검증 (validatePermissions)
+  - 권한 코드 → 이름 변환 (getPermissionNames)
+
+- ✅ **PermissionController 테스트** - 3개 테스트 통과
+  - 파일: [src/permission/permission.controller.spec.ts](../../src/permission/permission.controller.spec.ts)
+  - Controller 레이어 메서드 호출 검증
+  - AdminGuard 오버라이드를 통한 권한 검증 우회
+
+**실행 결과**:
+```bash
+npm run test -- permission
+✅ Test Suites: 2 passed, 2 total
+✅ Tests: 11 passed, 11 total
+```
 
 ### E2E 테스트
 
-- ⬜ 권한 CRUD 플로우 (TODO)
-- ⬜ Soft Delete 및 복원 플로우 (TODO)
-- ⬜ 운영자 권한 검증 (TODO)
-- ⬜ 그룹별 권한 검증 플로우 (TODO)
+- ✅ **테스트 파일 작성 완료**
+  - 파일: [test/permissions.e2e-spec.ts](../../test/permissions.e2e-spec.ts)
+  - 권한 조회, 권한 검증 시스템, 카테고리별 권한 테스트
+
+- ✅ **테스트 시나리오**
+  - 권한 조회 플로우 (전체 조회, 카테고리 필터링)
+  - 운영자 vs 일반 사용자 권한 검증
+  - 그룹별 권한 검증 시스템 (GroupPermissionGuard)
+  - 카테고리별 권한 존재 확인 (GROUP, MEMBER, ROLE)
+
+**E2E 테스트 실행**:
+```bash
+npm run test:e2e -- permissions.e2e-spec.ts
+```
 
 ---
 
@@ -260,10 +284,10 @@ enum PermissionCategory {
 
 ### ⬜ 향후 개선 사항
 
-1. **테스트 코드 작성**: 단위 테스트 및 E2E 테스트
-2. **추가 권한 카테고리**: SCHEDULE, TODO, MEMO 등 다른 기능의 권한 추가
-3. **권한 미리보기**: 역할 생성/수정 시 권한 설명 UI 개선
+1. **추가 권한 카테고리**: SCHEDULE, TODO, MEMO 등 다른 기능의 권한 추가
+2. **권한 미리보기**: 역할 생성/수정 시 권한 설명 UI 개선
+3. **Guard 단위 테스트**: AdminGuard, GroupPermissionGuard 테스트 추가
 
 ---
 
-**Last Updated**: 2025-12-24
+**Last Updated**: 2025-12-25 (테스트 코드 완성)
