@@ -62,6 +62,11 @@ export const validationSchema = Joi.object({
   R2_SECRET_ACCESS_KEY: Joi.string().required(),
   R2_BUCKET_NAME: Joi.string().required(),
   R2_PUBLIC_URL: Joi.string().uri().optional(), // Custom domain이 있는 경우
+
+  // Firebase Cloud Messaging 설정
+  FIREBASE_PROJECT_ID: Joi.string().required(),
+  FIREBASE_CLIENT_EMAIL: Joi.string().email().required(),
+  FIREBASE_PRIVATE_KEY: Joi.string().required(),
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {

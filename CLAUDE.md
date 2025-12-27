@@ -13,17 +13,19 @@
 
 - **[TODO.md](TODO.md)**: 프로젝트 전체 개요 및 기능별 문서 인덱스
 - **[ROADMAP.md](ROADMAP.md)**: Phase별 전체 프로젝트 로드맵 및 진행 상황
+- **[CODE_STYLE.md](CODE_STYLE.md)**: 코드 작성 스타일 가이드 (Controller, Service, DTO 등)
 - **[docs/features/](docs/features/)**: 기능별 상세 문서 (요구사항, API 명세, DB 스키마)
 
 ### 개발 워크플로우
 1. **작업 시작 전**:
    - [ROADMAP.md](ROADMAP.md)에서 전체 Phase 및 우선순위 확인
    - [docs/features/](docs/features/)에서 해당 기능 문서 확인
+   - **[CODE_STYLE.md](CODE_STYLE.md)에서 코드 작성 규칙 확인** ⭐
 
 2. **개발 중**:
    - Prisma 스키마 설계 및 마이그레이션
-   - NestJS 모듈/컨트롤러/서비스 구현
-   - Swagger 문서화 (`@ApiOperation`, `@ApiResponse` 등)
+   - NestJS 모듈/컨트롤러/서비스 구현 (**코드 스타일 가이드 준수**)
+   - Swagger 문서화 (커스텀 데코레이터 사용: `@ApiSuccess`, `@ApiCreated` 등)
    - 단위 테스트 작성
 
 3. **작업 완료 후**:
@@ -31,10 +33,18 @@
    - 기능 문서에 "구현 완료 요약" 섹션 작성
    - Phase 진행 시 [ROADMAP.md](ROADMAP.md) 진행률 업데이트
 
-### Import 경로 규칙
-- **절대 경로 사용**: 모든 import는 `@/` 접두사를 사용한 절대 경로로 작성
-- 예: `import { PrismaService } from '@/prisma/prisma.service';`
-- tsconfig.json의 path alias 설정: `"@/*": ["src/*"]`
+### 코드 작성 규칙
+**중요**: 새로운 기능을 구현하거나 기존 코드를 수정할 때는 반드시 **[CODE_STYLE.md](CODE_STYLE.md)** 문서를 참고하세요.
+
+주요 규칙:
+- **절대 경로 사용**: 모든 import는 `@/` 접두사 사용
+- **한글 문서화**: Swagger 태그, 주석, 에러 메시지 모두 한글
+- **DTO 클래스 사용**: Swagger 데코레이터에 string 대신 실제 DTO 클래스 전달
+- **커스텀 데코레이터**: `@ApiSuccess`, `@ApiCreated`, `@ApiNotFound` 등 사용
+- **@Request() req**: 컨트롤러에서 `req.user.userId`로 사용자 정보 접근
+- **async 제거**: 컨트롤러 메서드에서 async 키워드 사용하지 않음
+
+자세한 내용은 [CODE_STYLE.md](CODE_STYLE.md)를 참고하세요.
 
 ## 개발 명령어
 
@@ -109,18 +119,38 @@ Prisma 스키마 파일은 `prisma/schema.prisma`에 위치합니다. 데이터�
 ## 프로젝트 구조
 ```
 src/
-  main.ts           # 애플리케이션 진입점, NestJS 앱 부트스트랩
-  app.module.ts     # 루트 모듈
-  app.controller.ts # 루트 컨트롤러
-  app.service.ts    # 루트 서비스
-  prisma/           # Prisma 모듈
-    prisma.module.ts   # Prisma 모듈 (Global)
-    prisma.service.ts  # Prisma 서비스 (데이터베이스 연결 관리)
-  *.spec.ts         # 단위 테스트
+  main.ts                # 애플리케이션 진입점, NestJS 앱 부트스트랩
+  app.module.ts          # 루트 모듈
+  app.controller.ts      # 루트 컨트롤러
+  app.service.ts         # 루트 서비스
+  prisma/                # Prisma 모듈
+    prisma.module.ts        # Prisma 모듈 (Global)
+    prisma.service.ts       # Prisma 서비스 (데이터베이스 연결 관리)
+  firebase/              # Firebase 모듈
+    firebase.module.ts      # Firebase 모듈 (Global)
+    firebase.service.ts     # Firebase Admin SDK 서비스
+    firebase.config.ts      # Firebase 설정
+  auth/                  # 인증 모듈
+  group/                 # 그룹 관리 모듈
+  permission/            # 권한 관리 모듈
+  role/                  # 역할 관리 모듈
+  notification/          # 알림 모듈
+    dto/                    # DTO (Data Transfer Objects)
+    enums/                  # Enum 정의
+    notification.controller.ts
+    notification.service.ts
+    notification.module.ts
+  email/                 # 이메일 모듈
+  storage/               # 파일 스토리지 모듈 (Cloudflare R2)
+  sentry/                # Sentry 에러 추적 모듈
+  *.spec.ts              # 단위 테스트
 test/
-  *.e2e-spec.ts     # E2E 테스트
+  *.e2e-spec.ts          # E2E 테스트
 prisma/
-  schema.prisma     # Prisma 스키마 정의
+  schema.prisma          # Prisma 스키마 정의
+  migrations/            # 데이터베이스 마이그레이션
+docs/
+  features/              # 기능별 상세 문서
 ```
 
 ## 주요 의존성
@@ -129,6 +159,9 @@ prisma/
 - Jest v30 (테스팅)
 - RxJS v7 (반응형 프로그래밍)
 - Prisma v6.19 (ORM 및 데이터베이스 툴킷)
+- Firebase Admin SDK (FCM 푸시 알림)
+- Nodemailer (이메일 발송)
+- AWS SDK (Cloudflare R2 스토리지)
 
 ## 데이터베이스
 - MySQL (Railway를 통해 배포)

@@ -20,6 +20,8 @@ import r2Config from '@/config/r2.config';
 import { validationSchema } from '@/config/env.validation';
 import { SentryModule } from '@/sentry/sentry.module';
 import { StorageModule } from '@/storage/storage.module';
+import { FirebaseModule } from '@/firebase/firebase.module';
+import { NotificationModule } from '@/notification/notification.module';
 
 @Module({
   imports: [
@@ -95,12 +97,14 @@ import { StorageModule } from '@/storage/storage.module';
     }),
     SentryModule,
     PrismaModule,
+    FirebaseModule,
     AuthModule,
     EmailModule,
     GroupModule,
     PermissionModule,
     RoleModule,
     StorageModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [

@@ -49,6 +49,24 @@ enum JoinRequestStatus {
   REJECTED // 거부됨
 }
 
+// 알림 카테고리
+enum NotificationCategory {
+  SCHEDULE  // 일정
+  TODO      // 할일
+  HOUSEHOLD // 가계부
+  ASSET     // 자산
+  CHILDCARE // 육아
+  GROUP     // 그룹 (초대, 멤버 추가 등)
+  SYSTEM    // 시스템 알림
+}
+
+// 디바이스 플랫폼
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
 // 사용자 테이블
 model User {
   id                        String         @id @default(uuid())
@@ -66,10 +84,13 @@ model User {
   passwordResetToken        String?        @db.VarChar(255) // 비밀번호 재설정 토큰
   passwordResetExpires      DateTime?      // 비밀번호 재설정 토큰 만료 시간
   lastLoginAt               DateTime?      // 마지막 로그인 시간
-  createdAt                 DateTime       @default(now())
-  updatedAt                 DateTime       @updatedAt
-  refreshTokens             RefreshToken[] // RTR 방식을 위한 다중 refresh token 지원
-  groupMemberships          GroupMember[]  // 사용자가 속한 그룹들
+  createdAt                 DateTime               @default(now())
+  updatedAt                 DateTime               @updatedAt
+  refreshTokens             RefreshToken[]         // RTR 방식을 위한 다중 refresh token 지원
+  groupMemberships          GroupMember[]          // 사용자가 속한 그룹들
+  deviceTokens              DeviceToken[]          // FCM 디바이스 토큰들
+  notificationSettings      NotificationSetting[]  // 알림 설정
+  notifications             Notification[]         // 받은 알림들
 
   @@unique([provider, providerId]) // 같은 제공자에서 같은 ID는 유일해야 함
   @@index([email])
@@ -183,4 +204,54 @@ model Permission {
   @@index([isActive])
   @@index([sortOrder])
   @@map("permissions")
+}
+
+// FCM 디바이스 토큰 테이블
+model DeviceToken {
+  id        String         @id @default(uuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String         @unique @db.VarChar(500) // FCM 디바이스 토큰
+  platform  DevicePlatform // IOS, ANDROID, WEB
+  lastUsed  DateTime       @default(now()) // 마지막 사용 시간
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([lastUsed])
+  @@map("device_tokens")
+}
+
+// 알림 설정 테이블 (카테고리별 알림 on/off)
+model NotificationSetting {
+  id        String               @id @default(uuid())
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  NotificationCategory // 알림 카테고리
+  enabled   Boolean              @default(true) // 알림 활성화 여부
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@unique([userId, category]) // 사용자당 카테고리별 하나의 설정만 존재
+  @@index([userId])
+  @@map("notification_settings")
+}
+
+// 알림 히스토리 테이블
+model Notification {
+  id        String               @id @default(uuid())
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  NotificationCategory // 알림 카테고리
+  title     String               @db.VarChar(255) // 알림 제목
+  body      String               @db.Text // 알림 내용
+  data      Json?                // 추가 데이터 (화면 이동용 payload 등)
+  isRead    Boolean              @default(false) // 읽음 여부
+  sentAt    DateTime             @default(now()) // 발송 시간
+  readAt    DateTime?            // 읽은 시간
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([sentAt])
+  @@map("notifications")
 }
