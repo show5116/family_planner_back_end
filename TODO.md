@@ -18,6 +18,8 @@
 | ⬜ | 메모 | [08-memo.md](docs/features/08-memo.md) | Phase 4 |
 | ⬜ | 육아 포인트 | [09-childcare.md](docs/features/09-childcare.md) | Phase 5 |
 | ✅ | 알림 | [10-notifications.md](docs/features/10-notifications.md) | Phase 3 |
+| ⬜ | 공지사항 | [11-announcements.md](docs/features/11-announcements.md) | Phase 4 |
+| ⬜ | Q&A | [12-qna.md](docs/features/12-qna.md) | Phase 4 |
 
 ---
 
