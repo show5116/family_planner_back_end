@@ -763,14 +763,29 @@ class ApiDocGenerator {
         if (endpoint.queryParameters && endpoint.queryParameters.length > 0) {
           markdown += `**Query Parameters:**\n\n`;
           endpoint.queryParameters.forEach((param) => {
-            markdown += `- \`${param.name}\` (\`${param.type}\`)`;
-            if (!param.required) {
-              markdown += ` - Optional`;
+            // DTO 타입인 경우 파싱해서 필드들을 보여줌
+            const dtoInfo = this.parseDtoFile(param.type);
+            if (dtoInfo && dtoInfo.fields.length > 0) {
+              // DTO의 각 필드를 펼쳐서 표시
+              dtoInfo.fields.forEach((field) => {
+                const typeInfo = field.isArray ? `${field.type}[]` : field.type;
+                const requiredMark = field.required ? '' : ' (Optional)';
+                const description = field.description
+                  ? `: ${field.description}`
+                  : '';
+                markdown += `- \`${field.name}\` (\`${typeInfo}\`)${requiredMark}${description}\n`;
+              });
+            } else {
+              // DTO가 아닌 경우 기존 방식대로 표시
+              markdown += `- \`${param.name}\` (\`${param.type}\`)`;
+              if (!param.required) {
+                markdown += ` - Optional`;
+              }
+              if (param.description) {
+                markdown += `: ${param.description}`;
+              }
+              markdown += `\n`;
             }
-            if (param.description) {
-              markdown += `: ${param.description}`;
-            }
-            markdown += `\n`;
           });
           markdown += `\n`;
         }

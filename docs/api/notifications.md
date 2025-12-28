@@ -4,16 +4,13 @@
 
 ---
 
-## Notifications
+## 알림
 
 **Base Path:** `/notifications`
 
 ### POST `notifications/token`
 
 **요약:** FCM 디바이스 토큰 등록
-
-**설명:**
-사용자의 FCM 디바이스 토큰을 등록합니다. 이미 등록된 토큰인 경우 마지막 사용 시간을 업데이트합니다.
 
 **Request Body:**
 
@@ -26,9 +23,17 @@
 
 **Responses:**
 
-#### 201 - 토큰이 성공적으로 등록되었습니다.
+#### 201 - FCM 토큰 등록 성공
 
-#### 409 - 토큰이 이미 다른 사용자에게 등록되어 있습니다.
+```json
+{
+  "id": "uuid", // 토큰 ID (string)
+  "userId": "uuid", // 사용자 ID (string)
+  "token": "dXNlci1kZXZpY2UtdG9rZW4tZXhhbXBsZQ", // FCM 디바이스 토큰 (string)
+  "platform": null, // 플랫폼 (DevicePlatform)
+  "lastUsed": "2025-12-27T00:00:00Z" // 마지막 사용 시간 (Date)
+}
+```
 
 ---
 
@@ -36,18 +41,21 @@
 
 **요약:** FCM 디바이스 토큰 삭제
 
-**설명:**
-로그아웃 또는 디바이스 변경 시 FCM 토큰을 삭제합니다.
-
 **Path Parameters:**
 
 - `token` (`string`)
 
 **Responses:**
 
-#### 200 - 토큰이 성공적으로 삭제되었습니다.
+#### 200 - FCM 토큰 삭제 성공
 
-#### 404 - 토큰을 찾을 수 없습니다.
+```json
+{
+  "message": "토큰이 삭제되었습니다" // string
+}
+```
+
+#### 404 - 토큰을 찾을 수 없음
 
 ---
 
@@ -55,21 +63,24 @@
 
 **요약:** 알림 설정 조회
 
-**설명:**
-사용자의 카테고리별 알림 설정을 조회합니다.
-
 **Responses:**
 
-#### 200 - 알림 설정 목록
+#### 200 - 알림 설정 목록 반환
+
+```json
+{
+  "id": "uuid", // 설정 ID (string)
+  "userId": "uuid", // 사용자 ID (string)
+  "category": null, // 알림 카테고리 (NotificationCategory)
+  "enabled": true // 알림 활성화 여부 (boolean)
+}
+```
 
 ---
 
 ### PUT `notifications/settings`
 
 **요약:** 알림 설정 업데이트
-
-**설명:**
-특정 카테고리의 알림 활성화/비활성화를 설정합니다.
 
 **Request Body:**
 
@@ -82,24 +93,56 @@
 
 **Responses:**
 
-#### 200 - 알림 설정이 업데이트되었습니다.
+#### 200 - 알림 설정 업데이트 성공
+
+```json
+{
+  "id": "uuid", // 설정 ID (string)
+  "userId": "uuid", // 사용자 ID (string)
+  "category": null, // 알림 카테고리 (NotificationCategory)
+  "enabled": true // 알림 활성화 여부 (boolean)
+}
+```
 
 ---
 
 ### GET `notifications`
 
-**요약:** 알림 목록 조회
-
-**설명:**
-사용자의 알림 히스토리를 페이지네이션으로 조회합니다.
+**요약:** 알림 목록 조회 (페이지네이션)
 
 **Query Parameters:**
 
-- `query` (`QueryNotificationsDto`)
+- `unreadOnly` (`boolean`) (Optional): 읽지 않은 알림만 조회 (true인 경우)
+- `page` (`number`) (Optional): 페이지 번호 (1부터 시작)
+- `limit` (`number`) (Optional): 페이지당 항목 수
 
 **Responses:**
 
-#### 200 - 알림 목록 및 페이지네이션 정보
+#### 200 - 알림 목록 및 페이지네이션 정보 반환
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid", // 알림 ID (string)
+      "userId": "uuid", // 사용자 ID (string)
+      "category": null, // 알림 카테고리 (NotificationCategory)
+      "title": "새로운 일정 알림", // 알림 제목 (string)
+      "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
+      "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
+      "isRead": false, // 읽음 여부 (boolean)
+      "sentAt": "2025-12-27T00:00:00Z", // 발송 시간 (Date)
+      "readAt": "2025-12-27T00:30:00Z" // 읽은 시간 (Date | null)
+    }
+  ], // NotificationDto[]
+  "meta": {
+    "page": 1, // 현재 페이지 (number)
+    "limit": 20, // 페이지당 항목 수 (number)
+    "total": 42, // 전체 항목 수 (number)
+    "totalPages": 3 // 전체 페이지 수 (number)
+  } // PaginationMetaDto
+}
+```
 
 ---
 
@@ -107,12 +150,15 @@
 
 **요약:** 읽지 않은 알림 개수 조회
 
-**설명:**
-사용자의 읽지 않은 알림 개수를 조회합니다.
-
 **Responses:**
 
-#### 200 - 읽지 않은 알림 개수
+#### 200 - 읽지 않은 알림 개수 반환
+
+```json
+{
+  "count": 5 // 읽지 않은 알림 개수 (number)
+}
+```
 
 ---
 
@@ -120,18 +166,29 @@
 
 **요약:** 알림 읽음 처리
 
-**설명:**
-특정 알림을 읽음 상태로 변경합니다.
-
 **Path Parameters:**
 
 - `id` (`string`)
 
 **Responses:**
 
-#### 200 - 알림이 읽음 처리되었습니다.
+#### 200 - 알림 읽음 처리 성공
 
-#### 404 - 알림을 찾을 수 없습니다.
+```json
+{
+  "id": "uuid", // 알림 ID (string)
+  "userId": "uuid", // 사용자 ID (string)
+  "category": null, // 알림 카테고리 (NotificationCategory)
+  "title": "새로운 일정 알림", // 알림 제목 (string)
+  "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
+  "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
+  "isRead": false, // 읽음 여부 (boolean)
+  "sentAt": "2025-12-27T00:00:00Z", // 발송 시간 (Date)
+  "readAt": "2025-12-27T00:30:00Z" // 읽은 시간 (Date | null)
+}
+```
+
+#### 404 - 알림을 찾을 수 없음
 
 ---
 
@@ -139,17 +196,42 @@
 
 **요약:** 알림 삭제
 
-**설명:**
-특정 알림을 삭제합니다.
-
 **Path Parameters:**
 
 - `id` (`string`)
 
 **Responses:**
 
-#### 200 - 알림이 삭제되었습니다.
+#### 200 - 알림 삭제 성공
 
-#### 404 - 알림을 찾을 수 없습니다.
+```json
+{
+  "message": "토큰이 삭제되었습니다" // string
+}
+```
+
+#### 404 - 알림을 찾을 수 없음
+
+---
+
+### POST `notifications/test`
+
+**요약:** 테스트 알림 전송 (운영자 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Responses:**
+
+#### 200 - 테스트 알림 전송 성공
+
+```json
+{
+  "message": "토큰이 삭제되었습니다" // string
+}
+```
+
+#### 403 - 운영자 권한 필요
 
 ---

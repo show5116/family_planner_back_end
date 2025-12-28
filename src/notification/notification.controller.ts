@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
@@ -27,7 +28,9 @@ import {
   ApiSuccess,
   ApiCreated,
   ApiNotFound,
+  ApiForbidden,
 } from '@/common/decorators/api-responses.decorator';
+import { AdminGuard } from '@/auth/admin.guard';
 
 /**
  * 알림 컨트롤러
@@ -98,5 +101,14 @@ export class NotificationController {
   @ApiNotFound('알림을 찾을 수 없음')
   deleteNotification(@Request() req, @Param('id') id: string) {
     return this.notificationService.deleteNotification(req.user.userId, id);
+  }
+
+  @Post('test')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: '테스트 알림 전송 (운영자 전용)' })
+  @ApiSuccess(MessageResponseDto, '테스트 알림 전송 성공')
+  @ApiForbidden('운영자 권한 필요')
+  sendTestNotification(@Request() req) {
+    return this.notificationService.sendTestNotification(req.user.userId);
   }
 }

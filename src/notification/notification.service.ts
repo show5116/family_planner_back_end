@@ -352,4 +352,65 @@ export class NotificationService {
 
     return { count };
   }
+
+  /**
+   * 테스트 알림 전송 (운영자 전용)
+   * 자기 자신에게 테스트 알림을 전송
+   */
+  async sendTestNotification(userId: string) {
+    // 디바이스 토큰 확인
+    const deviceTokens = await this.prisma.deviceToken.findMany({
+      where: { userId },
+    });
+
+    if (deviceTokens.length === 0) {
+      return {
+        message: '테스트 알림 전송 실패',
+        error:
+          'FCM 디바이스 토큰이 등록되어 있지 않습니다. 먼저 토큰을 등록해주세요.',
+        userId,
+      };
+    }
+
+    // 알림 설정 확인
+    const setting = await this.prisma.notificationSetting.findUnique({
+      where: {
+        userId_category: {
+          userId,
+          category: NotificationCategory.SYSTEM as any,
+        },
+      },
+    });
+
+    if (setting && !setting.enabled) {
+      return {
+        message: '테스트 알림 전송 실패',
+        error: 'SYSTEM 카테고리 알림이 비활성화되어 있습니다.',
+        userId,
+        setting: {
+          category: NotificationCategory.SYSTEM,
+          enabled: false,
+        },
+      };
+    }
+
+    // 알림 전송
+    const result = await this.sendNotification({
+      userId,
+      category: NotificationCategory.SYSTEM,
+      title: '테스트 알림',
+      body: '알림 시스템이 정상적으로 작동하고 있습니다.',
+      data: {
+        test: 'true',
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    return {
+      message: '테스트 알림이 전송되었습니다',
+      userId,
+      deviceTokenCount: deviceTokens.length,
+      result,
+    };
+  }
 }
