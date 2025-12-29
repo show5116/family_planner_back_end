@@ -1,8 +1,8 @@
 # 04. 자산 관리 (Assets Management)
 
 > **상태**: ⬜ 시작 안함
-> **우선순위**: Medium
-> **담당 Phase**: Phase 3
+> **우선순위**: Low
+> **담당 Phase**: Phase 4
 
 ---
 

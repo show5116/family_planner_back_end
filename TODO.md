@@ -11,15 +11,14 @@
 | ✅ | 인증/인가 | [01-auth.md](docs/features/01-auth.md) | Phase 1 |
 | ✅ | 그룹 관리 | [02-groups.md](docs/features/02-groups.md) | Phase 2 |
 | ✅ | 권한 관리 | [03-permissions.md](docs/features/03-permissions.md) | Phase 2 |
-| ⬜ | 자산 관리 | [04-assets.md](docs/features/04-assets.md) | Phase 3 |
-| ⬜ | 가계부 관리 | [05-household.md](docs/features/05-household.md) | Phase 3 |
-| ⬜ | 일정 관리 | [06-schedule.md](docs/features/06-schedule.md) | Phase 4 |
-| ⬜ | ToDoList | [07-todo.md](docs/features/07-todo.md) | Phase 4 |
+| ⬜ | 자산 관리 | [04-assets.md](docs/features/04-assets.md) | Phase 4 |
+| ⬜ | 가계부 관리 | [05-household.md](docs/features/05-household.md) | Phase 4 |
+| ⬜ | 일정 & 할일 통합 | [06-tasks.md](docs/features/06-tasks.md) | Phase 3 |
 | ⬜ | 메모 | [08-memo.md](docs/features/08-memo.md) | Phase 4 |
 | ⬜ | 육아 포인트 | [09-childcare.md](docs/features/09-childcare.md) | Phase 5 |
 | ✅ | 알림 | [10-notifications.md](docs/features/10-notifications.md) | Phase 3 |
-| ⬜ | 공지사항 | [11-announcements.md](docs/features/11-announcements.md) | Phase 4 |
-| ⬜ | Q&A | [12-qna.md](docs/features/12-qna.md) | Phase 4 |
+| ⬜ | 공지사항 | [11-announcements.md](docs/features/11-announcements.md) | Phase 3 |
+| ⬜ | Q&A | [12-qna.md](docs/features/12-qna.md) | Phase 3 |
 
 ---
 
@@ -111,15 +110,17 @@ npm run start:dev
 ### Phase별 진행 상황
 - ✅ **Phase 1 (기반 구축)**: 100% 완료
 - ✅ **Phase 2 (핵심 기능)**: 100% 완료
-- 🟨 **Phase 3 (데이터 관리)**: 33% 완료 (알림 완료, 자산/가계부 대기)
-- ⬜ **Phase 4 (협업 기능)**: 시작 안함
+- 🟨 **Phase 3 (협업 기능)**: 33% 완료 (알림, 프로필 완료 / 공지사항, Q&A, 일정, ToDo 대기)
+- ⬜ **Phase 4 (데이터 관리)**: 시작 안함
 - ⬜ **Phase 5 (특화 기능)**: 시작 안함
 - ⬜ **Phase 6 (최적화/배포)**: 시작 안함
 
-### Phase 3 진행 내역 (2025-12-27)
+### Phase 3 진행 내역 (2025-12-28)
 - ✅ 알림 시스템 (FCM 푸시 알림) 완료
-- ⬜ 자산 관리 대기
-- ⬜ 가계부 관리 대기
+- ✅ 프로필 관리 (Cloudflare R2 이미지 업로드) 완료
+- ⬜ 공지사항 대기
+- ⬜ Q&A 대기
+- ⬜ 일정 & 할일 통합 관리 대기
 
 ### Phase 2 완료 내역 (2025-12-24)
 - ✅ 그룹 관리 시스템 전체 완료
@@ -128,9 +129,9 @@ npm run start:dev
 - ✅ 이메일 초대 시스템 완료
 
 ### 현재 우선순위
-1. 🔥 **High**: Phase 3 - 자산/가계부 API 설계 및 구현
-2. 📌 **Medium**: 테스트 코드 작성 (Phase 1-2 기능)
-3. 💡 **Low**: 최적화 및 성능 개선
+1. 🔥 **High**: Phase 3 - 공지사항, Q&A API 설계 및 구현
+2. 📌 **Medium**: Phase 3 - 일정 & 할일 통합 관리 구현
+3. 💡 **Low**: 테스트 코드 작성 및 최적화
 
 ---
 
