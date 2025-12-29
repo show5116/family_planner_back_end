@@ -874,7 +874,9 @@ function main() {
   // basePath별로 문서 생성
   controllersByBasePath.forEach((controllersGroup, basePath) => {
     const markdown = generator.generateMarkdown(controllersGroup);
-    const outputFile = path.join(outputDir, `${basePath}.md`);
+    // basePath의 슬래시를 하이픈으로 변경 (예: qna/admin -> qna-admin)
+    const fileName = basePath.replace(/\//g, '-');
+    const outputFile = path.join(outputDir, `${fileName}.md`);
     fs.writeFileSync(outputFile, markdown);
     console.log(`Generated: ${path.relative(process.cwd(), outputFile)}`);
   });

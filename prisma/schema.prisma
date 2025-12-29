@@ -67,6 +67,29 @@ enum DevicePlatform {
   WEB
 }
 
+// Q&A 질문 카테고리
+enum QuestionCategory {
+  BUG      // 버그 신고
+  FEATURE  // 기능 제안/개선
+  USAGE    // 사용법 문의
+  ACCOUNT  // 계정 문제
+  PAYMENT  // 결제/요금제
+  ETC      // 기타
+}
+
+// Q&A 질문 상태
+enum QuestionStatus {
+  PENDING  // 대기 중 (답변 대기)
+  ANSWERED // 답변 완료 (ADMIN 답변 완료)
+  RESOLVED // 해결 완료 (사용자가 해결 확인)
+}
+
+// Q&A 공개 여부
+enum QuestionVisibility {
+  PUBLIC  // 공개 (모든 사용자가 조회 가능)
+  PRIVATE // 비공개 (작성자와 ADMIN만 조회 가능)
+}
+
 // 사용자 테이블
 model User {
   id                        String         @id @default(uuid())
@@ -91,6 +114,10 @@ model User {
   deviceTokens              DeviceToken[]          // FCM 디바이스 토큰들
   notificationSettings      NotificationSetting[]  // 알림 설정
   notifications             Notification[]         // 받은 알림들
+  announcements             Announcement[]         @relation("AnnouncementAuthor") // 작성한 공지사항들
+  announcementReads         AnnouncementRead[]     @relation("AnnouncementReads") // 읽은 공지사항들
+  questions                 Question[]             // 작성한 질문들
+  answers                   Answer[]               @relation("AdminAnswers") // 작성한 답변들 (ADMIN 전용)
 
   @@unique([provider, providerId]) // 같은 제공자에서 같은 ID는 유일해야 함
   @@index([email])
@@ -254,4 +281,79 @@ model Notification {
   @@index([isRead])
   @@index([sentAt])
   @@map("notifications")
+}
+
+// 공지사항 테이블
+model Announcement {
+  id          String             @id @default(uuid())
+  authorId    String // ADMIN 사용자 ID
+  author      User               @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  title       String             @db.VarChar(200) // 공지 제목
+  content     String             @db.Text // 공지 내용 (Markdown 지원)
+  isPinned    Boolean            @default(false) // 상단 고정 여부
+  attachments Json? // 첨부파일 목록 [{url, name, size}]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  deletedAt   DateTime? // Soft Delete
+  reads       AnnouncementRead[] // 읽음 기록
+
+  @@index([isPinned, createdAt(sort: Desc)]) // 고정 공지 우선 정렬
+  @@index([createdAt(sort: Desc)]) // 최신순 조회
+  @@index([authorId])
+  @@map("announcements")
+}
+
+// 공지사항 읽음 기록 테이블
+model AnnouncementRead {
+  id             String       @id @default(uuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation("AnnouncementReads", fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now()) // 읽은 시간
+
+  @@unique([announcementId, userId]) // 공지별 사용자당 하나의 읽음 기록만
+  @@index([announcementId])
+  @@index([userId])
+  @@map("announcement_reads")
+}
+
+// Q&A 질문 테이블
+model Question {
+  id          String               @id @default(uuid())
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id])
+  title       String               @db.VarChar(200) // 질문 제목
+  content     String               @db.Text // 질문 내용
+  category    QuestionCategory // 카테고리 (BUG, FEATURE, USAGE 등)
+  status      QuestionStatus       @default(PENDING) // 상태 (PENDING, ANSWERED, RESOLVED)
+  visibility  QuestionVisibility   @default(PRIVATE) // 공개 여부 (PUBLIC, PRIVATE)
+  attachments Json? // 첨부파일 [{url, name, size}]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  deletedAt   DateTime? // Soft Delete
+  answers     Answer[] // 답변 목록
+
+  @@index([userId, createdAt(sort: Desc)]) // 사용자별 질문 조회
+  @@index([status]) // 상태별 필터링
+  @@index([category]) // 카테고리별 필터링
+  @@index([visibility, createdAt(sort: Desc)]) // 공개 질문 목록 조회
+  @@map("questions")
+}
+
+// Q&A 답변 테이블
+model Answer {
+  id          String    @id @default(uuid())
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  adminId     String
+  admin       User      @relation("AdminAnswers", fields: [adminId], references: [id])
+  content     String    @db.Text // 답변 내용
+  attachments Json? // 첨부파일 [{url, name, size}]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? // Soft Delete
+
+  @@index([questionId, createdAt(sort: Desc)]) // 질문별 답변 조회
+  @@map("answers")
 }

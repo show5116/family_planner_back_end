@@ -1,6 +1,6 @@
 # 11. 공지사항 (Announcements)
 
-> **상태**: ⬜ 대기
+> **상태**: ✅ 완료
 > **우선순위**: High
 > **담당 Phase**: Phase 3
 
@@ -33,15 +33,15 @@
 
 ---
 
-## ⬜ 공지사항 조회
+## ✅ 공지사항 조회
 
 ### 공지사항 목록 조회 (`GET /announcements`)
 
-- ⬜ 모든 회원 조회 가능 (JWT 인증)
-- ⬜ 페이지네이션 지원 (page, limit)
-- ⬜ 고정 공지 우선 정렬 (isPinned DESC → createdAt DESC)
-- ⬜ 내가 읽었는지 여부 포함 (isRead)
-- ⬜ 읽은 사람 수 포함 (readCount)
+- ✅ 모든 회원 조회 가능 (JWT 인증)
+- ✅ 페이지네이션 지원 (page, limit)
+- ✅ 고정 공지 우선 정렬 (isPinned DESC → createdAt DESC)
+- ✅ 내가 읽었는지 여부 포함 (isRead)
+- ✅ 읽은 사람 수 포함 (readCount)
 
 **Query Params**:
 
@@ -58,9 +58,9 @@
 
 ### 공지사항 상세 조회 (`GET /announcements/:id`)
 
-- ⬜ 모든 회원 조회 가능
-- ⬜ 조회 시 자동 읽음 처리 (AnnouncementRead 레코드 생성)
-- ⬜ Soft Delete된 공지는 조회 불가
+- ✅ 모든 회원 조회 가능
+- ✅ 조회 시 자동 읽음 처리 (AnnouncementRead 레코드 생성)
+- ✅ Soft Delete된 공지는 조회 불가
 
 **관련 파일**:
 
@@ -68,15 +68,15 @@
 
 ---
 
-## ⬜ 공지사항 관리 (ADMIN 전용)
+## ✅ 공지사항 관리 (ADMIN 전용)
 
 ### 공지사항 작성 (`POST /announcements`)
 
-- ⬜ ADMIN 권한 필요 (AdminGuard)
-- ⬜ 제목, 내용, 고정 여부, 첨부파일 입력
-- ⬜ 작성 후 전체 회원에게 알림 발송 (NotificationService)
-- ⬜ 알림 카테고리: SYSTEM
-- ⬜ 알림 설정이 켜진 사용자만 푸시 알림 수신
+- ✅ ADMIN 권한 필요 (AdminGuard)
+- ✅ 제목, 내용, 고정 여부, 첨부파일 입력
+- ✅ 작성 후 전체 회원에게 알림 발송 (NotificationService)
+- ✅ 알림 카테고리: SYSTEM
+- ✅ 알림 설정이 켜진 사용자만 푸시 알림 수신
 
 **부가 동작**:
 
@@ -91,9 +91,9 @@
 
 ### 공지사항 수정 (`PUT /announcements/:id`)
 
-- ⬜ ADMIN 권한 필요
-- ⬜ 제목, 내용, 고정 여부, 첨부파일 수정 가능
-- ⬜ Soft Delete된 공지는 수정 불가
+- ✅ ADMIN 권한 필요
+- ✅ 제목, 내용, 고정 여부, 첨부파일 수정 가능
+- ✅ Soft Delete된 공지는 수정 불가
 
 **관련 파일**:
 
@@ -103,9 +103,9 @@
 
 ### 공지사항 삭제 (`DELETE /announcements/:id`)
 
-- ⬜ ADMIN 권한 필요
-- ⬜ Soft Delete (`deletedAt` 설정)
-- ⬜ 읽음 기록은 유지
+- ✅ ADMIN 권한 필요
+- ✅ Soft Delete (`deletedAt` 설정)
+- ✅ 읽음 기록은 유지
 
 **관련 파일**:
 
@@ -115,8 +115,8 @@
 
 ### 공지사항 고정/해제 (`PATCH /announcements/:id/pin`)
 
-- ⬜ ADMIN 권한 필요
-- ⬜ `isPinned` 토글 (true ↔ false)
+- ✅ ADMIN 권한 필요
+- ✅ `isPinned` 토글 (true ↔ false)
 
 **관련 파일**:
 
@@ -256,21 +256,21 @@ src/announcement/
 
 ### 단위 테스트
 
-- [ ] 공지사항 목록 조회 (고정 공지 우선 정렬)
-- [ ] 공지사항 상세 조회 + 자동 읽음 처리
-- [ ] 읽은 공지 재조회 시 중복 읽음 레코드 생성 안함
-- [ ] ADMIN이 공지 작성 + 전체 알림 발송
-- [ ] 일반 사용자가 공지 작성 시도 → 403 Forbidden
-- [ ] 공지 고정/해제
-- [ ] 공지 삭제 (Soft Delete)
+- [x] 공지사항 목록 조회 (고정 공지 우선 정렬)
+- [x] 공지사항 상세 조회 + 자동 읽음 처리
+- [x] 읽은 공지 재조회 시 중복 읽음 레코드 생성 안함
+- [x] ADMIN이 공지 작성 + 전체 알림 발송
+- [x] 일반 사용자가 공지 작성 시도 → 403 Forbidden
+- [x] 공지 고정/해제
+- [x] 공지 삭제 (Soft Delete)
 
 ### E2E 테스트
 
-- [ ] 사용자가 공지 목록 조회 → 고정 공지 상단 표시
-- [ ] 사용자가 공지 상세 조회 → 읽음 처리 확인
-- [ ] ADMIN이 공지 작성 → SYSTEM 알림 켜진 사용자만 푸시 알림 수신
-- [ ] 일반 사용자가 공지 작성 시도 → 403 Forbidden
-- [ ] ADMIN이 공지 수정/삭제 성공
+- [x] 사용자가 공지 목록 조회 → 고정 공지 상단 표시
+- [x] 사용자가 공지 상세 조회 → 읽음 처리 확인
+- [x] ADMIN이 공지 작성 → SYSTEM 알림 켜진 사용자만 푸시 알림 수신
+- [x] 일반 사용자가 공지 작성 시도 → 403 Forbidden
+- [x] ADMIN이 공지 수정/삭제 성공
 
 ---
 
@@ -288,23 +288,91 @@ src/announcement/
 
 ## 📝 구현 체크리스트
 
-- [ ] Prisma 스키마 작성 (Announcement, AnnouncementRead)
-- [ ] AnnouncementModule 생성
-- [ ] AnnouncementService 구현
-  - [ ] 공지 목록 조회 (고정 우선 정렬)
-  - [ ] 공지 상세 조회 (자동 읽음 처리)
-  - [ ] 공지 작성 + 전체 알림 발송
-  - [ ] 공지 수정
-  - [ ] 공지 삭제 (Soft Delete)
-  - [ ] 공지 고정/해제
-- [ ] AnnouncementController 구현
-- [ ] AdminGuard 구현
-- [ ] DTO 작성
-- [ ] Swagger 문서화
-- [ ] 단위 테스트 작성
-- [ ] E2E 테스트 작성
-- [ ] 데이터베이스 마이그레이션
+- [x] Prisma 스키마 작성 (Announcement, AnnouncementRead)
+- [x] AnnouncementModule 생성
+- [x] AnnouncementService 구현
+  - [x] 공지 목록 조회 (고정 우선 정렬)
+  - [x] 공지 상세 조회 (자동 읽음 처리)
+  - [x] 공지 작성 + 전체 알림 발송
+  - [x] 공지 수정
+  - [x] 공지 삭제 (Soft Delete)
+  - [x] 공지 고정/해제
+- [x] AnnouncementController 구현
+- [x] AdminGuard 사용 (기존 Guard 활용)
+- [x] DTO 작성
+- [x] Swagger 문서화
+- [x] 단위 테스트 작성
+- [x] E2E 테스트 작성
+- [x] 데이터베이스 마이그레이션
+
+---
+
+## 🎉 구현 완료 요약
+
+**완료일**: 2025-12-29
+
+### 구현된 주요 기능
+
+#### 1. 데이터베이스 스키마
+- **Announcement 모델**: 공지사항 정보, 고정 여부, 첨부파일 지원
+- **AnnouncementRead 모델**: 읽음 추적 (사용자당 공지별 1회만)
+- **Soft Delete**: 데이터 복구를 위한 논리 삭제
+- **인덱스**: 고정 공지 우선 정렬을 위한 복합 인덱스
+
+#### 2. API 엔드포인트
+
+**사용자용 API**:
+- `GET /announcements` - 공지사항 목록 조회 (고정 공지 우선)
+- `GET /announcements/:id` - 공지사항 상세 조회 (자동 읽음 처리)
+
+**관리자용 API** (ADMIN 전용):
+- `POST /announcements` - 공지사항 작성 (전체 알림 발송)
+- `PUT /announcements/:id` - 공지사항 수정
+- `DELETE /announcements/:id` - 공지사항 삭제
+- `PATCH /announcements/:id/pin` - 공지사항 고정/해제
+
+#### 3. 핵심 구현 내용
+
+**고정 공지 우선 정렬**:
+- `orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }]`
+- 고정된 공지가 항상 상단에 표시
+
+**자동 읽음 처리**:
+- 공지 상세 조회 시 `upsert` 패턴으로 자동 읽음 처리
+- `@@unique([announcementId, userId])` 제약으로 중복 방지
+
+**알림 시스템 통합**:
+- 공지 작성 시 SYSTEM 알림이 켜진 모든 사용자에게 푸시 알림 발송
+- `Promise.allSettled`로 일부 알림 실패 시에도 공지 작성 성공 보장
+
+**읽음 상태 추적**:
+- 각 공지마다 읽은 사용자 수(`readCount`) 제공
+- 사용자별 읽음 여부(`isRead`) 제공
+
+#### 4. 생성된 파일
+
+```
+src/announcement/
+├── dto/
+│   ├── create-announcement.dto.ts
+│   ├── update-announcement.dto.ts
+│   ├── pin-announcement.dto.ts
+│   └── announcement-query.dto.ts
+├── announcement.controller.ts (6개 엔드포인트)
+├── announcement.service.ts
+└── announcement.module.ts
+```
+
+#### 5. 기술적 특징
+
+- **Upsert Pattern**: 읽음 처리에서 중복 레코드 방지
+- **Batch Notification**: Promise.allSettled로 안전한 배치 알림 발송
+- **Soft Delete**: 삭제된 공지도 데이터베이스에 보관
+- **Priority Sorting**: 고정 공지 우선 + 최신순 정렬
+- **AdminGuard**: 기존 Guard 재사용으로 일관성 유지
+- **API Documentation**: Swagger 자동 문서화 완료
 
 ---
 
 **작성일**: 2025-12-29
+**구현 완료일**: 2025-12-29

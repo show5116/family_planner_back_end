@@ -4,6 +4,145 @@
 
 ---
 
+## 공지사항
+
+**Base Path:** `/announcements`
+
+### GET `announcements`
+
+**요약:** 공지사항 목록 조회
+
+**Query Parameters:**
+
+- `page` (`number`) (Optional): 페이지 번호
+- `limit` (`number`) (Optional): 페이지 크기
+- `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회
+
+**Responses:**
+
+#### 200 - 공지사항 목록 조회 성공
+
+---
+
+### GET `announcements/:id`
+
+**요약:** 공지사항 상세 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 공지사항 상세 조회 성공
+
+#### 404 - 공지사항을 찾을 수 없습니다
+
+---
+
+### POST `announcements`
+
+**요약:** 공지사항 작성 (ADMIN 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Request Body:**
+
+```json
+{
+  "title": "v2.0 업데이트 안내", // 공지사항 제목 (string)
+  "content": "새로운 기능이 추가되었습니다...", // 공지사항 내용 (Markdown 지원) (string)
+  "isPinned": false, // 상단 고정 여부 (boolean?)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ] // 첨부파일 목록 (AttachmentDto[]?)
+}
+```
+
+**Responses:**
+
+#### 201 - 공지사항 작성 성공
+
+---
+
+### PUT `announcements/:id`
+
+**요약:** 공지사항 수정 (ADMIN 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Responses:**
+
+#### 200 - 공지사항 수정 성공
+
+#### 404 - 공지사항을 찾을 수 없습니다
+
+---
+
+### DELETE `announcements/:id`
+
+**요약:** 공지사항 삭제 (ADMIN 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 404 - 공지사항을 찾을 수 없습니다
+
+---
+
+### PATCH `announcements/:id/pin`
+
+**요약:** 공지사항 고정/해제 (ADMIN 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "isPinned": true // 고정 여부 (boolean)
+}
+```
+
+**Responses:**
+
+#### 200 - 공지사항 고정/해제 성공
+
+#### 404 - 공지사항을 찾을 수 없습니다
+
+---
+
 ##
 
 **Base Path:** `/`
@@ -1923,6 +2062,269 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
   ] // 권한 ID와 정렬 순서 배열 (PermissionSortOrderItem[])
 }
 ```
+
+---
+
+## Q&A (ADMIN)
+
+**Base Path:** `/qna/admin`
+
+### GET `qna/admin/questions`
+
+**요약:** 모든 질문 목록 조회 (ADMIN 전용)
+
+**Query Parameters:**
+
+- `page` (`number`): 페이지 번호
+- `limit` (`number`): 페이지 크기
+- `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `search` (`string`) (Optional): 검색어 (제목/내용)
+- `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회 여부
+
+**Responses:**
+
+#### 200 - 질문 목록 조회 성공
+
+---
+
+### GET `qna/admin/statistics`
+
+**요약:** 통계 조회 (ADMIN 전용)
+
+**Responses:**
+
+#### 200 - 통계 조회 성공
+
+---
+
+### POST `qna/admin/questions/:questionId/answers`
+
+**요약:** 답변 작성 (ADMIN 전용)
+
+**Path Parameters:**
+
+- `questionId` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "content": "해당 문제는 최신 버전에서 수정되었습니다. 앱을 업데이트 해주세요.", // 답변 내용 (string)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ] // 첨부파일 목록 (AttachmentDto[]?)
+}
+```
+
+**Responses:**
+
+#### 201 - 답변 작성 성공
+
+#### 404 - 질문을 찾을 수 없습니다
+
+---
+
+### PUT `qna/admin/questions/:questionId/answers/:id`
+
+**요약:** 답변 수정 (ADMIN 전용)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "content": "", // 답변 내용 (string?)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ] // 첨부파일 목록 (AttachmentDto[]?)
+}
+```
+
+**Responses:**
+
+#### 200 - 답변 수정 성공
+
+#### 404 - 답변을 찾을 수 없습니다
+
+---
+
+### DELETE `qna/admin/questions/:questionId/answers/:id`
+
+**요약:** 답변 삭제 (ADMIN 전용)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 404 - 답변을 찾을 수 없습니다
+
+---
+
+## Q&A
+
+**Base Path:** `/qna`
+
+### GET `qna/public-questions`
+
+**요약:** 공개 질문 목록 조회
+
+**Query Parameters:**
+
+- `page` (`number`): 페이지 번호
+- `limit` (`number`): 페이지 크기
+- `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `search` (`string`) (Optional): 검색어 (제목/내용)
+- `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회 여부
+
+**Responses:**
+
+#### 200 - 공개 질문 목록 조회 성공
+
+---
+
+### GET `qna/my-questions`
+
+**요약:** 내 질문 목록 조회
+
+**Query Parameters:**
+
+- `page` (`number`): 페이지 번호
+- `limit` (`number`): 페이지 크기
+- `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `search` (`string`) (Optional): 검색어 (제목/내용)
+- `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회 여부
+
+**Responses:**
+
+#### 200 - 내 질문 목록 조회 성공
+
+---
+
+### GET `qna/questions/:id`
+
+**요약:** 질문 상세 조회
+
+**인증/권한:**
+
+- QuestionVisibilityGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 질문 상세 조회 성공
+
+#### 404 - 질문을 찾을 수 없습니다
+
+---
+
+### POST `qna/questions`
+
+**요약:** 질문 작성
+
+**Request Body:**
+
+```json
+{
+  "title": "앱이 자꾸 종료돼요", // 질문 제목 (string)
+  "content": "홈 화면에서 특정 버튼을 누르면 앱이 종료됩니다.", // 질문 내용 (string)
+  "category": null, // 질문 카테고리 (QuestionCategory)
+  "visibility": null, // 공개 여부 (PUBLIC: 모든 사용자 조회 가능, PRIVATE: 본인/ADMIN만 조회 가능) (QuestionVisibility?)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ] // 첨부파일 목록 (AttachmentDto[]?)
+}
+```
+
+**Responses:**
+
+#### 201 - 질문 작성 성공
+
+---
+
+### PUT `qna/questions/:id`
+
+**요약:** 질문 수정 (본인만, PENDING 상태만)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "title": "", // 질문 제목 (string?)
+  "content": "", // 질문 내용 (string?)
+  "category": null, // 질문 카테고리 (QuestionCategory?)
+  "visibility": null, // 공개 여부 (QuestionVisibility?)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ] // 첨부파일 목록 (AttachmentDto[]?)
+}
+```
+
+**Responses:**
+
+#### 200 - 질문 수정 성공
+
+#### 404 - 질문을 찾을 수 없습니다
+
+---
+
+### DELETE `qna/questions/:id`
+
+**요약:** 질문 삭제 (본인만)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 404 - 질문을 찾을 수 없습니다
+
+---
+
+### PATCH `qna/questions/:id/resolve`
+
+**요약:** 질문 해결 완료 처리 (본인만, ANSWERED 상태만)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 질문 해결 완료 처리 성공
+
+#### 404 - 질문을 찾을 수 없습니다
 
 ---
 

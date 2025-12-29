@@ -22,6 +22,8 @@ import { SentryModule } from '@/sentry/sentry.module';
 import { StorageModule } from '@/storage/storage.module';
 import { FirebaseModule } from '@/firebase/firebase.module';
 import { NotificationModule } from '@/notification/notification.module';
+import { AnnouncementModule } from '@/announcement/announcement.module';
+import { QnaModule } from '@/qna/qna.module';
 
 @Module({
   imports: [
@@ -105,6 +107,8 @@ import { NotificationModule } from '@/notification/notification.module';
     RoleModule,
     StorageModule,
     NotificationModule,
+    AnnouncementModule,
+    QnaModule,
   ],
   controllers: [AppController],
   providers: [
