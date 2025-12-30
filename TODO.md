@@ -8,6 +8,7 @@
 
 | 상태 | 기능 | 문서 | Phase |
 |------|------|------|-------|
+| ✅ | 프로젝트 Setup | [00-setup.md](docs/features/00-setup.md) | Phase 1 |
 | ✅ | 인증/인가 | [01-auth.md](docs/features/01-auth.md) | Phase 1 |
 | ✅ | 그룹 관리 | [02-groups.md](docs/features/02-groups.md) | Phase 2 |
 | ✅ | 권한 관리 | [03-permissions.md](docs/features/03-permissions.md) | Phase 2 |
