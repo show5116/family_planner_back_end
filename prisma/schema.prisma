@@ -23,7 +23,8 @@ enum Provider {
 
 // 권한 카테고리
 enum PermissionCategory {
-  GROUP   // 그룹
+  GROUP // 그룹
+  TASK  // Task
 }
 
 // 권한 코드
@@ -34,6 +35,13 @@ enum PermissionCode {
   UPDATE_GROUP
   MANAGE_ROLE
   MANAGE_MEMBER
+
+  // TASK 카테고리
+  READ_TASK
+  CREATE_TASK
+  UPDATE_TASK
+  DELETE_TASK
+  MANAGE_CATEGORY
 }
 
 // 그룹 가입 요청 타입
@@ -90,6 +98,49 @@ enum QuestionVisibility {
   PRIVATE // 비공개 (작성자와 ADMIN만 조회 가능)
 }
 
+// Task 타입
+enum TaskType {
+  CALENDAR_ONLY // 캘린더 전용 (생일, 기념일 등)
+  TODO_LINKED   // 할일 연동 (완료 체크 가능)
+}
+
+// Task 우선순위
+enum TaskPriority {
+  LOW    // 낮음
+  MEDIUM // 보통
+  HIGH   // 높음
+  URGENT // 긴급
+}
+
+// 반복 규칙 타입
+enum RecurringRuleType {
+  DAILY   // 매일
+  WEEKLY  // 매주
+  MONTHLY // 매달
+  YEARLY  // 매년
+}
+
+// 반복 생성 방식
+enum RecurringGenerationType {
+  AUTO_SCHEDULER   // 스케줄러 자동 생성
+  AFTER_COMPLETION // 완료 후 생성
+}
+
+// Task 알림 타입
+enum TaskReminderType {
+  BEFORE_START // 시작 전
+  BEFORE_DUE   // 마감 전
+}
+
+// Task 변경 이력 액션
+enum TaskHistoryAction {
+  CREATE   // 생성
+  UPDATE   // 수정
+  DELETE   // 삭제
+  COMPLETE // 완료
+  SKIP     // 건너뛰기
+}
+
 // 사용자 테이블
 model User {
   id                        String         @id @default(uuid())
@@ -118,6 +169,12 @@ model User {
   announcementReads         AnnouncementRead[]     @relation("AnnouncementReads") // 읽은 공지사항들
   questions                 Question[]             // 작성한 질문들
   answers                   Answer[]               @relation("AdminAnswers") // 작성한 답변들 (ADMIN 전용)
+  categories                Category[]             // 작성한 카테고리들
+  tasks                     Task[]                 // 작성한 Task들
+  recurrings                Recurring[]            // 작성한 반복 규칙들
+  taskReminders             TaskReminder[]         // Task 알림들
+  taskSkips                 TaskSkip[]             // 반복 일정 건너뛰기들
+  taskHistories             TaskHistory[]          // Task 변경 이력들
 
   @@unique([provider, providerId]) // 같은 제공자에서 같은 ID는 유일해야 함
   @@index([email])
@@ -153,6 +210,9 @@ model Group {
   members             GroupMember[]      // 그룹 멤버들
   customRoles         Role[]             // 그룹별 커스텀 역할들
   joinRequests        GroupJoinRequest[] // 그룹 가입 요청들
+  categories          Category[]         // 그룹 카테고리들
+  tasks               Task[]             // 그룹 Task들
+  recurrings          Recurring[]        // 그룹 반복 규칙들
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -356,4 +416,133 @@ model Answer {
 
   @@index([questionId, createdAt(sort: Desc)]) // 질문별 답변 조회
   @@map("answers")
+}
+
+// 카테고리 테이블
+model Category {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId     String?
+  group       Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(50) // 카테고리 이름
+  description String?   @db.Text // 설명
+  emoji       String?   @db.VarChar(10) // 이모지
+  color       String?   @db.VarChar(7) // HEX 색상 코드
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  tasks       Task[] // 이 카테고리에 속한 Task들
+
+  @@index([userId])
+  @@index([groupId])
+  @@index([userId, groupId])
+  @@map("categories")
+}
+
+// Task 테이블
+model Task {
+  id           String       @id @default(uuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId      String?
+  group        Group?       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category     @relation(fields: [categoryId], references: [id])
+  recurringId  String?
+  recurring    Recurring?   @relation(fields: [recurringId], references: [id], onDelete: SetNull)
+  title        String       @db.VarChar(200) // Task 제목
+  description  String?      @db.Text // 상세 설명
+  location     String?      @db.VarChar(255) // 장소
+  type         TaskType     @default(TODO_LINKED) // Task 타입
+  priority     TaskPriority @default(MEDIUM) // 우선순위
+  scheduledAt  DateTime? // 수행 시작 날짜
+  dueAt        DateTime? // 마감 날짜
+  isCompleted  Boolean      @default(false) // 완료 여부
+  completedAt  DateTime? // 완료 시간
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime? // Soft Delete
+  reminders    TaskReminder[] // Task 알림들
+  histories    TaskHistory[] // 변경 이력들
+
+  @@index([userId, scheduledAt])
+  @@index([groupId, scheduledAt])
+  @@index([categoryId])
+  @@index([recurringId])
+  @@index([isCompleted])
+  @@index([deletedAt])
+  @@map("tasks")
+}
+
+// 반복 규칙 테이블
+model Recurring {
+  id              String                   @id @default(uuid())
+  userId          String
+  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId         String?
+  group           Group?                   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  ruleType        RecurringRuleType // 반복 유형 (DAILY, WEEKLY, MONTHLY, YEARLY)
+  ruleConfig      Json // 반복 설정 (요일, 날짜 등)
+  generationType  RecurringGenerationType // 생성 방식 (AUTO_SCHEDULER, AFTER_COMPLETION)
+  lastGeneratedAt DateTime? // 마지막 생성 시간
+  isActive        Boolean                  @default(true) // 활성화 여부
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  tasks           Task[] // 이 반복 규칙으로 생성된 Task들
+  skips           TaskSkip[] // 건너뛰기 목록
+
+  @@index([userId])
+  @@index([groupId])
+  @@index([isActive])
+  @@map("recurrings")
+}
+
+// Task 알림 테이블
+model TaskReminder {
+  id            String           @id @default(uuid())
+  taskId        String
+  task          Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminderType  TaskReminderType // 알림 유형 (BEFORE_START, BEFORE_DUE)
+  offsetMinutes Int // 알림 시간 오프셋 (분 단위, 음수 가능)
+  sentAt        DateTime? // 발송 시간
+  createdAt     DateTime         @default(now())
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([sentAt])
+  @@map("task_reminders")
+}
+
+// Task 건너뛰기 테이블
+model TaskSkip {
+  id          String    @id @default(uuid())
+  recurringId String
+  recurring   Recurring @relation(fields: [recurringId], references: [id], onDelete: Cascade)
+  skipDate    DateTime  @db.Date // 건너뛸 날짜
+  reason      String?   @db.Text // 건너뛰는 이유
+  createdBy   String
+  creator     User      @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime  @default(now())
+
+  @@index([recurringId])
+  @@index([skipDate])
+  @@map("task_skips")
+}
+
+// Task 변경 이력 테이블
+model TaskHistory {
+  id        String            @id @default(uuid())
+  taskId    String
+  task      Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  action    TaskHistoryAction // 변경 유형 (CREATE, UPDATE, DELETE, COMPLETE, SKIP)
+  changes   Json? // 변경 내용 (before/after)
+  createdAt DateTime          @default(now())
+
+  @@index([taskId, createdAt(sort: Desc)])
+  @@index([userId])
+  @@map("task_histories")
 }

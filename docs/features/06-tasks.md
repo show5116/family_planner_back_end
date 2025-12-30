@@ -1,8 +1,10 @@
 # 06. 일정 및 할일 통합 관리 (Tasks Management)
 
-> **상태**: ⬜ 대기
+> **상태**: 🟨 진행 중 (핵심 기능 구현 완료, 반복 일정 로직 TODO)
 > **우선순위**: Medium
 > **담당 Phase**: Phase 3
+> **구현 시작**: 2025-12-30
+> **핵심 구현 완료**: 2025-12-30
 
 ---
 
@@ -47,55 +49,55 @@
 
 ---
 
-## ⬜ 카테고리 관리
+## ✅ 카테고리 관리
 
 ### 카테고리 목록 조회 (`GET /categories`)
 
-- ⬜ JWT 인증
-- ⬜ 개인 카테고리 + 소속 그룹 카테고리 모두 조회
-- ⬜ 그룹 ID 필터링 지원 (groupId query param)
+- ✅ JWT 인증
+- ✅ 개인 카테고리 + 소속 그룹 카테고리 모두 조회
+- ✅ 그룹 ID 필터링 지원 (groupId query param)
 
 **Query Params**:
 - `groupId`: 그룹 ID (optional, 지정 시 그룹 카테고리만 조회)
 
 **관련 파일**:
-- [src/task/task.controller.ts](../../src/task/task.controller.ts) (예정)
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.controller.ts](../../src/task/task.controller.ts) ✅
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
 ### 카테고리 생성 (`POST /categories`)
 
-- ⬜ JWT 인증
-- ⬜ 이름(필수), 설명, 이모지, 색상 코드 입력
-- ⬜ groupId 지정 시 그룹 카테고리로 생성
-- ⬜ 그룹 카테고리 생성 시 그룹 멤버 권한 확인
+- ✅ JWT 인증
+- ✅ 이름(필수), 설명, 이모지, 색상 코드 입력
+- ✅ groupId 지정 시 그룹 카테고리로 생성
+- ✅ 그룹 카테고리 생성 시 그룹 멤버 권한 확인
 
 **관련 파일**:
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
 ### 카테고리 수정/삭제
 
-- ⬜ **수정** (`PUT /categories/:id`): 본인 작성 카테고리만 수정 가능
-- ⬜ **삭제** (`DELETE /categories/:id`): 연결된 Task가 있으면 삭제 불가 (안전성)
+- ✅ **수정** (`PUT /categories/:id`): 본인 작성 카테고리만 수정 가능
+- ✅ **삭제** (`DELETE /categories/:id`): 연결된 Task가 있으면 삭제 불가 (안전성)
 
 **관련 파일**:
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
-## ⬜ Task 관리
+## ✅ Task 관리
 
 ### Task 목록 조회 (`GET /tasks`)
 
-- ⬜ JWT 인증
-- ⬜ 캘린더 뷰 vs 할일 뷰 구분 (view query param)
-- ⬜ 그룹, 카테고리, 타입, 우선순위, 완료 여부, 날짜 범위 필터링
-- ⬜ D-Day 계산 (daysUntilDue 필드)
-- ⬜ 카테고리 정보 포함 (이모지, 색상)
-- ⬜ 반복 정보 포함 (있는 경우)
+- ✅ JWT 인증
+- ✅ 캘린더 뷰 vs 할일 뷰 구분 (view query param)
+- ✅ 그룹, 카테고리, 타입, 우선순위, 완료 여부, 날짜 범위 필터링
+- ✅ D-Day 계산 (daysUntilDue 필드)
+- ✅ 카테고리 정보 포함 (이모지, 색상)
+- ✅ 반복 정보 포함 (있는 경우)
 
 **Query Params**:
 - `groupId`: 그룹 ID (optional)
@@ -118,70 +120,70 @@
 
 ### Task 상세 조회 (`GET /tasks/:id`)
 
-- ⬜ JWT 인증
-- ⬜ Task 상세 정보 + 알림 목록 + 변경 이력
-- ⬜ 그룹 Task는 그룹 멤버만 조회 가능
+- ✅ JWT 인증
+- ✅ Task 상세 정보 + 알림 목록 + 변경 이력
+- ✅ 그룹 Task는 그룹 멤버만 조회 가능
 
 **관련 파일**:
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
 ### Task 생성 (`POST /tasks`)
 
-- ⬜ JWT 인증
-- ⬜ 제목, 타입, 카테고리 필수 입력
-- ⬜ 우선순위 기본값: MEDIUM
-- ⬜ 반복 일정 설정 가능 (recurring 객체)
-- ⬜ 알림 설정 가능 (reminders 배열)
-- ⬜ TaskHistory 자동 생성 (action=CREATE)
-- ⬜ 그룹 Task 생성 시 그룹 멤버에게 알림
+- ✅ JWT 인증
+- ✅ 제목, 타입, 카테고리 필수 입력
+- ✅ 우선순위 기본값: MEDIUM
+- ✅ 반복 일정 설정 가능 (recurring 객체)
+- ✅ 알림 설정 가능 (reminders 배열)
+- ✅ TaskHistory 자동 생성 (action=CREATE)
+- ✅ 그룹 Task 생성 시 그룹 멤버에게 알림
 
 **부가 동작**:
 - 반복 설정이 있으면 Recurring 레코드 생성
 - 그룹 Task인 경우 그룹 멤버에게 알림 발송
 
 **관련 파일**:
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
 ### Task 수정 (`PUT /tasks/:id`)
 
-- ⬜ 본인 작성 Task만 수정 가능
-- ⬜ 반복 Task인 경우 updateScope 필수
+- ✅ 본인 작성 Task만 수정 가능
+- ✅ 반복 Task인 경우 updateScope 필수
   - `current`: 현재 Task만 수정
   - `future`: 현재 + 미래의 모든 반복 Task 수정
-- ⬜ TaskHistory 자동 생성 (action=UPDATE, changes 기록)
+- ✅ TaskHistory 자동 생성 (action=UPDATE, changes 기록)
 
 **Query Params**:
 - `updateScope`: 'current' | 'future' (반복 Task인 경우 필수)
 
 **관련 파일**:
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
 ### Task 완료/미완료 (`PATCH /tasks/:id/complete`)
 
-- ⬜ JWT 인증
-- ⬜ isCompleted true 설정 시 completedAt 자동 기록
-- ⬜ TaskHistory 자동 생성 (action=COMPLETE)
-- ⬜ 반복 유형이 AFTER_COMPLETION인 경우 다음 Task 자동 생성
+- ✅ JWT 인증
+- ✅ isCompleted true 설정 시 completedAt 자동 기록
+- ✅ TaskHistory 자동 생성 (action=COMPLETE)
+- 🟨 반복 유형이 AFTER_COMPLETION인 경우 다음 Task 자동 생성 (TODO)
 
 **부가 동작**:
-- 완료 후 생성 타입 반복 일정은 다음 Task 자동 생성
+- 완료 후 생성 타입 반복 일정은 다음 Task 자동 생성 (향후 구현 필요)
 
 **관련 파일**:
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
 ### Task 삭제 (`DELETE /tasks/:id`)
 
-- ⬜ 본인 작성 Task만 삭제 가능
-- ⬜ Soft Delete (deletedAt 설정)
-- ⬜ 반복 Task인 경우 deleteScope 필수
+- ✅ 본인 작성 Task만 삭제 가능
+- ✅ Soft Delete (deletedAt 설정)
+- ✅ 반복 Task인 경우 deleteScope 필수
   - `current`: 현재 Task만 삭제
   - `future`: 현재 + 미래의 모든 반복 Task 삭제
   - `all`: 과거 + 현재 + 미래 모든 반복 Task 삭제
@@ -190,30 +192,30 @@
 - `deleteScope`: 'current' | 'future' | 'all' (반복 Task인 경우)
 
 **관련 파일**:
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
-## ⬜ 반복 일정 관리
+## 🟨 반복 일정 관리
 
 ### 반복 일정 일시정지/재개 (`PATCH /recurrings/:id/pause`)
 
-- ⬜ 본인 작성 반복 규칙만 변경 가능
-- ⬜ isActive 토글 (true ↔ false)
-- ⬜ 일시정지 시 스케줄러가 새 Task 생성하지 않음
+- ✅ 본인 작성 반복 규칙만 변경 가능
+- ✅ isActive 토글 (true ↔ false)
+- ✅ 일시정지 시 스케줄러가 새 Task 생성하지 않음
 
 **관련 파일**:
-- [src/task/task.service.ts](../../src/task/task.service.ts) (예정)
+- [src/task/task.service.ts](../../src/task/task.service.ts) ✅
 
 ---
 
 ### 반복 일정 건너뛰기 (`POST /recurrings/:id/skip`)
 
-- ⬜ 본인 작성 반복 규칙만 변경 가능
-- ⬜ 특정 날짜 건너뛰기 (skipDate)
-- ⬜ 건너뛰는 이유 기록 가능
-- ⬜ TaskSkip 레코드 생성
-- ⬜ 그룹 반복 일정인 경우 그룹 멤버에게 알림
+- ✅ 본인 작성 반복 규칙만 변경 가능
+- ✅ 특정 날짜 건너뛰기 (skipDate)
+- ✅ 건너뛰는 이유 기록 가능
+- ✅ TaskSkip 레코드 생성
+- ✅ 그룹 반복 일정인 경우 그룹 멤버에게 알림
 
 **부가 동작**:
 - 그룹 반복 일정인 경우 그룹 멤버에게 알림 발송
@@ -539,26 +541,53 @@ function calculateDaysUntilDue(dueAt: Date | null): number | null {
 
 ## 📝 구현 체크리스트
 
-- [ ] Prisma 스키마 작성 (Categories, Tasks, Recurrings, TaskReminders, TaskSkips, TaskHistories)
-- [ ] Enum 정의 (TaskType, TaskPriority, RecurringRuleType 등)
-- [ ] Permission 추가 (READ_TASK, CREATE_TASK 등)
-- [ ] TaskModule 생성
-- [ ] TaskService 구현
-  - [ ] 카테고리 CRUD
-  - [ ] Task CRUD
-  - [ ] D-Day 계산
-  - [ ] 완료 처리
-  - [ ] 반복 일정 관리
-  - [ ] 건너뛰기 처리
-  - [ ] 변경 이력 자동 기록
-- [ ] TaskSchedulerService 구현 (스케줄러)
-- [ ] TaskController 구현
-- [ ] DTO 작성
-- [ ] Swagger 문서화
+- [x] Prisma 스키마 작성 (Categories, Tasks, Recurrings, TaskReminders, TaskSkips, TaskHistories)
+- [x] Enum 정의 (TaskType, TaskPriority, RecurringRuleType 등)
+- [x] Permission 추가 (READ_TASK, CREATE_TASK 등)
+- [x] TaskModule 생성
+- [x] TaskService 구현
+  - [x] 카테고리 CRUD
+  - [x] Task CRUD
+  - [x] D-Day 계산
+  - [x] 완료 처리
+  - [x] 반복 일정 관리 (일시정지, 건너뛰기)
+  - [x] 건너뛰기 처리
+  - [x] 변경 이력 자동 기록
+  - [ ] 반복 일정 자동 생성 로직 (generateRecurringTasks - TODO)
+- [x] TaskSchedulerService 구현 (스케줄러)
+- [x] TaskController 구현
+- [x] DTO 작성
+- [x] Swagger 문서화
 - [ ] 단위 테스트 작성
 - [ ] E2E 테스트 작성
-- [ ] 데이터베이스 마이그레이션
+- [x] 데이터베이스 마이그레이션
+
+---
+
+## 🎉 구현 완료 요약
+
+### 완료된 핵심 기능 (2025-12-30)
+1. **데이터베이스**: 6개 Enum + 6개 테이블 설계 및 마이그레이션 완료
+2. **카테고리 관리**: 개인/그룹 카테고리 CRUD 완전 구현
+3. **Task 관리**: 캘린더/할일 뷰, D-Day 계산, 권한 관리, 변경 이력 완전 구현
+4. **반복 일정**: 일시정지, 건너뛰기 구현
+5. **스케줄러**: 매일 0시 자동 실행, 휴면 사용자 필터링
+6. **알림 연동**: 그룹 Task 생성/건너뛰기 시 자동 알림
+
+### TODO (향후 구현 필요)
+- `TaskService.generateRecurringTasks()`: 반복 날짜 계산 로직 (DAILY, WEEKLY, MONTHLY, YEARLY)
+- AFTER_COMPLETION 타입: Task 완료 시 다음 Task 자동 생성
+- 단위 테스트 및 E2E 테스트
+
+### 생성된 파일 (23개)
+- Prisma 스키마: 1개 (수정)
+- Enum: 7개 (src/task/enums/*.ts)
+- DTO: 11개 (src/task/dto/*.ts)
+- Core: 4개 (task.module.ts, task.service.ts, task.controller.ts, task-scheduler.service.ts)
+
+**자세한 구현 내역**: [TASK_PROGRESS.md](../../TASK_PROGRESS.md)
 
 ---
 
 **작성일**: 2025-12-29
+**구현 완료**: 2025-12-30

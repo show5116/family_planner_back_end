@@ -24,6 +24,7 @@ import { FirebaseModule } from '@/firebase/firebase.module';
 import { NotificationModule } from '@/notification/notification.module';
 import { AnnouncementModule } from '@/announcement/announcement.module';
 import { QnaModule } from '@/qna/qna.module';
+import { TaskModule } from '@/task/task.module';
 
 @Module({
   imports: [
@@ -109,6 +110,7 @@ import { QnaModule } from '@/qna/qna.module';
     NotificationModule,
     AnnouncementModule,
     QnaModule,
+    TaskModule,
   ],
   controllers: [AppController],
   providers: [
