@@ -51,7 +51,7 @@
 
 ```json
 {
-  "message": "토큰이 삭제되었습니다" // string
+  "message": "작업이 완료되었습니다" // string
 }
 ```
 
@@ -206,7 +206,7 @@
 
 ```json
 {
-  "message": "토큰이 삭제되었습니다" // string
+  "message": "작업이 완료되었습니다" // string
 }
 ```
 
@@ -228,7 +228,7 @@
 
 ```json
 {
-  "message": "토큰이 삭제되었습니다" // string
+  "message": "작업이 완료되었습니다" // string
 }
 ```
 

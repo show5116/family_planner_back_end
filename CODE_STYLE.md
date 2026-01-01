@@ -135,6 +135,7 @@ export class YourController {
 - ✅ **응답 데코레이터**: `@ApiSuccess`, `@ApiCreated`, `@ApiNotFound`, `@ApiForbidden` 사용
   - 첫 번째 인자: **DTO 클래스** (string 아님!)
   - 두 번째 인자: 한글 설명
+  - **중요**: Response DTO 파일을 반드시 생성하고 실제 클래스를 전달해야 함
 - ✅ **@Request() req 사용**: 사용자 정보는 `req.user.userId`로 접근
 - ✅ **async 키워드 제거**: 컨트롤러 메서드에서는 async 사용하지 않음 (service에서 처리)
 - ❌ **@HttpCode, HttpStatus 사용 금지**: NestJS 기본 동작 활용
@@ -292,10 +293,20 @@ export class CreateYourDto {
 
 ### Response DTO
 
+Response DTO는 **반드시 별도 파일로 작성**하고, Controller에서 실제 클래스를 import하여 사용해야 합니다.
+
+**파일 구조**:
+- `xxx-response.dto.ts`: 응답 DTO만 모아놓은 파일
+- Controller에서 `Object` 대신 실제 DTO 클래스 사용
+
 ```typescript
+// your-module/dto/your-response.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { YourEnum } from '@/your-module/enums/your.enum';
 
+/**
+ * 단일 리소스 응답 DTO
+ */
 export class YourDto {
   @ApiProperty({ description: 'ID', example: 'uuid' })
   id: string;
@@ -324,18 +335,61 @@ export class YourDto {
   optionalField: string | null;
 }
 
+/**
+ * 페이지네이션 응답 DTO
+ */
 export class PaginatedYourDto {
-  @ApiProperty({ type: [YourDto] })
+  @ApiProperty({ type: [YourDto], description: '리소스 목록' })
   data: YourDto[];
 
-  @ApiProperty({ type: PaginationMetaDto })
-  meta: PaginationMetaDto;
+  @ApiProperty({
+    description: '페이지네이션 메타 정보',
+    example: {
+      total: 100,
+      page: 1,
+      limit: 20,
+      totalPages: 5,
+    },
+  })
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
+/**
+ * 메시지 응답 DTO (삭제 등)
+ */
 export class MessageResponseDto {
   @ApiProperty({ example: '작업이 완료되었습니다' })
   message: string;
 }
+```
+
+**Controller에서 사용**:
+
+```typescript
+// ✅ 좋은 예 - 실제 DTO 클래스 사용
+import { YourDto, PaginatedYourDto, MessageResponseDto } from './dto/your-response.dto';
+
+@Get()
+@ApiSuccess(PaginatedYourDto, '목록 조회 성공')
+findAll() { ... }
+
+@Get(':id')
+@ApiSuccess(YourDto, '상세 조회 성공')
+findOne() { ... }
+
+@Delete(':id')
+@ApiSuccess(MessageResponseDto, '삭제 성공')
+remove() { ... }
+
+// ❌ 나쁜 예 - Object 사용 (Swagger 문서에서 스펙 확인 불가)
+@Get()
+@ApiSuccess(Object, '목록 조회 성공')  // ❌
+findAll() { ... }
 ```
 
 ### DTO 규칙 체크리스트

@@ -22,6 +22,28 @@
 
 #### 200 - 공지사항 목록 조회 성공
 
+```json
+{
+  "data": [
+    {
+      "id": "uuid", // 공지사항 ID (string)
+      "title": "시스템 점검 안내", // 제목 (string)
+      "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
+      "isPinned": false, // 고정 여부 (boolean)
+      "author": {
+        "id": "uuid",
+        "name": "관리자"
+      }, // 작성자 정보 (AnnouncementAuthorDto)
+      "readCount": 42, // 읽은 사람 수 (number)
+      "isRead": false, // 현재 사용자가 읽었는지 여부 (boolean)
+      "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 공지사항 목록 (AnnouncementDto[])
+  "meta": { "total": 100, "page": 1, "limit": 20, "totalPages": 5 } // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
+}
+```
+
 ---
 
 ### GET `announcements/:id`
@@ -35,6 +57,23 @@
 **Responses:**
 
 #### 200 - 공지사항 상세 조회 성공
+
+```json
+{
+  "id": "uuid", // 공지사항 ID (string)
+  "title": "시스템 점검 안내", // 제목 (string)
+  "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
+  "isPinned": false, // 고정 여부 (boolean)
+  "author": {
+    "id": "uuid", // 작성자 ID (string)
+    "name": "관리자" // 작성자 이름 (string)
+  }, // 작성자 정보 (AnnouncementAuthorDto)
+  "readCount": 42, // 읽은 사람 수 (number)
+  "isRead": false, // 현재 사용자가 읽었는지 여부 (boolean)
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
 
 #### 404 - 공지사항을 찾을 수 없습니다
 
@@ -69,6 +108,23 @@
 
 #### 201 - 공지사항 작성 성공
 
+```json
+{
+  "id": "uuid", // 공지사항 ID (string)
+  "title": "시스템 점검 안내", // 제목 (string)
+  "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
+  "isPinned": false, // 고정 여부 (boolean)
+  "author": {
+    "id": "uuid", // 작성자 ID (string)
+    "name": "관리자" // 작성자 이름 (string)
+  }, // 작성자 정보 (AnnouncementAuthorDto)
+  "readCount": 42, // 읽은 사람 수 (number)
+  "isRead": false, // 현재 사용자가 읽었는지 여부 (boolean)
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
+
 ---
 
 ### PUT `announcements/:id`
@@ -93,6 +149,23 @@
 
 #### 200 - 공지사항 수정 성공
 
+```json
+{
+  "id": "uuid", // 공지사항 ID (string)
+  "title": "시스템 점검 안내", // 제목 (string)
+  "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
+  "isPinned": false, // 고정 여부 (boolean)
+  "author": {
+    "id": "uuid", // 작성자 ID (string)
+    "name": "관리자" // 작성자 이름 (string)
+  }, // 작성자 정보 (AnnouncementAuthorDto)
+  "readCount": 42, // 읽은 사람 수 (number)
+  "isRead": false, // 현재 사용자가 읽었는지 여부 (boolean)
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
+
 #### 404 - 공지사항을 찾을 수 없습니다
 
 ---
@@ -110,6 +183,14 @@
 - `id` (`string`)
 
 **Responses:**
+
+#### 200 - 공지사항 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
 
 #### 404 - 공지사항을 찾을 수 없습니다
 
@@ -138,6 +219,23 @@
 **Responses:**
 
 #### 200 - 공지사항 고정/해제 성공
+
+```json
+{
+  "id": "uuid", // 공지사항 ID (string)
+  "title": "시스템 점검 안내", // 제목 (string)
+  "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
+  "isPinned": false, // 고정 여부 (boolean)
+  "author": {
+    "id": "uuid", // 작성자 ID (string)
+    "name": "관리자" // 작성자 이름 (string)
+  }, // 작성자 정보 (AnnouncementAuthorDto)
+  "readCount": 42, // 읽은 사람 수 (number)
+  "isRead": false, // 현재 사용자가 읽었는지 여부 (boolean)
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
 
 #### 404 - 공지사항을 찾을 수 없습니다
 

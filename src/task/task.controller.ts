@@ -41,7 +41,7 @@ import {
  * 카테고리, Task CRUD, 반복 일정 관리
  */
 @ApiTags('일정 및 할일')
-@Controller()
+@Controller('tasks')
 @ApiCommonAuthResponses()
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
@@ -86,14 +86,14 @@ export class TaskController {
 
   // ==================== Task API ====================
 
-  @Get('tasks')
+  @Get()
   @ApiOperation({ summary: 'Task 목록 조회 (캘린더/할일 뷰)' })
   @ApiSuccess(PaginatedTaskDto, 'Task 목록 조회 성공')
   getTasks(@Request() req, @Query() query: QueryTasksDto) {
     return this.taskService.getTasks(req.user.userId, query);
   }
 
-  @Get('tasks/:id')
+  @Get(':id')
   @ApiOperation({ summary: 'Task 상세 조회' })
   @ApiSuccess(TaskDetailDto, 'Task 상세 조회 성공')
   @ApiNotFound('Task를 찾을 수 없음')
@@ -102,14 +102,14 @@ export class TaskController {
     return this.taskService.getTaskById(req.user.userId, id);
   }
 
-  @Post('tasks')
+  @Post()
   @ApiOperation({ summary: 'Task 생성' })
   @ApiCreated(TaskDto, 'Task 생성 성공')
   createTask(@Request() req, @Body() dto: CreateTaskDto) {
     return this.taskService.createTask(req.user.userId, dto);
   }
 
-  @Put('tasks/:id')
+  @Put(':id')
   @ApiOperation({ summary: 'Task 수정' })
   @ApiSuccess(TaskDto, 'Task 수정 성공')
   @ApiNotFound('Task를 찾을 수 없음')
@@ -123,7 +123,7 @@ export class TaskController {
     return this.taskService.updateTask(req.user.userId, id, dto, updateScope);
   }
 
-  @Patch('tasks/:id/complete')
+  @Patch(':id/complete')
   @ApiOperation({ summary: 'Task 완료/미완료 처리' })
   @ApiSuccess(TaskDto, 'Task 완료 처리 성공')
   @ApiNotFound('Task를 찾을 수 없음')
@@ -135,7 +135,7 @@ export class TaskController {
     return this.taskService.completeTask(req.user.userId, id, dto.isCompleted);
   }
 
-  @Delete('tasks/:id')
+  @Delete(':id')
   @ApiOperation({ summary: 'Task 삭제' })
   @ApiSuccess(MessageResponseDto, 'Task 삭제 성공')
   @ApiNotFound('Task를 찾을 수 없음')

@@ -10,14 +10,18 @@ import {
   Query,
   Request,
   UseGuards,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+
 import { QnaService } from './qna.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { QuestionQueryDto } from './dto/question-query.dto';
+import {
+  PaginatedQuestionDto,
+  QuestionDetailDto,
+  MessageResponseDto,
+} from './dto/qna-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiSuccess,
@@ -38,14 +42,14 @@ export class QnaController {
 
   @Get('public-questions')
   @ApiOperation({ summary: '공개 질문 목록 조회' })
-  @ApiSuccess(Object, '공개 질문 목록 조회 성공')
+  @ApiSuccess(PaginatedQuestionDto, '공개 질문 목록 조회 성공')
   findPublicQuestions(@Query() query: QuestionQueryDto) {
     return this.qnaService.findPublicQuestions(query);
   }
 
   @Get('my-questions')
   @ApiOperation({ summary: '내 질문 목록 조회' })
-  @ApiSuccess(Object, '내 질문 목록 조회 성공')
+  @ApiSuccess(PaginatedQuestionDto, '내 질문 목록 조회 성공')
   findMyQuestions(@Request() req, @Query() query: QuestionQueryDto) {
     return this.qnaService.findMyQuestions(req.user.userId, query);
   }
@@ -53,7 +57,7 @@ export class QnaController {
   @Get('questions/:id')
   @UseGuards(QuestionVisibilityGuard)
   @ApiOperation({ summary: '질문 상세 조회' })
-  @ApiSuccess(Object, '질문 상세 조회 성공')
+  @ApiSuccess(QuestionDetailDto, '질문 상세 조회 성공')
   @ApiNotFound('질문을 찾을 수 없습니다')
   findOne(@Param('id') id: string) {
     return this.qnaService.findOne(id);
@@ -61,22 +65,22 @@ export class QnaController {
 
   @Post('questions')
   @ApiOperation({ summary: '질문 작성' })
-  @ApiCreated(Object, '질문 작성 성공')
+  @ApiCreated(QuestionDetailDto, '질문 작성 성공')
   create(@Request() req, @Body() dto: CreateQuestionDto) {
     return this.qnaService.create(req.user.userId, dto);
   }
 
   @Put('questions/:id')
   @ApiOperation({ summary: '질문 수정 (본인만, PENDING 상태만)' })
-  @ApiSuccess(Object, '질문 수정 성공')
+  @ApiSuccess(QuestionDetailDto, '질문 수정 성공')
   @ApiNotFound('질문을 찾을 수 없습니다')
   update(@Param('id') id: string, @Request() req, @Body() dto: UpdateQuestionDto) {
     return this.qnaService.update(id, req.user.userId, dto);
   }
 
   @Delete('questions/:id')
-  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '질문 삭제 (본인만)' })
+  @ApiSuccess(MessageResponseDto, '질문 삭제 성공')
   @ApiNotFound('질문을 찾을 수 없습니다')
   remove(@Param('id') id: string, @Request() req) {
     return this.qnaService.remove(id, req.user.userId);
@@ -84,7 +88,7 @@ export class QnaController {
 
   @Patch('questions/:id/resolve')
   @ApiOperation({ summary: '질문 해결 완료 처리 (본인만, ANSWERED 상태만)' })
-  @ApiSuccess(Object, '질문 해결 완료 처리 성공')
+  @ApiSuccess(QuestionDetailDto, '질문 해결 완료 처리 성공')
   @ApiNotFound('질문을 찾을 수 없습니다')
   resolve(@Param('id') id: string, @Request() req) {
     return this.qnaService.resolve(id, req.user.userId);

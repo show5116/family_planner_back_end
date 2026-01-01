@@ -51,7 +51,7 @@
 
 ## ✅ 카테고리 관리
 
-### 카테고리 목록 조회 (`GET /categories`)
+### 카테고리 목록 조회 (`GET /tasks/categories`)
 
 - ✅ JWT 인증
 - ✅ 개인 카테고리 + 소속 그룹 카테고리 모두 조회
@@ -66,7 +66,7 @@
 
 ---
 
-### 카테고리 생성 (`POST /categories`)
+### 카테고리 생성 (`POST /tasks/categories`)
 
 - ✅ JWT 인증
 - ✅ 이름(필수), 설명, 이모지, 색상 코드 입력
@@ -80,8 +80,8 @@
 
 ### 카테고리 수정/삭제
 
-- ✅ **수정** (`PUT /categories/:id`): 본인 작성 카테고리만 수정 가능
-- ✅ **삭제** (`DELETE /categories/:id`): 연결된 Task가 있으면 삭제 불가 (안전성)
+- ✅ **수정** (`PUT /tasks/categories/:id`): 본인 작성 카테고리만 수정 가능
+- ✅ **삭제** (`DELETE /tasks/categories/:id`): 연결된 Task가 있으면 삭제 불가 (안전성)
 
 **관련 파일**:
 - [src/task/task.service.ts](../../src/task/task.service.ts) ✅
@@ -198,7 +198,7 @@
 
 ## 🟨 반복 일정 관리
 
-### 반복 일정 일시정지/재개 (`PATCH /recurrings/:id/pause`)
+### 반복 일정 일시정지/재개 (`PATCH /tasks/recurrings/:id/pause`)
 
 - ✅ 본인 작성 반복 규칙만 변경 가능
 - ✅ isActive 토글 (true ↔ false)
@@ -209,7 +209,7 @@
 
 ---
 
-### 반복 일정 건너뛰기 (`POST /recurrings/:id/skip`)
+### 반복 일정 건너뛰기 (`POST /tasks/recurrings/:id/skip`)
 
 - ✅ 본인 작성 반복 규칙만 변경 가능
 - ✅ 특정 날짜 건너뛰기 (skipDate)
@@ -510,20 +510,20 @@ function calculateDaysUntilDue(dueAt: Date | null): number | null {
 
 ## 📝 API 엔드포인트
 
-| Method | Endpoint                     | 설명                    | Guard |
-| ------ | ---------------------------- | ----------------------- | ----- |
-| GET    | `/categories`                | 카테고리 목록 조회      | JWT   |
-| POST   | `/categories`                | 카테고리 생성           | JWT   |
-| PUT    | `/categories/:id`            | 카테고리 수정           | JWT   |
-| DELETE | `/categories/:id`            | 카테고리 삭제           | JWT   |
-| GET    | `/tasks`                     | Task 목록 조회          | JWT   |
-| GET    | `/tasks/:id`                 | Task 상세 조회          | JWT   |
-| POST   | `/tasks`                     | Task 생성               | JWT   |
-| PUT    | `/tasks/:id`                 | Task 수정               | JWT   |
-| PATCH  | `/tasks/:id/complete`        | Task 완료/미완료        | JWT   |
-| DELETE | `/tasks/:id`                 | Task 삭제               | JWT   |
-| PATCH  | `/recurrings/:id/pause`      | 반복 일정 일시정지/재개 | JWT   |
-| POST   | `/recurrings/:id/skip`       | 반복 일정 건너뛰기      | JWT   |
+| Method | Endpoint                           | 설명                    | Guard |
+| ------ | ---------------------------------- | ----------------------- | ----- |
+| GET    | `/tasks/categories`                | 카테고리 목록 조회      | JWT   |
+| POST   | `/tasks/categories`                | 카테고리 생성           | JWT   |
+| PUT    | `/tasks/categories/:id`            | 카테고리 수정           | JWT   |
+| DELETE | `/tasks/categories/:id`            | 카테고리 삭제           | JWT   |
+| GET    | `/tasks`                           | Task 목록 조회          | JWT   |
+| GET    | `/tasks/:id`                       | Task 상세 조회          | JWT   |
+| POST   | `/tasks`                           | Task 생성               | JWT   |
+| PUT    | `/tasks/:id`                       | Task 수정               | JWT   |
+| PATCH  | `/tasks/:id/complete`              | Task 완료/미완료        | JWT   |
+| DELETE | `/tasks/:id`                       | Task 삭제               | JWT   |
+| PATCH  | `/tasks/recurrings/:id/pause`      | 반복 일정 일시정지/재개 | JWT   |
+| POST   | `/tasks/recurrings/:id/skip`       | 반복 일정 건너뛰기      | JWT   |
 
 ---
 

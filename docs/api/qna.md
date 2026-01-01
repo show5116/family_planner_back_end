@@ -25,6 +25,29 @@
 
 #### 200 - 공개 질문 목록 조회 성공
 
+```json
+{
+  "data": [
+    {
+      "id": "uuid", // 질문 ID (string)
+      "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
+      "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
+      "category": null, // 카테고리 (QuestionCategory)
+      "status": null, // 질문 상태 (QuestionStatus)
+      "visibility": null, // 공개 여부 (QuestionVisibility)
+      "answerCount": 1, // 답변 수 (number)
+      "user": {
+        "id": "uuid",
+        "name": "홍길동"
+      }, // 작성자 정보 (QuestionUserDto)
+      "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 질문 목록 (QuestionListDto[])
+  "meta": { "total": 100, "page": 1, "limit": 20, "totalPages": 5 } // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
+}
+```
+
 ---
 
 ### GET `qna/my-questions`
@@ -44,6 +67,29 @@
 
 #### 200 - 내 질문 목록 조회 성공
 
+```json
+{
+  "data": [
+    {
+      "id": "uuid", // 질문 ID (string)
+      "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
+      "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
+      "category": null, // 카테고리 (QuestionCategory)
+      "status": null, // 질문 상태 (QuestionStatus)
+      "visibility": null, // 공개 여부 (QuestionVisibility)
+      "answerCount": 1, // 답변 수 (number)
+      "user": {
+        "id": "uuid",
+        "name": "홍길동"
+      }, // 작성자 정보 (QuestionUserDto)
+      "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 질문 목록 (QuestionListDto[])
+  "meta": { "total": 100, "page": 1, "limit": 20, "totalPages": 5 } // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
+}
+```
+
 ---
 
 ### GET `qna/questions/:id`
@@ -61,6 +107,48 @@
 **Responses:**
 
 #### 200 - 질문 상세 조회 성공
+
+```json
+{
+  "id": "uuid", // 질문 ID (string)
+  "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
+  "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
+  "category": null, // 카테고리 (QuestionCategory)
+  "status": null, // 질문 상태 (QuestionStatus)
+  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "user": {
+    "id": "uuid", // 사용자 ID (string)
+    "name": "홍길동" // 사용자 이름 (string)
+  }, // 작성자 정보 (QuestionUserDto)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ], // 첨부파일 목록 (AttachmentDto[])
+  "answers": [
+    {
+      "id": "uuid", // 답변 ID (string)
+      "content": "그룹 초대는 그룹 설정 메뉴에서 가능합니다...", // 답변 내용 (string)
+      "adminId": "uuid", // 작성자 ID (string)
+      "admin": {
+        "id": "uuid",
+        "name": "홍길동"
+      }, // 작성자 정보 (QuestionUserDto)
+      "attachments": {
+        "url": "",
+        "name": "",
+        "size": 0
+      }, // 첨부파일 목록 (AttachmentDto[])
+      "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 답변 목록 (AnswerDto[])
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
 
 #### 404 - 질문을 찾을 수 없습니다
 
@@ -91,6 +179,48 @@
 **Responses:**
 
 #### 201 - 질문 작성 성공
+
+```json
+{
+  "id": "uuid", // 질문 ID (string)
+  "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
+  "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
+  "category": null, // 카테고리 (QuestionCategory)
+  "status": null, // 질문 상태 (QuestionStatus)
+  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "user": {
+    "id": "uuid", // 사용자 ID (string)
+    "name": "홍길동" // 사용자 이름 (string)
+  }, // 작성자 정보 (QuestionUserDto)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ], // 첨부파일 목록 (AttachmentDto[])
+  "answers": [
+    {
+      "id": "uuid", // 답변 ID (string)
+      "content": "그룹 초대는 그룹 설정 메뉴에서 가능합니다...", // 답변 내용 (string)
+      "adminId": "uuid", // 작성자 ID (string)
+      "admin": {
+        "id": "uuid",
+        "name": "홍길동"
+      }, // 작성자 정보 (QuestionUserDto)
+      "attachments": {
+        "url": "",
+        "name": "",
+        "size": 0
+      }, // 첨부파일 목록 (AttachmentDto[])
+      "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 답변 목록 (AnswerDto[])
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
 
 ---
 
@@ -124,6 +254,48 @@
 
 #### 200 - 질문 수정 성공
 
+```json
+{
+  "id": "uuid", // 질문 ID (string)
+  "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
+  "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
+  "category": null, // 카테고리 (QuestionCategory)
+  "status": null, // 질문 상태 (QuestionStatus)
+  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "user": {
+    "id": "uuid", // 사용자 ID (string)
+    "name": "홍길동" // 사용자 이름 (string)
+  }, // 작성자 정보 (QuestionUserDto)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ], // 첨부파일 목록 (AttachmentDto[])
+  "answers": [
+    {
+      "id": "uuid", // 답변 ID (string)
+      "content": "그룹 초대는 그룹 설정 메뉴에서 가능합니다...", // 답변 내용 (string)
+      "adminId": "uuid", // 작성자 ID (string)
+      "admin": {
+        "id": "uuid",
+        "name": "홍길동"
+      }, // 작성자 정보 (QuestionUserDto)
+      "attachments": {
+        "url": "",
+        "name": "",
+        "size": 0
+      }, // 첨부파일 목록 (AttachmentDto[])
+      "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 답변 목록 (AnswerDto[])
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
+
 #### 404 - 질문을 찾을 수 없습니다
 
 ---
@@ -137,6 +309,14 @@
 - `id` (`string`)
 
 **Responses:**
+
+#### 200 - 질문 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
 
 #### 404 - 질문을 찾을 수 없습니다
 
@@ -153,6 +333,48 @@
 **Responses:**
 
 #### 200 - 질문 해결 완료 처리 성공
+
+```json
+{
+  "id": "uuid", // 질문 ID (string)
+  "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
+  "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
+  "category": null, // 카테고리 (QuestionCategory)
+  "status": null, // 질문 상태 (QuestionStatus)
+  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "user": {
+    "id": "uuid", // 사용자 ID (string)
+    "name": "홍길동" // 사용자 이름 (string)
+  }, // 작성자 정보 (QuestionUserDto)
+  "attachments": [
+    {
+      "url": "", // 파일 URL (string)
+      "name": "", // 파일 이름 (string)
+      "size": 0 // 파일 크기 (bytes) (number)
+    }
+  ], // 첨부파일 목록 (AttachmentDto[])
+  "answers": [
+    {
+      "id": "uuid", // 답변 ID (string)
+      "content": "그룹 초대는 그룹 설정 메뉴에서 가능합니다...", // 답변 내용 (string)
+      "adminId": "uuid", // 작성자 ID (string)
+      "admin": {
+        "id": "uuid",
+        "name": "홍길동"
+      }, // 작성자 정보 (QuestionUserDto)
+      "attachments": {
+        "url": "",
+        "name": "",
+        "size": 0
+      }, // 첨부파일 목록 (AttachmentDto[])
+      "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 답변 목록 (AnswerDto[])
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
 
 #### 404 - 질문을 찾을 수 없습니다
 
