@@ -25,6 +25,7 @@ import { NotificationModule } from '@/notification/notification.module';
 import { AnnouncementModule } from '@/announcement/announcement.module';
 import { QnaModule } from '@/qna/qna.module';
 import { TaskModule } from '@/task/task.module';
+import { RedisModule } from '@/redis/redis.module';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { TaskModule } from '@/task/task.module';
     SentryModule,
     PrismaModule,
     FirebaseModule,
+    RedisModule,
     AuthModule,
     EmailModule,
     GroupModule,
