@@ -13,6 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EmailService } from '@/email/email.service';
 import { StorageService } from '@/storage/storage.service';
+import { RedisService } from '@/redis/redis.service';
 import { SignupDto } from '@/auth/dto/signup.dto';
 import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
 
@@ -31,6 +32,7 @@ export class AuthService {
     private emailService: EmailService,
     private configService: ConfigService,
     private storageService: StorageService,
+    private redisService: RedisService,
   ) {}
 
   /**
@@ -48,15 +50,6 @@ export class AuthService {
   private calculateExpiryDate(hours: number): Date {
     const expiryDate = new Date();
     expiryDate.setHours(expiryDate.getHours() + hours);
-    return expiryDate;
-  }
-
-  /**
-   * Refresh Token 만료 날짜 계산
-   */
-  private calculateRefreshTokenExpiry(): Date {
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + this.REFRESH_TOKEN_EXPIRY_DAYS);
     return expiryDate;
   }
 
@@ -188,43 +181,27 @@ export class AuthService {
    * Refresh Token으로 새로운 Access Token 발급 (RTR)
    */
   async refresh(refreshToken: string) {
-    // Refresh Token 검증
-    const storedToken = await this.prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
-      include: { user: true },
-    });
+    // Redis에서 Refresh Token 검증
+    const userId = await this.redisService.get<string>(
+      `refresh-token:${refreshToken}`,
+    );
 
-    if (!storedToken) {
+    if (!userId) {
       throw new UnauthorizedException('유효하지 않은 Refresh Token입니다');
     }
 
-    // 토큰이 무효화되었는지 확인
-    if (storedToken.isRevoked) {
-      throw new UnauthorizedException('이미 무효화된 Refresh Token입니다');
-    }
-
-    // 만료 확인
-    if (new Date() > storedToken.expiresAt) {
-      throw new UnauthorizedException('만료된 Refresh Token입니다');
-    }
-
     // 기존 토큰 무효화 (RTR)
-    await this.prisma.refreshToken.update({
-      where: { id: storedToken.id },
-      data: { isRevoked: true },
-    });
+    await this.redisService.del(`refresh-token:${refreshToken}`);
 
     // 새로운 토큰 생성
-    const tokens = await this.generateTokens(storedToken.userId);
+    const tokens = await this.generateTokens(userId);
 
-    // 새로운 Refresh Token 저장
-    await this.prisma.refreshToken.create({
-      data: {
-        token: tokens.refreshToken,
-        userId: storedToken.userId,
-        expiresAt: this.calculateRefreshTokenExpiry(),
-      },
-    });
+    // 새로운 Refresh Token을 Redis에 저장 (7일 TTL)
+    await this.redisService.set(
+      `refresh-token:${tokens.refreshToken}`,
+      userId,
+      this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    );
 
     return {
       accessToken: tokens.accessToken,
@@ -281,7 +258,7 @@ export class AuthService {
 
   /**
    * 로그인 처리 공통 함수
-   * Refresh Token 저장 및 마지막 로그인 시간 업데이트
+   * Refresh Token을 Redis에 저장 및 마지막 로그인 시간 업데이트
    */
   async handleLoginSuccess(user: {
     id: string;
@@ -294,15 +271,13 @@ export class AuthService {
     // 토큰 생성
     const tokens = await this.generateTokens(user.id);
 
-    // Refresh Token 저장 (RTR) 및 마지막 로그인 시간 업데이트
+    // Refresh Token을 Redis에 저장 (RTR, 7일 TTL) 및 마지막 로그인 시간 업데이트
     await Promise.all([
-      this.prisma.refreshToken.create({
-        data: {
-          token: tokens.refreshToken,
-          userId: user.id,
-          expiresAt: this.calculateRefreshTokenExpiry(),
-        },
-      }),
+      this.redisService.set(
+        `refresh-token:${tokens.refreshToken}`,
+        user.id,
+        this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+      ),
       this.prisma.user.update({
         where: { id: user.id },
         data: { lastLoginAt: new Date() },
@@ -417,18 +392,16 @@ export class AuthService {
    * 로그아웃 (Refresh Token 무효화)
    */
   async logout(refreshToken: string) {
-    const storedToken = await this.prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
-    });
+    // Redis에서 Refresh Token 삭제
+    const exists = await this.redisService.has(
+      `refresh-token:${refreshToken}`,
+    );
 
-    if (!storedToken) {
+    if (!exists) {
       throw new NotFoundException('Refresh Token을 찾을 수 없습니다');
     }
 
-    await this.prisma.refreshToken.update({
-      where: { id: storedToken.id },
-      data: { isRevoked: true },
-    });
+    await this.redisService.del(`refresh-token:${refreshToken}`);
 
     return { message: '로그아웃되었습니다' };
   }

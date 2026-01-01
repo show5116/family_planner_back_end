@@ -54,7 +54,7 @@
 - ✅ 이메일/비밀번호 검증
 - ✅ 이메일 인증 완료 여부 확인 (LOCAL 로그인만)
 - ✅ JWT Access Token (15분) + Refresh Token (7일) 발급
-- ✅ Refresh Token은 DB에 저장 (`refresh_tokens` 테이블)
+- ✅ Refresh Token은 Redis에 저장 (키: `refresh-token:{token}`, 값: `userId`, TTL: 7일)
 - ✅ 응답: accessToken, refreshToken, 사용자 정보
 
 **환경 변수**:
@@ -64,6 +64,7 @@ JWT_ACCESS_SECRET=your-access-secret
 JWT_REFRESH_SECRET=your-refresh-secret
 JWT_ACCESS_EXPIRATION=15m
 JWT_REFRESH_EXPIRATION=7d
+REDIS_URL=redis://default:password@host:port
 ```
 
 **관련 파일**:
@@ -77,19 +78,20 @@ JWT_REFRESH_EXPIRATION=7d
 
 #### 토큰 갱신 (`POST /auth/refresh`)
 
-- ✅ Refresh Token 유효성 검증 (DB 조회)
-- ✅ 만료 및 무효화 여부 확인
-- ✅ 기존 Refresh Token 자동 무효화 (`isRevoked = true`)
+- ✅ Refresh Token 유효성 검증 (Redis 조회)
+- ✅ 만료 자동 확인 (Redis TTL)
+- ✅ 기존 Refresh Token 자동 무효화 (Redis에서 삭제)
 - ✅ 새로운 Access Token + Refresh Token 쌍 발급
-- ✅ 새 Refresh Token DB 저장
+- ✅ 새 Refresh Token을 Redis에 저장 (7일 TTL)
 - ✅ 다중 Refresh Token 지원 (여러 기기 로그인)
-- ✅ Cascade 삭제 설정 (사용자 삭제 시 모든 토큰 삭제)
+- ✅ 만료된 토큰 자동 삭제 (Redis TTL 기반)
 
 **보안 특징**:
 
 - 토큰 재사용 방지
 - 각 기기별 독립적인 세션 관리
 - 토큰 탈취 시 자동 무효화
+- TTL 기반 자동 만료 및 정리
 
 **관련 파일**:
 
@@ -99,8 +101,8 @@ JWT_REFRESH_EXPIRATION=7d
 
 ### 로그아웃 (`POST /auth/logout`)
 
-- ✅ Refresh Token 무효화 (`isRevoked = true`)
-- ✅ 특정 기기만 로그아웃 (해당 Refresh Token만 무효화)
+- ✅ Refresh Token 무효화 (Redis에서 삭제)
+- ✅ 특정 기기만 로그아웃 (해당 Refresh Token만 삭제)
 
 ---
 
@@ -230,20 +232,26 @@ model User {
   id                        String    @id @default(uuid())
   email                     String    @unique
   name                      String
-  profileImage              String?
+  profileImageKey           String?   @db.VarChar(255) // R2 키
+  phoneNumber               String?   @db.VarChar(20)
   provider                  Provider  @default(LOCAL)
   providerId                String?
   password                  String?
   isEmailVerified           Boolean   @default(false)
+  isAdmin                   Boolean   @default(false)
   emailVerificationToken    String?
   emailVerificationExpires  DateTime?
   passwordResetToken        String?
   passwordResetExpires      DateTime?
+  lastLoginAt               DateTime?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
 
-  refreshTokens             RefreshToken[]
-  groupMembers              GroupMember[]
+  groupMemberships          GroupMember[]
+  deviceTokens              DeviceToken[]
+  notificationSettings      NotificationSetting[]
+  notifications             Notification[]
+  // ... 기타 관계
 
   @@unique([provider, providerId])
 }
@@ -256,24 +264,26 @@ enum Provider {
 }
 ```
 
-### RefreshToken 테이블
+### Refresh Token 저장소
 
-```prisma
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  isRevoked Boolean  @default(false)
-  createdAt DateTime @default(now())
+**Redis** (기존 DB 테이블에서 변경)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 ```
+키 형식: refresh-token:{refreshToken}
+값: userId (String)
+TTL: 7일 (604800000 밀리초)
+```
+
+**장점**:
+- ✅ DB 부하 감소 (읽기/쓰기 성능 향상)
+- ✅ TTL 기반 자동 만료 및 정리
+- ✅ 빠른 토큰 검증 (메모리 기반)
+- ✅ 확장성 (Redis 클러스터링)
 
 **관련 파일**:
 
 - [prisma/schema.prisma](../../prisma/schema.prisma)
+- [src/redis/redis.service.ts](../../src/redis/redis.service.ts)
 
 ---
 
@@ -284,8 +294,9 @@ model RefreshToken {
 - ✅ JWT Refresh Token (기본 7일)
 - ✅ 토큰 만료시간 환경변수 설정 가능
 - ✅ 이메일 인증 필수 (LOCAL 로그인)
-- ✅ Refresh Token DB 관리 및 무효화 메커니즘
+- ✅ Refresh Token Redis 관리 및 무효화 메커니즘
 - ✅ RTR (Refresh Token Rotation) 방식
+- ✅ TTL 기반 자동 만료 및 정리
 - ✅ CORS 설정
 - ✅ Passport Strategy 기반 인증
 
@@ -338,4 +349,33 @@ model RefreshToken {
 
 ---
 
-**Last Updated**: 2025-12-04
+## 🚀 최근 변경사항
+
+### 2026-01-01: Refresh Token 저장소를 DB → Redis로 변경
+
+**변경 이유**:
+- DB 부하 감소 (읽기/쓰기 성능 향상)
+- TTL 기반 자동 만료 및 정리
+- 빠른 토큰 검증 (메모리 기반)
+- 확장성 개선 (Redis 클러스터링 지원)
+
+**변경 내용**:
+- ✅ `RefreshToken` 테이블 제거
+- ✅ Redis 모듈 추가 ([src/redis/](../../src/redis/))
+- ✅ `AuthService`에서 Redis 기반 토큰 관리
+- ✅ 마이그레이션 적용: `20260101230647_remove_refresh_token_table`
+
+**Redis 키 구조**:
+```
+refresh-token:{refreshToken} → userId (TTL: 7일)
+```
+
+**관련 파일**:
+- [src/redis/redis.module.ts](../../src/redis/redis.module.ts)
+- [src/redis/redis.service.ts](../../src/redis/redis.service.ts)
+- [src/auth/auth.service.ts](../../src/auth/auth.service.ts)
+- [REDIS_USAGE.md](../../REDIS_USAGE.md)
+
+---
+
+**Last Updated**: 2026-01-01

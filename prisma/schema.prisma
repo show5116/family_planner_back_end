@@ -160,7 +160,6 @@ model User {
   lastLoginAt               DateTime?      // 마지막 로그인 시간
   createdAt                 DateTime               @default(now())
   updatedAt                 DateTime               @updatedAt
-  refreshTokens             RefreshToken[]         // RTR 방식을 위한 다중 refresh token 지원
   groupMemberships          GroupMember[]          // 사용자가 속한 그룹들
   deviceTokens              DeviceToken[]          // FCM 디바이스 토큰들
   notificationSettings      NotificationSetting[]  // 알림 설정
@@ -181,20 +180,6 @@ model User {
   @@index([emailVerificationToken])
   @@index([passwordResetToken])
   @@map("users")
-}
-
-// Refresh Token 테이블 (RTR 방식)
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique @db.VarChar(500)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  isRevoked Boolean  @default(false) // 토큰 무효화 여부
-
-  @@index([userId])
-  @@map("refresh_tokens")
 }
 
 // 그룹 테이블
