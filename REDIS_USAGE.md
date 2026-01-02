@@ -202,19 +202,76 @@ async checkInviteCodeAttempts(userId: string): Promise<boolean> {
 ### 5. Refresh Token 저장 (RTR 방식)
 
 ```typescript
-async storeRefreshToken(userId: string, token: string) {
-  const key = `refresh-token:${userId}:${token}`;
-  await this.redisService.set(key, true, 7 * 24 * 60 * 60 * 1000); // 7일
+async storeRefreshToken(token: string, userId: string) {
+  const key = `refresh-token:${token}`;
+  await this.redisService.set(key, userId, 7 * 24 * 60 * 60 * 1000); // 7일
 }
 
-async validateRefreshToken(userId: string, token: string): Promise<boolean> {
-  const key = `refresh-token:${userId}:${token}`;
-  return await this.redisService.has(key);
+async validateRefreshToken(token: string): Promise<string | null> {
+  const key = `refresh-token:${token}`;
+  return await this.redisService.get<string>(key);
 }
 
-async revokeRefreshToken(userId: string, token: string) {
-  const key = `refresh-token:${userId}:${token}`;
+async revokeRefreshToken(token: string) {
+  const key = `refresh-token:${token}`;
   await this.redisService.del(key);
+}
+```
+
+### 6. 이메일 인증 코드 저장
+
+```typescript
+async sendVerificationEmail(email: string) {
+  const code = Math.random().toString().slice(2, 8); // 6자리 코드
+  await this.redisService.set(
+    `email-verification:${email}`,
+    code,
+    24 * 60 * 60 * 1000, // 24시간
+  );
+
+  // 이메일 발송...
+}
+
+async verifyEmail(email: string, code: string): Promise<boolean> {
+  const storedCode = await this.redisService.get<string>(
+    `email-verification:${email}`,
+  );
+
+  if (storedCode === code) {
+    await this.redisService.del(`email-verification:${email}`);
+    return true;
+  }
+
+  return false;
+}
+```
+
+### 7. 비밀번호 재설정 코드 저장
+
+```typescript
+async requestPasswordReset(email: string) {
+  const code = Math.random().toString().slice(2, 8); // 6자리 코드
+  await this.redisService.set(
+    `password-reset:${email}`,
+    code,
+    60 * 60 * 1000, // 1시간
+  );
+
+  // 이메일 발송...
+}
+
+async resetPassword(email: string, code: string, newPassword: string): Promise<boolean> {
+  const storedCode = await this.redisService.get<string>(
+    `password-reset:${email}`,
+  );
+
+  if (storedCode !== code) {
+    return false;
+  }
+
+  // 비밀번호 업데이트...
+  await this.redisService.del(`password-reset:${email}`);
+  return true;
 }
 ```
 
@@ -224,11 +281,12 @@ Redis 키는 구조화된 네이밍을 사용하여 관리합니다:
 
 - `user:{userId}` - 사용자 정보
 - `session:{sessionId}` - 세션 데이터
-- `email:verification:{email}` - 이메일 인증 코드
+- `email-verification:{email}` - 이메일 인증 코드 (TTL: 24시간)
+- `password-reset:{email}` - 비밀번호 재설정 코드 (TTL: 1시간)
+- `refresh-token:{token}` - Refresh Token (TTL: 7일)
 - `group:{groupId}:members` - 그룹 멤버 캐시
 - `rate-limit:{userId}` - API 속도 제한
 - `invite-attempts:{userId}` - 초대 코드 검증 시도 횟수
-- `refresh-token:{userId}:{token}` - Refresh Token
 
 ## 주의사항
 

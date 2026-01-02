@@ -323,7 +323,10 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: '유효하지 않거나 만료된 인증 코드' })
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    return this.authService.verifyEmail(verifyEmailDto.code);
+    return this.authService.verifyEmail(
+      verifyEmailDto.code,
+      verifyEmailDto.email,
+    );
   }
 
   @Public()

@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:alpine
+    container_name: my-local-redis
+    ports:
+      - '6379:6379' # 외부포트:내부포트
+    # 비밀번호 설정 (보안 습관을 위해 설정 추천)
+    command: redis-server --requirepass "mypassword123!"
+    volumes:
+      # 컨테이너가 꺼져도 데이터가 날아가지 않도록 로컬 폴더와 연결
+      - ./redis_data:/data

@@ -19,8 +19,9 @@
 - ✅ 이메일, 비밀번호(최소 6자), 이름 입력
 - ✅ 이메일 중복 체크
 - ✅ bcrypt로 비밀번호 해싱 (salt rounds: 10)
-- ✅ 이메일 인증 토큰 생성 (24시간 유효, crypto.randomBytes 32bytes)
-- ✅ AWS SES를 통한 인증 이메일 자동 발송
+- ✅ 이메일 인증 코드 생성 (6자리 숫자, 24시간 유효)
+- ✅ Redis에 인증 코드 저장 (키: `email-verification:{email}`, TTL: 24시간)
+- ✅ 이메일을 통한 인증 코드 자동 발송
 - ✅ 응답: 사용자 정보 (id, email, name, createdAt, isEmailVerified)
 
 **관련 파일**:
@@ -34,13 +35,14 @@
 
 #### 이메일 인증 (`POST /auth/verify-email`)
 
-- ✅ 토큰 유효성 검증
-- ✅ 만료 시간 확인 (24시간)
-- ✅ 인증 완료 시 `isEmailVerified = true`
+- ✅ Redis에서 인증 코드 조회 및 검증
+- ✅ 만료 자동 확인 (Redis TTL: 24시간)
+- ✅ 인증 완료 시 `isEmailVerified = true` 및 Redis 코드 삭제
 
 #### 인증 이메일 재전송 (`POST /auth/resend-verification`)
 
-- ✅ 새로운 토큰 생성 및 이메일 재발송
+- ✅ 새로운 인증 코드 생성 및 Redis에 저장
+- ✅ 이메일 재발송
 - ✅ 소셜 로그인 사용자는 제외
 
 **관련 파일**:
@@ -132,16 +134,18 @@ REDIS_URL=redis://default:password@host:port
 #### 비밀번호 재설정 요청 (`POST /auth/request-password-reset`)
 
 - ✅ 이메일 입력
-- ✅ 6자리 인증 코드 생성 (1시간 유효)
+- ✅ 6자리 인증 코드 생성
+- ✅ Redis에 인증 코드 저장 (키: `password-reset:{email}`, TTL: 1시간)
 - ✅ 이메일로 인증 코드 발송
 - ✅ LOCAL 로그인 사용자만 가능
 
 #### 비밀번호 재설정 (`POST /auth/reset-password`)
 
 - ✅ 이메일, 인증 코드, 새 비밀번호 입력
-- ✅ 인증 코드 유효성 검증 (1시간)
+- ✅ Redis에서 인증 코드 조회 및 검증
+- ✅ 만료 자동 확인 (Redis TTL: 1시간)
 - ✅ 비밀번호 해싱 후 업데이트
-- ✅ 인증 코드 삭제
+- ✅ Redis 인증 코드 삭제
 
 **관련 파일**:
 
@@ -239,10 +243,6 @@ model User {
   password                  String?
   isEmailVerified           Boolean   @default(false)
   isAdmin                   Boolean   @default(false)
-  emailVerificationToken    String?
-  emailVerificationExpires  DateTime?
-  passwordResetToken        String?
-  passwordResetExpires      DateTime?
   lastLoginAt               DateTime?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
@@ -264,21 +264,37 @@ enum Provider {
 }
 ```
 
-### Refresh Token 저장소
+### Redis 저장소 (토큰 및 인증 코드)
 
-**Redis** (기존 DB 테이블에서 변경)
+**모든 인증 관련 토큰과 코드를 Redis에 저장** (기존 DB 필드에서 변경)
 
+#### Refresh Token
 ```
-키 형식: refresh-token:{refreshToken}
+키: refresh-token:{refreshToken}
 값: userId (String)
 TTL: 7일 (604800000 밀리초)
 ```
 
+#### 이메일 인증 코드
+```
+키: email-verification:{email}
+값: 6자리 숫자 코드 (String)
+TTL: 24시간 (86400000 밀리초)
+```
+
+#### 비밀번호 재설정 코드
+```
+키: password-reset:{email}
+값: 6자리 숫자 코드 (String)
+TTL: 1시간 (3600000 밀리초)
+```
+
 **장점**:
 - ✅ DB 부하 감소 (읽기/쓰기 성능 향상)
-- ✅ TTL 기반 자동 만료 및 정리
-- ✅ 빠른 토큰 검증 (메모리 기반)
+- ✅ TTL 기반 자동 만료 및 정리 (만료 시간 체크 로직 불필요)
+- ✅ 빠른 토큰/코드 검증 (메모리 기반)
 - ✅ 확장성 (Redis 클러스터링)
+- ✅ DB 테이블 및 인덱스 감소 (스키마 단순화)
 
 **관련 파일**:
 
@@ -351,6 +367,36 @@ TTL: 7일 (604800000 밀리초)
 
 ## 🚀 최근 변경사항
 
+### 2026-01-02: 이메일 인증 및 비밀번호 재설정 토큰을 Redis로 변경
+
+**변경 이유**:
+- DB 부하 감소 (읽기/쓰기 성능 향상)
+- TTL 기반 자동 만료 (만료 시간 체크 로직 불필요)
+- 빠른 코드 검증 (메모리 기반)
+- DB 스키마 단순화 (불필요한 필드 및 인덱스 제거)
+
+**변경 내용**:
+- ✅ User 테이블에서 토큰 관련 필드 제거
+  - `emailVerificationToken`, `emailVerificationExpires`
+  - `passwordResetToken`, `passwordResetExpires`
+- ✅ 토큰 관련 인덱스 제거
+- ✅ `AuthService`에서 Redis 기반 코드 관리
+- ✅ `VerifyEmailDto`에 email 필드 추가
+- ✅ 마이그레이션 적용: `20260102220845_remove_token_fields`
+
+**Redis 키 구조**:
+```
+email-verification:{email} → 6자리 코드 (TTL: 24시간)
+password-reset:{email} → 6자리 코드 (TTL: 1시간)
+```
+
+**관련 파일**:
+- [src/auth/auth.service.ts](../../src/auth/auth.service.ts)
+- [src/auth/dto/verify-email.dto.ts](../../src/auth/dto/verify-email.dto.ts)
+- [prisma/schema.prisma](../../prisma/schema.prisma)
+
+---
+
 ### 2026-01-01: Refresh Token 저장소를 DB → Redis로 변경
 
 **변경 이유**:
@@ -378,4 +424,4 @@ refresh-token:{refreshToken} → userId (TTL: 7일)
 
 ---
 
-**Last Updated**: 2026-01-01
+**Last Updated**: 2026-01-02

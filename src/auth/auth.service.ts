@@ -45,15 +45,6 @@ export class AuthService {
   }
 
   /**
-   * 만료 날짜 계산
-   */
-  private calculateExpiryDate(hours: number): Date {
-    const expiryDate = new Date();
-    expiryDate.setHours(expiryDate.getHours() + hours);
-    return expiryDate;
-  }
-
-  /**
    * 비밀번호 해싱
    */
   private async hashPassword(password: string): Promise<string> {
@@ -90,9 +81,6 @@ export class AuthService {
 
     // 이메일 인증 코드 생성
     const verificationCode = this.generateVerificationCode();
-    const verificationExpires = this.calculateExpiryDate(
-      this.VERIFICATION_CODE_EXPIRY_HOURS,
-    );
 
     // 사용자 생성
     const user = await this.prisma.user.create({
@@ -101,8 +89,6 @@ export class AuthService {
         password: hashedPassword,
         name,
         provider: 'LOCAL',
-        emailVerificationToken: verificationCode,
-        emailVerificationExpires: verificationExpires,
         isEmailVerified: false,
       },
       select: {
@@ -113,6 +99,13 @@ export class AuthService {
         isEmailVerified: true,
       },
     });
+
+    // Redis에 이메일 인증 코드 저장 (24시간 TTL)
+    await this.redisService.set(
+      `email-verification:${email}`,
+      verificationCode,
+      this.VERIFICATION_CODE_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     // 이메일 인증 메일 발송
     try {
@@ -303,37 +296,37 @@ export class AuthService {
   /**
    * 이메일 인증
    */
-  async verifyEmail(code: string) {
-    const user = await this.prisma.user.findFirst({
-      where: { emailVerificationToken: code },
+  async verifyEmail(code: string, email: string) {
+    // Redis에서 인증 코드 조회
+    const storedCode = await this.redisService.get<string>(
+      `email-verification:${email}`,
+    );
+
+    if (!storedCode || storedCode !== code) {
+      throw new BadRequestException('유효하지 않은 인증 코드입니다');
+    }
+
+    // 사용자 조회
+    const user = await this.prisma.user.findUnique({
+      where: { email },
     });
 
     if (!user) {
-      throw new BadRequestException('유효하지 않은 인증 코드입니다');
+      throw new BadRequestException('사용자를 찾을 수 없습니다');
     }
 
     if (user.isEmailVerified) {
       throw new BadRequestException('이미 인증된 이메일입니다');
     }
 
-    if (
-      !user.emailVerificationExpires ||
-      user.emailVerificationExpires < new Date()
-    ) {
-      throw new BadRequestException(
-        '인증 코드가 만료되었습니다. 인증 이메일을 재전송해주세요',
-      );
-    }
-
-    // 이메일 인증 완료
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        isEmailVerified: true,
-        emailVerificationToken: null,
-        emailVerificationExpires: null,
-      },
-    });
+    // 이메일 인증 완료 및 Redis에서 코드 삭제
+    await Promise.all([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { isEmailVerified: true },
+      }),
+      this.redisService.del(`email-verification:${email}`),
+    ]);
 
     return { message: '이메일 인증이 완료되었습니다' };
   }
@@ -362,17 +355,13 @@ export class AuthService {
 
     // 새로운 인증 코드 생성
     const verificationCode = this.generateVerificationCode();
-    const verificationExpires = this.calculateExpiryDate(
-      this.VERIFICATION_CODE_EXPIRY_HOURS,
-    );
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        emailVerificationToken: verificationCode,
-        emailVerificationExpires: verificationExpires,
-      },
-    });
+    // Redis에 인증 코드 저장 (24시간 TTL, 기존 코드는 자동으로 덮어씀)
+    await this.redisService.set(
+      `email-verification:${email}`,
+      verificationCode,
+      this.VERIFICATION_CODE_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     // 이메일 발송
     try {
@@ -393,9 +382,7 @@ export class AuthService {
    */
   async logout(refreshToken: string) {
     // Redis에서 Refresh Token 삭제
-    const exists = await this.redisService.has(
-      `refresh-token:${refreshToken}`,
-    );
+    const exists = await this.redisService.has(`refresh-token:${refreshToken}`);
 
     if (!exists) {
       throw new NotFoundException('Refresh Token을 찾을 수 없습니다');
@@ -420,17 +407,13 @@ export class AuthService {
 
     // 인증 코드 생성
     const resetCode = this.generateVerificationCode();
-    const resetExpires = this.calculateExpiryDate(
-      this.PASSWORD_RESET_CODE_EXPIRY_HOURS,
-    );
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordResetToken: resetCode,
-        passwordResetExpires: resetExpires,
-      },
-    });
+    // Redis에 비밀번호 재설정 코드 저장 (1시간 TTL)
+    await this.redisService.set(
+      `password-reset:${email}`,
+      resetCode,
+      this.PASSWORD_RESET_CODE_EXPIRY_HOURS * 60 * 60 * 1000,
+    );
 
     // 이메일 발송
     try {
@@ -450,37 +433,37 @@ export class AuthService {
    * 비밀번호 재설정
    */
   async resetPassword(email: string, code: string, newPassword: string) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        email,
-        passwordResetToken: code,
-      },
-    });
+    // Redis에서 비밀번호 재설정 코드 조회
+    const storedCode = await this.redisService.get<string>(
+      `password-reset:${email}`,
+    );
 
-    if (!user) {
+    if (!storedCode || storedCode !== code) {
       throw new BadRequestException(
         '유효하지 않은 이메일 또는 인증 코드입니다',
       );
     }
 
-    if (!user.passwordResetExpires || user.passwordResetExpires < new Date()) {
-      throw new BadRequestException(
-        '인증 코드가 만료되었습니다. 비밀번호 재설정을 다시 요청해주세요',
-      );
+    // 사용자 조회
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new BadRequestException('사용자를 찾을 수 없습니다');
     }
 
     // 새 비밀번호 해싱
     const hashedPassword = await this.hashPassword(newPassword);
 
-    // 비밀번호 업데이트 및 재설정 토큰 삭제
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        passwordResetToken: null,
-        passwordResetExpires: null,
-      },
-    });
+    // 비밀번호 업데이트 및 Redis에서 코드 삭제
+    await Promise.all([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      }),
+      this.redisService.del(`password-reset:${email}`),
+    ]);
 
     return { message: '비밀번호가 성공적으로 재설정되었습니다' };
   }
