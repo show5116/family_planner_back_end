@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 
@@ -6,10 +6,22 @@ import { Cache } from 'cache-manager';
  * Redis 서비스
  *
  * Cache Manager를 래핑하여 편리한 Redis 조작 메서드 제공
+ * + 네이티브 Redis 명령어 지원 (원자성 보장)
  */
 @Injectable()
-export class RedisService {
+export class RedisService implements OnModuleInit {
+  private redisClient: any;
+
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+
+  onModuleInit() {
+    // cache-manager-redis-yet의 네이티브 Redis 클라이언트 접근
+    this.redisClient = (this.cacheManager as any).store?.client;
+
+    if (!this.redisClient) {
+      throw new Error('Redis client를 초기화할 수 없습니다.');
+    }
+  }
 
   /**
    * 값 저장
@@ -43,14 +55,14 @@ export class RedisService {
   }
 
   /**
-   * 키 존재 여부 확인
+   * 키 존재 여부 확인 (EXISTS 명령어 사용 - 최적화)
    *
    * @param key - 키
    * @returns 존재하면 true, 없으면 false
    */
   async has(key: string): Promise<boolean> {
-    const value = await this.cacheManager.get(key);
-    return value !== undefined && value !== null;
+    const exists = await this.redisClient.exists(key);
+    return exists === 1;
   }
 
   /**
@@ -77,7 +89,7 @@ export class RedisService {
 
   /**
    * 공지사항 조회수 증가 (Write-Back 전략)
-   * Redis에만 카운트를 저장하고, 스케줄러가 주기적으로 DB에 동기화
+   * Redis INCR + SADD 사용으로 원자성 보장
    *
    * @param announcementId - 공지사항 ID
    * @returns 증가된 조회수
@@ -88,16 +100,11 @@ export class RedisService {
     const key = `announcement:viewCount:${announcementId}`;
     const setKey = 'announcement:viewCount:tracking';
 
-    const currentCount = (await this.get<number>(key)) || 0;
-    const newCount = currentCount + 1;
-    await this.set(key, newCount); // TTL 없이 저장 (스케줄러가 삭제)
+    // INCR: 원자적으로 카운트 증가 (O(1))
+    const newCount = await this.redisClient.incr(key);
 
-    // 추적 Set에 announcementId 추가
-    const trackingSet = (await this.get<string[]>(setKey)) || [];
-    if (!trackingSet.includes(announcementId)) {
-      trackingSet.push(announcementId);
-      await this.set(setKey, trackingSet);
-    }
+    // SADD: 원자적으로 Set에 추가 (중복 자동 처리, O(1))
+    await this.redisClient.sAdd(setKey, announcementId);
 
     return newCount;
   }
@@ -115,12 +122,15 @@ export class RedisService {
 
   /**
    * 모든 공지사항 조회수 조회 (DB 동기화용)
+   * SMEMBERS 사용으로 O(N) 대신 Set 자료구조 활용
    *
    * @returns { announcementId: viewCount }
    */
   async getAllAnnouncementViewCounts(): Promise<Record<string, number>> {
     const setKey = 'announcement:viewCount:tracking';
-    const trackingSet = (await this.get<string[]>(setKey)) || [];
+
+    // SMEMBERS: Set의 모든 멤버 조회
+    const trackingSet = await this.redisClient.sMembers(setKey);
 
     const viewCounts: Record<string, number> = {};
 
@@ -136,6 +146,7 @@ export class RedisService {
 
   /**
    * 공지사항 조회수 초기화 (DB 동기화 후 호출)
+   * SREM 사용으로 원자적 제거
    *
    * @param announcementId - 공지사항 ID
    */
@@ -145,10 +156,8 @@ export class RedisService {
 
     await this.del(key);
 
-    // 추적 Set에서 announcementId 제거
-    const trackingSet = (await this.get<string[]>(setKey)) || [];
-    const filtered = trackingSet.filter((id) => id !== announcementId);
-    await this.set(setKey, filtered);
+    // SREM: Set에서 원자적으로 제거 (O(1))
+    await this.redisClient.sRem(setKey, announcementId);
   }
 
   /**
@@ -221,7 +230,7 @@ export class RedisService {
 
   /**
    * 공지사항 읽음 처리 (Write-Back 전략)
-   * Redis에만 기록하고, 스케줄러가 주기적으로 DB에 동기화
+   * SETNX + SADD 사용으로 원자성 보장 및 Race Condition 방지
    *
    * @param announcementId - 공지사항 ID
    * @param userId - 사용자 ID
@@ -232,22 +241,18 @@ export class RedisService {
   ): Promise<void> {
     const key = `announcement:read:${announcementId}:${userId}`;
     const trackingKey = 'announcement:read:tracking';
+    const item = `${announcementId}:${userId}`;
 
-    // 이미 읽음 처리된 경우 스킵
-    if (await this.has(key)) {
+    // SETNX: 키가 없을 때만 설정 (원자적, 중복 방지)
+    const wasSet = await this.redisClient.setNX(key, new Date().toISOString());
+
+    // 이미 존재하면 스킵
+    if (!wasSet) {
       return;
     }
 
-    // 읽음 표시 (TTL 없이 저장)
-    await this.set(key, new Date().toISOString());
-
-    // 추적 목록에 추가
-    const trackingList = (await this.get<string[]>(trackingKey)) || [];
-    const item = `${announcementId}:${userId}`;
-    if (!trackingList.includes(item)) {
-      trackingList.push(item);
-      await this.set(trackingKey, trackingList);
-    }
+    // SADD: 원자적으로 Set에 추가 (중복 자동 처리, O(1))
+    await this.redisClient.sAdd(trackingKey, item);
   }
 
   /**
@@ -267,6 +272,7 @@ export class RedisService {
 
   /**
    * 모든 읽음 처리 기록 조회 (DB 동기화용)
+   * SMEMBERS 사용 + Promise.all로 병렬 처리
    *
    * @returns [{ announcementId, userId, readAt }]
    */
@@ -274,30 +280,38 @@ export class RedisService {
     Array<{ announcementId: string; userId: string; readAt: string }>
   > {
     const trackingKey = 'announcement:read:tracking';
-    const trackingList = (await this.get<string[]>(trackingKey)) || [];
 
-    const reads: Array<{
-      announcementId: string;
-      userId: string;
-      readAt: string;
-    }> = [];
+    // SMEMBERS: Set의 모든 멤버 조회
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const trackingList = await this.redisClient.sMembers(trackingKey);
 
-    for (const item of trackingList) {
+    // Promise.all로 병렬 처리 (N+1 문제 해결)
+    const readPromises = trackingList.map(async (item: string) => {
       const [announcementId, userId] = item.split(':');
       const key = `announcement:read:${announcementId}:${userId}`;
       const readAt = await this.get<string>(key);
 
       if (readAt) {
-        reads.push({ announcementId, userId, readAt });
+        return { announcementId, userId, readAt };
       }
-    }
+      return null;
+    });
 
-    return reads;
+    const results = await Promise.all(readPromises);
+
+    // null 필터링
+    return results.filter(
+      (
+        read,
+      ): read is { announcementId: string; userId: string; readAt: string } =>
+        read !== null,
+    );
   }
 
   /**
    * 배치 크기만큼 읽음 처리 기록 조회 및 삭제 (Pop 방식)
-   * 메모리 보호 및 원자성 보장
+   * SPOP 사용으로 원자적 Pop 연산 보장 (메모리 보호 + Race Condition 방지)
+   * Promise.all로 병렬 처리
    *
    * @param batchSize - 한 번에 처리할 최대 건수
    * @returns [{ announcementId, userId, readAt }]
@@ -308,54 +322,49 @@ export class RedisService {
     Array<{ announcementId: string; userId: string; readAt: string }>
   > {
     const trackingKey = 'announcement:read:tracking';
-    const trackingList = (await this.get<string[]>(trackingKey)) || [];
 
-    // 배치 크기만큼만 가져오기
-    const itemsToPop = trackingList.slice(0, batchSize);
-    const remainingItems = trackingList.slice(batchSize);
+    // SPOP: Set에서 원자적으로 N개 제거하며 반환 (O(N))
+    // 동시 요청에도 안전 - 각 요청이 다른 아이템을 가져감
+    const items = await this.redisClient.sPop(trackingKey, batchSize);
 
-    if (itemsToPop.length === 0) {
+    if (!items || items.length === 0) {
       return [];
     }
 
-    const reads: Array<{
-      announcementId: string;
-      userId: string;
-      readAt: string;
-    }> = [];
-
-    // 데이터 조회 및 개별 키 삭제
-    const deleteKeys: string[] = [];
-
-    for (const item of itemsToPop) {
+    // Promise.all로 병렬 처리 (N+1 문제 해결)
+    const readPromises = items.map(async (item: string) => {
       const [announcementId, userId] = item.split(':');
       const key = `announcement:read:${announcementId}:${userId}`;
       const readAt = await this.get<string>(key);
 
       if (readAt) {
-        reads.push({ announcementId, userId, readAt });
-        deleteKeys.push(key);
+        return { announcementId, userId, readAt, key };
       }
-    }
+      return null;
+    });
+
+    const results = await Promise.all(readPromises);
+
+    // null 필터링 및 삭제할 키 추출
+    const validReads = results.filter((read) => read !== null);
+    const deleteKeys = validReads.map((read) => read.key);
 
     // 개별 키 일괄 삭제
     if (deleteKeys.length > 0) {
       await this.delMany(deleteKeys);
     }
 
-    // 추적 목록 업데이트
-    if (remainingItems.length > 0) {
-      await this.set(trackingKey, remainingItems);
-    } else {
-      // 모든 항목 처리 완료 시 추적 목록 삭제
-      await this.del(trackingKey);
-    }
-
-    return reads;
+    // key 필드 제거하여 반환
+    return validReads.map(({ announcementId, userId, readAt }) => ({
+      announcementId,
+      userId,
+      readAt,
+    }));
   }
 
   /**
    * 읽음 처리 기록 삭제 (DB 동기화 후)
+   * SREM 사용으로 원자적 제거
    *
    * @param announcementId - 공지사항 ID
    * @param userId - 사용자 ID
@@ -366,26 +375,26 @@ export class RedisService {
   ): Promise<void> {
     const key = `announcement:read:${announcementId}:${userId}`;
     const trackingKey = 'announcement:read:tracking';
+    const item = `${announcementId}:${userId}`;
 
     await this.del(key);
 
-    // 추적 목록에서 제거
-    const trackingList = (await this.get<string[]>(trackingKey)) || [];
-    const item = `${announcementId}:${userId}`;
-    const filtered = trackingList.filter((i) => i !== item);
-    await this.set(trackingKey, filtered);
+    // SREM: Set에서 원자적으로 제거 (O(1))
+    await this.redisClient.sRem(trackingKey, item);
   }
 
   /**
    * 모든 읽음 처리 기록 일괄 삭제 (DB 동기화 후)
-   * 배치 처리 완료 후 한 번에 삭제
+   * SMEMBERS + DEL 사용
    */
   async clearAllAnnouncementReads(): Promise<void> {
     const trackingKey = 'announcement:read:tracking';
-    const trackingList = (await this.get<string[]>(trackingKey)) || [];
+
+    // SMEMBERS: Set의 모든 멤버 조회
+    const trackingList = await this.redisClient.sMembers(trackingKey);
 
     // 모든 읽음 처리 키 삭제
-    const deleteKeys = trackingList.map((item) => {
+    const deleteKeys = trackingList.map((item: string) => {
       const [announcementId, userId] = item.split(':');
       return `announcement:read:${announcementId}:${userId}`;
     });
