@@ -296,6 +296,65 @@ export class RedisService {
   }
 
   /**
+   * 배치 크기만큼 읽음 처리 기록 조회 및 삭제 (Pop 방식)
+   * 메모리 보호 및 원자성 보장
+   *
+   * @param batchSize - 한 번에 처리할 최대 건수
+   * @returns [{ announcementId, userId, readAt }]
+   */
+  async popAnnouncementReads(
+    batchSize: number,
+  ): Promise<
+    Array<{ announcementId: string; userId: string; readAt: string }>
+  > {
+    const trackingKey = 'announcement:read:tracking';
+    const trackingList = (await this.get<string[]>(trackingKey)) || [];
+
+    // 배치 크기만큼만 가져오기
+    const itemsToPop = trackingList.slice(0, batchSize);
+    const remainingItems = trackingList.slice(batchSize);
+
+    if (itemsToPop.length === 0) {
+      return [];
+    }
+
+    const reads: Array<{
+      announcementId: string;
+      userId: string;
+      readAt: string;
+    }> = [];
+
+    // 데이터 조회 및 개별 키 삭제
+    const deleteKeys: string[] = [];
+
+    for (const item of itemsToPop) {
+      const [announcementId, userId] = item.split(':');
+      const key = `announcement:read:${announcementId}:${userId}`;
+      const readAt = await this.get<string>(key);
+
+      if (readAt) {
+        reads.push({ announcementId, userId, readAt });
+        deleteKeys.push(key);
+      }
+    }
+
+    // 개별 키 일괄 삭제
+    if (deleteKeys.length > 0) {
+      await this.delMany(deleteKeys);
+    }
+
+    // 추적 목록 업데이트
+    if (remainingItems.length > 0) {
+      await this.set(trackingKey, remainingItems);
+    } else {
+      // 모든 항목 처리 완료 시 추적 목록 삭제
+      await this.del(trackingKey);
+    }
+
+    return reads;
+  }
+
+  /**
    * 읽음 처리 기록 삭제 (DB 동기화 후)
    *
    * @param announcementId - 공지사항 ID
@@ -315,5 +374,26 @@ export class RedisService {
     const item = `${announcementId}:${userId}`;
     const filtered = trackingList.filter((i) => i !== item);
     await this.set(trackingKey, filtered);
+  }
+
+  /**
+   * 모든 읽음 처리 기록 일괄 삭제 (DB 동기화 후)
+   * 배치 처리 완료 후 한 번에 삭제
+   */
+  async clearAllAnnouncementReads(): Promise<void> {
+    const trackingKey = 'announcement:read:tracking';
+    const trackingList = (await this.get<string[]>(trackingKey)) || [];
+
+    // 모든 읽음 처리 키 삭제
+    const deleteKeys = trackingList.map((item) => {
+      const [announcementId, userId] = item.split(':');
+      return `announcement:read:${announcementId}:${userId}`;
+    });
+
+    // 추적 목록 키도 삭제
+    deleteKeys.push(trackingKey);
+
+    // 일괄 삭제
+    await this.delMany(deleteKeys);
   }
 }

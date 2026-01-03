@@ -19,13 +19,13 @@ export class AnnouncementService {
    * 공지사항 목록 조회 (고정 공지 우선) + Redis 캐싱
    */
   async findAll(userId: string, query: AnnouncementQueryDto) {
-    // 1. 캐시 키 생성
-    const cacheKey = `${userId}:${query.page}:${query.limit}:${query.category || 'all'}:${query.pinnedOnly || false}`;
+    // 1. 캐시 키 생성 (userId 제외 - 공지사항은 모든 사용자가 동일하게 봄)
+    const cacheKey = `${query.page}:${query.limit}:${query.category || 'all'}:${query.pinnedOnly || false}`;
 
     // 2. Redis 캐시 확인
     const cached = await this.redisService.getCachedAnnouncementList(cacheKey);
     if (cached) {
-      // 캐시된 데이터에 Redis 기반 읽음 상태 추가
+      // 캐시된 데이터에 사용자별 읽음 상태만 추가
       return {
         ...cached,
         data: await Promise.all(
@@ -61,8 +61,8 @@ export class AnnouncementService {
           author: {
             select: { id: true, name: true },
           },
-          reads: {
-            select: { id: true },
+          _count: {
+            select: { reads: true },
           },
         },
         orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
@@ -76,12 +76,12 @@ export class AnnouncementService {
     const data = await Promise.all(
       announcements.map(async (a) => ({
         ...a,
-        readCount: a.reads.length,
+        readCount: a._count.reads,
         isRead: await this.redisService.isAnnouncementRead(a.id, userId),
         viewCount:
           a.viewCount +
           (await this.redisService.getAnnouncementViewCount(a.id)),
-        reads: undefined,
+        _count: undefined,
       })),
     );
 
@@ -121,12 +121,22 @@ export class AnnouncementService {
     // 2. DB에서 조회
     const announcement = await this.prisma.announcement.findFirst({
       where: { id, deletedAt: null },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        category: true,
+        isPinned: true,
+        viewCount: true,
+        attachments: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
         author: {
           select: { id: true, name: true },
         },
-        reads: {
-          select: { id: true },
+        _count: {
+          select: { reads: true },
         },
       },
     });
@@ -138,8 +148,8 @@ export class AnnouncementService {
     // 3. Redis에 캐싱 (TTL: 7일)
     const result = {
       ...announcement,
-      readCount: announcement.reads.length,
-      reads: undefined,
+      readCount: announcement._count.reads,
+      _count: undefined,
     };
     await this.redisService.cacheAnnouncement(id, result);
 
