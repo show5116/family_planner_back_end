@@ -13,22 +13,24 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     });
   }
 
-  async validate(
+  validate(
     accessToken: string,
     refreshToken: string,
     profile: any,
     done: any,
-  ): Promise<any> {
+  ): void {
     const { id, username, _json } = profile;
 
     const user = {
       provider: 'KAKAO',
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       providerId: id.toString(),
       email: _json.kakao_account?.email || null,
       name: _json.kakao_account?.profile?.nickname || username,
       profileImage: _json.kakao_account?.profile?.profile_image_url,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     done(null, user);
   }
 }

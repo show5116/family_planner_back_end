@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { AnnouncementCategory } from '@/announcement/enums/announcement-category.enum';
 
 /**
  * 작성자 정보 (간략)
@@ -21,8 +22,19 @@ export class AnnouncementDto {
   @ApiProperty({ description: '제목', example: '시스템 점검 안내' })
   title: string;
 
-  @ApiProperty({ description: '내용', example: '2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.' })
+  @ApiProperty({
+    description: '내용',
+    example: '2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.',
+  })
   content: string;
+
+  @ApiProperty({
+    description: '카테고리',
+    enum: AnnouncementCategory,
+    enumName: 'AnnouncementCategory',
+    example: AnnouncementCategory.ANNOUNCEMENT,
+  })
+  category: AnnouncementCategory;
 
   @ApiProperty({ description: '고정 여부', example: false })
   isPinned: boolean;

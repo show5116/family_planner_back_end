@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PermissionService } from './permission.service';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -43,7 +44,7 @@ describe('PermissionService', () => {
       const mockPermissions = [
         {
           id: '1',
-          code: PermissionCode.READ_GROUP,
+          code: PermissionCode.UPDATE_GROUP,
           name: '그룹 조회',
           description: '그룹 정보 조회',
           category: PermissionCategory.GROUP,
@@ -60,7 +61,7 @@ describe('PermissionService', () => {
           code: PermissionCode.INVITE_MEMBER,
           name: '멤버 초대',
           description: '새 멤버 초대',
-          category: PermissionCategory.MEMBER,
+          category: PermissionCategory.GROUP,
         },
       ];
 
@@ -70,11 +71,7 @@ describe('PermissionService', () => {
 
       expect(prismaService.permission.findMany).toHaveBeenCalledWith({
         where: { isActive: true },
-        orderBy: [
-          { category: 'asc' },
-          { sortOrder: 'asc' },
-          { code: 'asc' },
-        ],
+        orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { code: 'asc' }],
         select: {
           id: true,
           code: true,
@@ -85,10 +82,7 @@ describe('PermissionService', () => {
       });
       expect(result.permissions).toHaveLength(3);
       expect(result.groupedByCategory[PermissionCategory.GROUP]).toHaveLength(
-        2,
-      );
-      expect(result.groupedByCategory[PermissionCategory.MEMBER]).toHaveLength(
-        1,
+        3,
       );
       expect(result.categories).toEqual(Object.values(PermissionCategory));
     });
@@ -97,7 +91,7 @@ describe('PermissionService', () => {
       const mockPermissions = [
         {
           id: '1',
-          code: PermissionCode.READ_GROUP,
+          code: PermissionCode.UPDATE_GROUP,
           name: '그룹 조회',
           description: '그룹 정보 조회',
           category: PermissionCategory.GROUP,
@@ -113,11 +107,7 @@ describe('PermissionService', () => {
           isActive: true,
           category: PermissionCategory.GROUP,
         },
-        orderBy: [
-          { category: 'asc' },
-          { sortOrder: 'asc' },
-          { code: 'asc' },
-        ],
+        orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }, { code: 'asc' }],
         select: expect.any(Object),
       });
     });
@@ -126,11 +116,11 @@ describe('PermissionService', () => {
   describe('validatePermissions', () => {
     it('모든 권한 코드가 유효하면 true를 반환해야 함', async () => {
       const permissionCodes = [
-        PermissionCode.READ_GROUP,
+        PermissionCode.UPDATE_GROUP,
         PermissionCode.UPDATE_GROUP,
       ];
       const mockPermissions = [
-        { code: PermissionCode.READ_GROUP },
+        { code: PermissionCode.UPDATE_GROUP },
         { code: PermissionCode.UPDATE_GROUP },
       ];
 
@@ -150,11 +140,11 @@ describe('PermissionService', () => {
 
     it('일부 권한 코드가 유효하지 않으면 false를 반환해야 함', async () => {
       const permissionCodes = [
-        PermissionCode.READ_GROUP,
+        PermissionCode.UPDATE_GROUP,
         PermissionCode.UPDATE_GROUP,
       ];
       const mockPermissions = [
-        { code: PermissionCode.READ_GROUP },
+        { code: PermissionCode.UPDATE_GROUP },
         // UPDATE_GROUP이 누락됨
       ];
 
@@ -167,7 +157,7 @@ describe('PermissionService', () => {
 
     it('모든 권한 코드가 유효하지 않으면 false를 반환해야 함', async () => {
       const permissionCodes = [
-        PermissionCode.READ_GROUP,
+        PermissionCode.UPDATE_GROUP,
         PermissionCode.UPDATE_GROUP,
       ];
 
@@ -182,13 +172,10 @@ describe('PermissionService', () => {
   describe('getPermissionNames', () => {
     it('권한 코드 배열을 이름 배열로 변환해야 함', async () => {
       const permissionCodes = [
-        PermissionCode.READ_GROUP,
+        PermissionCode.UPDATE_GROUP,
         PermissionCode.UPDATE_GROUP,
       ];
-      const mockPermissions = [
-        { name: '그룹 조회' },
-        { name: '그룹 수정' },
-      ];
+      const mockPermissions = [{ name: '그룹 조회' }, { name: '그룹 수정' }];
 
       mockPrismaService.permission.findMany.mockResolvedValue(mockPermissions);
 

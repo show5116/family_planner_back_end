@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
@@ -96,7 +97,8 @@ describe('QnaController (e2e)', () => {
         ],
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/qna/questions')
         .set('Authorization', user1Token)
         .send(createDto)
@@ -122,7 +124,8 @@ describe('QnaController (e2e)', () => {
         visibility: QuestionVisibility.PRIVATE,
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/qna/questions')
         .set('Authorization', user1Token)
         .send(createDto)
@@ -141,7 +144,8 @@ describe('QnaController (e2e)', () => {
         category: QuestionCategory.BUG,
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .post('/qna/questions')
         .set('Authorization', user1Token)
         .send(invalidDto)
@@ -173,7 +177,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('공개 질문만 조회됨', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/public-questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 20 })
@@ -195,7 +200,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('검색어로 제목/내용 검색', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/public-questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 20, search: '종료' })
@@ -206,7 +212,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('카테고리 필터링', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/public-questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 20, category: QuestionCategory.BUG })
@@ -220,7 +227,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('상태 필터링', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/public-questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 20, status: QuestionStatus.PENDING })
@@ -246,7 +254,8 @@ describe('QnaController (e2e)', () => {
         },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/public-questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 20 })
@@ -259,19 +268,21 @@ describe('QnaController (e2e)', () => {
 
   describe('GET /qna/my-questions (내 질문 목록 조회)', () => {
     it('본인 질문만 조회됨', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/my-questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 20 })
         .expect(200);
 
-      expect(
-        response.body.data.every((q: any) => q.userId === user1.id),
-      ).toBe(true);
+      expect(response.body.data.every((q: any) => q.userId === user1.id)).toBe(
+        true,
+      );
     });
 
     it('공개/비공개 질문 모두 포함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/my-questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 20 })
@@ -291,7 +302,8 @@ describe('QnaController (e2e)', () => {
 
   describe('GET /qna/questions/:id (질문 상세 조회)', () => {
     it('공개 질문은 누구나 조회 가능', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get(`/qna/questions/${publicQuestionId}`)
         .set('Authorization', user2Token)
         .expect(200);
@@ -303,7 +315,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('비공개 질문은 작성자만 조회 가능', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get(`/qna/questions/${privateQuestionId}`)
         .set('Authorization', user1Token)
         .expect(200);
@@ -315,14 +328,16 @@ describe('QnaController (e2e)', () => {
     });
 
     it('비공개 질문을 타인이 조회 시 403', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get(`/qna/questions/${privateQuestionId}`)
         .set('Authorization', user2Token)
         .expect(403);
     });
 
     it('ADMIN은 모든 질문 조회 가능', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get(`/qna/questions/${privateQuestionId}`)
         .set('Authorization', adminToken)
         .expect(200);
@@ -331,7 +346,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('존재하지 않는 질문 조회 시 404', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get('/qna/questions/non-existent-id')
         .set('Authorization', user1Token)
         .expect(404);
@@ -363,7 +379,8 @@ describe('QnaController (e2e)', () => {
         category: QuestionCategory.FEATURE,
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .put(`/qna/questions/${editableQuestionId}`)
         .set('Authorization', user1Token)
         .send(updateDto)
@@ -382,7 +399,8 @@ describe('QnaController (e2e)', () => {
         title: '타인 수정 시도',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .put(`/qna/questions/${editableQuestionId}`)
         .set('Authorization', user2Token)
         .send(updateDto)
@@ -400,7 +418,8 @@ describe('QnaController (e2e)', () => {
         title: 'ANSWERED 상태 수정 시도',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .put(`/qna/questions/${editableQuestionId}`)
         .set('Authorization', user1Token)
         .send(updateDto)
@@ -432,7 +451,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('본인 질문 삭제 성공 (soft delete)', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/qna/questions/${deletableQuestionId}`)
         .set('Authorization', user1Token)
         .expect(200);
@@ -446,7 +466,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('삭제된 질문은 목록에 노출되지 않음', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/public-questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 100 })
@@ -460,7 +481,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('타인의 질문 삭제 시 403', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/qna/questions/${publicQuestionId}`)
         .set('Authorization', user2Token)
         .expect(403);
@@ -486,7 +508,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('ANSWERED 상태에서 RESOLVED로 변경 성공', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .patch(`/qna/questions/${resolvableQuestionId}/resolve`)
         .set('Authorization', user1Token)
         .expect(200);
@@ -507,7 +530,8 @@ describe('QnaController (e2e)', () => {
         },
       });
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .patch(`/qna/questions/${pendingQuestion.id}/resolve`)
         .set('Authorization', user1Token)
         .expect(400);
@@ -525,7 +549,8 @@ describe('QnaController (e2e)', () => {
         },
       });
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .patch(`/qna/questions/${otherUserQuestion.id}/resolve`)
         .set('Authorization', user1Token)
         .expect(403);
@@ -562,7 +587,8 @@ describe('QnaController (e2e)', () => {
         ],
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post(`/qna/admin/questions/${answerableQuestionId}/answers`)
         .set('Authorization', adminToken)
         .send(createAnswerDto)
@@ -587,7 +613,8 @@ describe('QnaController (e2e)', () => {
         content: '일반 사용자 답변 시도',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .post(`/qna/admin/questions/${answerableQuestionId}/answers`)
         .set('Authorization', user1Token)
         .send(createAnswerDto)
@@ -599,7 +626,8 @@ describe('QnaController (e2e)', () => {
         content: '답변',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .post('/qna/admin/questions/non-existent-id/answers')
         .set('Authorization', adminToken)
         .send(createAnswerDto)
@@ -640,7 +668,8 @@ describe('QnaController (e2e)', () => {
         content: '수정된 답변 내용',
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .put(`/qna/admin/answers/${editableAnswerId}`)
         .set('Authorization', adminToken)
         .send(updateDto)
@@ -657,7 +686,8 @@ describe('QnaController (e2e)', () => {
         content: '일반 사용자 수정 시도',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .put(`/qna/admin/answers/${editableAnswerId}`)
         .set('Authorization', user1Token)
         .send(updateDto)
@@ -669,7 +699,8 @@ describe('QnaController (e2e)', () => {
         content: '수정',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .put('/qna/admin/answers/non-existent-id')
         .set('Authorization', adminToken)
         .send(updateDto)
@@ -704,7 +735,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('ADMIN이 답변 삭제 성공 (soft delete)', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/qna/admin/answers/${deletableAnswerId}`)
         .set('Authorization', adminToken)
         .expect(200);
@@ -718,7 +750,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('일반 사용자는 답변 삭제 불가 (403)', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/qna/admin/answers/${deletableAnswerId}`)
         .set('Authorization', user1Token)
         .expect(403);
@@ -727,7 +760,8 @@ describe('QnaController (e2e)', () => {
 
   describe('GET /qna/admin/questions (모든 질문 조회 - ADMIN)', () => {
     it('ADMIN은 모든 질문 조회 가능', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/admin/questions')
         .set('Authorization', adminToken)
         .query({ page: 1, limit: 20 })
@@ -745,7 +779,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('PENDING 질문이 우선 정렬', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/admin/questions')
         .set('Authorization', adminToken)
         .query({ page: 1, limit: 100 })
@@ -774,7 +809,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('사용자명으로 검색 가능', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/admin/questions')
         .set('Authorization', adminToken)
         .query({ page: 1, limit: 20, search: '사용자1' })
@@ -786,7 +822,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('일반 사용자는 접근 불가 (403)', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get('/qna/admin/questions')
         .set('Authorization', user1Token)
         .query({ page: 1, limit: 20 })
@@ -796,7 +833,8 @@ describe('QnaController (e2e)', () => {
 
   describe('GET /qna/admin/statistics (통계 조회 - ADMIN)', () => {
     it('ADMIN이 통계 조회 성공', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/qna/admin/statistics')
         .set('Authorization', adminToken)
         .expect(200);
@@ -814,7 +852,8 @@ describe('QnaController (e2e)', () => {
     });
 
     it('일반 사용자는 통계 조회 불가 (403)', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get('/qna/admin/statistics')
         .set('Authorization', user1Token)
         .expect(403);

@@ -45,7 +45,8 @@ export class CreateQuestionDto {
   category: QuestionCategory;
 
   @ApiProperty({
-    description: '공개 여부 (PUBLIC: 모든 사용자 조회 가능, PRIVATE: 본인/ADMIN만 조회 가능)',
+    description:
+      '공개 여부 (PUBLIC: 모든 사용자 조회 가능, PRIVATE: 본인/ADMIN만 조회 가능)',
     enum: QuestionVisibility,
     default: QuestionVisibility.PRIVATE,
     required: false,

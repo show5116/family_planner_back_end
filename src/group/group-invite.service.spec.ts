@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { GroupInviteService } from './group-invite.service';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -545,11 +546,7 @@ describe('GroupInviteService', () => {
       mockPrismaService.groupJoinRequest.create.mockResolvedValue(joinRequest);
       mockEmailService.sendGroupInviteEmail.mockResolvedValue(undefined);
 
-      const result = await service.inviteByEmail(
-        groupId,
-        inviterUserId,
-        email,
-      );
+      const result = await service.inviteByEmail(groupId, inviterUserId, email);
 
       expect(result.message).toBe('초대 이메일이 발송되었습니다');
       expect(result.email).toBe(email);
@@ -647,12 +644,12 @@ describe('GroupInviteService', () => {
         joinRequest,
       );
 
-      await expect(
-        service.cancelInvite(groupId, requestId),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.cancelInvite(groupId, requestId),
-      ).rejects.toThrow('INVITE 타입의 요청만 취소할 수 있습니다');
+      await expect(service.cancelInvite(groupId, requestId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.cancelInvite(groupId, requestId)).rejects.toThrow(
+        'INVITE 타입의 요청만 취소할 수 있습니다',
+      );
     });
   });
 

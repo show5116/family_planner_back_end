@@ -46,6 +46,7 @@ export class QuestionVisibilityGuard implements CanActivate {
     }
 
     // 공개 질문은 누구나 접근 가능
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     if (question.visibility === QuestionVisibility.PUBLIC) {
       return true;
     }

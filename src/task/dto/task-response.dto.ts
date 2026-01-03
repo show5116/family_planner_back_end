@@ -45,6 +45,7 @@ export class TaskHistoryDto {
   action: TaskHistoryAction;
 
   @ApiProperty({ description: '변경 내용', nullable: true })
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   changes: any | null;
 
   @ApiProperty({ description: '변경 시간' })

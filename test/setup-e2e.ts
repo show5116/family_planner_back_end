@@ -14,5 +14,7 @@ if (!process.env.DATABASE_URL) {
 // 테스트 환경 확인
 console.log('🧪 E2E Test Environment:');
 console.log(`  NODE_ENV: ${process.env.NODE_ENV || 'test'}`);
-console.log(`  DATABASE_URL: ${process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':***@') || 'NOT SET'}`);
+console.log(
+  `  DATABASE_URL: ${process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':***@') || 'NOT SET'}`,
+);
 console.log('');

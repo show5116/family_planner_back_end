@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@/prisma/prisma.service';
+import { AnnouncementCategory } from '@prisma/client';
 
 describe('AnnouncementController (e2e)', () => {
   let app: INestApplication;
@@ -74,7 +76,8 @@ describe('AnnouncementController (e2e)', () => {
         ],
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/announcements')
         .set('Authorization', adminToken)
         .send(createDto)
@@ -96,7 +99,8 @@ describe('AnnouncementController (e2e)', () => {
         content: '내용',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .post('/announcements')
         .set('Authorization', normalToken)
         .send(createDto)
@@ -108,7 +112,8 @@ describe('AnnouncementController (e2e)', () => {
         content: '내용만 있음',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .post('/announcements')
         .set('Authorization', adminToken)
         .send(invalidDto)
@@ -125,12 +130,14 @@ describe('AnnouncementController (e2e)', () => {
             authorId: adminUser.id,
             title: '일반 공지 1',
             content: '내용 1',
+            category: AnnouncementCategory.ANNOUNCEMENT,
             isPinned: false,
           },
           {
             authorId: adminUser.id,
             title: '일반 공지 2',
             content: '내용 2',
+            category: AnnouncementCategory.ANNOUNCEMENT,
             isPinned: false,
           },
         ],
@@ -138,7 +145,8 @@ describe('AnnouncementController (e2e)', () => {
     });
 
     it('공지사항 목록 조회 성공', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/announcements')
         .set('Authorization', normalToken)
         .query({ page: 1, limit: 20 })
@@ -158,19 +166,19 @@ describe('AnnouncementController (e2e)', () => {
     });
 
     it('고정 공지만 조회 (pinnedOnly=true)', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/announcements')
         .set('Authorization', normalToken)
         .query({ page: 1, limit: 20, pinnedOnly: true })
         .expect(200);
 
-      expect(response.body.data.every((item: any) => item.isPinned)).toBe(
-        true,
-      );
+      expect(response.body.data.every((item: any) => item.isPinned)).toBe(true);
     });
 
     it('고정 공지가 우선 정렬', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/announcements')
         .set('Authorization', normalToken)
         .query({ page: 1, limit: 20 })
@@ -198,7 +206,8 @@ describe('AnnouncementController (e2e)', () => {
 
   describe('GET /announcements/:id (공지사항 상세 조회)', () => {
     it('공지사항 상세 조회 성공 및 자동 읽음 처리', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get(`/announcements/${createdAnnouncementId}`)
         .set('Authorization', normalToken)
         .expect(200);
@@ -222,7 +231,8 @@ describe('AnnouncementController (e2e)', () => {
     });
 
     it('존재하지 않는 공지사항 조회 시 404', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get('/announcements/non-existent-id')
         .set('Authorization', normalToken)
         .expect(404);
@@ -230,13 +240,15 @@ describe('AnnouncementController (e2e)', () => {
 
     it('중복 읽음 처리 시 upsert로 하나만 생성', async () => {
       // 첫 번째 조회
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get(`/announcements/${createdAnnouncementId}`)
         .set('Authorization', normalToken)
         .expect(200);
 
       // 두 번째 조회
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get(`/announcements/${createdAnnouncementId}`)
         .set('Authorization', normalToken)
         .expect(200);
@@ -261,7 +273,8 @@ describe('AnnouncementController (e2e)', () => {
         isPinned: false,
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .put(`/announcements/${createdAnnouncementId}`)
         .set('Authorization', adminToken)
         .send(updateDto)
@@ -280,7 +293,8 @@ describe('AnnouncementController (e2e)', () => {
         title: '일반 사용자 수정 시도',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .put(`/announcements/${createdAnnouncementId}`)
         .set('Authorization', normalToken)
         .send(updateDto)
@@ -292,7 +306,8 @@ describe('AnnouncementController (e2e)', () => {
         title: '수정 시도',
       };
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .put('/announcements/non-existent-id')
         .set('Authorization', adminToken)
         .send(updateDto)
@@ -302,7 +317,8 @@ describe('AnnouncementController (e2e)', () => {
 
   describe('PATCH /announcements/:id/pin (공지사항 고정/해제)', () => {
     it('ADMIN이 공지사항 고정 성공', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .patch(`/announcements/${createdAnnouncementId}/pin`)
         .set('Authorization', adminToken)
         .send({ isPinned: true })
@@ -312,7 +328,8 @@ describe('AnnouncementController (e2e)', () => {
     });
 
     it('ADMIN이 공지사항 고정 해제 성공', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .patch(`/announcements/${createdAnnouncementId}/pin`)
         .set('Authorization', adminToken)
         .send({ isPinned: false })
@@ -322,7 +339,8 @@ describe('AnnouncementController (e2e)', () => {
     });
 
     it('일반 사용자는 고정/해제 불가 (403)', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .patch(`/announcements/${createdAnnouncementId}/pin`)
         .set('Authorization', normalToken)
         .send({ isPinned: true })
@@ -340,13 +358,15 @@ describe('AnnouncementController (e2e)', () => {
           authorId: adminUser.id,
           title: '삭제 테스트 공지',
           content: '삭제될 공지사항',
+          category: AnnouncementCategory.ANNOUNCEMENT,
         },
       });
       deletableAnnouncementId = announcement.id;
     });
 
     it('ADMIN이 공지사항 삭제 성공 (soft delete)', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/announcements/${deletableAnnouncementId}`)
         .set('Authorization', adminToken)
         .expect(200);
@@ -360,7 +380,8 @@ describe('AnnouncementController (e2e)', () => {
     });
 
     it('삭제된 공지사항은 목록에 노출되지 않음', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/announcements')
         .set('Authorization', normalToken)
         .query({ page: 1, limit: 100 })
@@ -374,14 +395,16 @@ describe('AnnouncementController (e2e)', () => {
     });
 
     it('일반 사용자는 공지사항 삭제 불가 (403)', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/announcements/${createdAnnouncementId}`)
         .set('Authorization', normalToken)
         .expect(403);
     });
 
     it('존재하지 않는 공지사항 삭제 시 404', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete('/announcements/non-existent-id')
         .set('Authorization', adminToken)
         .expect(404);

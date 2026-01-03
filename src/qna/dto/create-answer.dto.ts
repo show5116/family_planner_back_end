@@ -15,7 +15,8 @@ export class CreateAnswerDto {
     description: '답변 내용',
     minLength: 1,
     maxLength: 5000,
-    example: '해당 문제는 최신 버전에서 수정되었습니다. 앱을 업데이트 해주세요.',
+    example:
+      '해당 문제는 최신 버전에서 수정되었습니다. 앱을 업데이트 해주세요.',
   })
   @IsString()
   @MinLength(1)

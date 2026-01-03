@@ -1,6 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsBoolean, Min, Max } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsBoolean,
+  Min,
+  Max,
+  IsEnum,
+} from 'class-validator';
+import { AnnouncementCategory } from '@/announcement/enums/announcement-category.enum';
 
 export class AnnouncementQueryDto {
   @ApiProperty({
@@ -28,6 +36,17 @@ export class AnnouncementQueryDto {
   @Type(() => Number)
   @IsOptional()
   limit?: number = 20;
+
+  @ApiProperty({
+    description: '카테고리 필터',
+    enum: AnnouncementCategory,
+    enumName: 'AnnouncementCategory',
+    required: false,
+    example: AnnouncementCategory.EVENT,
+  })
+  @IsEnum(AnnouncementCategory)
+  @IsOptional()
+  category?: AnnouncementCategory;
 
   @ApiProperty({
     description: '고정 공지만 조회',

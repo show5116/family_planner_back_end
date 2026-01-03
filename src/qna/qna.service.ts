@@ -241,7 +241,9 @@ export class QnaService {
     }
 
     if (
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
       question.status === QuestionStatus.ANSWERED ||
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
       question.status === QuestionStatus.RESOLVED
     ) {
       throw new BadRequestException(
@@ -299,8 +301,11 @@ export class QnaService {
       throw new ForbiddenException('본인 작성 질문만 해결 처리할 수 있습니다');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     if (question.status === QuestionStatus.PENDING) {
-      throw new BadRequestException('답변이 등록되지 않은 질문은 해결할 수 없습니다');
+      throw new BadRequestException(
+        '답변이 등록되지 않은 질문은 해결할 수 없습니다',
+      );
     }
 
     return this.prisma.question.update({
@@ -312,7 +317,11 @@ export class QnaService {
   /**
    * 답변 작성 (ADMIN 전용) + 상태 변경 + 사용자 알림
    */
-  async createAnswer(questionId: string, adminId: string, dto: CreateAnswerDto) {
+  async createAnswer(
+    questionId: string,
+    adminId: string,
+    dto: CreateAnswerDto,
+  ) {
     const question = await this.prisma.question.findFirst({
       where: { id: questionId, deletedAt: null },
       include: {

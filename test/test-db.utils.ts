@@ -16,7 +16,6 @@ export async function resetTestDatabase() {
     await prisma.groupJoinRequest.deleteMany();
     await prisma.groupMember.deleteMany();
     await prisma.group.deleteMany();
-    await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
     await prisma.role.deleteMany();
 
@@ -91,7 +90,7 @@ export async function seedTestDatabase() {
 /**
  * 테스트 데이터베이스 마이그레이션 실행
  */
-export async function runTestMigrations() {
+export function runTestMigrations() {
   try {
     console.log('🔄 Running test database migrations...');
     execSync('npx prisma migrate deploy', {
@@ -118,7 +117,7 @@ export async function disconnectTestDatabase() {
  */
 export async function setupTestDatabase() {
   try {
-    await runTestMigrations();
+    runTestMigrations();
     await resetTestDatabase();
     await seedTestDatabase();
     console.log('✅ Test database setup completed\n');

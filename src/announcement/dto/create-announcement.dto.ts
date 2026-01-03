@@ -7,8 +7,10 @@ import {
   MaxLength,
   IsArray,
   ValidateNested,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { AnnouncementCategory } from '@/announcement/enums/announcement-category.enum';
 
 class AttachmentDto {
   @ApiProperty({ description: '파일 URL' })
@@ -46,6 +48,15 @@ export class CreateAnnouncementDto {
   @MinLength(1)
   @MaxLength(10000)
   content: string;
+
+  @ApiProperty({
+    description: '공지사항 카테고리',
+    enum: AnnouncementCategory,
+    enumName: 'AnnouncementCategory',
+    example: AnnouncementCategory.UPDATE,
+  })
+  @IsEnum(AnnouncementCategory)
+  category: AnnouncementCategory;
 
   @ApiProperty({
     description: '상단 고정 여부',

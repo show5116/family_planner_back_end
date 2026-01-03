@@ -1,14 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
+import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@/prisma/prisma.service';
 import { resetTestDatabase, seedTestDatabase } from './test-db.utils';
 import { PermissionCategory } from '@prisma/client';
 
 describe('Permissions (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   let prisma: PrismaService;
   let adminToken: string;
   let adminUserId: string;
@@ -46,7 +46,8 @@ describe('Permissions (e2e)', () => {
     const adminEmail = `admin-${Date.now()}@test.com`;
     const adminPassword = 'Admin1234!';
 
-    const adminSignup = await request(app.getHttpServer())
+    const adminSignup = await request
+      .default(app.getHttpServer())
       .post('/auth/signup')
       .send({
         email: adminEmail,
@@ -64,7 +65,8 @@ describe('Permissions (e2e)', () => {
     });
 
     // 관리자 로그인
-    const adminLogin = await request(app.getHttpServer())
+    const adminLogin = await request
+      .default(app.getHttpServer())
       .post('/auth/login')
       .send({
         email: adminEmail,
@@ -78,7 +80,8 @@ describe('Permissions (e2e)', () => {
     const userEmail = `user-${Date.now()}@test.com`;
     const userPassword = 'User1234!';
 
-    const userSignup = await request(app.getHttpServer())
+    const userSignup = await request
+      .default(app.getHttpServer())
       .post('/auth/signup')
       .send({
         email: userEmail,
@@ -94,7 +97,8 @@ describe('Permissions (e2e)', () => {
     });
 
     // 일반 사용자 로그인
-    const userLogin = await request(app.getHttpServer())
+    const userLogin = await request
+      .default(app.getHttpServer())
       .post('/auth/login')
       .send({
         email: userEmail,
@@ -118,7 +122,8 @@ describe('Permissions (e2e)', () => {
 
   describe('권한 조회', () => {
     it('GET /permissions - 모든 권한을 조회해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/permissions')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -131,7 +136,8 @@ describe('Permissions (e2e)', () => {
     });
 
     it('GET /permissions?category=GROUP - 특정 카테고리의 권한만 조회해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/permissions?category=GROUP')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -149,7 +155,8 @@ describe('Permissions (e2e)', () => {
     it('GET /permissions - 일반 사용자는 권한 조회 불가 (403)', async () => {
       // AdminGuard가 적용되어 있지 않은 경우 이 테스트는 통과할 수 있음
       // AdminGuard 적용 여부에 따라 200 또는 403 반환
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/permissions')
         .set('Authorization', `Bearer ${regularUserToken}`);
 
@@ -161,7 +168,8 @@ describe('Permissions (e2e)', () => {
   describe('권한 검증 시스템', () => {
     it('그룹 권한 시스템이 정상적으로 작동해야 함', async () => {
       // 그룹 생성 (권한 필요 없음)
-      const createGroupResponse = await request(app.getHttpServer())
+      const createGroupResponse = await request
+        .default(app.getHttpServer())
         .post('/groups')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -173,7 +181,8 @@ describe('Permissions (e2e)', () => {
       const groupId = createGroupResponse.body.id;
 
       // 그룹 정보 수정 (UPDATE_GROUP 권한 필요 - OWNER는 자동으로 모든 권한 보유)
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .patch(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -182,7 +191,8 @@ describe('Permissions (e2e)', () => {
         .expect(200);
 
       // 정리
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -190,7 +200,8 @@ describe('Permissions (e2e)', () => {
 
     it('권한이 없는 사용자는 특정 작업을 수행할 수 없어야 함', async () => {
       // 관리자가 그룹 생성
-      const createGroupResponse = await request(app.getHttpServer())
+      const createGroupResponse = await request
+        .default(app.getHttpServer())
         .post('/groups')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
@@ -202,13 +213,15 @@ describe('Permissions (e2e)', () => {
       const groupId = createGroupResponse.body.id;
 
       // 일반 사용자는 멤버가 아니므로 그룹에 접근 불가 (403)
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${regularUserToken}`)
         .expect(403);
 
       // 정리
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -217,7 +230,8 @@ describe('Permissions (e2e)', () => {
 
   describe('카테고리별 권한 확인', () => {
     it('GROUP 카테고리 권한이 존재해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/permissions?category=GROUP')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -226,7 +240,8 @@ describe('Permissions (e2e)', () => {
     });
 
     it('MEMBER 카테고리 권한이 존재해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/permissions?category=MEMBER')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
@@ -235,7 +250,8 @@ describe('Permissions (e2e)', () => {
     });
 
     it('ROLE 카테고리 권한이 존재해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/permissions?category=ROLE')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);

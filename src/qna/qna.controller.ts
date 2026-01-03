@@ -74,7 +74,11 @@ export class QnaController {
   @ApiOperation({ summary: '질문 수정 (본인만, PENDING 상태만)' })
   @ApiSuccess(QuestionDetailDto, '질문 수정 성공')
   @ApiNotFound('질문을 찾을 수 없습니다')
-  update(@Param('id') id: string, @Request() req, @Body() dto: UpdateQuestionDto) {
+  update(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() dto: UpdateQuestionDto,
+  ) {
     return this.qnaService.update(id, req.user.userId, dto);
   }
 

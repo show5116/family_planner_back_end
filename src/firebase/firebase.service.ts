@@ -19,8 +19,9 @@ export class FirebaseService implements OnModuleInit {
   onModuleInit() {
     try {
       const projectId = this.configService.get<string>('firebase.projectId');
-      const clientEmail =
-        this.configService.get<string>('firebase.clientEmail');
+      const clientEmail = this.configService.get<string>(
+        'firebase.clientEmail',
+      );
       const privateKey = this.configService.get<string>('firebase.privateKey');
 
       if (!projectId || !clientEmail || !privateKey) {

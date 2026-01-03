@@ -25,16 +25,31 @@ export class QuestionListDto {
   @ApiProperty({ description: '제목', example: '그룹 초대는 어떻게 하나요?' })
   title: string;
 
-  @ApiProperty({ description: '내용 (미리보기 100자)', example: '안녕하세요. 그룹에 가족을 초대하고 싶은데...' })
+  @ApiProperty({
+    description: '내용 (미리보기 100자)',
+    example: '안녕하세요. 그룹에 가족을 초대하고 싶은데...',
+  })
   content: string;
 
-  @ApiProperty({ description: '카테고리', enum: QuestionCategory, example: QuestionCategory.FEATURE })
+  @ApiProperty({
+    description: '카테고리',
+    enum: QuestionCategory,
+    example: QuestionCategory.FEATURE,
+  })
   category: QuestionCategory;
 
-  @ApiProperty({ description: '질문 상태', enum: QuestionStatus, example: QuestionStatus.PENDING })
+  @ApiProperty({
+    description: '질문 상태',
+    enum: QuestionStatus,
+    example: QuestionStatus.PENDING,
+  })
   status: QuestionStatus;
 
-  @ApiProperty({ description: '공개 여부', enum: QuestionVisibility, example: QuestionVisibility.PUBLIC })
+  @ApiProperty({
+    description: '공개 여부',
+    enum: QuestionVisibility,
+    example: QuestionVisibility.PUBLIC,
+  })
   visibility: QuestionVisibility;
 
   @ApiProperty({ description: '답변 수', example: 1 })
@@ -57,7 +72,10 @@ export class AnswerDto {
   @ApiProperty({ description: '답변 ID', example: 'uuid' })
   id: string;
 
-  @ApiProperty({ description: '답변 내용', example: '그룹 초대는 그룹 설정 메뉴에서 가능합니다...' })
+  @ApiProperty({
+    description: '답변 내용',
+    example: '그룹 초대는 그룹 설정 메뉴에서 가능합니다...',
+  })
   content: string;
 
   @ApiProperty({ description: '작성자 ID', example: 'uuid' })
@@ -86,16 +104,31 @@ export class QuestionDetailDto {
   @ApiProperty({ description: '제목', example: '그룹 초대는 어떻게 하나요?' })
   title: string;
 
-  @ApiProperty({ description: '내용', example: '안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.' })
+  @ApiProperty({
+    description: '내용',
+    example: '안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.',
+  })
   content: string;
 
-  @ApiProperty({ description: '카테고리', enum: QuestionCategory, example: QuestionCategory.FEATURE })
+  @ApiProperty({
+    description: '카테고리',
+    enum: QuestionCategory,
+    example: QuestionCategory.FEATURE,
+  })
   category: QuestionCategory;
 
-  @ApiProperty({ description: '질문 상태', enum: QuestionStatus, example: QuestionStatus.ANSWERED })
+  @ApiProperty({
+    description: '질문 상태',
+    enum: QuestionStatus,
+    example: QuestionStatus.ANSWERED,
+  })
   status: QuestionStatus;
 
-  @ApiProperty({ description: '공개 여부', enum: QuestionVisibility, example: QuestionVisibility.PUBLIC })
+  @ApiProperty({
+    description: '공개 여부',
+    enum: QuestionVisibility,
+    example: QuestionVisibility.PUBLIC,
+  })
   visibility: QuestionVisibility;
 
   @ApiProperty({ description: '작성자 정보', type: QuestionUserDto })

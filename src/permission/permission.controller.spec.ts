@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PermissionController } from './permission.controller';
 import { PermissionService } from './permission.service';
@@ -48,9 +49,9 @@ describe('PermissionController', () => {
         permissions: [
           {
             id: '1',
-            code: PermissionCode.READ_GROUP,
-            name: '그룹 조회',
-            description: '그룹 정보 조회',
+            code: PermissionCode.UPDATE_GROUP,
+            name: '그룹 수정',
+            description: '그룹 정보 수정',
             category: PermissionCategory.GROUP,
           },
         ],
@@ -58,9 +59,9 @@ describe('PermissionController', () => {
           [PermissionCategory.GROUP]: [
             {
               id: '1',
-              code: PermissionCode.READ_GROUP,
-              name: '그룹 조회',
-              description: '그룹 정보 조회',
+              code: PermissionCode.UPDATE_GROUP,
+              name: '그룹 수정',
+              description: '그룹 정보 수정',
               category: PermissionCategory.GROUP,
             },
           ],
@@ -84,9 +85,9 @@ describe('PermissionController', () => {
         permissions: [
           {
             id: '1',
-            code: PermissionCode.READ_GROUP,
-            name: '그룹 조회',
-            description: '그룹 정보 조회',
+            code: PermissionCode.UPDATE_GROUP,
+            name: '그룹 수정',
+            description: '그룹 정보 수정',
             category: PermissionCategory.GROUP,
           },
         ],

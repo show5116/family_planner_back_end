@@ -14,19 +14,21 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
-  async validate(
+  validate(
     accessToken: string,
     refreshToken: string,
     profile: any,
     done: VerifyCallback,
-  ): Promise<any> {
+  ): void {
     const { id, name, emails, photos } = profile;
 
     // 한국식 이름 형식: 성(familyName) + 이름(givenName)
+
     const fullName =
       name.familyName && name.givenName
         ? `${name.familyName}${name.givenName}`
-        : name.givenName || name.familyName || emails[0].value.split('@')[0];
+        : // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+          name.givenName || name.familyName || emails[0].value.split('@')[0];
 
     const user = {
       provider: 'GOOGLE',

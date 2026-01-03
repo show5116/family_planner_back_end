@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnnouncementService } from './announcement.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotFoundException } from '@nestjs/common';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
+import { AnnouncementCategory } from '@/announcement/enums/announcement-category.enum';
 
 describe('AnnouncementService', () => {
   let service: AnnouncementService;
@@ -185,6 +187,7 @@ describe('AnnouncementService', () => {
       const createDto = {
         title: '새 공지',
         content: '내용',
+        category: AnnouncementCategory.ANNOUNCEMENT,
         isPinned: false,
       };
       const mockAnnouncement = {
@@ -194,9 +197,7 @@ describe('AnnouncementService', () => {
       };
       const mockUsers = [{ id: 'user-1' }, { id: 'user-2' }];
 
-      mockPrismaService.announcement.create.mockResolvedValue(
-        mockAnnouncement,
-      );
+      mockPrismaService.announcement.create.mockResolvedValue(mockAnnouncement);
       mockPrismaService.user.findMany.mockResolvedValue(mockUsers);
       mockNotificationService.sendNotification.mockResolvedValue({});
 

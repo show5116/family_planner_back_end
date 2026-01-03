@@ -1,13 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
+import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@/prisma/prisma.service';
 import { resetTestDatabase, seedTestDatabase } from './test-db.utils';
 
 describe('Groups (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   let prisma: PrismaService;
   let authToken: string;
   let userId: string;
@@ -47,7 +47,8 @@ describe('Groups (e2e)', () => {
     const email1 = `test-${Date.now()}@test.com`;
     const password1 = 'Test1234!';
 
-    const signupRes1 = await request(app.getHttpServer())
+    const signupRes1 = await request
+      .default(app.getHttpServer())
       .post('/auth/signup')
       .send({
         email: email1,
@@ -65,7 +66,8 @@ describe('Groups (e2e)', () => {
     });
 
     // 로그인하여 토큰 획득
-    const loginRes1 = await request(app.getHttpServer())
+    const loginRes1 = await request
+      .default(app.getHttpServer())
       .post('/auth/login')
       .send({
         email: email1,
@@ -79,7 +81,8 @@ describe('Groups (e2e)', () => {
     const email2 = `test2-${Date.now()}@test.com`;
     const password2 = 'Test1234!';
 
-    const signupRes2 = await request(app.getHttpServer())
+    const signupRes2 = await request
+      .default(app.getHttpServer())
       .post('/auth/signup')
       .send({
         email: email2,
@@ -96,7 +99,8 @@ describe('Groups (e2e)', () => {
       data: { isEmailVerified: true },
     });
 
-    const loginRes2 = await request(app.getHttpServer())
+    const loginRes2 = await request
+      .default(app.getHttpServer())
       .post('/auth/login')
       .send({
         email: email2,
@@ -134,7 +138,8 @@ describe('Groups (e2e)', () => {
         defaultColor: '#FF5733',
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/groups')
         .set('Authorization', `Bearer ${authToken}`)
         .send(createGroupDto)
@@ -152,7 +157,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('GET /groups - 내가 속한 그룹 목록을 조회해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get('/groups')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -165,7 +171,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('GET /groups/:id - 그룹 상세 정보를 조회해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -177,7 +184,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('GET /groups/:id - 멤버가 아니면 403을 반환해야 함', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .expect(403);
@@ -190,7 +198,8 @@ describe('Groups (e2e)', () => {
         defaultColor: '#00FF00',
       };
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .patch(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send(updateGroupDto)
@@ -202,7 +211,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('DELETE /groups/:id - 그룹을 삭제해야 함 (DELETE_GROUP 권한 필요)', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .delete(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -210,7 +220,8 @@ describe('Groups (e2e)', () => {
       expect(response.body.message).toBe('그룹이 삭제되었습니다');
 
       // 삭제된 그룹 조회 시 404
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
@@ -223,7 +234,8 @@ describe('Groups (e2e)', () => {
 
     beforeAll(async () => {
       // 그룹 생성
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/groups')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -238,14 +250,16 @@ describe('Groups (e2e)', () => {
 
     afterAll(async () => {
       // 그룹 삭제
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
     });
 
     it('POST /groups/join - 초대 코드로 가입 요청을 생성해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/groups/join')
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .send({ inviteCode })
@@ -258,7 +272,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('POST /groups/join - 이미 가입 요청이 있으면 409를 반환해야 함', async () => {
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .post('/groups/join')
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .send({ inviteCode })
@@ -266,7 +281,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('GET /groups/:id/join-requests - 가입 요청 목록을 조회해야 함 (INVITE_MEMBER 권한 필요)', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}/join-requests`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -279,7 +295,8 @@ describe('Groups (e2e)', () => {
 
     it('POST /groups/:id/join-requests/:requestId/accept - 가입 요청을 승인해야 함', async () => {
       // 가입 요청 목록 조회
-      const requestsResponse = await request(app.getHttpServer())
+      const requestsResponse = await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}/join-requests`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -287,7 +304,8 @@ describe('Groups (e2e)', () => {
       const requestId = requestsResponse.body[0].id;
 
       // 가입 요청 승인
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post(`/groups/${groupId}/join-requests/${requestId}/accept`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(201);
@@ -296,7 +314,8 @@ describe('Groups (e2e)', () => {
       expect(response.body.member).toBeDefined();
 
       // 두 번째 사용자가 그룹 멤버로 추가되었는지 확인
-      const groupResponse = await request(app.getHttpServer())
+      const groupResponse = await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .expect(200);
@@ -305,7 +324,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('POST /groups/:id/regenerate-code - 초대 코드를 재생성해야 함 (REGENERATE_INVITE_CODE 권한 필요)', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post(`/groups/${groupId}/regenerate-code`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(201);
@@ -322,7 +342,8 @@ describe('Groups (e2e)', () => {
 
     beforeAll(async () => {
       // 그룹 생성
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/groups')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -337,7 +358,8 @@ describe('Groups (e2e)', () => {
 
     afterAll(async () => {
       // 그룹 삭제
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -349,19 +371,21 @@ describe('Groups (e2e)', () => {
         where: { id: secondUserId },
       });
 
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post(`/groups/${groupId}/invite-by-email`)
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ email: user!.email })
+        .send({ email: user.email })
         .expect(201);
 
       expect(response.body.message).toBe('초대 이메일이 발송되었습니다');
-      expect(response.body.email).toBe(user!.email);
+      expect(response.body.email).toBe(user.email);
       expect(response.body).toHaveProperty('joinRequestId');
     });
 
     it('POST /groups/join - 이메일로 초대받은 사용자는 즉시 가입되어야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/groups/join')
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .send({ inviteCode })
@@ -372,7 +396,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('GET /groups/:id/join-requests - 초대 요청 목록을 조회해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}/join-requests`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -391,7 +416,8 @@ describe('Groups (e2e)', () => {
 
     beforeAll(async () => {
       // 그룹 생성
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .post('/groups')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -407,13 +433,15 @@ describe('Groups (e2e)', () => {
         where: { id: secondUserId },
       });
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .post(`/groups/${groupId}/invite-by-email`)
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ email: user!.email })
+        .send({ email: user.email })
         .expect(201);
 
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .post('/groups/join')
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .send({ inviteCode: response.body.inviteCode })
@@ -422,14 +450,16 @@ describe('Groups (e2e)', () => {
 
     afterAll(async () => {
       // 그룹 삭제
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .delete(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
     });
 
     it('GET /groups/:id/members - 그룹 멤버 목록을 조회해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}/members`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -441,7 +471,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('PATCH /groups/:id/my-color - 개인 그룹 색상을 설정해야 함', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .patch(`/groups/${groupId}/my-color`)
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .send({ customColor: '#123456' })
@@ -451,7 +482,8 @@ describe('Groups (e2e)', () => {
     });
 
     it('DELETE /groups/:id/members/:userId - 멤버를 삭제해야 함 (REMOVE_MEMBER 권한 필요)', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request
+        .default(app.getHttpServer())
         .delete(`/groups/${groupId}/members/${secondUserId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -459,7 +491,8 @@ describe('Groups (e2e)', () => {
       expect(response.body.message).toBe('멤버가 삭제되었습니다');
 
       // 삭제된 멤버는 그룹에 접근할 수 없음
-      await request(app.getHttpServer())
+      await request
+        .default(app.getHttpServer())
         .get(`/groups/${groupId}`)
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .expect(403);
