@@ -279,6 +279,68 @@ export class RedisService implements OnModuleInit {
   }
 
   /**
+   * 여러 공지사항의 읽음 상태 일괄 조회 (Pipeline 사용)
+   * N+1 문제 해결 - 단일 네트워크 RTT로 처리
+   *
+   * @param announcementIds - 공지사항 ID 배열
+   * @param userId - 사용자 ID
+   * @returns { announcementId: isRead }
+   */
+  async batchIsAnnouncementRead(
+    announcementIds: string[],
+    userId: string,
+  ): Promise<Record<string, boolean>> {
+    if (announcementIds.length === 0) {
+      return {};
+    }
+
+    const keys = announcementIds.map(
+      (id) => `announcement:read:${id}:${userId}`,
+    );
+
+    // Pipeline을 사용하여 단일 RTT로 여러 EXISTS 명령 실행
+    const pipeline = this.redisClient.multi();
+    keys.forEach((key) => pipeline.exists(key));
+    const results = await pipeline.exec();
+
+    // 결과 매핑
+    const readStatus: Record<string, boolean> = {};
+    announcementIds.forEach((id, index) => {
+      readStatus[id] = results[index] === 1;
+    });
+
+    return readStatus;
+  }
+
+  /**
+   * 여러 공지사항의 조회수 일괄 조회 (MGET 사용)
+   * N+1 문제 해결 - 단일 네트워크 RTT로 처리
+   *
+   * @param announcementIds - 공지사항 ID 배열
+   * @returns { announcementId: viewCount }
+   */
+  async batchGetAnnouncementViewCount(
+    announcementIds: string[],
+  ): Promise<Record<string, number>> {
+    if (announcementIds.length === 0) {
+      return {};
+    }
+
+    const keys = announcementIds.map((id) => `announcement:viewCount:${id}`);
+
+    // MGET: 여러 키의 값을 단일 명령으로 조회 (O(N))
+    const values = await this.redisClient.mGet(keys);
+
+    // 결과 매핑
+    const viewCounts: Record<string, number> = {};
+    announcementIds.forEach((id, index) => {
+      viewCounts[id] = values[index] ? parseInt(values[index], 10) : 0;
+    });
+
+    return viewCounts;
+  }
+
+  /**
    * 모든 읽음 처리 기록 조회 (DB 동기화용)
    * SMEMBERS 사용 + Promise.all로 병렬 처리
    *

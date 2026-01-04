@@ -26,7 +26,7 @@ export class NotificationService {
   ) {}
 
   /**
-   * FCM 디바이스 토큰 등록
+   * FCM 디바이스 토큰 등록 + Topic 자동 구독
    */
   async registerToken(userId: string, dto: RegisterTokenDto) {
     try {
@@ -34,6 +34,8 @@ export class NotificationService {
       const existingToken = await this.prisma.deviceToken.findUnique({
         where: { token: dto.token },
       });
+
+      let deviceToken;
 
       if (existingToken) {
         // 다른 사용자에게 등록된 토큰이면 기존 토큰 삭제 후 새로 등록
@@ -43,39 +45,52 @@ export class NotificationService {
             `Token ${dto.token} is being transferred from user ${existingToken.userId} to ${userId}`,
           );
 
+          // 기존 사용자의 Topic 구독 해제
+          await this.unsubscribeUserFromTopics(existingToken.userId, [
+            dto.token,
+          ]);
+
           // 기존 토큰 삭제
           await this.prisma.deviceToken.delete({
             where: { token: dto.token },
           });
 
           // 새로운 사용자로 등록
-          return await this.prisma.deviceToken.create({
+          deviceToken = await this.prisma.deviceToken.create({
             data: {
               userId,
               token: dto.token,
               platform: dto.platform,
             },
           });
-        }
 
-        // 같은 사용자라면 lastUsed만 업데이트
-        return await this.prisma.deviceToken.update({
-          where: { token: dto.token },
+          // 새로운 사용자의 Topic 구독 (비동기)
+          void this.subscribeUserToTopics(userId, [dto.token]);
+        } else {
+          // 같은 사용자라면 lastUsed만 업데이트
+          deviceToken = await this.prisma.deviceToken.update({
+            where: { token: dto.token },
+            data: {
+              lastUsed: new Date(),
+              platform: dto.platform,
+            },
+          });
+        }
+      } else {
+        // 새로운 토큰 등록
+        deviceToken = await this.prisma.deviceToken.create({
           data: {
-            lastUsed: new Date(),
+            userId,
+            token: dto.token,
             platform: dto.platform,
           },
         });
+
+        // Topic 구독 (비동기)
+        void this.subscribeUserToTopics(userId, [dto.token]);
       }
 
-      // 새로운 토큰 등록
-      return await this.prisma.deviceToken.create({
-        data: {
-          userId,
-          token: dto.token,
-          platform: dto.platform,
-        },
-      });
+      return deviceToken;
     } catch (error) {
       this.logger.error(`Failed to register token: ${error.message}`, error);
       throw error;
@@ -83,7 +98,7 @@ export class NotificationService {
   }
 
   /**
-   * FCM 디바이스 토큰 삭제
+   * FCM 디바이스 토큰 삭제 + Topic 구독 해제
    */
   async deleteToken(userId: string, token: string) {
     const deviceToken = await this.prisma.deviceToken.findUnique({
@@ -97,6 +112,9 @@ export class NotificationService {
     if (deviceToken.userId !== userId) {
       throw new ConflictException('This token does not belong to you');
     }
+
+    // Topic 구독 해제 (비동기)
+    void this.unsubscribeUserFromTopics(userId, [token]);
 
     await this.prisma.deviceToken.delete({
       where: { token },
@@ -141,10 +159,10 @@ export class NotificationService {
   }
 
   /**
-   * 알림 설정 업데이트
+   * 알림 설정 업데이트 + Topic 구독 관리
    */
   async updateSettings(userId: string, dto: UpdateSettingsDto) {
-    return await this.prisma.notificationSetting.upsert({
+    const result = await this.prisma.notificationSetting.upsert({
       where: {
         userId_category: {
           userId,
@@ -160,6 +178,40 @@ export class NotificationService {
         enabled: dto.enabled,
       },
     });
+
+    // SYSTEM 알림 설정 변경 시 Topic 구독/해제 처리 (비동기)
+    if (dto.category === NotificationCategory.SYSTEM) {
+      const deviceTokens = await this.prisma.deviceToken.findMany({
+        where: { userId },
+        select: { token: true },
+      });
+
+      const tokens = deviceTokens.map((dt) => dt.token);
+
+      if (tokens.length > 0) {
+        if (dto.enabled) {
+          // 알림 활성화 → Topic 구독
+          void this.firebaseService
+            .subscribeToTopic(tokens, 'announcements')
+            .catch((err) => {
+              this.logger.error(
+                `Failed to subscribe user ${userId} to announcements topic: ${err.message}`,
+              );
+            });
+        } else {
+          // 알림 비활성화 → Topic 구독 해제
+          void this.firebaseService
+            .unsubscribeFromTopic(tokens, 'announcements')
+            .catch((err) => {
+              this.logger.error(
+                `Failed to unsubscribe user ${userId} from announcements topic: ${err.message}`,
+              );
+            });
+        }
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -412,5 +464,101 @@ export class NotificationService {
       deviceTokenCount: deviceTokens.length,
       result,
     };
+  }
+
+  /**
+   * 사용자의 토큰을 활성화된 알림 카테고리 Topic에 구독
+   * SYSTEM 알림이 활성화된 경우 'announcements' Topic 구독
+   *
+   * @param userId - 사용자 ID
+   * @param tokens - 디바이스 토큰 배열
+   */
+  private async subscribeUserToTopics(userId: string, tokens: string[]) {
+    try {
+      // 사용자의 알림 설정 조회
+      const settings = await this.prisma.notificationSetting.findMany({
+        where: { userId },
+      });
+
+      // SYSTEM 알림이 활성화된 경우 'announcements' Topic 구독
+      const systemSetting = settings.find(
+        (s) => s.category === (NotificationCategory.SYSTEM as any),
+      );
+
+      if (!systemSetting || systemSetting.enabled) {
+        // 기본값 또는 명시적으로 활성화된 경우
+        await this.firebaseService.subscribeToTopic(tokens, 'announcements');
+        this.logger.log(
+          `User ${userId} subscribed to 'announcements' topic (${tokens.length} tokens)`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to subscribe user ${userId} to topics: ${error.message}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * 사용자의 토큰을 Topic에서 구독 해제
+   *
+   * @param userId - 사용자 ID
+   * @param tokens - 디바이스 토큰 배열
+   */
+  private async unsubscribeUserFromTopics(userId: string, tokens: string[]) {
+    try {
+      // 모든 Topic에서 구독 해제
+      await this.firebaseService.unsubscribeFromTopic(tokens, 'announcements');
+      this.logger.log(
+        `User ${userId} unsubscribed from 'announcements' topic (${tokens.length} tokens)`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to unsubscribe user ${userId} from topics: ${error.message}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * 공지사항 알림 전송 (FCM Topic 사용)
+   * SYSTEM 알림이 켜진 모든 사용자에게 한 번의 API 호출로 전송
+   *
+   * @param announcement - 공지사항 객체
+   */
+  async sendAnnouncementNotification(announcement: {
+    id: string;
+    title: string;
+  }) {
+    try {
+      // Topic으로 알림 전송 (10만 명이든 100만 명이든 단일 API 호출)
+      const response = await this.firebaseService.sendToTopic(
+        'announcements',
+        {
+          title: '새 공지사항',
+          body: announcement.title,
+        },
+        {
+          announcementId: announcement.id,
+          action: 'view_announcement',
+        },
+      );
+
+      this.logger.log(
+        `Announcement notification sent to 'announcements' topic: ${response}`,
+      );
+
+      return {
+        sent: true,
+        messageId: response,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to send announcement notification: ${error.message}`,
+        error,
+      );
+      throw error;
+    }
   }
 }

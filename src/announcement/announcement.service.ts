@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { RedisService } from '@/redis/redis.service';
-import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 import { AnnouncementQueryDto } from './dto/announcement-query.dto';
@@ -25,15 +24,19 @@ export class AnnouncementService {
     // 2. Redis 캐시 확인
     const cached = await this.redisService.getCachedAnnouncementList(cacheKey);
     if (cached) {
-      // 캐시된 데이터에 사용자별 읽음 상태만 추가
+      // 캐시된 데이터에 사용자별 읽음 상태만 추가 (배치 조회)
+      const announcementIds = cached.data.map((a: any) => a.id);
+      const readStatusMap = await this.redisService.batchIsAnnouncementRead(
+        announcementIds,
+        userId,
+      );
+
       return {
         ...cached,
-        data: await Promise.all(
-          cached.data.map(async (a: any) => ({
-            ...a,
-            isRead: await this.redisService.isAnnouncementRead(a.id, userId),
-          })),
-        ),
+        data: cached.data.map((a: any) => ({
+          ...a,
+          isRead: readStatusMap[a.id] || false,
+        })),
       };
     }
 
@@ -71,18 +74,22 @@ export class AnnouncementService {
       this.prisma.announcement.count({ where }),
     ]);
 
-    // 4. 응답 데이터 생성
-    const data = await Promise.all(
-      announcements.map(async (a) => ({
-        ...a,
-        readCount: a._count.reads,
-        isRead: await this.redisService.isAnnouncementRead(a.id, userId),
-        viewCount:
-          a.viewCount +
-          (await this.redisService.getAnnouncementViewCount(a.id)),
-        _count: undefined,
-      })),
-    );
+    // 4. 응답 데이터 생성 (배치 Redis 조회로 N+1 문제 해결)
+    const announcementIds = announcements.map((a) => a.id);
+
+    // 일괄 조회 (단일 RTT)
+    const [readStatusMap, viewCountMap] = await Promise.all([
+      this.redisService.batchIsAnnouncementRead(announcementIds, userId),
+      this.redisService.batchGetAnnouncementViewCount(announcementIds),
+    ]);
+
+    const data = announcements.map((a) => ({
+      ...a,
+      readCount: a._count.reads,
+      isRead: readStatusMap[a.id] || false,
+      viewCount: a.viewCount + (viewCountMap[a.id] || 0),
+      _count: undefined,
+    }));
 
     const result = {
       data,
@@ -280,36 +287,14 @@ export class AnnouncementService {
   }
 
   /**
-   * 전체 회원에게 알림 발송 (SYSTEM 카테고리 켜진 사용자만)
+   * 전체 회원에게 알림 발송 (FCM Topic 사용)
+   * SYSTEM 알림이 켜진 모든 사용자에게 단일 API 호출로 전송
    */
   private async sendAnnouncementNotification(announcement: any) {
-    // SYSTEM 알림이 켜진 모든 사용자 조회
-    const users = await this.prisma.user.findMany({
-      where: {
-        notificationSettings: {
-          some: {
-            category: NotificationCategory.SYSTEM,
-            enabled: true,
-          },
-        },
-      },
-      select: { id: true },
+    // FCM Topic으로 알림 전송 (메모리 효율적, 단일 API 호출)
+    await this.notificationService.sendAnnouncementNotification({
+      id: announcement.id,
+      title: announcement.title,
     });
-
-    // 배치로 알림 발송
-    await Promise.allSettled(
-      users.map((user) =>
-        this.notificationService.sendNotification({
-          userId: user.id,
-          category: NotificationCategory.SYSTEM,
-          title: '새 공지사항',
-          body: announcement.title,
-          data: {
-            announcementId: announcement.id,
-            action: 'view_announcement',
-          },
-        }),
-      ),
-    );
   }
 }
