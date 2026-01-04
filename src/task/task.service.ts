@@ -43,7 +43,7 @@ export class TaskService {
       if (!isMember) {
         throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
       where.OR.push({ groupId });
     } else {
       // 그룹 ID가 없는 경우: 소속된 모든 그룹의 카테고리
@@ -53,7 +53,6 @@ export class TaskService {
       });
       const groupIds = memberships.map((m) => m.groupId);
       if (groupIds.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         where.OR.push({ groupId: { in: groupIds } });
       }
     }
@@ -188,7 +187,7 @@ export class TaskService {
       if (!isMember) {
         throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
       where.OR.push({ groupId });
     } else {
       const memberships = await this.prisma.groupMember.findMany({
@@ -197,7 +196,6 @@ export class TaskService {
       });
       const groupIds = memberships.map((m) => m.groupId);
       if (groupIds.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         where.OR.push({ groupId: { in: groupIds } });
       }
     }

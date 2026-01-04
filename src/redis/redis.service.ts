@@ -145,19 +145,27 @@ export class RedisService implements OnModuleInit {
   }
 
   /**
-   * 공지사항 조회수 초기화 (DB 동기화 후 호출)
-   * SREM 사용으로 원자적 제거
+   * 공지사항 조회수 차감 (DB 동기화 후 호출)
+   * DECRBY 사용으로 Race Condition 방지 (차감 방식)
    *
    * @param announcementId - 공지사항 ID
+   * @param count - 차감할 조회수
    */
-  async resetAnnouncementViewCount(announcementId: string): Promise<void> {
+  async decrementAnnouncementViewCount(
+    announcementId: string,
+    count: number,
+  ): Promise<void> {
     const key = `announcement:viewCount:${announcementId}`;
     const setKey = 'announcement:viewCount:tracking';
 
-    await this.del(key);
+    // DECRBY: 원자적으로 카운트 차감 (O(1))
+    const newCount = await this.redisClient.decrBy(key, count);
 
-    // SREM: Set에서 원자적으로 제거 (O(1))
-    await this.redisClient.sRem(setKey, announcementId);
+    // 0 이하면 키와 tracking 제거
+    if (newCount <= 0) {
+      await this.del(key);
+      await this.redisClient.sRem(setKey, announcementId);
+    }
   }
 
   /**
@@ -178,7 +186,7 @@ export class RedisService implements OnModuleInit {
    * @param announcementId - 공지사항 ID
    * @returns 공지사항 데이터 또는 null
    */
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+
   async getCachedAnnouncement(announcementId: string): Promise<any | null> {
     const key = `announcement:content:${announcementId}`;
     return await this.get(key);
@@ -212,7 +220,7 @@ export class RedisService implements OnModuleInit {
    * @param cacheKey - 캐시 키
    * @returns 목록 데이터 또는 null
    */
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+
   async getCachedAnnouncementList(cacheKey: string): Promise<any | null> {
     const key = `announcement:list:${cacheKey}`;
     return await this.get(key);
@@ -282,7 +290,7 @@ export class RedisService implements OnModuleInit {
     const trackingKey = 'announcement:read:tracking';
 
     // SMEMBERS: Set의 모든 멤버 조회
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     const trackingList = await this.redisClient.sMembers(trackingKey);
 
     // Promise.all로 병렬 처리 (N+1 문제 해결)

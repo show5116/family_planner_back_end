@@ -27,8 +27,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const fullName =
       name.familyName && name.givenName
         ? `${name.familyName}${name.givenName}`
-        : // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          name.givenName || name.familyName || emails[0].value.split('@')[0];
+        : name.givenName || name.familyName || emails[0].value.split('@')[0];
 
     const user = {
       provider: 'GOOGLE',

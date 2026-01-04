@@ -29,7 +29,6 @@ export class AnnouncementService {
       return {
         ...cached,
         data: await Promise.all(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           cached.data.map(async (a: any) => ({
             ...a,
             isRead: await this.redisService.isAnnouncementRead(a.id, userId),
