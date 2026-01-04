@@ -142,6 +142,7 @@
 
 ```json
 {
+  "email": "user@example.com", // 이메일 (string)
   "code": "123456" // 이메일 인증 코드 (6자리 숫자) (string)
 }
 ```

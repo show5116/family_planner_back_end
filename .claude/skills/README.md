@@ -4,9 +4,102 @@
 
 ## 사용 가능한 스킬
 
+### 🚀 post-dev (개발 완료 후 워크플로우)
+
+개발 완료 후 자동으로 실행해야 하는 체크리스트를 순차적으로 수행하는 통합 스킬입니다.
+
+**언제 사용하나요?**
+- ✅ 새로운 기능 구현 완료 후
+- ✅ 버그 수정 완료 후
+- ✅ 리팩토링 완료 후
+- ✅ Git commit 전
+
+**실행 순서:**
+1. **코드 검사** (check-errors) - TypeScript/ESLint 에러 확인
+2. **코드 스타일 검사** (code-style-check) - CODE_STYLE.md 준수 여부
+3. **문서 업데이트** (update-docs) - 기능 문서 체크박스, API 명세 등
+4. **ROADMAP 진행률 업데이트** - 자동 계산 및 반영
+5. **최종 확인** - Swagger UI, Git commit 준비
+
+자세한 내용은 [post-dev.md](post-dev.md)를 참고하세요.
+
+---
+
+### 🎯 pre-dev (개발 시작 전 준비)
+
+개발 시작 전 필요한 문서를 자동으로 찾아 요약하고 가이드를 제공하는 스킬입니다.
+
+**언제 사용하나요?**
+- ✅ 새로운 기능 개발 시작 전
+- ✅ 버그 수정 시작 전
+- ✅ 코드 리뷰 전 (코드 이해를 위해)
+
+**제공 정보:**
+1. **ROADMAP 우선순위** - 해당 기능의 Phase, 우선순위, 진행률
+2. **기능 문서 요약** - requirements, API, DB 스키마 요약
+3. **CODE_STYLE 핵심 규칙** - Controller, Service, DTO 작성 규칙
+4. **개발 시작 가이드** - 구현 순서, 주의사항, 참고 파일
+
+자세한 내용은 [pre-dev.md](pre-dev.md)를 참고하세요.
+
+---
+
+### 🛠️ code-style-check (코드 스타일 검사)
+
+CODE_STYLE.md 준수 여부를 종합적으로 검사하는 스킬입니다. update-swagger를 포함하여 더 포괄적으로 검사합니다.
+
+**언제 사용하나요?**
+- ✅ 코드 작성 후
+- ✅ Pull Request 생성 전
+- ✅ 코드 리뷰 전
+
+**주요 검사 항목:**
+1. **Import 규칙** - 절대 경로 사용 (`@/`)
+2. **Controller 규칙** - async 제거, Response DTO, `@Request() req`
+3. **Service 규칙** - userId 첫 번째 파라미터, JSDoc 주석
+4. **DTO 규칙** - `@ApiProperty` 필수, description/example
+5. **Swagger 문서화** - 커스텀 데코레이터, 배열 응답, 에러 응답
+
+자세한 내용은 [code-style-check.md](code-style-check.md)를 참고하세요.
+
+---
+
+### 🗄️ prisma-workflow (Prisma 워크플로우)
+
+Prisma 스키마 변경 시 안전하게 generate → migrate 워크플로우를 실행하는 스킬입니다.
+
+**언제 사용하나요?**
+- ✅ Prisma 스키마 파일 수정 후
+- ✅ 새로운 모델 추가 후
+- ✅ 필드 추가/수정/삭제 후
+
+**실행 순서:**
+1. Prisma 스키마 변경 감지
+2. `npm run prisma:generate` 실행
+3. `npm run prisma:migrate` 실행
+4. 마이그레이션 SQL 미리보기
+5. 데이터베이스 적용 확인
+6. 관련 문서 업데이트 안내
+
+자세한 내용은 [prisma-workflow.md](prisma-workflow.md)를 참고하세요.
+
+---
+
+### 📚 update-swagger (Swagger 문서화)
+
+NestJS 특성상 누락되기 쉬운 Response DTO를 포함하여 Swagger 문서화를 최신 상태로 유지하는 스킬입니다.
+
+**참고:** 이 스킬은 `code-style-check`에 통합되어 있습니다. 별도로 사용하거나 `code-style-check`를 통해 실행할 수 있습니다.
+
+자세한 내용은 [update-swagger.md](update-swagger.md)를 참고하세요.
+
+---
+
 ### 🔍 check-errors
 
 코드 수정 후 TypeScript 컴파일 에러와 ESLint 에러를 자동으로 확인하는 스킬입니다.
+
+**참고:** 이 스킬은 `post-dev`에 통합되어 있습니다.
 
 ### 🔍 code-review
 

@@ -17,35 +17,25 @@
 - **[docs/features/](docs/features/)**: 기능별 상세 문서 (요구사항, API 명세, DB 스키마)
 
 ### 개발 워크플로우
-1. **작업 시작 전**:
-   - [ROADMAP.md](ROADMAP.md)에서 전체 Phase 및 우선순위 확인
-   - [docs/features/](docs/features/)에서 해당 기능 문서 확인
-   - **[CODE_STYLE.md](CODE_STYLE.md)에서 코드 작성 규칙 확인** ⭐
 
-2. **개발 중**:
-   - Prisma 스키마 설계 및 마이그레이션
-   - NestJS 모듈/컨트롤러/서비스 구현 (**코드 스타일 가이드 준수**)
-   - Swagger 문서화 (커스텀 데코레이터 사용: `@ApiSuccess`, `@ApiCreated` 등)
-   - 단위 테스트 작성
+자동화된 워크플로우는 [.claude/skills/](.claude/skills/) 디렉토리의 스킬을 참고하세요:
+- **작업 시작 전**: [pre-dev.md](.claude/skills/pre-dev.md)
+- **Prisma 작업**: [prisma-workflow.md](.claude/skills/prisma-workflow.md)
+- **Swagger 문서화**: [update-swagger.md](.claude/skills/update-swagger.md)
+- **작업 완료 후**: [post-dev.md](.claude/skills/post-dev.md)
 
-3. **작업 완료 후**:
-   - **코드 검사 실행**: `npm run check` 명령어로 TypeScript 및 ESLint 에러 확인 ⭐
-   - 기능 문서의 체크박스 상태 업데이트 (⬜ → 🟨 → ✅)
-   - 기능 문서에 "구현 완료 요약" 섹션 작성
-   - Phase 진행 시 [ROADMAP.md](ROADMAP.md) 진행률 업데이트
+상세 내용은 각 스킬 파일을 참고하세요.
 
 ### 코드 작성 규칙
-**중요**: 새로운 기능을 구현하거나 기존 코드를 수정할 때는 반드시 **[CODE_STYLE.md](CODE_STYLE.md)** 문서를 참고하세요.
+**[CODE_STYLE.md](CODE_STYLE.md)** 참고 - 주요 규칙:
+- 절대 경로 (`@/`)
+- 한글 문서화
+- Response DTO 클래스 사용
+- 커스텀 데코레이터 (`@ApiSuccess`, `@ApiCreated`)
+- `@Request() req` → `req.user.userId`
+- Controller에서 async 제거
 
-주요 규칙:
-- **절대 경로 사용**: 모든 import는 `@/` 접두사 사용
-- **한글 문서화**: Swagger 태그, 주석, 에러 메시지 모두 한글
-- **DTO 클래스 사용**: Swagger 데코레이터에 string 대신 실제 DTO 클래스 전달
-- **커스텀 데코레이터**: `@ApiSuccess`, `@ApiCreated`, `@ApiNotFound` 등 사용
-- **@Request() req**: 컨트롤러에서 `req.user.userId`로 사용자 정보 접근
-- **async 제거**: 컨트롤러 메서드에서 async 키워드 사용하지 않음
-
-자세한 내용은 [CODE_STYLE.md](CODE_STYLE.md)를 참고하세요.
+**자동 검사**: [.claude/skills/code-style-check.md](.claude/skills/code-style-check.md)
 
 ## 개발 명령어
 
