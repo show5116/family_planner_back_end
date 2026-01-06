@@ -102,7 +102,7 @@ import { RedisModule } from '@/redis/redis.module';
     SentryModule,
     PrismaModule,
     FirebaseModule,
-    RedisModule,
+    RedisModule.forRoot(),
     AuthModule,
     EmailModule,
     GroupModule,

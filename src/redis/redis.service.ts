@@ -1,25 +1,32 @@
-import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import Redis from 'ioredis';
+import { REDIS_CLIENT } from './redis.module';
 
 /**
  * Redis 서비스
  *
  * Cache Manager를 래핑하여 편리한 Redis 조작 메서드 제공
- * + 네이티브 Redis 명령어 지원 (원자성 보장)
+ * + ioredis 클라이언트를 직접 사용하여 네이티브 Redis 명령어 지원 (원자성 보장)
  */
 @Injectable()
 export class RedisService implements OnModuleInit {
-  private redisClient: any;
+  private readonly logger = new Logger(RedisService.name);
 
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject(REDIS_CLIENT) private redisClient: Redis,
+  ) {}
 
-  onModuleInit() {
-    // cache-manager-redis-yet의 네이티브 Redis 클라이언트 접근
-    this.redisClient = (this.cacheManager as any).store?.client;
-
-    if (!this.redisClient) {
-      throw new Error('Redis client를 초기화할 수 없습니다.');
+  async onModuleInit() {
+    // Redis 연결 테스트
+    try {
+      await this.redisClient.ping();
+      this.logger.log('Redis 클라이언트 연결 성공');
+    } catch (error) {
+      this.logger.error('Redis 클라이언트 연결 테스트 실패', error);
+      throw error; // 연결 실패 시 애플리케이션 시작 중단
     }
   }
 
@@ -104,7 +111,7 @@ export class RedisService implements OnModuleInit {
     const newCount = await this.redisClient.incr(key);
 
     // SADD: 원자적으로 Set에 추가 (중복 자동 처리, O(1))
-    await this.redisClient.sAdd(setKey, announcementId);
+    await this.redisClient.sadd(setKey, announcementId);
 
     return newCount;
   }
@@ -130,7 +137,7 @@ export class RedisService implements OnModuleInit {
     const setKey = 'announcement:viewCount:tracking';
 
     // SMEMBERS: Set의 모든 멤버 조회
-    const trackingSet = await this.redisClient.sMembers(setKey);
+    const trackingSet = await this.redisClient.smembers(setKey);
 
     const viewCounts: Record<string, number> = {};
 
@@ -159,12 +166,12 @@ export class RedisService implements OnModuleInit {
     const setKey = 'announcement:viewCount:tracking';
 
     // DECRBY: 원자적으로 카운트 차감 (O(1))
-    const newCount = await this.redisClient.decrBy(key, count);
+    const newCount = await this.redisClient.decrby(key, count);
 
     // 0 이하면 키와 tracking 제거
     if (newCount <= 0) {
       await this.del(key);
-      await this.redisClient.sRem(setKey, announcementId);
+      await this.redisClient.srem(setKey, announcementId);
     }
   }
 
@@ -252,7 +259,7 @@ export class RedisService implements OnModuleInit {
     const item = `${announcementId}:${userId}`;
 
     // SETNX: 키가 없을 때만 설정 (원자적, 중복 방지)
-    const wasSet = await this.redisClient.setNX(key, new Date().toISOString());
+    const wasSet = await this.redisClient.setnx(key, new Date().toISOString());
 
     // 이미 존재하면 스킵
     if (!wasSet) {
@@ -260,7 +267,7 @@ export class RedisService implements OnModuleInit {
     }
 
     // SADD: 원자적으로 Set에 추가 (중복 자동 처리, O(1))
-    await this.redisClient.sAdd(trackingKey, item);
+    await this.redisClient.sadd(trackingKey, item);
   }
 
   /**
@@ -306,7 +313,9 @@ export class RedisService implements OnModuleInit {
     // 결과 매핑
     const readStatus: Record<string, boolean> = {};
     announcementIds.forEach((id, index) => {
-      readStatus[id] = results[index] === 1;
+      // exec() returns [error, result][] format
+      const [, result] = results[index];
+      readStatus[id] = result === 1;
     });
 
     return readStatus;
@@ -329,7 +338,7 @@ export class RedisService implements OnModuleInit {
     const keys = announcementIds.map((id) => `announcement:viewCount:${id}`);
 
     // MGET: 여러 키의 값을 단일 명령으로 조회 (O(N))
-    const values = await this.redisClient.mGet(keys);
+    const values = await this.redisClient.mget(...keys);
 
     // 결과 매핑
     const viewCounts: Record<string, number> = {};
@@ -353,7 +362,7 @@ export class RedisService implements OnModuleInit {
 
     // SMEMBERS: Set의 모든 멤버 조회
 
-    const trackingList = await this.redisClient.sMembers(trackingKey);
+    const trackingList = await this.redisClient.smembers(trackingKey);
 
     // Promise.all로 병렬 처리 (N+1 문제 해결)
     const readPromises = trackingList.map(async (item: string) => {
@@ -395,7 +404,7 @@ export class RedisService implements OnModuleInit {
 
     // SPOP: Set에서 원자적으로 N개 제거하며 반환 (O(N))
     // 동시 요청에도 안전 - 각 요청이 다른 아이템을 가져감
-    const items = await this.redisClient.sPop(trackingKey, batchSize);
+    const items = await this.redisClient.spop(trackingKey, batchSize);
 
     if (!items || items.length === 0) {
       return [];
@@ -450,7 +459,7 @@ export class RedisService implements OnModuleInit {
     await this.del(key);
 
     // SREM: Set에서 원자적으로 제거 (O(1))
-    await this.redisClient.sRem(trackingKey, item);
+    await this.redisClient.srem(trackingKey, item);
   }
 
   /**
@@ -461,7 +470,7 @@ export class RedisService implements OnModuleInit {
     const trackingKey = 'announcement:read:tracking';
 
     // SMEMBERS: Set의 모든 멤버 조회
-    const trackingList = await this.redisClient.sMembers(trackingKey);
+    const trackingList = await this.redisClient.smembers(trackingKey);
 
     // 모든 읽음 처리 키 삭제
     const deleteKeys = trackingList.map((item: string) => {

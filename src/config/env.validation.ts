@@ -67,6 +67,9 @@ export const validationSchema = Joi.object({
   FIREBASE_PROJECT_ID: Joi.string().required(),
   FIREBASE_CLIENT_EMAIL: Joi.string().email().required(),
   FIREBASE_PRIVATE_KEY: Joi.string().required(),
+
+  // Redis 설정
+  REDIS_URL: Joi.string().required(),
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {
