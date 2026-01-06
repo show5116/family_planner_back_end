@@ -2,34 +2,24 @@
 
 개발 시작 전 필요한 문서를 자동으로 찾아 요약하고 가이드를 제공합니다.
 
-## 사용 시점
-- 새로운 기능 개발 시작 전
-- 버그 수정 시작 전
+## ⚠️ 중요 규칙
+
+**해당 기능 문서만 읽기:**
+- ❌ docs/features/ 전체 읽기 금지
+- ✅ 해당 기능 문서만 읽기
+
+예: "공지사항 개발" → `docs/features/11-announcements.md`만 읽음
 
 ## 실행 순서
 
-### 1. 기능명 입력
-예: "공지사항", "알림", "이메일 인증"
+### 1. 기능명 확인
+예: "공지사항", "알림", "Q&A"
 
-### 2. ROADMAP 우선순위 확인
-```markdown
-📍 ROADMAP 정보
-- Phase: Phase 1 - 사용자 관리 및 그룹 기능
-- 우선순위: 높음
-- 상태: 🟡 In Progress
-- 진행률: 85%
-```
+### 2. 해당 문서만 읽기
+`docs/features/XX-기능명.md` 파일만 읽기
 
-### 3. 기능 문서 요약
-`docs/features/[기능명]/` 검색
-
-```markdown
-📚 기능 문서 요약
-- requirements.md: 요구사항 (✅/🟨/⬜)
-- api.md: API 엔드포인트
-- database.md: DB 스키마
-- implementation.md: 구현 상세
-```
+### 3. 문서 요약
+해당 문서의 요구사항, API, DB 스키마 확인
 
 ### 4. CODE_STYLE 핵심 규칙
 ```markdown

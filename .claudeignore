@@ -1,0 +1,38 @@
+# 빌드 결과물
+node_modules/
+dist/
+build/
+
+# 의존성 락 파일
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 환경 변수
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+
+# Prisma 마이그레이션 (schema.prisma만 있으면 충분)
+prisma/migrations/
+
+# 로그
+*.log
+logs/
+
+# 테스트 커버리지
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+
+# 임시 파일
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

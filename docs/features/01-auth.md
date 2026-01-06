@@ -1,242 +1,99 @@
 # 01. 인증/인가 (Authentication & Authorization)
 
 > **상태**: ✅ 완료 (소셜 로그인 일부 진행 중)
-> **우선순위**: High
-> **담당 Phase**: Phase 1
+> **Phase**: Phase 1
 
 ---
 
-## 📋 개요
+## 개요
 
-사용자 인증 및 권한 관리를 위한 시스템입니다. LOCAL 로그인, 소셜 로그인, JWT 기반 인증을 지원합니다.
+JWT 기반 인증 및 소셜 로그인(Google, Kakao)을 지원하는 시스템입니다.
 
 ---
 
-## ✅ LOCAL 인증 (이메일/비밀번호)
+## LOCAL 인증
 
 ### 회원가입 (`POST /auth/signup`)
+- 이메일, 비밀번호(최소 6자), 이름 입력
+- bcrypt 해싱 (salt rounds: 10)
+- 이메일 인증 코드 생성 (6자리, 24시간 유효)
+- Redis에 저장 (`email-verification:{email}`, TTL: 24시간)
+- 이메일 자동 발송
 
-- ✅ 이메일, 비밀번호(최소 6자), 이름 입력
-- ✅ 이메일 중복 체크
-- ✅ bcrypt로 비밀번호 해싱 (salt rounds: 10)
-- ✅ 이메일 인증 코드 생성 (6자리 숫자, 24시간 유효)
-- ✅ Redis에 인증 코드 저장 (키: `email-verification:{email}`, TTL: 24시간)
-- ✅ 이메일을 통한 인증 코드 자동 발송
-- ✅ 응답: 사용자 정보 (id, email, name, createdAt, isEmailVerified)
-
-**관련 파일**:
-
-- [src/auth/auth.controller.ts](../../src/auth/auth.controller.ts#L30-L40)
-- [src/auth/auth.service.ts](../../src/auth/auth.service.ts#L50-L120)
-
----
-
-### 이메일 인증 시스템
-
-#### 이메일 인증 (`POST /auth/verify-email`)
-
-- ✅ Redis에서 인증 코드 조회 및 검증
-- ✅ 만료 자동 확인 (Redis TTL: 24시간)
-- ✅ 인증 완료 시 `isEmailVerified = true` 및 Redis 코드 삭제
-
-#### 인증 이메일 재전송 (`POST /auth/resend-verification`)
-
-- ✅ 새로운 인증 코드 생성 및 Redis에 저장
-- ✅ 이메일 재발송
-- ✅ 소셜 로그인 사용자는 제외
-
-**관련 파일**:
-
-- [src/auth/auth.service.ts](../../src/auth/auth.service.ts#L150-L250)
-
----
+### 이메일 인증
+- **인증** (`POST /auth/verify-email`): Redis에서 코드 검증, TTL 자동 확인
+- **재전송** (`POST /auth/resend-verification`): 새 코드 생성 및 이메일 재발송
 
 ### 로그인 (`POST /auth/login`)
+- 이메일/비밀번호 검증
+- 이메일 인증 완료 여부 확인
+- JWT Access Token (15분) + Refresh Token (7일) 발급
+- Refresh Token은 Redis 저장 (`refresh-token:{token}`, TTL: 7일)
 
-- ✅ 이메일/비밀번호 검증
-- ✅ 이메일 인증 완료 여부 확인 (LOCAL 로그인만)
-- ✅ JWT Access Token (15분) + Refresh Token (7일) 발급
-- ✅ Refresh Token은 Redis에 저장 (키: `refresh-token:{token}`, 값: `userId`, TTL: 7일)
-- ✅ 응답: accessToken, refreshToken, 사용자 정보
+### RTR (Refresh Token Rotation)
+- **토큰 갱신** (`POST /auth/refresh`):
+  - Refresh Token 유효성 검증 (Redis)
+  - 기존 토큰 무효화 후 새 쌍 발급
+  - 다중 디바이스 지원
+  - TTL 기반 자동 만료
 
-**환경 변수**:
+- **로그아웃** (`POST /auth/logout`):
+  - Refresh Token 무효화 (Redis 삭제)
+  - 특정 디바이스만 로그아웃
 
-```env
-JWT_ACCESS_SECRET=your-access-secret
-JWT_REFRESH_SECRET=your-refresh-secret
-JWT_ACCESS_EXPIRATION=15m
-JWT_REFRESH_EXPIRATION=7d
-REDIS_URL=redis://default:password@host:port
-```
+### 비밀번호 재설정
+- **요청** (`POST /auth/request-password-reset`):
+  - 6자리 코드 생성
+  - Redis 저장 (`password-reset:{email}`, TTL: 1시간)
+  - 이메일 발송
 
-**관련 파일**:
-
-- [src/auth/auth.controller.ts](../../src/auth/auth.controller.ts#L45-L55)
-- [src/auth/auth.service.ts](../../src/auth/auth.service.ts#L280-L350)
-
----
-
-### RTR (Refresh Token Rotation) 방식
-
-#### 토큰 갱신 (`POST /auth/refresh`)
-
-- ✅ Refresh Token 유효성 검증 (Redis 조회)
-- ✅ 만료 자동 확인 (Redis TTL)
-- ✅ 기존 Refresh Token 자동 무효화 (Redis에서 삭제)
-- ✅ 새로운 Access Token + Refresh Token 쌍 발급
-- ✅ 새 Refresh Token을 Redis에 저장 (7일 TTL)
-- ✅ 다중 Refresh Token 지원 (여러 기기 로그인)
-- ✅ 만료된 토큰 자동 삭제 (Redis TTL 기반)
-
-**보안 특징**:
-
-- 토큰 재사용 방지
-- 각 기기별 독립적인 세션 관리
-- 토큰 탈취 시 자동 무효화
-- TTL 기반 자동 만료 및 정리
-
-**관련 파일**:
-
-- [src/auth/auth.service.ts](../../src/auth/auth.service.ts#L400-L480)
+- **재설정** (`POST /auth/reset-password`):
+  - Redis에서 코드 검증
+  - 비밀번호 해싱 후 업데이트
 
 ---
 
-### 로그아웃 (`POST /auth/logout`)
+## 소셜 로그인
 
-- ✅ Refresh Token 무효화 (Redis에서 삭제)
-- ✅ 특정 기기만 로그아웃 (해당 Refresh Token만 삭제)
+### Google OAuth
+- GoogleStrategy (passport-google-oauth20)
+- `GET /auth/google`: 로그인 시작
+- `GET /auth/google/callback`: 콜백 처리
+- 자동 회원가입 및 로그인
 
----
-
-### 인증 확인
-
-#### 사용자 정보 조회 (`GET /auth/me`)
-
-- ✅ JWT Guard로 보호
-- ✅ Bearer Token 필요
-- ✅ 응답: userId, email, name
-
-#### JWT Strategy (passport-jwt)
-
-- ✅ Bearer Token 추출
-- ✅ Access Token 검증 (15분 만료)
-- ✅ 사용자 존재 여부 확인
-
-**관련 파일**:
-
-- [src/auth/strategies/jwt.strategy.ts](../../src/auth/strategies/jwt.strategy.ts)
-- [src/auth/guards/jwt-auth.guard.ts](../../src/auth/guards/jwt-auth.guard.ts)
-
----
-
-### 비밀번호 찾기/재설정
-
-#### 비밀번호 재설정 요청 (`POST /auth/request-password-reset`)
-
-- ✅ 이메일 입력
-- ✅ 6자리 인증 코드 생성
-- ✅ Redis에 인증 코드 저장 (키: `password-reset:{email}`, TTL: 1시간)
-- ✅ 이메일로 인증 코드 발송
-- ✅ LOCAL 로그인 사용자만 가능
-
-#### 비밀번호 재설정 (`POST /auth/reset-password`)
-
-- ✅ 이메일, 인증 코드, 새 비밀번호 입력
-- ✅ Redis에서 인증 코드 조회 및 검증
-- ✅ 만료 자동 확인 (Redis TTL: 1시간)
-- ✅ 비밀번호 해싱 후 업데이트
-- ✅ Redis 인증 코드 삭제
-
-**관련 파일**:
-
-- [src/auth/auth.service.ts](../../src/auth/auth.service.ts#L500-L600)
-
----
-
-## 🟨 소셜 로그인
-
-### ✅ 구글 로그인 (OAuth 2.0)
-
-- ✅ GoogleStrategy 구현 (passport-google-oauth20)
-- ✅ `GET /auth/google` (로그인 시작)
-- ✅ `GET /auth/google/callback` (콜백 처리)
-- ✅ 자동 회원가입 및 로그인
-
-**환경 변수**:
-
+환경 변수:
 ```env
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
 ```
 
-**관련 파일**:
+### Kakao
+- KakaoStrategy (passport-kakao)
+- `GET /auth/kakao`: 로그인 시작
+- `GET /auth/kakao/callback`: 콜백 처리
 
-- [src/auth/strategies/google.strategy.ts](../../src/auth/strategies/google.strategy.ts)
-
----
-
-### ✅ 카카오 로그인
-
-- ✅ KakaoStrategy 구현 (passport-kakao)
-- ✅ `GET /auth/kakao` (로그인 시작)
-- ✅ `GET /auth/kakao/callback` (콜백 처리)
-- ✅ 자동 회원가입 및 로그인
-
-**환경 변수**:
-
+환경 변수:
 ```env
 KAKAO_CLIENT_ID=your-kakao-client-id
 KAKAO_CALLBACK_URL=http://localhost:3000/auth/kakao/callback
 ```
 
-**관련 파일**:
-
-- [src/auth/strategies/kakao.strategy.ts](../../src/auth/strategies/kakao.strategy.ts)
-
----
-
-### ⬜ 애플 로그인
-
-- ⬜ AppleStrategy 구현 예정
+### 비밀번호 설정/변경
+- **설정** (`POST /auth/set-password`): 소셜 로그인 사용자가 비밀번호 설정
+- **변경** (`POST /auth/change-password`): 현재 비밀번호 확인 후 변경
 
 ---
 
-### ✅ 비밀번호 설정/변경
-
-#### 비밀번호 설정 (`POST /auth/set-password`)
-
-- ✅ 소셜 로그인 사용자가 비밀번호 설정
-- ✅ JWT 인증 필요 (로그인 상태에서만 가능)
-- ✅ 비밀번호 설정 후 이메일/비밀번호 로그인 가능
-
-#### 비밀번호 변경 (`POST /auth/change-password`)
-
-- ✅ 현재 비밀번호 확인 후 새 비밀번호로 변경
-- ✅ JWT 인증 필요
-
-**특징**:
-
-- 소셜 로그인 사용자도 비밀번호 설정 가능
-- provider와 관계없이 비밀번호가 있으면 로그인 허용
-- 다중 로그인 방법 지원
-
-**관련 파일**:
-
-- [src/auth/auth.service.ts](../../src/auth/auth.service.ts#L650-L750)
-
----
-
-## 🗄️ 데이터베이스 스키마
+## 데이터베이스
 
 ### User 테이블
-
 ```prisma
 model User {
   id                        String    @id @default(uuid())
   email                     String    @unique
   name                      String
-  profileImageKey           String?   @db.VarChar(255) // R2 키
+  profileImageKey           String?   @db.VarChar(255)
   phoneNumber               String?   @db.VarChar(20)
   provider                  Provider  @default(LOCAL)
   providerId                String?
@@ -247,78 +104,74 @@ model User {
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
 
-  groupMemberships          GroupMember[]
-  deviceTokens              DeviceToken[]
-  notificationSettings      NotificationSetting[]
-  notifications             Notification[]
-  // ... 기타 관계
-
   @@unique([provider, providerId])
 }
 
 enum Provider {
-  GOOGLE
-  KAKAO
-  APPLE
-  LOCAL
+  GOOGLE, KAKAO, APPLE, LOCAL
 }
 ```
 
-### Redis 저장소 (토큰 및 인증 코드)
-
-**모든 인증 관련 토큰과 코드를 Redis에 저장** (기존 DB 필드에서 변경)
-
-#### Refresh Token
+### Redis 저장소
+**Refresh Token**:
 ```
 키: refresh-token:{refreshToken}
-값: userId (String)
-TTL: 7일 (604800000 밀리초)
+값: userId
+TTL: 7일
 ```
 
-#### 이메일 인증 코드
+**이메일 인증 코드**:
 ```
 키: email-verification:{email}
-값: 6자리 숫자 코드 (String)
-TTL: 24시간 (86400000 밀리초)
+값: 6자리 코드
+TTL: 24시간
 ```
 
-#### 비밀번호 재설정 코드
+**비밀번호 재설정 코드**:
 ```
 키: password-reset:{email}
-값: 6자리 숫자 코드 (String)
-TTL: 1시간 (3600000 밀리초)
+값: 6자리 코드
+TTL: 1시간
 ```
 
 **장점**:
-- ✅ DB 부하 감소 (읽기/쓰기 성능 향상)
-- ✅ TTL 기반 자동 만료 및 정리 (만료 시간 체크 로직 불필요)
-- ✅ 빠른 토큰/코드 검증 (메모리 기반)
-- ✅ 확장성 (Redis 클러스터링)
-- ✅ DB 테이블 및 인덱스 감소 (스키마 단순화)
-
-**관련 파일**:
-
-- [prisma/schema.prisma](../../prisma/schema.prisma)
-- [src/redis/redis.service.ts](../../src/redis/redis.service.ts)
+- DB 부하 감소 (읽기/쓰기 성능 향상)
+- TTL 기반 자동 만료 (만료 체크 로직 불필요)
+- 빠른 토큰/코드 검증 (메모리 기반)
+- 확장성 (Redis 클러스터링)
 
 ---
 
-## 🔐 보안 구현
+## 구현 상태
 
-- ✅ bcrypt 비밀번호 해싱 (salt rounds: 10)
-- ✅ JWT Access Token (기본 15분)
-- ✅ JWT Refresh Token (기본 7일)
-- ✅ 토큰 만료시간 환경변수 설정 가능
-- ✅ 이메일 인증 필수 (LOCAL 로그인)
-- ✅ Refresh Token Redis 관리 및 무효화 메커니즘
-- ✅ RTR (Refresh Token Rotation) 방식
-- ✅ TTL 기반 자동 만료 및 정리
-- ✅ CORS 설정
-- ✅ Passport Strategy 기반 인증
+### ✅ 완료
+- [x] 회원가입 (이메일/비밀번호)
+- [x] 이메일 인증 시스템 (Redis 기반)
+- [x] 이메일 인증 코드 재전송
+- [x] 로그인 (JWT Access/Refresh Token)
+- [x] RTR (Refresh Token Rotation)
+- [x] 로그아웃 (Refresh Token 무효화)
+- [x] 비밀번호 재설정 (이메일 인증)
+- [x] Google OAuth 로그인
+- [x] Kakao OAuth 로그인
+- [x] 소셜 로그인 사용자 비밀번호 설정
+- [x] 비밀번호 변경
+- [x] 사용자 정보 조회 (GET /auth/me)
+- [x] Redis 기반 토큰 관리 (TTL 자동 만료)
+- [x] bcrypt 비밀번호 해싱
+
+### 🟨 진행 중
+- [ ] Apple OAuth (환경 변수 설정 필요)
+
+### ⬜ TODO / 향후 고려
+- [ ] 2단계 인증 (2FA)
+- [ ] 소셜 계정 연동/해제
+- [ ] 휴면 계정 관리
+- [ ] 로그인 이력 추적
 
 ---
 
-## 📝 API 엔드포인트
+## API 엔드포인트
 
 | Method | Endpoint                       | 설명                 | Guard |
 | ------ | ------------------------------ | -------------------- | ----- |
@@ -340,87 +193,17 @@ TTL: 1시간 (3600000 밀리초)
 
 ---
 
-## 🧪 테스트
+## 최근 변경사항
 
-### 단위 테스트
+### 2026-01-02: 이메일 인증 및 비밀번호 재설정 토큰 Redis 변경
+- User 테이블에서 토큰 관련 필드 제거
+- Redis 기반 코드 관리로 변경
+- DB 부하 감소 및 TTL 기반 자동 만료
 
-- ⬜ AuthService 테스트
-- ⬜ AuthController 테스트
-- ⬜ JWT Strategy 테스트
-
-### E2E 테스트
-
-- ⬜ 회원가입 플로우
-- ⬜ 로그인 플로우
-- ⬜ 토큰 갱신 플로우
-- ⬜ 소셜 로그인 플로우
-
----
-
-## 📚 참고 자료
-
-- [NestJS Authentication](https://docs.nestjs.com/security/authentication)
-- [Passport JWT](https://www.passportjs.org/packages/passport-jwt/)
-- [OAuth 2.0](https://oauth.net/2/)
-
----
-
-## 🚀 최근 변경사항
-
-### 2026-01-02: 이메일 인증 및 비밀번호 재설정 토큰을 Redis로 변경
-
-**변경 이유**:
-- DB 부하 감소 (읽기/쓰기 성능 향상)
-- TTL 기반 자동 만료 (만료 시간 체크 로직 불필요)
-- 빠른 코드 검증 (메모리 기반)
-- DB 스키마 단순화 (불필요한 필드 및 인덱스 제거)
-
-**변경 내용**:
-- ✅ User 테이블에서 토큰 관련 필드 제거
-  - `emailVerificationToken`, `emailVerificationExpires`
-  - `passwordResetToken`, `passwordResetExpires`
-- ✅ 토큰 관련 인덱스 제거
-- ✅ `AuthService`에서 Redis 기반 코드 관리
-- ✅ `VerifyEmailDto`에 email 필드 추가
-- ✅ 마이그레이션 적용: `20260102220845_remove_token_fields`
-
-**Redis 키 구조**:
-```
-email-verification:{email} → 6자리 코드 (TTL: 24시간)
-password-reset:{email} → 6자리 코드 (TTL: 1시간)
-```
-
-**관련 파일**:
-- [src/auth/auth.service.ts](../../src/auth/auth.service.ts)
-- [src/auth/dto/verify-email.dto.ts](../../src/auth/dto/verify-email.dto.ts)
-- [prisma/schema.prisma](../../prisma/schema.prisma)
-
----
-
-### 2026-01-01: Refresh Token 저장소를 DB → Redis로 변경
-
-**변경 이유**:
-- DB 부하 감소 (읽기/쓰기 성능 향상)
-- TTL 기반 자동 만료 및 정리
-- 빠른 토큰 검증 (메모리 기반)
-- 확장성 개선 (Redis 클러스터링 지원)
-
-**변경 내용**:
-- ✅ `RefreshToken` 테이블 제거
-- ✅ Redis 모듈 추가 ([src/redis/](../../src/redis/))
-- ✅ `AuthService`에서 Redis 기반 토큰 관리
-- ✅ 마이그레이션 적용: `20260101230647_remove_refresh_token_table`
-
-**Redis 키 구조**:
-```
-refresh-token:{refreshToken} → userId (TTL: 7일)
-```
-
-**관련 파일**:
-- [src/redis/redis.module.ts](../../src/redis/redis.module.ts)
-- [src/redis/redis.service.ts](../../src/redis/redis.service.ts)
-- [src/auth/auth.service.ts](../../src/auth/auth.service.ts)
-- [REDIS_USAGE.md](../../REDIS_USAGE.md)
+### 2026-01-01: Refresh Token 저장소 DB → Redis 변경
+- RefreshToken 테이블 제거
+- Redis 모듈 추가
+- 빠른 토큰 검증 및 확장성 개선
 
 ---
 
