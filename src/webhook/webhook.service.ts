@@ -21,17 +21,12 @@ export class WebhookService implements OnModuleInit {
   }
 
   /**
-   * 모듈 초기화 시 테스트 에러 발생 (개발 환경에서만)
+   * 모듈 초기화 시 테스트 에러 발생
    */
   onModuleInit() {
-    const nodeEnv = this.configService.get<string>('NODE_ENV');
-
-    if (nodeEnv === 'development') {
-      // 5초 후에 테스트 에러 발생
-      setTimeout(() => {
-        this.triggerStartupTestError();
-      }, 5000);
-    }
+    setTimeout(() => {
+      this.triggerStartupTestError();
+    }, 5000);
   }
 
   /**
