@@ -187,11 +187,3 @@ export class QnaStatisticsDto {
   @ApiProperty({ description: '해결 완료 질문 수', example: 120 })
   resolvedQuestions: number;
 }
-
-/**
- * 메시지 응답 DTO
- */
-export class MessageResponseDto {
-  @ApiProperty({ example: '작업이 완료되었습니다' })
-  message: string;
-}

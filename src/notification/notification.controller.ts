@@ -21,8 +21,8 @@ import {
   NotificationDto,
   PaginatedNotificationsDto,
   UnreadCountResponseDto,
-  MessageResponseDto,
 } from './dto/notification-response.dto';
+import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiSuccess,

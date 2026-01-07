@@ -21,8 +21,8 @@ import { AnnouncementQueryDto } from './dto/announcement-query.dto';
 import {
   AnnouncementDto,
   PaginatedAnnouncementDto,
-  MessageResponseDto,
 } from './dto/announcement-response.dto';
+import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiSuccess,

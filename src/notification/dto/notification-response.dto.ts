@@ -120,8 +120,3 @@ export class UnreadCountResponseDto {
   @ApiProperty({ description: '읽지 않은 알림 개수', example: 5 })
   count: number;
 }
-
-export class MessageResponseDto {
-  @ApiProperty({ example: '토큰이 삭제되었습니다' })
-  message: string;
-}
