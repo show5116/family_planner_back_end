@@ -26,6 +26,7 @@ import { AnnouncementModule } from '@/announcement/announcement.module';
 import { QnaModule } from '@/qna/qna.module';
 import { TaskModule } from '@/task/task.module';
 import { RedisModule } from '@/redis/redis.module';
+import { WebhookModule } from '@/webhook/webhook.module';
 
 @Module({
   imports: [
@@ -113,6 +114,7 @@ import { RedisModule } from '@/redis/redis.module';
     AnnouncementModule,
     QnaModule,
     TaskModule,
+    WebhookModule,
   ],
   controllers: [AppController],
   providers: [

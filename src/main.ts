@@ -29,6 +29,7 @@ import { Logger } from 'nestjs-pino';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
+    rawBody: true, // Raw body 활성화
   });
 
   // Pino Logger 설정
