@@ -1,6 +1,21 @@
 // Sentry 초기화 (가장 먼저 import)
 import '../instrument';
 
+import { execSync } from 'child_process';
+
+// Windows 환경에서 UTF-8 출력 설정 (콘솔 코드페이지도 변경)
+if (process.platform === 'win32') {
+  process.stdout.setDefaultEncoding('utf-8');
+  process.stderr.setDefaultEncoding('utf-8');
+
+  // Windows 콘솔 코드페이지를 UTF-8(65001)로 설정
+  try {
+    execSync('chcp 65001', { stdio: 'ignore' });
+  } catch (error) {
+    // 실패해도 계속 진행
+  }
+}
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
