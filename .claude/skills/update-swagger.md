@@ -1,5 +1,14 @@
 # Swagger Documentation Update
 
+⚠️ **DEPRECATED**: 이 스킬은 `/validate`에 통합되었습니다.
+
+**대신 사용:** `/validate` (TypeScript + ESLint + CODE_STYLE + Swagger)
+
+---
+
+<details>
+<summary>기존 문서 (참고용)</summary>
+
 NestJS 특성상 누락되기 쉬운 Response DTO를 포함하여 Swagger 문서화를 최신 상태로 유지하는 스킬입니다.
 
 ## 사용 시점
@@ -106,3 +115,5 @@ createUser(@Body() dto: CreateUserDto) { ... }
 ## 참고
 - [CODE_STYLE.md](../../../CODE_STYLE.md) - 코드 스타일 가이드
 - [NestJS Swagger](https://docs.nestjs.com/openapi/introduction)
+
+</details>

@@ -1,5 +1,14 @@
 # Check TypeScript and ESLint Errors
 
+⚠️ **DEPRECATED**: 이 스킬은 `/validate`에 통합되었습니다.
+
+**대신 사용:** `/validate` (TypeScript + ESLint + CODE_STYLE + Swagger)
+
+---
+
+<details>
+<summary>기존 문서 (참고용)</summary>
+
 코드 수정 후 TypeScript 컴파일 에러와 ESLint 에러를 확인하는 스킬입니다.
 
 ## 사용 시점
@@ -79,3 +88,5 @@ npm run lint
 - 두 검사 모두 통과해야 코드가 안전합니다
 - ESLint 경고도 가능하면 수정하는 것이 좋습니다
 - 테스트 파일은 일부 규칙을 비활성화할 수 있습니다
+
+</details>

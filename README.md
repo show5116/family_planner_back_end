@@ -77,6 +77,7 @@ src/
 ├── role/           # 역할 관리
 ├── prisma/         # Prisma 서비스
 ├── sentry/         # Sentry 에러 추적
+├── webhook/        # Webhook (Sentry → Discord)
 ├── config/         # 환경 설정
 └── main.ts         # 애플리케이션 진입점
 ```
@@ -110,6 +111,8 @@ cp .env.example .env
 - `AXIOM_DATASET` - Axiom 데이터셋 이름
 - `SENTRY_DSN` - Sentry 프로젝트 DSN
 - `SENTRY_TRACES_SAMPLE_RATE` - 트레이스 샘플링 비율
+- `DISCORD_WEBHOOK_URL` - Discord webhook URL (Sentry 알림 전송)
+- `SENTRY_WEBHOOK_SECRET` - Sentry webhook 서명 검증 키 (선택)
 
 ### 3. 데이터베이스 마이그레이션
 
@@ -199,14 +202,20 @@ Railway 대시보드에서 다음 환경 변수 설정:
 3. API Token 발급
 4. Railway 환경 변수에 `AXIOM_TOKEN`, `AXIOM_DATASET` 설정
 
-### Sentry (에러 추적)
+### Sentry (에러 추적 + Discord 알림)
 
 1. [Sentry](https://sentry.io/) 프로젝트 생성
 2. DSN 복사
 3. Railway 환경 변수에 `SENTRY_DSN` 설정
-4. (선택) Discord 연동:
-   - Sentry > Settings > Integrations > Discord
-   - Alert Rules 설정
+4. Discord Webhook 연동 (선택):
+   - Discord 채널에서 Webhook URL 생성
+   - `DISCORD_WEBHOOK_URL` 환경 변수 설정
+   - Sentry → Settings → Developer Settings → Internal Integrations
+   - Webhook URL: `https://your-domain.com/webhook/sentry` 설정
+   - 이벤트 선택: issue.created, error, issue.resolved 등
+   - Discord에서 실시간 에러 알림 수신
+
+자세한 설정은 [docs/features/00-setup.md](docs/features/00-setup.md#sentry--discord-webhook-연동) 참고
 
 ## 개발 가이드
 

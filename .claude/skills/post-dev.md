@@ -1,5 +1,18 @@
 # Post Development Workflow
 
+⚠️ **DEPRECATED**: 이 스킬은 더 이상 사용되지 않습니다.
+
+**대신 사용:**
+- `/validate` - 빠른 검증 (TypeScript/ESLint/CODE_STYLE)
+- `/finalize` - 문서화 및 마무리
+
+자세한 내용은 [WORKFLOW.md](WORKFLOW.md)를 참고하세요.
+
+---
+
+<details>
+<summary>기존 문서 (참고용)</summary>
+
 개발 완료 후 자동으로 실행하는 체크리스트 워크플로우입니다.
 
 ## 사용 시점
@@ -60,3 +73,5 @@ npm run check
 - [check-errors.md](check-errors.md)
 - [code-style-check.md](code-style-check.md)
 - [update-docs.md](update-docs.md)
+
+</details>

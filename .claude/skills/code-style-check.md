@@ -1,5 +1,14 @@
 # Code Style Check
 
+⚠️ **DEPRECATED**: 이 스킬은 `/validate`에 통합되었습니다.
+
+**대신 사용:** `/validate` (TypeScript + ESLint + CODE_STYLE + Swagger)
+
+---
+
+<details>
+<summary>기존 문서 (참고용)</summary>
+
 CODE_STYLE.md 준수 여부를 종합적으로 검사하는 스킬입니다.
 
 ## 사용 시점
@@ -82,3 +91,5 @@ getUsers() { ... }
 ## 참고
 - [CODE_STYLE.md](../../../CODE_STYLE.md)
 - [update-swagger.md](update-swagger.md)
+
+</details>

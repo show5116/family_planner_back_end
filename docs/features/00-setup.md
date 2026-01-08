@@ -74,6 +74,7 @@ src/
 ├── email/                     # 이메일 모듈
 ├── storage/                   # Cloudflare R2 스토리지
 ├── sentry/                    # Sentry 에러 추적
+├── webhook/                   # Webhook (Sentry → Discord)
 ├── auth/                      # 인증
 ├── group/                     # 그룹 관리
 ├── permission/                # 권한 관리
@@ -121,7 +122,16 @@ NODE_ENV="development"
 FRONTEND_URL="http://localhost:3001"
 ```
 
-선택적 환경 변수는 `.env.example` 참고.
+선택적 환경 변수:
+```env
+# Discord Webhook (Sentry 알림 전송)
+DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+
+# Sentry Webhook 서명 검증 (선택)
+SENTRY_WEBHOOK_SECRET=""
+```
+
+전체 환경 변수는 `.env.example` 참고.
 
 ### 3. 데이터베이스
 ```bash
@@ -215,6 +225,47 @@ npm run test:e2e             # E2E 테스트
 
 ---
 
+## Sentry → Discord Webhook 연동
+
+Sentry에서 발생한 에러를 Discord로 실시간 알림받을 수 있습니다.
+
+### 1. Discord Webhook 생성
+1. Discord 채널 → 설정 → 연동 → Webhook
+2. "새 Webhook" 생성
+3. Webhook URL 복사 → `.env`의 `DISCORD_WEBHOOK_URL`에 추가
+
+### 2. Sentry Internal Integration 설정
+1. Sentry 프로젝트 → **Settings** → **Developer Settings** → **Internal Integrations**
+2. **"New Internal Integration"** 클릭
+3. 설정:
+   - **Name**: Discord Notifier (원하는 이름)
+   - **Webhook URL**: `https://your-domain.com/webhook/sentry`
+   - **Permissions**: Issue & Event → **Read** 권한 부여
+4. **Webhooks** 섹션에서 알림받을 이벤트 선택:
+   - ✅ `issue.created` (새 이슈 생성)
+   - ✅ `error` (에러 발생)
+   - ✅ `issue.resolved` (이슈 해결)
+   - ✅ `issue.assigned` (이슈 할당)
+5. (선택) **Client Secret** 복사 → `.env`의 `SENTRY_WEBHOOK_SECRET`에 추가 (서명 검증용)
+6. Integration 저장
+
+### 3. 작동 방식
+- Sentry에서 에러 발생 → Internal Integration이 webhook 호출
+- NestJS `/webhook/sentry` 엔드포인트 수신
+- Raw Body로 HMAC SHA-256 서명 검증 (Secret이 있는 경우)
+- Discord Embed 형식으로 변환하여 전송
+- Discord 채널에서 실시간 알림 확인
+
+### 4. Discord 알림 포함 정보
+- 이벤트 타입 (issue.created, error 등)
+- 프로젝트 이름
+- 에러 위치 및 메시지
+- 발생 횟수
+- 영향받은 사용자 수
+- Sentry 이슈 링크
+
+---
+
 ## 트러블슈팅
 
 ### Prisma Client 오류
@@ -246,4 +297,4 @@ npx prisma migrate reset
 ---
 
 **작성일**: 2025-12-31
-**최종 업데이트**: 2025-12-31
+**최종 업데이트**: 2026-01-08

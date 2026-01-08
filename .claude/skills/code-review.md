@@ -41,26 +41,70 @@
 
 ## 실행 순서
 
-### 1. 변경 사항 확인
+### 1. 변경 사항 확인 (토큰 최적화)
+
+**우선순위 1: 스테이징된 파일만 (권장)**
 ```bash
-git diff --name-only              # 변경된 파일
-git diff HEAD~1 --name-only       # 최근 커밋
-git diff --cached --name-only     # 스테이징된 파일
+git diff --cached --name-only
+```
+→ commit 전 변경 사항만 리뷰 (가장 효율적)
+
+**우선순위 2: 최근 커밋**
+```bash
+git diff HEAD~1 --name-only
+```
+→ 마지막 커밋 내용만 리뷰
+
+**우선순위 3: 모든 변경 파일 (비권장)**
+```bash
+git diff --name-only
+```
+→ 모든 uncommitted 변경 사항 (토큰 많이 사용)
+
+**파일 필터링:**
+```bash
+# TypeScript 파일만
+git diff --cached --name-only -- '*.ts'
+
+# 특정 모듈만
+git diff --cached --name-only -- 'src/auth/**'
+
+# 테스트 제외
+git diff --cached --name-only | grep -v '.spec.ts'
 ```
 
-### 2. 병렬 리뷰 수행
+### 2. 파일 크기 확인 (토큰 제한)
+
+**토큰 제한:**
+- 파일 5개 이하: 전체 리뷰 OK
+- 파일 6-10개: 핵심 파일만 (Controller, Service)
+- 파일 10개 이상: 사용자에게 범위 축소 요청
+
+**예시:**
+```
+⚠️ 변경된 파일이 15개입니다 (토큰 많이 사용)
+
+다음 중 선택:
+1. 핵심 파일만 리뷰 (Controller, Service)
+2. 특정 모듈만 리뷰 (예: src/auth/)
+3. 전체 리뷰 (시간 오래 걸림)
+```
+
+### 3. 병렬 리뷰 수행
 **4개 Task를 단일 메시지로 병렬 실행**:
 
 ```typescript
 parallel [
-  Task("보안 취약점 검사: 인증/인가, DB 쿼리, 입력 검증, 민감 정보"),
-  Task("성능 이슈 검사: N+1, 메모리, 캐싱, 비동기 처리"),
-  Task("유지보수성 검사: 복잡도, 결합도, CODE_STYLE.md, 에러 처리"),
-  Task("테스팅 검사: 커버리지, 품질, 테스트 가능성")
+  Task("보안 취약점 검사: 변경된 파일만"),
+  Task("성능 이슈 검사: 변경된 파일만"),
+  Task("유지보수성 검사: 변경된 파일만"),
+  Task("테스팅 검사: 변경된 파일만")
 ]
 ```
 
-### 3. 리포트 생성
+**주의:** 전체 코드베이스가 아닌 변경된 파일만 리뷰
+
+### 4. 리포트 생성
 4개 Task 결과를 우선순위별로 통합:
 
 ```markdown
@@ -132,22 +176,53 @@ await this.prisma.group.findMany({ include: { members: true } });
 - [ ] 함수 분리 - user.service.ts:100-150
 ```
 
+## 토큰 최적화 전략
+
+### 1. 스테이징된 파일만 (가장 효율적)
+```
+git add src/auth/auth.service.ts src/auth/auth.controller.ts
+"코드 리뷰해줘"
+→ 2개 파일만 리뷰
+→ 토큰 사용: ~5000-8000
+```
+
+### 2. 특정 모듈만
+```
+"src/auth/ 모듈만 리뷰해줘"
+→ 해당 모듈 파일만
+→ 토큰 사용: ~10000-15000
+```
+
+### 3. 전체 리뷰 (비권장, 토큰 많이 사용)
+```
+"전체 코드 리뷰해줘"
+→ 모든 변경 파일
+→ 토큰 사용: 20000+
+```
+
+**권장:** 항상 범위를 명확히 지정
+
 ## 사용 예시
 
-**새로운 기능 구현 후:**
-```
-리뷰 대상: src/auth/auth.service.ts, auth.controller.ts
-실행: 4개 관점 병렬 리뷰
-결과: 우선순위별 리포트
-액션: Critical/High 이슈 즉시 수정
+**commit 전 검토 (권장):**
+```bash
+git add src/auth/auth.service.ts src/auth/auth.controller.ts
+"코드 리뷰해줘"
+→ 스테이징된 파일만 리뷰
+→ Critical/High 이슈 수정
+→ git commit
 ```
 
-**전체 모듈 리뷰:**
+**특정 파일만:**
 ```
-리뷰 대상: src/notification/**/*.ts
-실행: 모듈 전체 병렬 리뷰
-결과: 종합 리포트 + 개선 로드맵
-액션: 우선순위별 순차 개선
+"src/auth/auth.service.ts 리뷰해줘"
+→ 1개 파일만 리뷰 (가장 효율적)
+```
+
+**모듈 단위:**
+```
+"auth 모듈 리뷰해줘"
+→ src/auth/ 디렉토리만 리뷰
 ```
 
 ## 주의사항

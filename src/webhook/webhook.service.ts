@@ -1,14 +1,13 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
-import * as Sentry from '@sentry/node';
 
 /**
  * Webhook 서비스
  * Sentry 이벤트를 Discord로 전송
  */
 @Injectable()
-export class WebhookService implements OnModuleInit {
+export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
   private readonly discordWebhookUrl: string;
   private readonly sentrySecret: string;
@@ -18,48 +17,6 @@ export class WebhookService implements OnModuleInit {
       'DISCORD_WEBHOOK_URL',
     );
     this.sentrySecret = this.configService.get<string>('SENTRY_WEBHOOK_SECRET');
-  }
-
-  /**
-   * 모듈 초기화 시 테스트 에러 발생
-   */
-  onModuleInit() {
-    setTimeout(() => {
-      this.triggerStartupTestError();
-    }, 5000);
-  }
-
-  /**
-   * 서버 시작 시 자동 테스트 에러 발생
-   */
-  private triggerStartupTestError() {
-    this.logger.warn('🔴 서버 시작 테스트 에러를 발생시킵니다...');
-
-    try {
-      throw new Error(
-        '서버 시작 테스트: 이것은 Sentry 및 Discord 웹훅 연동을 테스트하기 위한 의도적인 에러입니다.',
-      );
-    } catch (error) {
-      Sentry.captureException(error, {
-        tags: {
-          test: 'true',
-          source: 'startup-test',
-          environment: 'development',
-        },
-        extra: {
-          timestamp: new Date().toISOString(),
-          message: '서버 시작 시 자동 생성된 테스트 에러',
-          description:
-            'Sentry에서 Discord로 웹훅이 정상적으로 전송되는지 확인하세요.',
-        },
-        level: 'error',
-      });
-
-      this.logger.error(
-        '테스트 에러가 Sentry로 전송되었습니다:',
-        error.message,
-      );
-    }
   }
 
   /**

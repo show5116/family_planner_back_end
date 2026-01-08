@@ -1,5 +1,14 @@
 # Update Documentation After Code Changes
 
+⚠️ **DEPRECATED**: 이 스킬은 `/finalize`에 통합되었습니다.
+
+**대신 사용:** `/finalize` (문서 업데이트 + ROADMAP 진행률 + 최종 확인)
+
+---
+
+<details>
+<summary>기존 문서 (참고용)</summary>
+
 비즈니스 로직 변경 시 관련 문서를 자동으로 찾아서 업데이트하는 스킬입니다.
 
 ## 사용 시점
@@ -165,3 +174,5 @@ TODO.md                # 프로젝트 개요 및 문서 인덱스
 - `docs/features/[기능명]/` 디렉토리에서 관련 문서 찾기
 - Grep으로 ROADMAP.md와 TODO.md에서 해당 섹션 검색
 - 체크박스와 진행률 자동 계산
+
+</details>
