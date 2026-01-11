@@ -12,9 +12,12 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
+import { NotificationTokenService } from './notification-token.service';
+import { NotificationSettingsService } from './notification-settings.service';
 import { RegisterTokenDto } from './dto/register-token.dto';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { QueryNotificationsDto } from './dto/query-notifications.dto';
+import { ScheduleNotificationDto } from './dto/schedule-notification.dto';
 import {
   DeviceTokenDto,
   NotificationSettingDto,
@@ -40,13 +43,17 @@ import { AdminGuard } from '@/auth/admin.guard';
 @Controller('notifications')
 @ApiCommonAuthResponses()
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly notificationService: NotificationService,
+    private readonly tokenService: NotificationTokenService,
+    private readonly settingsService: NotificationSettingsService,
+  ) {}
 
   @Post('token')
   @ApiOperation({ summary: 'FCM 디바이스 토큰 등록' })
   @ApiCreated(DeviceTokenDto, 'FCM 토큰 등록 성공')
   registerToken(@Request() req, @Body() dto: RegisterTokenDto) {
-    return this.notificationService.registerToken(req.user.userId, dto);
+    return this.tokenService.registerToken(req.user.userId, dto);
   }
 
   @Delete('token/:token')
@@ -54,7 +61,7 @@ export class NotificationController {
   @ApiSuccess(MessageResponseDto, 'FCM 토큰 삭제 성공')
   @ApiNotFound('토큰을 찾을 수 없음')
   deleteToken(@Request() req, @Param('token') token: string) {
-    return this.notificationService.deleteToken(req.user.userId, token);
+    return this.tokenService.deleteToken(req.user.userId, token);
   }
 
   @Get('settings')
@@ -63,14 +70,14 @@ export class NotificationController {
     isArray: true,
   })
   getSettings(@Request() req) {
-    return this.notificationService.getSettings(req.user.userId);
+    return this.settingsService.getSettings(req.user.userId);
   }
 
   @Put('settings')
   @ApiOperation({ summary: '알림 설정 업데이트' })
   @ApiSuccess(NotificationSettingDto, '알림 설정 업데이트 성공')
   updateSettings(@Request() req, @Body() dto: UpdateSettingsDto) {
-    return this.notificationService.updateSettings(req.user.userId, dto);
+    return this.settingsService.updateSettings(req.user.userId, dto);
   }
 
   @Get()
@@ -110,5 +117,16 @@ export class NotificationController {
   @ApiForbidden('운영자 권한 필요')
   sendTestNotification(@Request() req) {
     return this.notificationService.sendTestNotification(req.user.userId);
+  }
+
+  @Post('schedule')
+  @ApiOperation({ summary: '예약 알림 전송 (특정 시간에 발송)' })
+  @ApiCreated(MessageResponseDto, '예약 알림 등록 성공')
+  scheduleNotification(@Request() req, @Body() dto: ScheduleNotificationDto) {
+    // userId는 인증된 사용자로 설정 (관리자가 다른 사용자에게 보내려면 dto.userId 사용)
+    return this.notificationService.scheduleNotification({
+      ...dto,
+      userId: dto.userId || req.user.userId,
+    });
   }
 }

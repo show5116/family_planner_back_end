@@ -59,13 +59,14 @@ enum JoinRequestStatus {
 
 // 알림 카테고리
 enum NotificationCategory {
-  SCHEDULE  // 일정
-  TODO      // 할일
-  HOUSEHOLD // 가계부
-  ASSET     // 자산
-  CHILDCARE // 육아
-  GROUP     // 그룹 (초대, 멤버 추가 등)
-  SYSTEM    // 시스템 알림
+  SCHEDULE     // 일정
+  TODO         // 할일
+  HOUSEHOLD    // 가계부
+  ASSET        // 자산
+  CHILDCARE    // 육아
+  GROUP        // 그룹 (초대, 멤버 추가 등)
+  SYSTEM       // 시스템 알림
+  ANNOUNCEMENT // 공지사항 (FCM Topic 전용, DB 저장 안 함)
 }
 
 // 디바이스 플랫폼
@@ -319,13 +320,16 @@ model Notification {
   title     String               @db.VarChar(255) // 알림 제목
   body      String               @db.Text // 알림 내용
   data      Json?                // 추가 데이터 (화면 이동용 payload 등)
+  sent      Boolean              @default(false) // FCM 발송 성공 여부
   isRead    Boolean              @default(false) // 읽음 여부
-  sentAt    DateTime             @default(now()) // 발송 시간
+  createdAt DateTime             @default(now()) // 생성 시간 (히스토리 저장 시점)
+  sentAt    DateTime?            // FCM 발송 성공 시간
   readAt    DateTime?            // 읽은 시간
 
   @@index([userId])
   @@index([isRead])
-  @@index([sentAt])
+  @@index([sent])
+  @@index([createdAt])
   @@map("notifications")
 }
 

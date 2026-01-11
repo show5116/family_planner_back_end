@@ -2,13 +2,14 @@ import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from './redis.module';
+import { REDIS_CLIENT, REDIS_BLOCKING_CLIENT } from './redis.module';
 
 /**
  * Redis 서비스
  *
  * Cache Manager를 래핑하여 편리한 Redis 조작 메서드 제공
  * + ioredis 클라이언트를 직접 사용하여 네이티브 Redis 명령어 지원 (원자성 보장)
+ * + BLPOP 전용 클라이언트로 Blocking 명령어 처리 (연결 독점 방지)
  */
 @Injectable()
 export class RedisService implements OnModuleInit {
@@ -17,6 +18,7 @@ export class RedisService implements OnModuleInit {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(REDIS_CLIENT) private redisClient: Redis,
+    @Inject(REDIS_BLOCKING_CLIENT) private blockingClient: Redis,
   ) {}
 
   async onModuleInit() {
@@ -24,6 +26,9 @@ export class RedisService implements OnModuleInit {
     try {
       await this.redisClient.ping();
       this.logger.log('Redis 클라이언트 연결 성공');
+
+      await this.blockingClient.ping();
+      this.logger.log('Redis Blocking 클라이언트 연결 성공');
     } catch (error) {
       this.logger.error('Redis 클라이언트 연결 테스트 실패', error);
       throw error; // 연결 실패 시 애플리케이션 시작 중단
@@ -483,5 +488,265 @@ export class RedisService implements OnModuleInit {
 
     // 일괄 삭제
     await this.delMany(deleteKeys);
+  }
+
+  // ==================== FCM Token Cache ====================
+
+  /**
+   * FCM 토큰 캐시 키 생성
+   *
+   * @param userId - 사용자 ID
+   * @returns Redis 키
+   */
+  private getUserTokensCacheKey(userId: string): string {
+    return `user:${userId}:tokens`;
+  }
+
+  /**
+   * 사용자의 FCM 토큰을 Redis에 캐싱 (Set 자료구조)
+   * TTL: 1일
+   *
+   * @param userId - 사용자 ID
+   * @param tokens - 토큰 배열
+   */
+  async cacheUserTokens(userId: string, tokens: string[]): Promise<void> {
+    const key = this.getUserTokensCacheKey(userId);
+
+    if (tokens.length === 0) {
+      // 토큰이 없으면 빈 Set 저장 (캐시 펀칭 방지)
+      await this.redisClient.del(key);
+      await this.redisClient.sadd(key, '__empty__');
+      await this.redisClient.expire(key, 86400); // 1일 (초 단위)
+      return;
+    }
+
+    // SADD: 여러 토큰을 Set에 추가
+    await this.redisClient.sadd(key, ...tokens);
+
+    // TTL 설정: 1일
+    await this.redisClient.expire(key, 86400); // 1일 (초 단위)
+  }
+
+  /**
+   * 사용자의 FCM 토큰을 Redis에서 조회
+   *
+   * @param userId - 사용자 ID
+   * @returns 토큰 배열 또는 null (캐시 미스)
+   */
+  async getCachedUserTokens(userId: string): Promise<string[] | null> {
+    const key = this.getUserTokensCacheKey(userId);
+
+    // EXISTS: 키 존재 여부 확인
+    const exists = await this.redisClient.exists(key);
+    if (!exists) {
+      return null; // 캐시 미스
+    }
+
+    // SMEMBERS: Set의 모든 토큰 조회
+    const tokens = await this.redisClient.smembers(key);
+
+    // 빈 Set 체크 (캐시 펀칭 방지용)
+    if (tokens.length === 1 && tokens[0] === '__empty__') {
+      return []; // 빈 배열 반환
+    }
+
+    return tokens;
+  }
+
+  /**
+   * 사용자의 FCM 토큰 캐시 무효화
+   * (토큰 등록/삭제 시 호출)
+   *
+   * @param userId - 사용자 ID
+   */
+  async invalidateUserTokensCache(userId: string): Promise<void> {
+    const key = this.getUserTokensCacheKey(userId);
+    await this.del(key);
+  }
+
+  /**
+   * 사용자의 FCM 토큰 캐시에 토큰 추가
+   *
+   * ⚠️ Race Condition 위험으로 현재 미사용
+   * (invalidateUserTokensCache 사용 권장)
+   *
+   * @deprecated Race Condition 방지를 위해 invalidate 전략 사용
+   * @param userId - 사용자 ID
+   * @param token - 토큰
+   */
+  async addTokenToCache(userId: string, token: string): Promise<void> {
+    const key = this.getUserTokensCacheKey(userId);
+
+    // EXISTS: 키 존재 여부 확인
+    const exists = await this.redisClient.exists(key);
+    if (!exists) {
+      return; // 캐시가 없으면 스킵 (다음 조회 시 DB에서 가져옴)
+    }
+
+    // '__empty__' 제거 (있다면)
+    await this.redisClient.srem(key, '__empty__');
+
+    // SADD: 토큰 추가
+    await this.redisClient.sadd(key, token);
+
+    // TTL 갱신: 1일
+    await this.redisClient.expire(key, 86400);
+  }
+
+  /**
+   * 사용자의 FCM 토큰 캐시에서 토큰 제거
+   *
+   * ⚠️ Race Condition 위험으로 현재 미사용
+   * (invalidateUserTokensCache 사용 권장)
+   *
+   * @deprecated Race Condition 방지를 위해 invalidate 전략 사용
+   * @param userId - 사용자 ID
+   * @param token - 토큰
+   */
+  async removeTokenFromCache(userId: string, token: string): Promise<void> {
+    const key = this.getUserTokensCacheKey(userId);
+
+    // EXISTS: 키 존재 여부 확인
+    const exists = await this.redisClient.exists(key);
+    if (!exists) {
+      return; // 캐시가 없으면 스킵
+    }
+
+    // SREM: 토큰 제거
+    await this.redisClient.srem(key, token);
+
+    // Set이 비었는지 확인
+    const count = await this.redisClient.scard(key);
+    if (count === 0) {
+      // 빈 Set으로 변경 (캐시 펀칭 방지)
+      await this.redisClient.sadd(key, '__empty__');
+      await this.redisClient.expire(key, 86400);
+    }
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * 5. Notification Queue (Two-Track System)
+   * ───────────────────────────────────────────────────────────────────────── */
+
+  /**
+   * Ready Queue: 즉시 발송 대기 중인 알림들 (Redis List)
+   */
+  private readonly READY_QUEUE_KEY = 'notification:ready';
+
+  /**
+   * Waiting Room: 예약된 알림들 (Redis Sorted Set, score = Unix timestamp)
+   */
+  private readonly WAITING_ROOM_KEY = 'notification:waiting';
+
+  /**
+   * Ready Queue에 알림 추가 (즉시 발송 대상)
+   * @param notification 알림 데이터 객체
+   */
+  async addToReadyQueue(notification: object): Promise<void> {
+    const serialized = JSON.stringify(notification);
+    await this.redisClient.lpush(this.READY_QUEUE_KEY, serialized);
+  }
+
+  /**
+   * Ready Queue에서 알림 하나 꺼내기 (Non-blocking)
+   * @returns 알림 객체 또는 null (큐가 비어있을 경우)
+   */
+  async popFromReadyQueue(): Promise<object | null> {
+    const serialized = await this.redisClient.rpop(this.READY_QUEUE_KEY);
+    if (!serialized) {
+      return null;
+    }
+    return JSON.parse(serialized);
+  }
+
+  /**
+   * Ready Queue에서 알림 하나 꺼내기 (Blocking)
+   * 큐에 데이터가 들어올 때까지 대기 (실시간 처리)
+   *
+   * ⚠️ BLPOP 전용 클라이언트 사용
+   * - Blocking 명령어는 연결을 독점하므로 별도 클라이언트 필수
+   * - 일반 Redis 작업(GET, SET 등)은 영향받지 않음
+   *
+   * @param timeoutSeconds 타임아웃 시간 (초), 0이면 무한 대기
+   * @returns 알림 객체 또는 null (타임아웃 발생 시)
+   */
+  async blockingPopFromReadyQueue(
+    timeoutSeconds: number = 5,
+  ): Promise<object | null> {
+    // BRPOP: Blocking Right Pop (전용 클라이언트 사용)
+    // 반환값: [key, value] 또는 null (타임아웃)
+    const result = await this.blockingClient.brpop(
+      this.READY_QUEUE_KEY,
+      timeoutSeconds,
+    );
+
+    if (!result) {
+      return null; // 타임아웃
+    }
+
+    // result[0]: key, result[1]: value
+    return JSON.parse(result[1]);
+  }
+
+  /**
+   * Waiting Room에 예약 알림 추가
+   * @param notification 알림 데이터 객체
+   * @param scheduledTime 발송 예정 시간
+   */
+  async addToWaitingRoom(
+    notification: object,
+    scheduledTime: Date,
+  ): Promise<void> {
+    const serialized = JSON.stringify(notification);
+    const score = Math.floor(scheduledTime.getTime() / 1000); // Unix timestamp (초 단위)
+    await this.redisClient.zadd(this.WAITING_ROOM_KEY, score, serialized);
+  }
+
+  /**
+   * Waiting Room에서 발송 시간이 된 알림들을 Ready Queue로 이동
+   * @param currentTime 현재 Unix timestamp (초 단위)
+   * @returns 이동된 알림 개수
+   */
+  async moveReadyNotificationsFromWaiting(
+    currentTime: number,
+  ): Promise<number> {
+    // ZRANGEBYSCORE: score가 -inf ~ currentTime 범위인 항목들 조회
+    const readyNotifications = await this.redisClient.zrangebyscore(
+      this.WAITING_ROOM_KEY,
+      '-inf',
+      currentTime.toString(),
+    );
+
+    if (readyNotifications.length === 0) {
+      return 0;
+    }
+
+    // Ready Queue로 이동 (LPUSH)
+    if (readyNotifications.length > 0) {
+      await this.redisClient.lpush(this.READY_QUEUE_KEY, ...readyNotifications);
+    }
+
+    // Waiting Room에서 제거 (ZREMRANGEBYSCORE)
+    await this.redisClient.zremrangebyscore(
+      this.WAITING_ROOM_KEY,
+      '-inf',
+      currentTime.toString(),
+    );
+
+    return readyNotifications.length;
+  }
+
+  /**
+   * Ready Queue 크기 조회
+   */
+  async getReadyQueueSize(): Promise<number> {
+    return await this.redisClient.llen(this.READY_QUEUE_KEY);
+  }
+
+  /**
+   * Waiting Room 크기 조회
+   */
+  async getWaitingRoomSize(): Promise<number> {
+    return await this.redisClient.zcard(this.WAITING_ROOM_KEY);
   }
 }

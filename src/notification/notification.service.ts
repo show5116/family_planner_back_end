@@ -3,18 +3,25 @@ import {
   Logger,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { FirebaseService } from '@/firebase/firebase.service';
-import { RegisterTokenDto } from './dto/register-token.dto';
-import { UpdateSettingsDto } from './dto/update-settings.dto';
+import { RedisService } from '@/redis/redis.service';
 import { SendNotificationDto } from './dto/send-notification.dto';
+import { ScheduleNotificationDto } from './dto/schedule-notification.dto';
 import { QueryNotificationsDto } from './dto/query-notifications.dto';
 import { NotificationCategory } from './enums/notification-category.enum';
+import { NotificationTokenService } from './notification-token.service';
+import { NotificationQueueService } from './notification-queue.service';
+import {
+  getTopicNameByCategory,
+  isTopicCategory,
+} from './notification-topic.config';
 
 /**
- * 알림 서비스
- * FCM 토큰 관리, 알림 설정, 알림 전송 및 히스토리 관리
+ * 알림 발송 관리 서비스
+ * 알림 전송, 히스토리 조회, 읽음 처리 등
  */
 @Injectable()
 export class NotificationService {
@@ -23,201 +30,56 @@ export class NotificationService {
   constructor(
     private prisma: PrismaService,
     private firebaseService: FirebaseService,
+    private redis: RedisService,
+    private tokenService: NotificationTokenService,
+    private queueService: NotificationQueueService,
   ) {}
 
   /**
-   * FCM 디바이스 토큰 등록 + Topic 자동 구독
-   */
-  async registerToken(userId: string, dto: RegisterTokenDto) {
-    try {
-      // 기존 토큰이 있으면 업데이트, 없으면 생성
-      const existingToken = await this.prisma.deviceToken.findUnique({
-        where: { token: dto.token },
-      });
-
-      let deviceToken;
-
-      if (existingToken) {
-        // 다른 사용자에게 등록된 토큰이면 기존 토큰 삭제 후 새로 등록
-        // (계정 전환 시나리오: 사용자 A 로그아웃 → 사용자 B 로그인)
-        if (existingToken.userId !== userId) {
-          this.logger.warn(
-            `Token ${dto.token} is being transferred from user ${existingToken.userId} to ${userId}`,
-          );
-
-          // 기존 사용자의 Topic 구독 해제
-          await this.unsubscribeUserFromTopics(existingToken.userId, [
-            dto.token,
-          ]);
-
-          // 기존 토큰 삭제
-          await this.prisma.deviceToken.delete({
-            where: { token: dto.token },
-          });
-
-          // 새로운 사용자로 등록
-          deviceToken = await this.prisma.deviceToken.create({
-            data: {
-              userId,
-              token: dto.token,
-              platform: dto.platform,
-            },
-          });
-
-          // 새로운 사용자의 Topic 구독 (비동기)
-          void this.subscribeUserToTopics(userId, [dto.token]);
-        } else {
-          // 같은 사용자라면 lastUsed만 업데이트
-          deviceToken = await this.prisma.deviceToken.update({
-            where: { token: dto.token },
-            data: {
-              lastUsed: new Date(),
-              platform: dto.platform,
-            },
-          });
-        }
-      } else {
-        // 새로운 토큰 등록
-        deviceToken = await this.prisma.deviceToken.create({
-          data: {
-            userId,
-            token: dto.token,
-            platform: dto.platform,
-          },
-        });
-
-        // Topic 구독 (비동기)
-        void this.subscribeUserToTopics(userId, [dto.token]);
-      }
-
-      return deviceToken;
-    } catch (error) {
-      this.logger.error(`Failed to register token: ${error.message}`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * FCM 디바이스 토큰 삭제 + Topic 구독 해제
-   */
-  async deleteToken(userId: string, token: string) {
-    const deviceToken = await this.prisma.deviceToken.findUnique({
-      where: { token },
-    });
-
-    if (!deviceToken) {
-      throw new NotFoundException('Token not found');
-    }
-
-    if (deviceToken.userId !== userId) {
-      throw new ConflictException('This token does not belong to you');
-    }
-
-    // Topic 구독 해제 (비동기)
-    void this.unsubscribeUserFromTopics(userId, [token]);
-
-    await this.prisma.deviceToken.delete({
-      where: { token },
-    });
-
-    return { message: 'Token deleted successfully' };
-  }
-
-  /**
-   * 알림 설정 조회 (모든 카테고리)
-   */
-  async getSettings(userId: string) {
-    const settings = await this.prisma.notificationSetting.findMany({
-      where: { userId },
-    });
-
-    // 모든 카테고리에 대한 기본 설정 생성
-    const allCategories = Object.values(NotificationCategory);
-    const existingCategories = settings.map((s) => s.category);
-    const missingCategories = allCategories.filter(
-      (cat) => !existingCategories.includes(cat as any),
-    );
-
-    // 누락된 카테고리에 대한 기본 설정 생성
-    if (missingCategories.length > 0) {
-      await this.prisma.notificationSetting.createMany({
-        data: missingCategories.map((category) => ({
-          userId,
-          category: category as any,
-          enabled: true,
-        })),
-      });
-
-      // 다시 조회
-      return await this.prisma.notificationSetting.findMany({
-        where: { userId },
-        orderBy: { category: 'asc' },
-      });
-    }
-
-    return settings;
-  }
-
-  /**
-   * 알림 설정 업데이트 + Topic 구독 관리
-   */
-  async updateSettings(userId: string, dto: UpdateSettingsDto) {
-    const result = await this.prisma.notificationSetting.upsert({
-      where: {
-        userId_category: {
-          userId,
-          category: dto.category as any,
-        },
-      },
-      update: {
-        enabled: dto.enabled,
-      },
-      create: {
-        userId,
-        category: dto.category as any,
-        enabled: dto.enabled,
-      },
-    });
-
-    // SYSTEM 알림 설정 변경 시 Topic 구독/해제 처리 (비동기)
-    if (dto.category === NotificationCategory.SYSTEM) {
-      const deviceTokens = await this.prisma.deviceToken.findMany({
-        where: { userId },
-        select: { token: true },
-      });
-
-      const tokens = deviceTokens.map((dt) => dt.token);
-
-      if (tokens.length > 0) {
-        if (dto.enabled) {
-          // 알림 활성화 → Topic 구독
-          void this.firebaseService
-            .subscribeToTopic(tokens, 'announcements')
-            .catch((err) => {
-              this.logger.error(
-                `Failed to subscribe user ${userId} to announcements topic: ${err.message}`,
-              );
-            });
-        } else {
-          // 알림 비활성화 → Topic 구독 해제
-          void this.firebaseService
-            .unsubscribeFromTopic(tokens, 'announcements')
-            .catch((err) => {
-              this.logger.error(
-                `Failed to unsubscribe user ${userId} from announcements topic: ${err.message}`,
-              );
-            });
-        }
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * 알림 전송
+   * 알림 전송 (즉시 발송 - Queue 기반)
    */
   async sendNotification(dto: SendNotificationDto) {
+    // Queue에 추가 (Worker가 비동기로 처리)
+    await this.queueService.enqueueImmediate({
+      userId: dto.userId,
+      category: dto.category,
+      title: dto.title,
+      body: dto.body,
+      data: dto.data,
+    });
+
+    return {
+      queued: true,
+      message: 'Notification queued for immediate delivery',
+    };
+  }
+
+  /**
+   * 예약 알림 전송 (Queue 기반)
+   */
+  async scheduleNotification(dto: ScheduleNotificationDto) {
+    // Waiting Room에 추가 (Worker가 시간되면 Ready Queue로 이동)
+    await this.queueService.enqueueScheduled({
+      userId: dto.userId,
+      category: dto.category,
+      title: dto.title,
+      body: dto.body,
+      data: dto.data,
+      scheduledTime: dto.scheduledTime,
+    });
+
+    return {
+      queued: true,
+      scheduledTime: dto.scheduledTime,
+      message: 'Notification scheduled successfully',
+    };
+  }
+
+  /**
+   * 알림 전송 (Legacy - 즉시 발송, Queue 미사용)
+   * @deprecated Queue 기반 sendNotification() 사용 권장
+   */
+  async sendNotificationDirect(dto: SendNotificationDto) {
     try {
       // 1. 사용자의 알림 설정 확인
       const setting = await this.prisma.notificationSetting.findUnique({
@@ -237,19 +99,28 @@ export class NotificationService {
         return { sent: false, reason: 'Category disabled by user' };
       }
 
-      // 2. 사용자의 디바이스 토큰 조회
-      const deviceTokens = await this.prisma.deviceToken.findMany({
-        where: { userId: dto.userId },
-      });
+      // 2. 사용자의 디바이스 토큰 조회 (Look-Aside 패턴)
+      const tokens = await this.tokenService.getUserTokens(dto.userId);
 
-      if (deviceTokens.length === 0) {
+      if (tokens.length === 0) {
         this.logger.warn(`No device tokens found for user ${dto.userId}`);
         return { sent: false, reason: 'No device tokens' };
       }
 
-      // 3. FCM 메시지 전송
+      // 3. 알림 히스토리 먼저 저장 (sent = false 상태)
+      const notification = await this.prisma.notification.create({
+        data: {
+          userId: dto.userId,
+          category: dto.category as any,
+          title: dto.title,
+          body: dto.body,
+          data: dto.data || null,
+          sent: false, // 발송 전 상태
+        },
+      });
+
+      // 4. FCM 메시지 전송
       const messaging = this.firebaseService.getMessaging();
-      const tokens = deviceTokens.map((dt) => dt.token);
 
       const message = {
         notification: {
@@ -266,18 +137,18 @@ export class NotificationService {
 
       const response = await messaging.sendEachForMulticast(message);
 
-      // 4. 알림 히스토리 저장
-      await this.prisma.notification.create({
-        data: {
-          userId: dto.userId,
-          category: dto.category as any,
-          title: dto.title,
-          body: dto.body,
-          data: dto.data || null,
-        },
-      });
+      // 5. FCM 발송 성공 시 히스토리 상태 업데이트
+      if (response.successCount > 0) {
+        await this.prisma.notification.update({
+          where: { id: notification.id },
+          data: {
+            sent: true,
+            sentAt: new Date(),
+          },
+        });
+      }
 
-      // 5. 실패한 토큰 처리 (유효하지 않은 토큰 삭제)
+      // 6. 실패한 토큰 처리 (유효하지 않은 토큰 삭제)
       if (response.failureCount > 0) {
         const failedTokens: string[] = [];
         response.responses.forEach((resp, idx) => {
@@ -296,13 +167,17 @@ export class NotificationService {
               token: { in: failedTokens },
             },
           });
+
+          // Redis 캐시 무효화
+          await this.redis.invalidateUserTokensCache(dto.userId);
         }
       }
 
       return {
-        sent: true,
+        sent: response.successCount > 0,
         successCount: response.successCount,
         failureCount: response.failureCount,
+        notificationId: notification.id,
       };
     } catch (error) {
       this.logger.error(`Failed to send notification: ${error.message}`, error);
@@ -325,7 +200,7 @@ export class NotificationService {
     const [notifications, total] = await Promise.all([
       this.prisma.notification.findMany({
         where,
-        orderBy: { sentAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -410,12 +285,10 @@ export class NotificationService {
    * 자기 자신에게 테스트 알림을 전송
    */
   async sendTestNotification(userId: string) {
-    // 디바이스 토큰 확인
-    const deviceTokens = await this.prisma.deviceToken.findMany({
-      where: { userId },
-    });
+    // 디바이스 토큰 확인 (Look-Aside 패턴)
+    const tokens = await this.tokenService.getUserTokens(userId);
 
-    if (deviceTokens.length === 0) {
+    if (tokens.length === 0) {
       return {
         message: '테스트 알림 전송 실패',
         error:
@@ -461,69 +334,87 @@ export class NotificationService {
     return {
       message: '테스트 알림이 전송되었습니다',
       userId,
-      deviceTokenCount: deviceTokens.length,
+      deviceTokenCount: tokens.length,
       result,
     };
   }
 
   /**
-   * 사용자의 토큰을 활성화된 알림 카테고리 Topic에 구독
-   * SYSTEM 알림이 활성화된 경우 'announcements' Topic 구독
+   * FCM Topic 알림 전송 (공지사항 등)
    *
-   * @param userId - 사용자 ID
-   * @param tokens - 디바이스 토큰 배열
+   * ⚠️ 비즈니스 정책: Topic 알림은 DB에 저장하지 않음 (휘발성)
+   *
+   * [배경]
+   * - FCM Topic: 100만 명에게 1번 API 호출 (효율적)
+   * - 100만 개 DB Row Insert: 비효율적
+   * - Family Planner: 별도 게시판 제공 (Announcement 등)
+   *
+   * [결과]
+   * - 푸시 알림: O (핸드폰 상단바)
+   * - 알림함: X (저장 안 함)
+   * - 게시판 목록: 별도 API
+   *
+   * [클라이언트 처리]
+   * - 푸시 클릭 시: FCM data로 상세 조회
+   * - 앱 내 알림함: 개인 알림만 표시
+   * - 게시판 메뉴: 별도 화면에서 목록 제공
+   *
+   * @param category - 알림 카테고리 (Topic 매핑용)
+   * @param title - 알림 제목
+   * @param body - 알림 본문
+   * @param data - 추가 데이터 (payload)
    */
-  private async subscribeUserToTopics(userId: string, tokens: string[]) {
-    try {
-      // 사용자의 알림 설정 조회
-      const settings = await this.prisma.notificationSetting.findMany({
-        where: { userId },
-      });
-
-      // SYSTEM 알림이 활성화된 경우 'announcements' Topic 구독
-      const systemSetting = settings.find(
-        (s) => s.category === (NotificationCategory.SYSTEM as any),
-      );
-
-      if (!systemSetting || systemSetting.enabled) {
-        // 기본값 또는 명시적으로 활성화된 경우
-        await this.firebaseService.subscribeToTopic(tokens, 'announcements');
-        this.logger.log(
-          `User ${userId} subscribed to 'announcements' topic (${tokens.length} tokens)`,
-        );
-      }
-    } catch (error) {
-      this.logger.error(
-        `Failed to subscribe user ${userId} to topics: ${error.message}`,
-        error,
+  async sendTopicNotification(
+    category: NotificationCategory,
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ) {
+    // 1. Category가 Topic 발송용인지 확인
+    if (!isTopicCategory(category)) {
+      throw new BadRequestException(
+        `Category ${category} is not configured for topic notifications`,
       );
     }
-  }
 
-  /**
-   * 사용자의 토큰을 Topic에서 구독 해제
-   *
-   * @param userId - 사용자 ID
-   * @param tokens - 디바이스 토큰 배열
-   */
-  private async unsubscribeUserFromTopics(userId: string, tokens: string[]) {
-    try {
-      // 모든 Topic에서 구독 해제
-      await this.firebaseService.unsubscribeFromTopic(tokens, 'announcements');
-      this.logger.log(
-        `User ${userId} unsubscribed from 'announcements' topic (${tokens.length} tokens)`,
+    // 2. Topic 이름 조회
+    const topicName = getTopicNameByCategory(category);
+    if (!topicName) {
+      throw new BadRequestException(
+        `No topic configured for category ${category}`,
       );
+    }
+
+    try {
+      // 3. Topic으로 알림 전송 (10만 명이든 100만 명이든 단일 API 호출)
+      const response = await this.firebaseService.sendToTopic(
+        topicName,
+        { title, body },
+        data,
+      );
+
+      this.logger.log(
+        `Topic notification sent to '${topicName}' (category: ${category}): ${response}`,
+      );
+
+      return {
+        sent: true,
+        messageId: response,
+        topic: topicName,
+        category,
+      };
     } catch (error) {
       this.logger.error(
-        `Failed to unsubscribe user ${userId} from topics: ${error.message}`,
+        `Failed to send topic notification to '${topicName}': ${error.message}`,
         error,
       );
+      throw error;
     }
   }
 
   /**
    * 공지사항 알림 전송 (FCM Topic 사용)
-   * SYSTEM 알림이 켜진 모든 사용자에게 한 번의 API 호출로 전송
+   * @deprecated sendTopicNotification() 사용 권장
    *
    * @param announcement - 공지사항 객체
    */
@@ -531,34 +422,14 @@ export class NotificationService {
     id: string;
     title: string;
   }) {
-    try {
-      // Topic으로 알림 전송 (10만 명이든 100만 명이든 단일 API 호출)
-      const response = await this.firebaseService.sendToTopic(
-        'announcements',
-        {
-          title: '새 공지사항',
-          body: announcement.title,
-        },
-        {
-          announcementId: announcement.id,
-          action: 'view_announcement',
-        },
-      );
-
-      this.logger.log(
-        `Announcement notification sent to 'announcements' topic: ${response}`,
-      );
-
-      return {
-        sent: true,
-        messageId: response,
-      };
-    } catch (error) {
-      this.logger.error(
-        `Failed to send announcement notification: ${error.message}`,
-        error,
-      );
-      throw error;
-    }
+    return this.sendTopicNotification(
+      NotificationCategory.ANNOUNCEMENT,
+      '새 공지사항',
+      announcement.title,
+      {
+        announcementId: announcement.id,
+        action: 'view_announcement',
+      },
+    );
   }
 }

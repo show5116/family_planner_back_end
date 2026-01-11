@@ -10,4 +10,5 @@ export enum NotificationCategory {
   CHILDCARE = 'CHILDCARE',
   GROUP = 'GROUP',
   SYSTEM = 'SYSTEM',
+  ANNOUNCEMENT = 'ANNOUNCEMENT', // 공지사항 (FCM Topic 전용, DB 저장 안 함)
 }
