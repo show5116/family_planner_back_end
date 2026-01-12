@@ -2,6 +2,20 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
+import hbs from 'nodemailer-express-handlebars';
+import { NodemailerExpressHandlebarsOptions } from 'nodemailer-express-handlebars';
+import * as path from 'path';
+import {
+  EmailTemplate,
+  EMAIL_THEME_COLORS,
+  EMAIL_MESSAGES,
+} from './email.constants';
+import {
+  SendEmailOptions,
+  VerificationEmailContext,
+  PasswordResetEmailContext,
+  GroupInviteEmailContext,
+} from './email.types';
 
 @Injectable()
 export class EmailService {
@@ -22,44 +36,94 @@ export class EmailService {
 
     this.transporter = nodemailer.createTransport(smtpConfig);
     this.smtpFrom = this.configService.get<string>('smtp.from');
+
+    // Handlebars 템플릿 엔진 설정
+    const templatesDir = path.join(__dirname, 'templates');
+    const handlebarOptions: NodemailerExpressHandlebarsOptions = {
+      viewEngine: {
+        extname: '.hbs',
+        layoutsDir: path.join(templatesDir, 'layouts'),
+        partialsDir: path.join(templatesDir, 'partials'),
+        defaultLayout: 'main',
+      },
+      viewPath: templatesDir,
+      extName: '.hbs',
+    };
+
+    this.transporter.use('compile', hbs(handlebarOptions));
+  }
+
+  /**
+   * 공통 이메일 발송 메서드
+   */
+  private async sendEmail(options: SendEmailOptions): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: this.smtpFrom,
+        to: options.to,
+        subject: options.subject,
+        template: options.template,
+        context: options.context,
+      });
+
+      this.logger.log(
+        `Email sent to: ${options.to} (template: ${options.template})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send email to ${options.to} (template: ${options.template})`,
+        error,
+      );
+      throw new Error('이메일 전송에 실패했습니다');
+    }
   }
 
   /**
    * 이메일 인증 메일 발송
    */
-  async sendVerificationEmail(to: string, code: string, userName: string) {
-    try {
-      await this.transporter.sendMail({
-        from: this.smtpFrom,
-        to,
-        subject: '이메일 인증 코드입니다',
-        html: this.getVerificationEmailTemplate(userName, code),
-      });
+  async sendVerificationEmail(
+    to: string,
+    code: string,
+    userName: string,
+  ): Promise<void> {
+    const template = EmailTemplate.VERIFICATION;
+    const context: VerificationEmailContext = {
+      userName,
+      code,
+      ...EMAIL_THEME_COLORS[template],
+      ...EMAIL_MESSAGES[template],
+    };
 
-      this.logger.log(`Verification email sent to: ${to}`);
-    } catch (error) {
-      this.logger.error(`Failed to send verification email to ${to}`, error);
-      throw new Error('이메일 전송에 실패했습니다');
-    }
+    await this.sendEmail({
+      to,
+      subject: '이메일 인증 코드입니다',
+      template,
+      context,
+    });
   }
 
   /**
    * 비밀번호 재설정 이메일 발송
    */
-  async sendPasswordResetEmail(to: string, code: string, userName: string) {
-    try {
-      await this.transporter.sendMail({
-        from: this.smtpFrom,
-        to,
-        subject: '비밀번호 재설정 인증 코드입니다',
-        html: this.getPasswordResetEmailTemplate(userName, code),
-      });
+  async sendPasswordResetEmail(
+    to: string,
+    code: string,
+    userName: string,
+  ): Promise<void> {
+    const template = EmailTemplate.PASSWORD_RESET;
+    const context: PasswordResetEmailContext = {
+      userName,
+      code,
+      ...EMAIL_THEME_COLORS[template],
+      ...EMAIL_MESSAGES[template],
+    };
 
-      this.logger.log(`Password reset email sent to: ${to}`);
-    } catch (error) {
-      this.logger.error(`Failed to send password reset email to ${to}`, error);
-      throw new Error('이메일 전송에 실패했습니다');
-    }
+    await this.sendEmail({
+      to,
+      subject: '비밀번호 재설정 인증 코드입니다',
+      template,
+      context,
+    });
   }
 
   /**
@@ -70,382 +134,21 @@ export class EmailService {
     groupName: string,
     inviterName: string,
     inviteCode: string,
-  ) {
-    try {
-      await this.transporter.sendMail({
-        from: this.smtpFrom,
-        to,
-        subject: `[Family Planner] ${groupName} 그룹에 초대되었습니다`,
-        html: this.getGroupInviteEmailTemplate(
-          groupName,
-          inviterName,
-          inviteCode,
-        ),
-      });
+  ): Promise<void> {
+    const template = EmailTemplate.GROUP_INVITE;
+    const context: GroupInviteEmailContext = {
+      groupName,
+      inviterName,
+      inviteCode,
+      ...EMAIL_THEME_COLORS[template],
+      ...EMAIL_MESSAGES[template],
+    };
 
-      this.logger.log(`Group invite email sent to: ${to}`);
-    } catch (error) {
-      this.logger.error(`Failed to send group invite email to ${to}`, error);
-      throw new Error('이메일 전송에 실패했습니다');
-    }
-  }
-
-  /**
-   * 이메일 인증 템플릿
-   */
-  private getVerificationEmailTemplate(userName: string, code: string): string {
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body {
-              font-family: 'Arial', sans-serif;
-              line-height: 1.6;
-              color: #333;
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .container {
-              background-color: #f9f9f9;
-              border-radius: 10px;
-              padding: 30px;
-              box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            .header h1 {
-              color: #4CAF50;
-              margin: 0;
-            }
-            .content {
-              background-color: white;
-              padding: 25px;
-              border-radius: 8px;
-            }
-            .code-box {
-              background-color: #f0f0f0;
-              border: 2px dashed #4CAF50;
-              border-radius: 8px;
-              padding: 20px;
-              margin: 25px 0;
-              text-align: center;
-            }
-            .code {
-              font-size: 36px;
-              font-weight: bold;
-              color: #4CAF50;
-              letter-spacing: 8px;
-              font-family: 'Courier New', monospace;
-            }
-            .footer {
-              margin-top: 30px;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
-            }
-            .warning {
-              background-color: #fff3cd;
-              border-left: 4px solid #ffc107;
-              padding: 15px;
-              margin-top: 20px;
-              border-radius: 4px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Family Planner</h1>
-              <p>가족 플래너에 오신 것을 환영합니다!</p>
-            </div>
-
-            <div class="content">
-              <h2>안녕하세요, ${userName}님!</h2>
-              <p>가족 플래너 회원가입을 완료하기 위해 이메일 인증이 필요합니다.</p>
-              <p>아래 6자리 인증 코드를 입력하여 이메일 인증을 완료해주세요.</p>
-
-              <div class="code-box">
-                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">인증 코드</div>
-                <div class="code">${code}</div>
-              </div>
-
-              <p style="text-align: center; color: #666;">위 코드를 앱 또는 웹사이트에 입력해주세요.</p>
-
-              <div class="warning">
-                <strong>주의:</strong> 이 인증 코드는 24시간 동안만 유효합니다.
-              </div>
-            </div>
-
-            <div class="footer">
-              <p>본 메일은 회원가입 시 자동으로 발송되는 메일입니다.</p>
-              <p>만약 회원가입을 하지 않으셨다면 이 메일을 무시해주세요.</p>
-              <p>&copy; 2025 Family Planner. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-  }
-
-  /**
-   * 비밀번호 재설정 이메일 템플릿
-   */
-  private getPasswordResetEmailTemplate(
-    userName: string,
-    code: string,
-  ): string {
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body {
-              font-family: 'Arial', sans-serif;
-              line-height: 1.6;
-              color: #333;
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .container {
-              background-color: #f9f9f9;
-              border-radius: 10px;
-              padding: 30px;
-              box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            .header h1 {
-              color: #FF5722;
-              margin: 0;
-            }
-            .content {
-              background-color: white;
-              padding: 25px;
-              border-radius: 8px;
-            }
-            .code-box {
-              background-color: #fff3e0;
-              border: 2px dashed #FF5722;
-              border-radius: 8px;
-              padding: 20px;
-              margin: 25px 0;
-              text-align: center;
-            }
-            .code {
-              font-size: 36px;
-              font-weight: bold;
-              color: #FF5722;
-              letter-spacing: 8px;
-              font-family: 'Courier New', monospace;
-            }
-            .footer {
-              margin-top: 30px;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
-            }
-            .warning {
-              background-color: #ffebee;
-              border-left: 4px solid #f44336;
-              padding: 15px;
-              margin-top: 20px;
-              border-radius: 4px;
-            }
-            .security-notice {
-              background-color: #e3f2fd;
-              border-left: 4px solid #2196F3;
-              padding: 15px;
-              margin-top: 20px;
-              border-radius: 4px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Family Planner</h1>
-              <p>비밀번호 재설정</p>
-            </div>
-
-            <div class="content">
-              <h2>안녕하세요, ${userName}님!</h2>
-              <p>비밀번호 재설정을 요청하셨습니다.</p>
-              <p>아래 6자리 인증 코드를 입력하여 비밀번호를 재설정해주세요.</p>
-
-              <div class="code-box">
-                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">인증 코드</div>
-                <div class="code">${code}</div>
-              </div>
-
-              <p style="text-align: center; color: #666;">위 코드를 앱 또는 웹사이트에 입력해주세요.</p>
-
-              <div class="warning">
-                <strong>주의:</strong> 이 인증 코드는 1시간 동안만 유효합니다.
-              </div>
-
-              <div class="security-notice">
-                <strong>보안 안내:</strong><br>
-                본인이 요청하지 않은 비밀번호 재설정 이메일을 받으셨다면, 즉시 이 메일을 무시하고 계정 보안을 점검해주세요.
-              </div>
-            </div>
-
-            <div class="footer">
-              <p>본 메일은 비밀번호 재설정 요청 시 자동으로 발송되는 메일입니다.</p>
-              <p>만약 비밀번호 재설정을 요청하지 않으셨다면 이 메일을 무시해주세요.</p>
-              <p>&copy; 2025 Family Planner. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-  }
-
-  /**
-   * 그룹 초대 이메일 템플릿
-   */
-  private getGroupInviteEmailTemplate(
-    groupName: string,
-    inviterName: string,
-    inviteCode: string,
-  ): string {
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body {
-              font-family: 'Arial', sans-serif;
-              line-height: 1.6;
-              color: #333;
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            .container {
-              background-color: #f9f9f9;
-              border-radius: 10px;
-              padding: 30px;
-              box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            .header h1 {
-              color: #6366F1;
-              margin: 0;
-            }
-            .content {
-              background-color: white;
-              padding: 25px;
-              border-radius: 8px;
-            }
-            .invite-box {
-              background-color: #f0f0ff;
-              border: 2px solid #6366F1;
-              border-radius: 8px;
-              padding: 20px;
-              margin: 25px 0;
-              text-align: center;
-            }
-            .group-name {
-              font-size: 24px;
-              font-weight: bold;
-              color: #6366F1;
-              margin: 10px 0;
-            }
-            .code-box {
-              background-color: #fff;
-              border: 2px dashed #6366F1;
-              border-radius: 8px;
-              padding: 20px;
-              margin: 25px 0;
-              text-align: center;
-            }
-            .code {
-              font-size: 32px;
-              font-weight: bold;
-              color: #6366F1;
-              letter-spacing: 4px;
-              font-family: 'Courier New', monospace;
-            }
-            .footer {
-              margin-top: 30px;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
-            }
-            .info {
-              background-color: #e8f5e9;
-              border-left: 4px solid #4CAF50;
-              padding: 15px;
-              margin-top: 20px;
-              border-radius: 4px;
-            }
-            .steps {
-              margin: 20px 0;
-              padding-left: 20px;
-            }
-            .steps li {
-              margin: 10px 0;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Family Planner</h1>
-              <p>그룹 초대</p>
-            </div>
-
-            <div class="content">
-              <h2>그룹 초대장이 도착했습니다!</h2>
-              <p><strong>${inviterName}</strong>님이 회원님을 그룹에 초대하였습니다.</p>
-
-              <div class="invite-box">
-                <div style="font-size: 14px; color: #666;">초대받은 그룹</div>
-                <div class="group-name">${groupName}</div>
-              </div>
-
-              <p>아래 초대 코드를 사용하여 그룹에 가입하실 수 있습니다.</p>
-
-              <div class="code-box">
-                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">초대 코드</div>
-                <div class="code">${inviteCode}</div>
-              </div>
-
-              <div class="info">
-                <strong>가입 방법:</strong>
-                <ol class="steps">
-                  <li>Family Planner 앱 또는 웹사이트에 로그인</li>
-                  <li>그룹 가입 메뉴 선택</li>
-                  <li>위의 초대 코드 입력</li>
-                </ol>
-              </div>
-
-              <p style="text-align: center; color: #666; margin-top: 20px;">
-                초대 코드는 7일간 유효합니다.
-              </p>
-            </div>
-
-            <div class="footer">
-              <p>본 메일은 그룹 초대 시 자동으로 발송되는 메일입니다.</p>
-              <p>만약 그룹 가입을 원하지 않으시면 이 메일을 무시해주세요.</p>
-              <p>&copy; 2025 Family Planner. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+    await this.sendEmail({
+      to,
+      subject: `[Family Planner] ${groupName} 그룹에 초대되었습니다`,
+      template,
+      context,
+    });
   }
 }
