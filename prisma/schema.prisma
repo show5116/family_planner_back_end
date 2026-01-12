@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,248 +7,107 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 소셜 로그인 제공자
-enum Provider {
-  GOOGLE
-  KAKAO
-  APPLE
-  LOCAL
-}
-
-// 권한 카테고리
-enum PermissionCategory {
-  GROUP // 그룹
-  TASK  // Task
-}
-
-// 권한 코드
-enum PermissionCode {
-  // GROUP 카테고리
-  INVITE_MEMBER
-  DELETE_GROUP
-  UPDATE_GROUP
-  MANAGE_ROLE
-  MANAGE_MEMBER
-
-  // TASK 카테고리
-  READ_TASK
-  CREATE_TASK
-  UPDATE_TASK
-  DELETE_TASK
-  MANAGE_CATEGORY
-}
-
-// 그룹 가입 요청 타입
-enum JoinRequestType {
-  REQUEST // 사용자가 초대 코드로 가입 요청
-  INVITE  // 관리자가 이메일로 초대
-}
-
-// 그룹 가입 요청 상태
-enum JoinRequestStatus {
-  PENDING  // 대기 중
-  ACCEPTED // 승인됨
-  REJECTED // 거부됨
-}
-
-// 알림 카테고리
-enum NotificationCategory {
-  SCHEDULE     // 일정
-  TODO         // 할일
-  HOUSEHOLD    // 가계부
-  ASSET        // 자산
-  CHILDCARE    // 육아
-  GROUP        // 그룹 (초대, 멤버 추가 등)
-  SYSTEM       // 시스템 알림
-  ANNOUNCEMENT // 공지사항 (FCM Topic 전용, DB 저장 안 함)
-}
-
-// 디바이스 플랫폼
-enum DevicePlatform {
-  IOS
-  ANDROID
-  WEB
-}
-
-// Q&A 질문 카테고리
-enum QuestionCategory {
-  BUG      // 버그 신고
-  FEATURE  // 기능 제안/개선
-  USAGE    // 사용법 문의
-  ACCOUNT  // 계정 문제
-  PAYMENT  // 결제/요금제
-  ETC      // 기타
-}
-
-// Q&A 질문 상태
-enum QuestionStatus {
-  PENDING  // 대기 중 (답변 대기)
-  ANSWERED // 답변 완료 (ADMIN 답변 완료)
-  RESOLVED // 해결 완료 (사용자가 해결 확인)
-}
-
-// Q&A 공개 여부
-enum QuestionVisibility {
-  PUBLIC  // 공개 (모든 사용자가 조회 가능)
-  PRIVATE // 비공개 (작성자와 ADMIN만 조회 가능)
-}
-
-// 공지사항 카테고리
-enum AnnouncementCategory {
-  ANNOUNCEMENT // 공지
-  EVENT        // 이벤트
-  UPDATE       // 업데이트
-}
-
-// Task 타입
-enum TaskType {
-  CALENDAR_ONLY // 캘린더 전용 (생일, 기념일 등)
-  TODO_LINKED   // 할일 연동 (완료 체크 가능)
-}
-
-// Task 우선순위
-enum TaskPriority {
-  LOW    // 낮음
-  MEDIUM // 보통
-  HIGH   // 높음
-  URGENT // 긴급
-}
-
-// 반복 규칙 타입
-enum RecurringRuleType {
-  DAILY   // 매일
-  WEEKLY  // 매주
-  MONTHLY // 매달
-  YEARLY  // 매년
-}
-
-// 반복 생성 방식
-enum RecurringGenerationType {
-  AUTO_SCHEDULER   // 스케줄러 자동 생성
-  AFTER_COMPLETION // 완료 후 생성
-}
-
-// Task 알림 타입
-enum TaskReminderType {
-  BEFORE_START // 시작 전
-  BEFORE_DUE   // 마감 전
-}
-
-// Task 변경 이력 액션
-enum TaskHistoryAction {
-  CREATE   // 생성
-  UPDATE   // 수정
-  DELETE   // 삭제
-  COMPLETE // 완료
-  SKIP     // 건너뛰기
-}
-
-// 사용자 테이블
 model User {
-  id                        String         @id @default(uuid())
-  email                     String?        @unique
-  name                      String
-  profileImageKey           String?        @db.VarChar(255) // R2에 저장된 프로필 이미지 키
-  phoneNumber               String?        @db.VarChar(20) // 전화번호
-  provider                  Provider       @default(LOCAL)
-  providerId                String?        // 소셜 로그인 제공자의 고유 ID
-  password                  String?        // LOCAL 로그인 시에만 사용, 소셜 로그인 시 null
-  isEmailVerified           Boolean        @default(false) // 이메일 인증 여부
-  isAdmin                   Boolean        @default(false) // 관리자 여부
-  lastLoginAt               DateTime?      // 마지막 로그인 시간
-  createdAt                 DateTime               @default(now())
-  updatedAt                 DateTime               @updatedAt
-  groupMemberships          GroupMember[]          // 사용자가 속한 그룹들
-  deviceTokens              DeviceToken[]          // FCM 디바이스 토큰들
-  notificationSettings      NotificationSetting[]  // 알림 설정
-  notifications             Notification[]         // 받은 알림들
-  announcements             Announcement[]         @relation("AnnouncementAuthor") // 작성한 공지사항들
-  announcementReads         AnnouncementRead[]     @relation("AnnouncementReads") // 읽은 공지사항들
-  questions                 Question[]             // 작성한 질문들
-  answers                   Answer[]               @relation("AdminAnswers") // 작성한 답변들 (ADMIN 전용)
-  categories                Category[]             // 작성한 카테고리들
-  tasks                     Task[]                 // 작성한 Task들
-  recurrings                Recurring[]            // 작성한 반복 규칙들
-  taskReminders             TaskReminder[]         // Task 알림들
-  taskSkips                 TaskSkip[]             // 반복 일정 건너뛰기들
-  taskHistories             TaskHistory[]          // Task 변경 이력들
+  id                   String                @id @default(uuid())
+  email                String?               @unique
+  name                 String
+  provider             Provider              @default(LOCAL)
+  providerId           String?
+  password             String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  isEmailVerified      Boolean               @default(false)
+  isAdmin              Boolean               @default(false)
+  lastLoginAt          DateTime?
+  phoneNumber          String?               @db.VarChar(20)
+  profileImageKey      String?               @db.VarChar(255)
+  announcementReads    AnnouncementRead[]    @relation("AnnouncementReads")
+  announcements        Announcement[]        @relation("AnnouncementAuthor")
+  answers              Answer[]              @relation("AdminAnswers")
+  categories           Category[]
+  deviceTokens         DeviceToken[]
+  groupMemberships     GroupMember[]
+  notificationSettings NotificationSetting[]
+  notifications        Notification[]
+  questions            Question[]
+  recurrings           Recurring[]
+  taskHistories        TaskHistory[]
+  taskReminders        TaskReminder[]
+  taskSkips            TaskSkip[]
+  tasks                Task[]
 
-  @@unique([provider, providerId]) // 같은 제공자에서 같은 ID는 유일해야 함
+  @@unique([provider, providerId])
   @@index([email])
   @@map("users")
 }
 
-// 그룹 테이블
 model Group {
   id                  String             @id @default(uuid())
-  name                String             @db.VarChar(100) // 그룹명
-  description         String?            @db.Text // 그룹 설명
-  inviteCode          String             @unique @db.VarChar(8) // 초대 코드 (8자리 영문+숫자)
-  inviteCodeExpiresAt DateTime           // 초대 코드 만료 시간
-  defaultColor        String             @default("#6366F1") @db.VarChar(7) // 그룹 기본 색상 (HEX)
+  name                String             @db.VarChar(100)
+  description         String?            @db.Text
+  inviteCode          String             @unique @db.VarChar(8)
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
-  members             GroupMember[]      // 그룹 멤버들
-  customRoles         Role[]             // 그룹별 커스텀 역할들
-  joinRequests        GroupJoinRequest[] // 그룹 가입 요청들
-  categories          Category[]         // 그룹 카테고리들
-  tasks               Task[]             // 그룹 Task들
-  recurrings          Recurring[]        // 그룹 반복 규칙들
+  defaultColor        String             @default("#6366F1") @db.VarChar(7)
+  inviteCodeExpiresAt DateTime
+  categories          Category[]
+  joinRequests        GroupJoinRequest[]
+  members             GroupMember[]
+  recurrings          Recurring[]
+  customRoles         Role[]
+  tasks               Task[]
 
   @@index([inviteCode])
   @@map("member_groups")
 }
 
-// 역할 테이블 (공통 역할 + 그룹별 커스텀 역할)
 model Role {
-  id              String        @id @default(uuid())
-  name            String        @db.VarChar(50) // 역할명 (예: OWNER, ADMIN, MEMBER, 부모, 자녀 등)
-  groupId         String?       // null이면 공통 역할, 값이 있으면 그룹별 커스텀 역할
-  group           Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  isDefaultRole   Boolean       @default(false) // 초대 시 자동 부여 역할 여부
-  isImmutable     Boolean       @default(false) // true이면 수정 불가능한 역할 (예: OWNER, ADMIN, MEMBER)
-  permissions     Json          @default("[]") // 권한 목록 (JSON 배열: ["VIEW", "CREATE", "UPDATE", ...])
-  color           String        @default("#6366F1") @db.VarChar(7) // 역할 색상 (HEX)
-  sortOrder       Int           @default(0) // 정렬 순서 (낮을수록 먼저 표시)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  groupMembers    GroupMember[] // 이 역할을 가진 멤버들
+  id            String        @id @default(uuid())
+  name          String        @db.VarChar(50)
+  groupId       String?
+  isDefaultRole Boolean       @default(false)
+  permissions   Json
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  isImmutable   Boolean       @default(false)
+  sortOrder     Int           @default(0)
+  color         String        @default("#6366F1") @db.VarChar(7)
+  groupMembers  GroupMember[]
+  group         Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
-  @@unique([name, groupId]) // 같은 그룹(또는 공통)에서 역할명 중복 방지
+  @@unique([name, groupId])
   @@index([groupId])
   @@index([sortOrder])
   @@map("roles")
 }
 
-// 그룹 멤버 테이블
 model GroupMember {
   id          String   @id @default(uuid())
   groupId     String
-  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roleId      String   // Role 테이블 참조
-  role        Role     @relation(fields: [roleId], references: [id])
-  customColor String?  @db.VarChar(7) // 개인 설정 색상 (HEX, nullable)
   joinedAt    DateTime @default(now())
+  customColor String?  @db.VarChar(7)
+  roleId      String
+  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role        Role     @relation(fields: [roleId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([groupId, userId]) // 같은 그룹에 같은 사용자 중복 방지
+  @@unique([groupId, userId])
   @@index([groupId])
   @@index([userId])
   @@index([roleId])
   @@map("group_members")
 }
 
-// 그룹 가입 요청 테이블
 model GroupJoinRequest {
   id        String            @id @default(uuid())
   groupId   String
-  group     Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  type      JoinRequestType   @default(REQUEST) // REQUEST: 사용자 요청, INVITE: 관리자 초대
-  email     String            @db.VarChar(255) // 초대 대상 이메일
-  status    JoinRequestStatus @default(PENDING) // PENDING, ACCEPTED, REJECTED
+  type      JoinRequestType   @default(REQUEST)
+  email     String            @db.VarChar(255)
+  status    JoinRequestStatus @default(PENDING)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+  group     Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
   @@index([email])
@@ -262,17 +115,16 @@ model GroupJoinRequest {
   @@map("group_join_requests")
 }
 
-// 권한 정의 테이블 (UI 표시 및 메타데이터용)
 model Permission {
   id          String             @id @default(uuid())
-  code        PermissionCode     @unique // 권한 코드
-  name        String             @db.VarChar(100) // 권한 이름 (예: "조회", "생성", "수정", "삭제")
-  description String?            @db.Text // 권한 설명
-  category    PermissionCategory @default(GROUP) // 권한 카테고리
-  isActive    Boolean            @default(true) // 활성화 여부
-  sortOrder   Int                @default(0) // 정렬 순서 (낮을수록 먼저 표시)
+  code        PermissionCode     @unique
+  name        String             @db.VarChar(100)
+  description String?            @db.Text
+  category    PermissionCategory @default(GROUP)
+  isActive    Boolean            @default(true)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+  sortOrder   Int                @default(0)
 
   @@index([category])
   @@index([isActive])
@@ -280,51 +132,48 @@ model Permission {
   @@map("permissions")
 }
 
-// FCM 디바이스 토큰 테이블
 model DeviceToken {
   id        String         @id @default(uuid())
   userId    String
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String         @unique @db.VarChar(500) // FCM 디바이스 토큰
-  platform  DevicePlatform // IOS, ANDROID, WEB
-  lastUsed  DateTime       @default(now()) // 마지막 사용 시간
+  token     String         @unique @db.VarChar(500)
+  platform  DevicePlatform
+  lastUsed  DateTime       @default(now())
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([lastUsed])
   @@map("device_tokens")
 }
 
-// 알림 설정 테이블 (카테고리별 알림 on/off)
 model NotificationSetting {
-  id        String               @id @default(uuid())
+  id        String                         @id @default(uuid())
   userId    String
-  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category  NotificationCategory // 알림 카테고리
-  enabled   Boolean              @default(true) // 알림 활성화 여부
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
+  category  notification_settings_category
+  enabled   Boolean                        @default(true)
+  createdAt DateTime                       @default(now())
+  updatedAt DateTime                       @updatedAt
+  user      User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, category]) // 사용자당 카테고리별 하나의 설정만 존재
+  @@unique([userId, category])
   @@index([userId])
   @@map("notification_settings")
 }
 
-// 알림 히스토리 테이블
 model Notification {
-  id        String               @id @default(uuid())
+  id        String                 @id @default(uuid())
   userId    String
-  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category  NotificationCategory // 알림 카테고리
-  title     String               @db.VarChar(255) // 알림 제목
-  body      String               @db.Text // 알림 내용
-  data      Json?                // 추가 데이터 (화면 이동용 payload 등)
-  sent      Boolean              @default(false) // FCM 발송 성공 여부
-  isRead    Boolean              @default(false) // 읽음 여부
-  createdAt DateTime             @default(now()) // 생성 시간 (히스토리 저장 시점)
-  sentAt    DateTime?            // FCM 발송 성공 시간
-  readAt    DateTime?            // 읽은 시간
+  category  notifications_category
+  title     String                 @db.VarChar(255)
+  body      String                 @db.Text
+  data      Json?
+  sent      Boolean                @default(false) // FCM 발송 성공 여부
+  isRead    Boolean                @default(false)
+  createdAt DateTime               @default(now()) // 생성 시간 (히스토리 저장 시점)
+  sentAt    DateTime?              // FCM 발송 성공 시간
+  readAt    DateTime?
+  user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])
@@ -333,98 +182,94 @@ model Notification {
   @@map("notifications")
 }
 
-// 공지사항 테이블
 model Announcement {
-  id          String                @id @default(uuid())
-  authorId    String // ADMIN 사용자 ID
-  author      User                  @relation("AnnouncementAuthor", fields: [authorId], references: [id])
-  title       String                @db.VarChar(200) // 공지 제목
-  content     String                @db.Text // 공지 내용 (Markdown 지원)
-  category    AnnouncementCategory // 카테고리 (ANNOUNCEMENT, EVENT, UPDATE)
-  isPinned    Boolean               @default(false) // 상단 고정 여부
-  viewCount   Int                   @default(0) // 조회수 (Redis에서 주기적으로 동기화)
-  attachments Json? // 첨부파일 목록 [{url, name, size}]
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  deletedAt   DateTime? // Soft Delete
-  reads       AnnouncementRead[] // 읽음 기록
+  id          String               @id @default(uuid())
+  authorId    String
+  title       String               @db.VarChar(200)
+  content     String               @db.Text
+  isPinned    Boolean              @default(false)
+  attachments Json?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  deletedAt   DateTime?
+  category    AnnouncementCategory
+  viewCount   Int                  @default(0)
+  reads       AnnouncementRead[]
+  author      User                 @relation("AnnouncementAuthor", fields: [authorId], references: [id])
 
-  @@index([isPinned, createdAt(sort: Desc)]) // 고정 공지 우선 정렬
-  @@index([category]) // 카테고리별 조회
-  @@index([createdAt(sort: Desc)]) // 최신순 조회
+  @@index([isPinned, createdAt(sort: Desc)])
+  @@index([category])
+  @@index([createdAt(sort: Desc)])
   @@index([authorId])
   @@map("announcements")
 }
 
-// 공지사항 읽음 기록 테이블
 model AnnouncementRead {
   id             String       @id @default(uuid())
   announcementId String
-  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   userId         String
+  readAt         DateTime     @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   user           User         @relation("AnnouncementReads", fields: [userId], references: [id], onDelete: Cascade)
-  readAt         DateTime     @default(now()) // 읽은 시간
 
-  @@unique([announcementId, userId]) // 공지별 사용자당 하나의 읽음 기록만
+  @@unique([announcementId, userId])
   @@index([announcementId])
   @@index([userId])
   @@map("announcement_reads")
 }
 
-// Q&A 질문 테이블
 model Question {
-  id          String               @id @default(uuid())
+  id          String             @id @default(uuid())
   userId      String
-  user        User                 @relation(fields: [userId], references: [id])
-  title       String               @db.VarChar(200) // 질문 제목
-  content     String               @db.Text // 질문 내용
-  category    QuestionCategory // 카테고리 (BUG, FEATURE, USAGE 등)
-  status      QuestionStatus       @default(PENDING) // 상태 (PENDING, ANSWERED, RESOLVED)
-  visibility  QuestionVisibility   @default(PRIVATE) // 공개 여부 (PUBLIC, PRIVATE)
-  attachments Json? // 첨부파일 [{url, name, size}]
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  deletedAt   DateTime? // Soft Delete
-  answers     Answer[] // 답변 목록
+  title       String             @db.VarChar(200)
+  content     String             @db.Text
+  category    QuestionCategory
+  status      QuestionStatus     @default(PENDING)
+  visibility  QuestionVisibility @default(PRIVATE)
+  attachments Json?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  deletedAt   DateTime?
+  answers     Answer[]
+  user        User               @relation(fields: [userId], references: [id])
 
-  @@index([userId, createdAt(sort: Desc)]) // 사용자별 질문 조회
-  @@index([status]) // 상태별 필터링
-  @@index([category]) // 카테고리별 필터링
-  @@index([visibility, createdAt(sort: Desc)]) // 공개 질문 목록 조회
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status])
+  @@index([category])
+  @@index([visibility, createdAt(sort: Desc)])
   @@map("questions")
 }
 
-// Q&A 답변 테이블
 model Answer {
   id          String    @id @default(uuid())
   questionId  String
-  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
   adminId     String
-  admin       User      @relation("AdminAnswers", fields: [adminId], references: [id])
-  content     String    @db.Text // 답변 내용
-  attachments Json? // 첨부파일 [{url, name, size}]
+  content     String    @db.Text
+  attachments Json?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime? // Soft Delete
+  deletedAt   DateTime?
+  admin       User      @relation("AdminAnswers", fields: [adminId], references: [id])
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@index([questionId, createdAt(sort: Desc)]) // 질문별 답변 조회
+  @@index([questionId, createdAt(sort: Desc)])
+  @@index([adminId], map: "answers_adminId_fkey")
   @@map("answers")
 }
 
-// 카테고리 테이블
 model Category {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   groupId     String?
-  group       Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  name        String    @db.VarChar(50) // 카테고리 이름
-  description String?   @db.Text // 설명
-  emoji       String?   @db.VarChar(10) // 이모지
-  color       String?   @db.VarChar(7) // HEX 색상 코드
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  tasks       Task[] // 이 카테고리에 속한 Task들
+  name        String   @db.VarChar(50)
+  description String?  @db.Text
+  emoji       String?  @db.VarChar(10)
+  color       String?  @db.VarChar(7)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  group       Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       Task[]
 
   @@index([userId])
   @@index([groupId])
@@ -432,31 +277,30 @@ model Category {
   @@map("categories")
 }
 
-// Task 테이블
 model Task {
-  id           String       @id @default(uuid())
-  userId       String
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  groupId      String?
-  group        Group?       @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  categoryId   String
-  category     Category     @relation(fields: [categoryId], references: [id])
-  recurringId  String?
-  recurring    Recurring?   @relation(fields: [recurringId], references: [id], onDelete: SetNull)
-  title        String       @db.VarChar(200) // Task 제목
-  description  String?      @db.Text // 상세 설명
-  location     String?      @db.VarChar(255) // 장소
-  type         TaskType     @default(TODO_LINKED) // Task 타입
-  priority     TaskPriority @default(MEDIUM) // 우선순위
-  scheduledAt  DateTime? // 수행 시작 날짜
-  dueAt        DateTime? // 마감 날짜
-  isCompleted  Boolean      @default(false) // 완료 여부
-  completedAt  DateTime? // 완료 시간
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  deletedAt    DateTime? // Soft Delete
-  reminders    TaskReminder[] // Task 알림들
-  histories    TaskHistory[] // 변경 이력들
+  id          String         @id @default(uuid())
+  userId      String
+  groupId     String?
+  categoryId  String
+  recurringId String?
+  title       String         @db.VarChar(200)
+  description String?        @db.Text
+  location    String?        @db.VarChar(255)
+  type        TaskType       @default(TODO_LINKED)
+  priority    TaskPriority   @default(MEDIUM)
+  scheduledAt DateTime?
+  dueAt       DateTime?
+  isCompleted Boolean        @default(false)
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+  histories   TaskHistory[]
+  reminders   TaskReminder[]
+  category    Category       @relation(fields: [categoryId], references: [id])
+  group       Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  recurring   Recurring?     @relation(fields: [recurringId], references: [id])
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, scheduledAt])
   @@index([groupId, scheduledAt])
@@ -467,22 +311,21 @@ model Task {
   @@map("tasks")
 }
 
-// 반복 규칙 테이블
 model Recurring {
-  id              String                   @id @default(uuid())
+  id              String                  @id @default(uuid())
   userId          String
-  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   groupId         String?
-  group           Group?                   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  ruleType        RecurringRuleType // 반복 유형 (DAILY, WEEKLY, MONTHLY, YEARLY)
-  ruleConfig      Json // 반복 설정 (요일, 날짜 등)
-  generationType  RecurringGenerationType // 생성 방식 (AUTO_SCHEDULER, AFTER_COMPLETION)
-  lastGeneratedAt DateTime? // 마지막 생성 시간
-  isActive        Boolean                  @default(true) // 활성화 여부
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
-  tasks           Task[] // 이 반복 규칙으로 생성된 Task들
-  skips           TaskSkip[] // 건너뛰기 목록
+  ruleType        RecurringRuleType
+  ruleConfig      Json
+  generationType  RecurringGenerationType
+  lastGeneratedAt DateTime?
+  isActive        Boolean                 @default(true)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  group           Group?                  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skips           TaskSkip[]
+  tasks           Task[]
 
   @@index([userId])
   @@index([groupId])
@@ -490,17 +333,16 @@ model Recurring {
   @@map("recurrings")
 }
 
-// Task 알림 테이블
 model TaskReminder {
   id            String           @id @default(uuid())
   taskId        String
-  task          Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId        String
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reminderType  TaskReminderType // 알림 유형 (BEFORE_START, BEFORE_DUE)
-  offsetMinutes Int // 알림 시간 오프셋 (분 단위, 음수 가능)
-  sentAt        DateTime? // 발송 시간
+  reminderType  TaskReminderType
+  offsetMinutes Int
+  sentAt        DateTime?
   createdAt     DateTime         @default(now())
+  task          Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([userId])
@@ -508,34 +350,158 @@ model TaskReminder {
   @@map("task_reminders")
 }
 
-// Task 건너뛰기 테이블
 model TaskSkip {
   id          String    @id @default(uuid())
   recurringId String
-  recurring   Recurring @relation(fields: [recurringId], references: [id], onDelete: Cascade)
-  skipDate    DateTime  @db.Date // 건너뛸 날짜
-  reason      String?   @db.Text // 건너뛰는 이유
+  skipDate    DateTime  @db.Date
+  reason      String?   @db.Text
   createdBy   String
-  creator     User      @relation(fields: [createdBy], references: [id])
   createdAt   DateTime  @default(now())
+  creator     User      @relation(fields: [createdBy], references: [id])
+  recurring   Recurring @relation(fields: [recurringId], references: [id], onDelete: Cascade)
 
   @@index([recurringId])
   @@index([skipDate])
+  @@index([createdBy], map: "task_skips_createdBy_fkey")
   @@map("task_skips")
 }
 
-// Task 변경 이력 테이블
 model TaskHistory {
   id        String            @id @default(uuid())
   taskId    String
-  task      Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId    String
-  user      User              @relation(fields: [userId], references: [id])
-  action    TaskHistoryAction // 변경 유형 (CREATE, UPDATE, DELETE, COMPLETE, SKIP)
-  changes   Json? // 변경 내용 (before/after)
+  action    TaskHistoryAction
+  changes   Json?
   createdAt DateTime          @default(now())
+  task      Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id])
 
   @@index([taskId, createdAt(sort: Desc)])
   @@index([userId])
   @@map("task_histories")
+}
+
+enum Provider {
+  GOOGLE
+  KAKAO
+  APPLE
+  LOCAL
+}
+
+enum PermissionCategory {
+  GROUP
+  TASK
+}
+
+enum PermissionCode {
+  INVITE_MEMBER
+  DELETE_GROUP
+  UPDATE_GROUP
+  MANAGE_ROLE
+  MANAGE_MEMBER
+  READ_TASK
+  CREATE_TASK
+  UPDATE_TASK
+  DELETE_TASK
+  MANAGE_CATEGORY
+}
+
+enum JoinRequestType {
+  REQUEST
+  INVITE
+}
+
+enum JoinRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+enum QuestionCategory {
+  BUG
+  FEATURE
+  USAGE
+  ACCOUNT
+  PAYMENT
+  ETC
+}
+
+enum QuestionStatus {
+  PENDING
+  ANSWERED
+  RESOLVED
+}
+
+enum QuestionVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum AnnouncementCategory {
+  ANNOUNCEMENT
+  EVENT
+  UPDATE
+}
+
+enum TaskType {
+  CALENDAR_ONLY
+  TODO_LINKED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum RecurringRuleType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum RecurringGenerationType {
+  AUTO_SCHEDULER
+  AFTER_COMPLETION
+}
+
+enum TaskReminderType {
+  BEFORE_START
+  BEFORE_DUE
+}
+
+enum TaskHistoryAction {
+  CREATE
+  UPDATE
+  DELETE
+  COMPLETE
+  SKIP
+}
+
+enum notification_settings_category {
+  SCHEDULE
+  TODO
+  HOUSEHOLD
+  ASSET
+  CHILDCARE
+  GROUP
+  SYSTEM
+}
+
+enum notifications_category {
+  SCHEDULE
+  TODO
+  HOUSEHOLD
+  ASSET
+  CHILDCARE
+  GROUP
+  SYSTEM
 }
