@@ -42,7 +42,8 @@ export const EMAIL_MESSAGES = {
   },
   [EmailTemplate.PASSWORD_RESET]: {
     headerSubtitle: '비밀번호 재설정',
-    footerText1: '본 메일은 비밀번호 재설정 요청 시 자동으로 발송되는 메일입니다.',
+    footerText1:
+      '본 메일은 비밀번호 재설정 요청 시 자동으로 발송되는 메일입니다.',
     footerText2:
       '만약 비밀번호 재설정을 요청하지 않으셨다면 이 메일을 무시해주세요.',
   },

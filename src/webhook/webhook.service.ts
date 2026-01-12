@@ -10,11 +10,15 @@ import * as crypto from 'crypto';
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
   private readonly discordWebhookUrl: string;
+  private readonly discordQnaWebhookUrl: string;
   private readonly sentrySecret: string;
 
   constructor(private configService: ConfigService) {
     this.discordWebhookUrl = this.configService.get<string>(
       'DISCORD_WEBHOOK_URL',
+    );
+    this.discordQnaWebhookUrl = this.configService.get<string>(
+      'DISCORD_QNA_WEBHOOK_URL',
     );
     this.sentrySecret = this.configService.get<string>('SENTRY_WEBHOOK_SECRET');
   }
@@ -190,5 +194,106 @@ export class WebhookService {
     await this.sendToDiscord(embed);
 
     return { message: 'Webhook 처리 완료' };
+  }
+
+  /**
+   * Q&A 새 질문 Discord 알림
+   */
+  async sendQuestionToDiscord(question: {
+    id: string;
+    title: string;
+    content: string;
+    category: string;
+    visibility: string;
+    user: {
+      name: string;
+    };
+  }) {
+    if (!this.discordQnaWebhookUrl) {
+      this.logger.warn('DISCORD_QNA_WEBHOOK_URL이 설정되지 않았습니다');
+      return;
+    }
+
+    // 카테고리 한글 매핑
+    const categoryMap = {
+      BUG: '🐛 버그',
+      FEATURE: '✨ 개선 제안',
+      USAGE: '❓ 사용법',
+      ACCOUNT: '👤 계정',
+      PAYMENT: '💳 결제',
+      ETC: '📌 기타',
+    };
+
+    // 공개/비공개 한글 매핑
+    const visibilityMap = {
+      PUBLIC: '🌐 공개',
+      PRIVATE: '🔒 비공개',
+    };
+
+    const embed = {
+      title: '📬 새로운 Q&A 질문이 등록되었습니다',
+      color: 0x5865f2, // Discord 블루
+      fields: [
+        {
+          name: '제목',
+          value: question.title,
+          inline: false,
+        },
+        {
+          name: '내용',
+          value:
+            question.content.length > 200
+              ? question.content.substring(0, 200) + '...'
+              : question.content,
+          inline: false,
+        },
+        {
+          name: '카테고리',
+          value: categoryMap[question.category] || question.category,
+          inline: true,
+        },
+        {
+          name: '공개 설정',
+          value: visibilityMap[question.visibility] || question.visibility,
+          inline: true,
+        },
+        {
+          name: '작성자',
+          value: question.user.name,
+          inline: true,
+        },
+        {
+          name: '질문 ID',
+          value: `\`${question.id}\``,
+          inline: false,
+        },
+      ],
+      timestamp: new Date().toISOString(),
+      footer: {
+        text: 'Family Planner Q&A',
+      },
+    };
+
+    try {
+      const response = await fetch(this.discordQnaWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          embeds: [embed],
+        }),
+      });
+
+      if (!response.ok) {
+        this.logger.error(
+          `Discord 전송 실패: ${response.status} ${response.statusText}`,
+        );
+      } else {
+        this.logger.log('Q&A 질문 Discord 알림 전송 성공');
+      }
+    } catch (error) {
+      this.logger.error('Q&A Discord 알림 전송 중 에러 발생', error);
+    }
   }
 }

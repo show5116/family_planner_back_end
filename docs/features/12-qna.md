@@ -21,7 +21,9 @@
 - **상태 관리**: PENDING (대기 중), ANSWERED (답변 완료), RESOLVED (해결 완료)
 - **카테고리**: BUG (버그), FEATURE (개선 제안), USAGE (사용법), ACCOUNT (계정), PAYMENT (결제), ETC (기타)
 - **첨부 파일**: 스크린샷, 로그 파일 등
-- **알림 연동**: 새 질문/답변 시 알림
+- **알림 연동**:
+  - 앱 내 알림: 새 질문 시 ADMIN에게, 답변 시 작성자에게
+  - Discord 웹훅: Q&A 전용 채널로 실시간 질문 알림
 
 ### 주요 유스케이스
 1. **버그 신고**: "앱이 자꾸 종료돼요"
@@ -59,6 +61,7 @@
 - 제목 (1~200자), 내용 (1~5000자) 필수
 - 카테고리, 공개여부, 첨부파일
 - 작성 후 모든 ADMIN에게 SYSTEM 알림
+- Discord 웹훅을 통한 실시간 알림 (Q&A 전용 채널)
 
 ### 질문 수정 (`PUT /qna/questions/:id`)
 - 본인 작성 질문만
@@ -224,6 +227,7 @@ export class QuestionVisibilityGuard implements CanActivate {
 - [x] ADMIN 전용 모든 질문 목록 조회
 - [x] ADMIN 답변 작성 시 질문 상태 자동 변경
 - [x] 알림 연동 (새 질문 시 ADMIN에게, 답변 시 작성자에게)
+- [x] Discord 웹훅 연동 (Q&A 전용 채널)
 - [x] 페이지네이션
 - [x] 검색 기능 (제목/내용/사용자명)
 - [x] 상태/카테고리 필터링
@@ -242,4 +246,59 @@ export class QuestionVisibilityGuard implements CanActivate {
 
 ---
 
+## Discord 웹훅 연동
+
+### 개요
+Q&A 질문 등록 시 Discord 전용 채널로 실시간 알림을 전송합니다. Sentry 에러 로그와는 별도의 웹훅을 사용하여 Q&A 전용 채널에 메시지를 전송합니다.
+
+### 설정 방법
+
+#### 1. Discord 웹훅 URL 생성
+1. Discord 서버 설정 > 통합 > 웹후크
+2. Q&A 전용 채널에서 웹훅 생성
+3. 웹훅 URL 복사
+
+#### 2. 환경 변수 설정
+`.env` 파일에 Q&A 전용 웹훅 URL 추가:
+```env
+# Sentry 에러 로그용 웹훅 (에러 알림 채널)
+DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+
+# Q&A 질문 알림용 웹훅 (Q&A 전용 채널)
+DISCORD_QNA_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+```
+
+### 알림 내용
+
+Discord로 전송되는 정보:
+- 📬 제목: "새로운 Q&A 질문이 등록되었습니다"
+- 질문 제목
+- 질문 내용 (200자 미리보기)
+- 카테고리 (이모지 포함)
+  - 🐛 버그
+  - ✨ 개선 제안
+  - ❓ 사용법
+  - 👤 계정
+  - 💳 결제
+  - 📌 기타
+- 공개 설정 (🌐 공개 / 🔒 비공개)
+- 작성자명
+- 질문 ID
+- 타임스탬프
+
+### 구현 세부사항
+
+**파일 변경:**
+- `src/webhook/webhook.service.ts` - `sendQuestionToDiscord()` 메서드 추가
+- `src/webhook/webhook.module.ts` - WebhookService export 추가
+- `src/qna/qna.module.ts` - WebhookModule import
+- `src/qna/qna.service.ts` - 질문 생성 시 Discord 알림 호출
+
+**비동기 처리:**
+- Discord 웹훅 전송은 비동기로 처리되어 응답 시간에 영향 없음
+- 에러 발생 시 로그만 출력하고 질문 생성은 정상 진행
+
+---
+
 **구현 완료**: 2025-12-29
+**Discord 웹훅 추가**: 2026-01-13

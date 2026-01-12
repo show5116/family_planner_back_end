@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
+import { WebhookService } from '@/webhook/webhook.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
@@ -20,6 +21,7 @@ export class QnaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
+    private readonly webhookService: WebhookService,
   ) {}
 
   /**
@@ -197,7 +199,7 @@ export class QnaService {
   }
 
   /**
-   * 질문 작성 + ADMIN에게 알림 발송
+   * 질문 작성 + ADMIN에게 알림 발송 + Discord 웹훅
    */
   async create(userId: string, dto: CreateQuestionDto) {
     const question = await this.prisma.question.create({
@@ -220,6 +222,20 @@ export class QnaService {
     this.sendQuestionNotificationToAdmins(question).catch((err) => {
       console.error('질문 알림 발송 실패:', err);
     });
+
+    // Discord 웹훅 발송 (비동기)
+    this.webhookService
+      .sendQuestionToDiscord({
+        id: question.id,
+        title: question.title,
+        content: question.content,
+        category: question.category,
+        visibility: question.visibility,
+        user: question.user,
+      })
+      .catch((err) => {
+        console.error('Discord 웹훅 발송 실패:', err);
+      });
 
     return question;
   }
