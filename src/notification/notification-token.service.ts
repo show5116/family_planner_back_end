@@ -9,6 +9,7 @@ import { FirebaseService } from '@/firebase/firebase.service';
 import { RedisService } from '@/redis/redis.service';
 import { RegisterTokenDto } from './dto/register-token.dto';
 import { NotificationCategory } from './enums/notification-category.enum';
+import { FcmTopic } from './enums/fcm-topic.enum';
 
 /**
  * 알림 토큰 관리 서비스
@@ -182,7 +183,7 @@ export class NotificationTokenService {
 
   /**
    * 사용자의 토큰을 활성화된 알림 카테고리 Topic에 구독
-   * SYSTEM 알림이 활성화된 경우 'announcements' Topic 구독
+   * SYSTEM 알림이 활성화된 경우 announcements Topic 구독
    *
    * @param userId - 사용자 ID
    * @param tokens - 디바이스 토큰 배열
@@ -194,16 +195,19 @@ export class NotificationTokenService {
         where: { userId },
       });
 
-      // SYSTEM 알림이 활성화된 경우 'announcements' Topic 구독
+      // SYSTEM 알림이 활성화된 경우 announcements Topic 구독
       const systemSetting = settings.find(
         (s) => s.category === (NotificationCategory.SYSTEM as any),
       );
 
       if (!systemSetting || systemSetting.enabled) {
         // 기본값 또는 명시적으로 활성화된 경우
-        await this.firebaseService.subscribeToTopic(tokens, 'announcements');
+        await this.firebaseService.subscribeToTopic(
+          tokens,
+          FcmTopic.ANNOUNCEMENTS,
+        );
         this.logger.log(
-          `User ${userId} subscribed to 'announcements' topic (${tokens.length} tokens)`,
+          `User ${userId} subscribed to '${FcmTopic.ANNOUNCEMENTS}' topic (${tokens.length} tokens)`,
         );
       }
     } catch (error) {
@@ -223,9 +227,12 @@ export class NotificationTokenService {
   async unsubscribeUserFromTopics(userId: string, tokens: string[]) {
     try {
       // 모든 Topic에서 구독 해제
-      await this.firebaseService.unsubscribeFromTopic(tokens, 'announcements');
+      await this.firebaseService.unsubscribeFromTopic(
+        tokens,
+        FcmTopic.ANNOUNCEMENTS,
+      );
       this.logger.log(
-        `User ${userId} unsubscribed from 'announcements' topic (${tokens.length} tokens)`,
+        `User ${userId} unsubscribed from '${FcmTopic.ANNOUNCEMENTS}' topic (${tokens.length} tokens)`,
       );
     } catch (error) {
       this.logger.error(

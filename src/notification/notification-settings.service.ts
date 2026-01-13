@@ -3,6 +3,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { FirebaseService } from '@/firebase/firebase.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { NotificationCategory } from './enums/notification-category.enum';
+import { FcmTopic } from './enums/fcm-topic.enum';
 
 /**
  * 알림 설정 관리 서비스
@@ -86,19 +87,19 @@ export class NotificationSettingsService {
         if (dto.enabled) {
           // 알림 활성화 → Topic 구독 (비동기 - 실패해도 서비스 정상 동작)
           this.firebaseService
-            .subscribeToTopic(tokens, 'announcements')
+            .subscribeToTopic(tokens, FcmTopic.ANNOUNCEMENTS)
             .catch((err) => {
               this.logger.error(
-                `Background task failed - subscribe user ${userId} to announcements topic: ${err.message}`,
+                `Background task failed - subscribe user ${userId} to ${FcmTopic.ANNOUNCEMENTS} topic: ${err.message}`,
               );
             });
         } else {
           // 알림 비활성화 → Topic 구독 해제 (비동기 - 실패해도 서비스 정상 동작)
           this.firebaseService
-            .unsubscribeFromTopic(tokens, 'announcements')
+            .unsubscribeFromTopic(tokens, FcmTopic.ANNOUNCEMENTS)
             .catch((err) => {
               this.logger.error(
-                `Background task failed - unsubscribe user ${userId} from announcements topic: ${err.message}`,
+                `Background task failed - unsubscribe user ${userId} from ${FcmTopic.ANNOUNCEMENTS} topic: ${err.message}`,
               );
             });
         }

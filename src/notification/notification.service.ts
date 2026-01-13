@@ -3,7 +3,6 @@ import {
   Logger,
   NotFoundException,
   ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { FirebaseService } from '@/firebase/firebase.service';
@@ -14,10 +13,7 @@ import { QueryNotificationsDto } from './dto/query-notifications.dto';
 import { NotificationCategory } from './enums/notification-category.enum';
 import { NotificationTokenService } from './notification-token.service';
 import { NotificationQueueService } from './notification-queue.service';
-import {
-  getTopicNameByCategory,
-  isTopicCategory,
-} from './notification-topic.config';
+import { FcmTopic } from './enums/fcm-topic.enum';
 
 /**
  * 알림 발송 관리 서비스
@@ -340,7 +336,7 @@ export class NotificationService {
   }
 
   /**
-   * FCM Topic 알림 전송 (공지사항 등)
+   * 공지사항 알림 전송 (FCM Topic 사용)
    *
    * ⚠️ 비즈니스 정책: Topic 알림은 DB에 저장하지 않음 (휘발성)
    *
@@ -359,77 +355,40 @@ export class NotificationService {
    * - 앱 내 알림함: 개인 알림만 표시
    * - 게시판 메뉴: 별도 화면에서 목록 제공
    *
-   * @param category - 알림 카테고리 (Topic 매핑용)
-   * @param title - 알림 제목
-   * @param body - 알림 본문
-   * @param data - 추가 데이터 (payload)
-   */
-  async sendTopicNotification(
-    category: NotificationCategory,
-    title: string,
-    body: string,
-    data?: Record<string, string>,
-  ) {
-    // 1. Category가 Topic 발송용인지 확인
-    if (!isTopicCategory(category)) {
-      throw new BadRequestException(
-        `Category ${category} is not configured for topic notifications`,
-      );
-    }
-
-    // 2. Topic 이름 조회
-    const topicName = getTopicNameByCategory(category);
-    if (!topicName) {
-      throw new BadRequestException(
-        `No topic configured for category ${category}`,
-      );
-    }
-
-    try {
-      // 3. Topic으로 알림 전송 (10만 명이든 100만 명이든 단일 API 호출)
-      const response = await this.firebaseService.sendToTopic(
-        topicName,
-        { title, body },
-        data,
-      );
-
-      this.logger.log(
-        `Topic notification sent to '${topicName}' (category: ${category}): ${response}`,
-      );
-
-      return {
-        sent: true,
-        messageId: response,
-        topic: topicName,
-        category,
-      };
-    } catch (error) {
-      this.logger.error(
-        `Failed to send topic notification to '${topicName}': ${error.message}`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * 공지사항 알림 전송 (FCM Topic 사용)
-   * @deprecated sendTopicNotification() 사용 권장
-   *
-   * @param announcement - 공지사항 객체
+   * @param announcement - 공지사항 객체 (id, title)
    */
   async sendAnnouncementNotification(announcement: {
     id: string;
     title: string;
   }) {
-    return this.sendTopicNotification(
-      NotificationCategory.ANNOUNCEMENT,
-      '새 공지사항',
-      announcement.title,
-      {
-        announcementId: announcement.id,
-        action: 'view_announcement',
-      },
-    );
+    try {
+      const response = await this.firebaseService.sendToTopic(
+        FcmTopic.ANNOUNCEMENTS,
+        {
+          title: '새 공지사항',
+          body: announcement.title,
+        },
+        {
+          announcementId: announcement.id,
+          action: 'view_announcement',
+        },
+      );
+
+      this.logger.log(
+        `Announcement notification sent to '${FcmTopic.ANNOUNCEMENTS}' topic: ${response}`,
+      );
+
+      return {
+        sent: true,
+        messageId: response,
+        topic: FcmTopic.ANNOUNCEMENTS,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to send announcement notification: ${error.message}`,
+        error,
+      );
+      throw error;
+    }
   }
 }
