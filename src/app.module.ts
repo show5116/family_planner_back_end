@@ -2,6 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// dayjs 플러그인 활성화
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -78,10 +85,15 @@ import { WebhookModule } from '@/webhook/webhook.module';
                     options: {
                       colorize: true,
                       singleLine: true,
-                      translateTime: 'yyyy-mm-dd HH:MM:ss',
+                      translateTime: 'SYS:yyyy-mm-dd HH:MM:ss',
                       ignore: 'pid,hostname',
                     },
                   }),
+            // Pino 기본 타임스탬프를 한국 시간으로 변환 (dayjs 사용)
+            timestamp: () => {
+              const kstTime = dayjs().tz('Asia/Seoul').format();
+              return `,"time":"${kstTime}"`;
+            },
             customProps: () => ({
               context: 'HTTP',
             }),

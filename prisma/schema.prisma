@@ -183,24 +183,27 @@ model Notification {
 }
 
 model Announcement {
-  id          String               @id @default(uuid())
-  authorId    String
-  title       String               @db.VarChar(200)
-  content     String               @db.Text
-  isPinned    Boolean              @default(false)
-  attachments Json?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  deletedAt   DateTime?
-  category    AnnouncementCategory
-  viewCount   Int                  @default(0)
-  reads       AnnouncementRead[]
-  author      User                 @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  id                      String               @id @default(uuid())
+  authorId                String
+  title                   String               @db.VarChar(200)
+  content                 String               @db.Text
+  isPinned                Boolean              @default(false)
+  attachments             Json?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  deletedAt               DateTime?
+  category                AnnouncementCategory
+  viewCount               Int                  @default(0)
+  scheduledNotificationAt DateTime?
+  notificationSentAt      DateTime?
+  reads                   AnnouncementRead[]
+  author                  User                 @relation("AnnouncementAuthor", fields: [authorId], references: [id])
 
   @@index([isPinned, createdAt(sort: Desc)])
   @@index([category])
   @@index([createdAt(sort: Desc)])
   @@index([authorId])
+  @@index([scheduledNotificationAt])
   @@map("announcements")
 }
 

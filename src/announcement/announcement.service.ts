@@ -5,6 +5,13 @@ import { RedisService } from '@/redis/redis.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 import { AnnouncementQueryDto } from './dto/announcement-query.dto';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// dayjs 플러그인 활성화
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class AnnouncementService {
@@ -186,9 +193,50 @@ export class AnnouncementService {
   }
 
   /**
-   * 공지사항 작성 + 전체 알림 발송 + 캐시 무효화
+   * 현재 시간이 조용한 시간대(저녁 6시 ~ 오전 9시)인지 확인
+   * 한국 시간 기준 (Asia/Seoul)
+   *
+   * @returns 조용한 시간대이면 true
+   */
+  private isQuietHours(): boolean {
+    const kstHour = dayjs().tz('Asia/Seoul').hour();
+
+    // 저녁 6시(18시) ~ 오전 9시 사이
+    return kstHour >= 18 || kstHour < 9;
+  }
+
+  /**
+   * 다음 오전 9시(KST) 시간 계산
+   *
+   * @returns 다음 오전 9시(KST)의 Date 객체 (UTC로 저장)
+   *
+   * 예시:
+   * - 현재 KST 08:00 → 오늘 09:00 (1시간 후)
+   * - 현재 KST 10:00 → 내일 09:00 (23시간 후)
+   * - 현재 KST 23:00 → 내일 09:00 (10시간 후)
+   */
+  private getNextMorningNine(): Date {
+    const now = dayjs().tz('Asia/Seoul');
+    let nextMorning = now.hour(9).minute(0).second(0).millisecond(0);
+
+    // 현재 시간이 이미 오전 9시 이후라면 다음날 오전 9시
+    if (now.hour() >= 9) {
+      nextMorning = nextMorning.add(1, 'day');
+    }
+
+    // UTC Date 객체로 변환하여 반환
+    return nextMorning.toDate();
+  }
+
+  /**
+   * 공지사항 작성 + 알림 발송/예약 + 캐시 무효화
+   * 저녁 6시 ~ 오전 9시 사이 작성 시 자동으로 다음 오전 9시에 예약
    */
   async create(authorId: string, dto: CreateAnnouncementDto) {
+    // 조용한 시간대인지 확인
+    const shouldSchedule = this.isQuietHours();
+    const scheduledTime = shouldSchedule ? this.getNextMorningNine() : null;
+
     const announcement = await this.prisma.announcement.create({
       data: {
         authorId,
@@ -197,6 +245,7 @@ export class AnnouncementService {
         category: dto.category,
         isPinned: dto.isPinned,
         attachments: dto.attachments as any,
+        scheduledNotificationAt: scheduledTime,
       },
       include: {
         author: {
@@ -208,10 +257,23 @@ export class AnnouncementService {
     // 목록 캐시 무효화
     await this.redisService.invalidateAllAnnouncementListCache();
 
-    // 전체 회원에게 알림 발송 (비동기)
-    this.sendAnnouncementNotification(announcement).catch((err) => {
-      console.error('공지사항 알림 발송 실패:', err);
-    });
+    // 알림 발송 또는 예약
+    if (shouldSchedule && scheduledTime) {
+      // 예약 발송: Redis Sorted Set에 추가
+      await this.redisService.scheduleAnnouncementNotification(
+        announcement.id,
+        announcement.title,
+        scheduledTime,
+      );
+      console.log(
+        `공지사항 알림 예약 완료: ${announcement.id} (발송 시간: ${scheduledTime.toISOString()})`,
+      );
+    } else {
+      // 즉시 발송: 전체 회원에게 알림 발송 (비동기)
+      this.sendAnnouncementNotification(announcement).catch((err) => {
+        console.error('공지사항 알림 발송 실패:', err);
+      });
+    }
 
     return announcement;
   }

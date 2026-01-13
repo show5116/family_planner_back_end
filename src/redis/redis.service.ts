@@ -749,4 +749,110 @@ export class RedisService implements OnModuleInit {
   async getWaitingRoomSize(): Promise<number> {
     return await this.redisClient.zcard(this.WAITING_ROOM_KEY);
   }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * 6. Scheduled Announcement Notifications (공지사항 예약 알림)
+   * ───────────────────────────────────────────────────────────────────────── */
+
+  /**
+   * 예약 알림 Sorted Set Key
+   * score = 발송 예정 timestamp (초 단위)
+   */
+  private readonly SCHEDULED_NOTIFICATIONS_KEY =
+    'announcement:scheduled:notifications';
+
+  /**
+   * 예약 알림 추가 (Redis Sorted Set)
+   *
+   * @param announcementId - 공지사항 ID
+   * @param title - 공지사항 제목
+   * @param scheduledTime - 발송 예정 시간
+   * @param retryCount - 재시도 횟수 (기본 0)
+   */
+  async scheduleAnnouncementNotification(
+    announcementId: string,
+    title: string,
+    scheduledTime: Date,
+    retryCount: number = 0,
+  ): Promise<void> {
+    const data = JSON.stringify({ announcementId, title, retryCount });
+    const score = Math.floor(scheduledTime.getTime() / 1000); // Unix timestamp (초)
+
+    // ZADD: Sorted Set에 추가 (O(log N))
+    await this.redisClient.zadd(this.SCHEDULED_NOTIFICATIONS_KEY, score, data);
+  }
+
+  /**
+   * 발송 시간이 된 예약 알림 조회 및 제거 (Pop 방식)
+   *
+   * @param currentTimestamp - 현재 Unix timestamp (초 단위)
+   * @param batchSize - 한 번에 처리할 최대 건수
+   * @returns 발송할 알림 목록 (retryCount 포함)
+   */
+  async popReadyScheduledNotifications(
+    currentTimestamp: number,
+    batchSize: number = 100,
+  ): Promise<
+    Array<{ announcementId: string; title: string; retryCount: number }>
+  > {
+    // ZRANGEBYSCORE: score가 현재 시간 이하인 항목들 조회 (O(log N + M))
+    const items = await this.redisClient.zrangebyscore(
+      this.SCHEDULED_NOTIFICATIONS_KEY,
+      '-inf',
+      currentTimestamp.toString(),
+      'LIMIT',
+      0,
+      batchSize,
+    );
+
+    if (items.length === 0) {
+      return [];
+    }
+
+    // 조회한 항목들을 개별 제거 (ZREM) - 원자적 처리
+    await this.redisClient.zrem(this.SCHEDULED_NOTIFICATIONS_KEY, ...items);
+
+    return items.map((item) => {
+      const parsed = JSON.parse(item);
+      return {
+        announcementId: parsed.announcementId,
+        title: parsed.title,
+        retryCount: parsed.retryCount || 0, // 기본값 0
+      };
+    });
+  }
+
+  /**
+   * 특정 공지사항의 예약 알림 취소
+   *
+   * @param announcementId - 공지사항 ID
+   */
+  async cancelScheduledNotification(announcementId: string): Promise<void> {
+    // ZSCAN으로 전체 조회 후 해당 announcementId 삭제
+    // 프로덕션에서는 별도 인덱스 고려 필요
+    const allItems = await this.redisClient.zrange(
+      this.SCHEDULED_NOTIFICATIONS_KEY,
+      0,
+      -1,
+    );
+
+    const toRemove = allItems.filter((item) => {
+      const parsed = JSON.parse(item);
+      return parsed.announcementId === announcementId;
+    });
+
+    if (toRemove.length > 0) {
+      await this.redisClient.zrem(
+        this.SCHEDULED_NOTIFICATIONS_KEY,
+        ...toRemove,
+      );
+    }
+  }
+
+  /**
+   * 예약 알림 개수 조회
+   */
+  async getScheduledNotificationCount(): Promise<number> {
+    return await this.redisClient.zcard(this.SCHEDULED_NOTIFICATIONS_KEY);
+  }
 }

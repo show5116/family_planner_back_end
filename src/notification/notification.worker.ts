@@ -1,8 +1,8 @@
 import {
   Injectable,
-  Logger,
   OnModuleInit,
   OnModuleDestroy,
+  Logger,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RedisService } from '@/redis/redis.service';
