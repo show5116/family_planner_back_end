@@ -12,6 +12,9 @@
 
 **요약:** 모든 질문 목록 조회 (ADMIN 전용)
 
+**설명:**
+통합 API (/qna/questions?filter=all) 사용 권장. 이 엔드포인트는 하위 호환성을 위해 유지됩니다.
+
 **Query Parameters:**
 
 - `page` (`number`): 페이지 번호
@@ -19,7 +22,7 @@
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
 - `category` (`QuestionCategory`) (Optional): 카테고리 필터
 - `search` (`string`) (Optional): 검색어 (제목/내용)
-- `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회 여부
+- `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
 **Responses:**
 

@@ -58,10 +58,13 @@ export class QuestionQueryDto {
   search?: string;
 
   @ApiProperty({
-    description: '고정 공지만 조회 여부',
+    description:
+      '질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)',
+    enum: ['public', 'my', 'all'],
     required: false,
-    default: false,
+    default: 'public',
   })
+  @IsEnum(['public', 'my', 'all'])
   @IsOptional()
-  pinnedOnly?: boolean = false;
+  filter?: 'public' | 'my' | 'all' = 'public';
 }

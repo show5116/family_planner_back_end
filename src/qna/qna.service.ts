@@ -25,6 +25,109 @@ export class QnaService {
   ) {}
 
   /**
+   * 통합 질문 목록 조회
+   * @param userId - 사용자 ID (filter='my'일 때 필수)
+   * @param query - 쿼리 파라미터 (filter: 'public' | 'my' | 'all')
+   * @param isAdmin - ADMIN 여부 (filter='all'일 때 검증용)
+   */
+  async findQuestions(
+    userId: string | null,
+    query: QuestionQueryDto,
+    isAdmin: boolean = false,
+  ) {
+    const filter = query.filter || 'public';
+
+    // filter='all'은 ADMIN 전용
+    if (filter === 'all' && !isAdmin) {
+      throw new ForbiddenException('관리자만 모든 질문을 조회할 수 있습니다');
+    }
+
+    // filter='my'일 때 userId 필수
+    if (filter === 'my' && !userId) {
+      throw new BadRequestException('내 질문 조회는 로그인이 필요합니다');
+    }
+
+    // WHERE 조건 구성
+    const where: any = {
+      deletedAt: null,
+      ...(query.status && { status: query.status }),
+      ...(query.category && { category: query.category }),
+      ...(query.search && {
+        OR: [
+          { title: { contains: query.search } },
+          { content: { contains: query.search } },
+          ...(filter === 'all'
+            ? [{ user: { name: { contains: query.search } } }]
+            : []),
+        ],
+      }),
+    };
+
+    // 필터별 WHERE 조건 추가
+    if (filter === 'public') {
+      where.visibility = QuestionVisibility.PUBLIC;
+    } else if (filter === 'my') {
+      where.userId = userId;
+    }
+    // filter === 'all'일 때는 추가 조건 없음 (모든 질문 조회)
+
+    // SELECT 및 정렬
+    const includeUser =
+      filter === 'public' || filter === 'all'
+        ? {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                ...(filter === 'all' ? { email: true } : {}),
+              },
+            },
+          }
+        : {};
+
+    const orderBy =
+      filter === 'all'
+        ? [{ status: 'asc' as const }, { createdAt: 'desc' as const }] // PENDING 우선
+        : { createdAt: 'desc' as const };
+
+    const [questions, total] = await Promise.all([
+      this.prisma.question.findMany({
+        where,
+        include: {
+          ...includeUser,
+          answers: {
+            where: { deletedAt: null },
+            select: { id: true },
+          },
+        },
+        orderBy,
+        skip: (query.page - 1) * query.limit,
+        take: query.limit,
+      }),
+      this.prisma.question.count({ where }),
+    ]);
+
+    return {
+      data: questions.map((q) => ({
+        ...q,
+        // 공개 질문은 미리보기만
+        ...(filter === 'public' && {
+          content: q.content.substring(0, 100),
+        }),
+        answerCount: q.answers.length,
+        answers: undefined,
+      })),
+      meta: {
+        total,
+        page: query.page,
+        limit: query.limit,
+        totalPages: Math.ceil(total / query.limit),
+      },
+    };
+  }
+
+  /**
+   * @deprecated 통합 API findQuestions 사용 권장
    * 공개 질문 목록 조회 (PUBLIC만)
    */
   async findPublicQuestions(query: QuestionQueryDto) {
@@ -77,6 +180,7 @@ export class QnaService {
   }
 
   /**
+   * @deprecated 통합 API findQuestions 사용 권장
    * 내 질문 목록 조회 (공개/비공개 모두)
    */
   async findMyQuestions(userId: string, query: QuestionQueryDto) {
@@ -119,6 +223,7 @@ export class QnaService {
   }
 
   /**
+   * @deprecated 통합 API findQuestions 사용 권장
    * ADMIN용 전체 질문 목록 조회
    */
   async findAllQuestionsForAdmin(query: QuestionQueryDto) {

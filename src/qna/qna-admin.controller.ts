@@ -42,7 +42,11 @@ export class QnaAdminController {
   constructor(private readonly qnaService: QnaService) {}
 
   @Get('questions')
-  @ApiOperation({ summary: '모든 질문 목록 조회 (ADMIN 전용)' })
+  @ApiOperation({
+    summary: '모든 질문 목록 조회 (ADMIN 전용)',
+    description:
+      '통합 API (/qna/questions?filter=all) 사용 권장. 이 엔드포인트는 하위 호환성을 위해 유지됩니다.',
+  })
   @ApiSuccess(PaginatedQuestionDto, '질문 목록 조회 성공')
   findAllQuestions(@Query() query: QuestionQueryDto) {
     return this.qnaService.findAllQuestionsForAdmin(query);

@@ -40,18 +40,17 @@ import { QuestionVisibilityGuard } from './guards/question-visibility.guard';
 export class QnaController {
   constructor(private readonly qnaService: QnaService) {}
 
-  @Get('public-questions')
-  @ApiOperation({ summary: '공개 질문 목록 조회' })
-  @ApiSuccess(PaginatedQuestionDto, '공개 질문 목록 조회 성공')
-  findPublicQuestions(@Query() query: QuestionQueryDto) {
-    return this.qnaService.findPublicQuestions(query);
-  }
-
-  @Get('my-questions')
-  @ApiOperation({ summary: '내 질문 목록 조회' })
-  @ApiSuccess(PaginatedQuestionDto, '내 질문 목록 조회 성공')
-  findMyQuestions(@Request() req, @Query() query: QuestionQueryDto) {
-    return this.qnaService.findMyQuestions(req.user.userId, query);
+  @Get('questions')
+  @ApiOperation({
+    summary: '질문 목록 조회 (통합)',
+    description:
+      'filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질문), all(모든 질문-ADMIN 전용)',
+  })
+  @ApiSuccess(PaginatedQuestionDto, '질문 목록 조회 성공')
+  findQuestions(@Request() req, @Query() query: QuestionQueryDto) {
+    const userId = req.user?.userId || null;
+    const isAdmin = req.user?.isAdmin || false;
+    return this.qnaService.findQuestions(userId, query, isAdmin);
   }
 
   @Get('questions/:id')

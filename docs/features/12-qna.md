@@ -34,22 +34,38 @@
 
 ---
 
-## 공개 질문 조회
+## 질문 목록 조회 (통합 API)
 
-### 공개 질문 목록 (`GET /qna/public-questions`)
-- 모든 사용자 조회 가능 (JWT)
-- 공개(PUBLIC) 질문만 필터링
-- 페이지네이션, 상태/카테고리 필터, 검색 (제목/내용)
-- 작성자 정보 포함, 내용 미리보기 100자
+### 통합 질문 목록 (`GET /qna/questions`)
+- **filter 파라미터로 조회 범위 설정**:
+  - `public`: 공개(PUBLIC) 질문만 조회 (기본값)
+    - 모든 사용자 조회 가능
+    - 작성자 정보 포함
+    - 내용 미리보기 100자
+  - `my`: 내 질문만 조회 (공개/비공개 모두)
+    - 본인 작성 질문만 조회
+    - 전체 내용 표시
+  - `all`: 모든 질문 조회 (ADMIN 전용)
+    - 공개/비공개 모든 질문
+    - 작성자 이메일 포함
+    - PENDING 우선 정렬 → 최신순
+
+- 공통 기능:
+  - 페이지네이션 (page, limit)
+  - 상태/카테고리 필터 (status, category)
+  - 검색 (search: 제목/내용, filter=all일 때 사용자명 포함)
+  - 답변 개수 포함
+
+### 예시
+```
+GET /qna/questions?filter=public&page=1&limit=20&status=PENDING
+GET /qna/questions?filter=my&category=BUG
+GET /qna/questions?filter=all&search=로그인  // ADMIN 전용
+```
 
 ---
 
 ## 내 질문 관리
-
-### 내 질문 목록 (`GET /qna/my-questions`)
-- 본인 질문만 조회 (공개/비공개 모두)
-- 페이지네이션, 상태/카테고리 필터
-- 최신순 정렬
 
 ### 질문 상세 (`GET /qna/questions/:id`)
 - 공개 질문: 모든 사용자
@@ -80,7 +96,9 @@
 
 ## ADMIN 기능
 
-### 모든 질문 목록 (`GET /qna/admin/questions`)
+### 모든 질문 목록
+- **권장**: `GET /qna/questions?filter=all` (통합 API)
+- **레거시**: `GET /qna/admin/questions` (하위 호환성 유지)
 - ADMIN 권한 필요
 - 공개/비공개 모든 질문 조회
 - 상태별, 카테고리별 필터
@@ -161,20 +179,22 @@ model Answer {
 
 ## API 엔드포인트
 
-| Method | Endpoint                               | 설명                     | Guard              |
-| ------ | -------------------------------------- | ------------------------ | ------------------ |
-| GET    | `/qna/public-questions`                | 공개 질문 목록 조회      | JWT                |
-| GET    | `/qna/my-questions`                    | 내 질문 목록 조회        | JWT                |
-| GET    | `/qna/questions/:id`                   | 질문 상세 조회           | JWT, Visibility    |
-| POST   | `/qna/questions`                       | 질문 작성                | JWT                |
-| PUT    | `/qna/questions/:id`                   | 질문 수정                | JWT                |
-| DELETE | `/qna/questions/:id`                   | 질문 삭제                | JWT                |
-| PATCH  | `/qna/questions/:id/resolve`           | 질문 해결 완료 처리      | JWT                |
-| GET    | `/qna/admin/questions`                 | 모든 질문 목록 조회      | JWT, Admin         |
-| POST   | `/qna/questions/:questionId/answers`   | 답변 작성                | JWT, Admin         |
-| PUT    | `/qna/questions/:questionId/answers/:id` | 답변 수정              | JWT, Admin         |
-| DELETE | `/qna/questions/:questionId/answers/:id` | 답변 삭제              | JWT, Admin         |
-| GET    | `/qna/admin/statistics`                | 통계 조회                | JWT, Admin         |
+| Method | Endpoint                                 | 설명                                      | Guard              |
+| ------ | ---------------------------------------- | ----------------------------------------- | ------------------ |
+| GET    | `/qna/questions?filter={type}`           | **질문 목록 조회 (통합 API)**             | JWT                |
+|        | `filter=public`                          | - 공개 질문만 (기본값)                    |                    |
+|        | `filter=my`                              | - 내 질문만                               |                    |
+|        | `filter=all`                             | - 모든 질문 (ADMIN 전용)                  |                    |
+| GET    | `/qna/questions/:id`                     | 질문 상세 조회                            | JWT, Visibility    |
+| POST   | `/qna/questions`                         | 질문 작성                                 | JWT                |
+| PUT    | `/qna/questions/:id`                     | 질문 수정                                 | JWT                |
+| DELETE | `/qna/questions/:id`                     | 질문 삭제                                 | JWT                |
+| PATCH  | `/qna/questions/:id/resolve`             | 질문 해결 완료 처리                       | JWT                |
+| GET    | `/qna/admin/questions`                   | ~~모든 질문 목록 조회~~ (deprecated)      | JWT, Admin         |
+| POST   | `/qna/questions/:questionId/answers`     | 답변 작성                                 | JWT, Admin         |
+| PUT    | `/qna/questions/:questionId/answers/:id` | 답변 수정                                 | JWT, Admin         |
+| DELETE | `/qna/questions/:questionId/answers/:id` | 답변 삭제                                 | JWT, Admin         |
+| GET    | `/qna/admin/statistics`                  | 통계 조회                                 | JWT, Admin         |
 
 ---
 

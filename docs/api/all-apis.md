@@ -1912,6 +1912,35 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ---
 
+### POST `notifications/schedule`
+
+**요약:** 예약 알림 전송 (특정 시간에 발송)
+
+**Request Body:**
+
+```json
+{
+  "userId": "550e8400-e29b-41d4-a716-446655440000", // 알림 받을 사용자 ID (string)
+  "category": null, // 알림 카테고리 (NotificationCategory)
+  "title": "할 일 알림", // 알림 제목 (string)
+  "body": "30분 후 회의 시작", // 알림 내용 (string)
+  "scheduledTime": "2026-01-11T15:30:00Z", // 발송 예정 시간 (ISO 8601 형식) (string)
+  "data": { "taskId": "123", "action": "view_task" } // 추가 데이터 (화면 이동용 payload 등) (Record<string, any>?)
+}
+```
+
+**Responses:**
+
+#### 201 - 예약 알림 등록 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+---
+
 ## permissions
 
 **Base Path:** `/permissions`
@@ -2179,6 +2208,9 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **요약:** 모든 질문 목록 조회 (ADMIN 전용)
 
+**설명:**
+통합 API (/qna/questions?filter=all) 사용 권장. 이 엔드포인트는 하위 호환성을 위해 유지됩니다.
+
 **Query Parameters:**
 
 - `page` (`number`): 페이지 번호
@@ -2186,7 +2218,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
 - `category` (`QuestionCategory`) (Optional): 카테고리 필터
 - `search` (`string`) (Optional): 검색어 (제목/내용)
-- `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회 여부
+- `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
 **Responses:**
 
@@ -2366,51 +2398,12 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Base Path:** `/qna`
 
-### GET `qna/public-questions`
+### GET `qna/questions`
 
-**요약:** 공개 질문 목록 조회
+**요약:** 질문 목록 조회 (통합)
 
-**Query Parameters:**
-
-- `page` (`number`): 페이지 번호
-- `limit` (`number`): 페이지 크기
-- `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
-- `category` (`QuestionCategory`) (Optional): 카테고리 필터
-- `search` (`string`) (Optional): 검색어 (제목/내용)
-- `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회 여부
-
-**Responses:**
-
-#### 200 - 공개 질문 목록 조회 성공
-
-```json
-{
-  "data": [
-    {
-      "id": "uuid", // 질문 ID (string)
-      "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
-      "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
-      "category": null, // 카테고리 (QuestionCategory)
-      "status": null, // 질문 상태 (QuestionStatus)
-      "visibility": null, // 공개 여부 (QuestionVisibility)
-      "answerCount": 1, // 답변 수 (number)
-      "user": {
-        "id": "uuid",
-        "name": "홍길동"
-      }, // 작성자 정보 (QuestionUserDto)
-      "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
-      "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
-    }
-  ], // 질문 목록 (QuestionListDto[])
-  "meta": { "total": 100, "page": 1, "limit": 20, "totalPages": 5 } // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
-}
-```
-
----
-
-### GET `qna/my-questions`
-
-**요약:** 내 질문 목록 조회
+**설명:**
+filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질문), all(모든 질문-ADMIN 전용)
 
 **Query Parameters:**
 
@@ -2419,11 +2412,11 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
 - `category` (`QuestionCategory`) (Optional): 카테고리 필터
 - `search` (`string`) (Optional): 검색어 (제목/내용)
-- `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회 여부
+- `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
 **Responses:**
 
-#### 200 - 내 질문 목록 조회 성공
+#### 200 - 질문 목록 조회 성공
 
 ```json
 {
@@ -3518,5 +3511,25 @@ R2에 파일이 존재하는지 확인합니다.
 #### 404 - 반복 규칙을 찾을 수 없음
 
 #### 403 - 본인 작성 반복 규칙만 건너뛰기 가능
+
+---
+
+## Webhook
+
+**Base Path:** `/webhook`
+
+### POST `webhook/sentry`
+
+**요약:** Sentry Webhook 수신
+
+**Responses:**
+
+#### 200 - Webhook 처리 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
 
 ---

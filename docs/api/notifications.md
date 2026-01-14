@@ -235,3 +235,32 @@
 #### 403 - 운영자 권한 필요
 
 ---
+
+### POST `notifications/schedule`
+
+**요약:** 예약 알림 전송 (특정 시간에 발송)
+
+**Request Body:**
+
+```json
+{
+  "userId": "550e8400-e29b-41d4-a716-446655440000", // 알림 받을 사용자 ID (string)
+  "category": null, // 알림 카테고리 (NotificationCategory)
+  "title": "할 일 알림", // 알림 제목 (string)
+  "body": "30분 후 회의 시작", // 알림 내용 (string)
+  "scheduledTime": "2026-01-11T15:30:00Z", // 발송 예정 시간 (ISO 8601 형식) (string)
+  "data": { "taskId": "123", "action": "view_task" } // 추가 데이터 (화면 이동용 payload 등) (Record<string, any>?)
+}
+```
+
+**Responses:**
+
+#### 201 - 예약 알림 등록 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+---
