@@ -311,46 +311,6 @@ describe('QnaService', () => {
     });
   });
 
-  describe('resolve', () => {
-    it('PENDING 상태에서는 해결 불가', async () => {
-      const questionId = 'q-1';
-      const userId = 'user-1';
-      const mockQuestion = {
-        id: questionId,
-        userId,
-        status: QuestionStatus.PENDING,
-        deletedAt: null,
-      };
-
-      mockPrismaService.question.findFirst.mockResolvedValue(mockQuestion);
-
-      await expect(service.resolve(questionId, userId)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('ANSWERED 상태에서 RESOLVED로 변경 성공', async () => {
-      const questionId = 'q-1';
-      const userId = 'user-1';
-      const mockQuestion = {
-        id: questionId,
-        userId,
-        status: QuestionStatus.ANSWERED,
-        deletedAt: null,
-      };
-
-      mockPrismaService.question.findFirst.mockResolvedValue(mockQuestion);
-      mockPrismaService.question.update.mockResolvedValue({
-        ...mockQuestion,
-        status: QuestionStatus.RESOLVED,
-      });
-
-      const result = await service.resolve(questionId, userId);
-
-      expect(result.status).toBe(QuestionStatus.RESOLVED);
-    });
-  });
-
   describe('createAnswer', () => {
     it('답변 작성 시 질문 상태가 ANSWERED로 변경', async () => {
       const questionId = 'q-1';
@@ -439,8 +399,7 @@ describe('QnaService', () => {
       mockPrismaService.question.count
         .mockResolvedValueOnce(10) // totalQuestions
         .mockResolvedValueOnce(3) // pendingCount
-        .mockResolvedValueOnce(5) // answeredCount
-        .mockResolvedValueOnce(2); // resolvedCount
+        .mockResolvedValueOnce(5); // answeredCount
       mockPrismaService.question.groupBy.mockResolvedValue(mockCategoryStats);
       mockPrismaService.question.findMany.mockResolvedValue(
         mockRecentQuestions,
@@ -451,7 +410,6 @@ describe('QnaService', () => {
       expect(result.totalQuestions).toBe(10);
       expect(result.statusStats.pending).toBe(3);
       expect(result.statusStats.answered).toBe(5);
-      expect(result.statusStats.resolved).toBe(2);
       expect(result.categoryStats).toHaveLength(2);
       expect(result.recentQuestions).toHaveLength(1);
     });

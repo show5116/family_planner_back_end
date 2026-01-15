@@ -18,7 +18,7 @@
 - **공개/비공개**: 질문 작성 시 설정 가능
   - **공개**: 모든 사용자 조회 가능 (작성자명 표시)
   - **비공개**: 작성자와 ADMIN만 조회 가능
-- **상태 관리**: PENDING (대기 중), ANSWERED (답변 완료), RESOLVED (해결 완료)
+- **상태 관리**: PENDING (대기 중), ANSWERED (답변 완료)
 - **카테고리**: BUG (버그), FEATURE (개선 제안), USAGE (사용법), ACCOUNT (계정), PAYMENT (결제), ETC (기타)
 - **첨부 파일**: 스크린샷, 로그 파일 등
 - **알림 연동**:
@@ -81,16 +81,11 @@ GET /qna/questions?filter=all&search=로그인  // ADMIN 전용
 
 ### 질문 수정 (`PUT /qna/questions/:id`)
 - 본인 작성 질문만
-- ANSWERED 또는 RESOLVED 상태에서는 수정 불가
+- ANSWERED 상태에서는 수정 불가
 
 ### 질문 삭제 (`DELETE /qna/questions/:id`)
 - 본인 작성 질문만
 - Soft Delete, 답변 데이터 유지
-
-### 질문 해결 완료 (`PATCH /qna/questions/:id/resolve`)
-- 본인 작성 질문만
-- status를 RESOLVED로 변경
-- PENDING 상태에서는 해결 불가 (답변 필요)
 
 ---
 
@@ -151,7 +146,7 @@ enum QuestionCategory {
 }
 
 enum QuestionStatus {
-  PENDING, ANSWERED, RESOLVED
+  PENDING, ANSWERED
 }
 
 enum QuestionVisibility {
@@ -189,7 +184,6 @@ model Answer {
 | POST   | `/qna/questions`                         | 질문 작성                                 | JWT                |
 | PUT    | `/qna/questions/:id`                     | 질문 수정                                 | JWT                |
 | DELETE | `/qna/questions/:id`                     | 질문 삭제                                 | JWT                |
-| PATCH  | `/qna/questions/:id/resolve`             | 질문 해결 완료 처리                       | JWT                |
 | GET    | `/qna/admin/questions`                   | ~~모든 질문 목록 조회~~ (deprecated)      | JWT, Admin         |
 | POST   | `/qna/questions/:questionId/answers`     | 답변 작성                                 | JWT, Admin         |
 | PUT    | `/qna/questions/:questionId/answers/:id` | 답변 수정                                 | JWT, Admin         |
@@ -238,12 +232,10 @@ export class QuestionVisibilityGuard implements CanActivate {
 - [x] 답변 CRUD (생성, 수정, 삭제)
 - [x] 공개/비공개 질문 설정
 - [x] 카테고리 시스템 (BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC)
-- [x] 상태 관리 (PENDING, ANSWERED, RESOLVED)
+- [x] 상태 관리 (PENDING, ANSWERED)
 - [x] QuestionVisibilityGuard (공개/비공개 접근 제어)
-- [x] 공개 질문 목록 조회 (모든 사용자)
-- [x] 내 질문 목록 조회
+- [x] 질문 목록 조회 (통합 API: filter 파라미터)
 - [x] 질문 상세 조회 (답변 포함)
-- [x] 질문 해결 완료 처리
 - [x] ADMIN 전용 모든 질문 목록 조회
 - [x] ADMIN 답변 작성 시 질문 상태 자동 변경
 - [x] 알림 연동 (새 질문 시 ADMIN에게, 답변 시 작성자에게)

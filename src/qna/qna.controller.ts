@@ -4,7 +4,6 @@ import {
   Post,
   Put,
   Delete,
-  Patch,
   Body,
   Param,
   Query,
@@ -87,13 +86,5 @@ export class QnaController {
   @ApiNotFound('질문을 찾을 수 없습니다')
   remove(@Param('id') id: string, @Request() req) {
     return this.qnaService.remove(id, req.user.userId);
-  }
-
-  @Patch('questions/:id/resolve')
-  @ApiOperation({ summary: '질문 해결 완료 처리 (본인만, ANSWERED 상태만)' })
-  @ApiSuccess(QuestionDetailDto, '질문 해결 완료 처리 성공')
-  @ApiNotFound('질문을 찾을 수 없습니다')
-  resolve(@Param('id') id: string, @Request() req) {
-    return this.qnaService.resolve(id, req.user.userId);
   }
 }

@@ -361,15 +361,9 @@ export class QnaService {
       throw new ForbiddenException('본인 작성 질문만 수정할 수 있습니다');
     }
 
-    if (
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-      question.status === QuestionStatus.ANSWERED ||
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-      question.status === QuestionStatus.RESOLVED
-    ) {
-      throw new BadRequestException(
-        '답변 완료 또는 해결 완료된 질문은 수정할 수 없습니다',
-      );
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (question.status === QuestionStatus.ANSWERED) {
+      throw new BadRequestException('답변 완료된 질문은 수정할 수 없습니다');
     }
 
     return this.prisma.question.update({
@@ -403,35 +397,6 @@ export class QnaService {
     await this.prisma.question.update({
       where: { id },
       data: { deletedAt: new Date() },
-    });
-  }
-
-  /**
-   * 질문 해결 완료 처리 (본인만, PENDING 상태에서는 불가)
-   */
-  async resolve(id: string, userId: string) {
-    const question = await this.prisma.question.findFirst({
-      where: { id, deletedAt: null },
-    });
-
-    if (!question) {
-      throw new NotFoundException('질문을 찾을 수 없습니다');
-    }
-
-    if (question.userId !== userId) {
-      throw new ForbiddenException('본인 작성 질문만 해결 처리할 수 있습니다');
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-    if (question.status === QuestionStatus.PENDING) {
-      throw new BadRequestException(
-        '답변이 등록되지 않은 질문은 해결할 수 없습니다',
-      );
-    }
-
-    return this.prisma.question.update({
-      where: { id },
-      data: { status: QuestionStatus.RESOLVED },
     });
   }
 
@@ -532,7 +497,6 @@ export class QnaService {
       totalQuestions,
       pendingCount,
       answeredCount,
-      resolvedCount,
       categoryStats,
       recentQuestions,
     ] = await Promise.all([
@@ -542,9 +506,6 @@ export class QnaService {
       }),
       this.prisma.question.count({
         where: { deletedAt: null, status: QuestionStatus.ANSWERED },
-      }),
-      this.prisma.question.count({
-        where: { deletedAt: null, status: QuestionStatus.RESOLVED },
       }),
       this.prisma.question.groupBy({
         by: ['category'],
@@ -568,7 +529,6 @@ export class QnaService {
       statusStats: {
         pending: pendingCount,
         answered: answeredCount,
-        resolved: resolvedCount,
       },
       categoryStats: categoryStats.map((c) => ({
         category: c.category,
