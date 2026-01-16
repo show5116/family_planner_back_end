@@ -8,6 +8,27 @@
 
 **Base Path:** `/storage`
 
+### POST `storage/editor-upload`
+
+**요약:** 에디터 이미지 업로드
+
+**Query Parameters:**
+
+- `type` (`'qna' | 'announcements'`)
+
+**Responses:**
+
+#### 201 - 이미지 업로드 성공
+
+```json
+{
+  "key": "qna/550e8400-e29b-41d4-a716-446655440000.jpg", // 파일 키 (R2 스토리지 경로) (string)
+  "url": "https://files.example.com/qna/550e8400-e29b-41d4-a716-446655440000.jpg" // 파일 URL (string)
+}
+```
+
+---
+
 ### POST `storage/upload`
 
 **요약:** 파일 업로드

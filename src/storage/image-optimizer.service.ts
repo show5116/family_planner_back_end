@@ -64,6 +64,32 @@ export class ImageOptimizerService {
   }
 
   /**
+   * 에디터 이미지 최적화 (최대 1200px 너비, JPEG, 품질 85%)
+   */
+  async optimizeEditorImage(buffer: Buffer): Promise<Buffer> {
+    try {
+      const optimized = await sharp(buffer)
+        .rotate() // EXIF 방향 정보에 따라 자동 회전 (모바일 사진 회전 문제 해결)
+        .flatten({ background: { r: 255, g: 255, b: 255 } }) // PNG 투명 배경을 흰색으로 채움
+        .resize(1200, undefined, {
+          fit: 'inside',
+          withoutEnlargement: true, // 1200px 이하면 원본 크기 유지
+        })
+        .toFormat('jpeg', { quality: 85 })
+        .toBuffer();
+
+      this.logger.log(
+        `Editor image optimized: ${buffer.length} bytes -> ${optimized.length} bytes (${Math.round((1 - optimized.length / buffer.length) * 100)}% reduction)`,
+      );
+
+      return optimized;
+    } catch (error) {
+      this.logger.error(`Failed to optimize editor image: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * 이미지 메타데이터 추출
    * @param buffer - 이미지 버퍼
    * @returns 이미지 메타데이터

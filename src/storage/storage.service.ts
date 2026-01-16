@@ -1,4 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  HttpException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -128,6 +133,56 @@ export class StorageService {
         `Failed to upload image: ${error.message}`,
         error.stack,
       );
+      throw error;
+    }
+  }
+
+  /**
+   * 에디터 이미지 업로드 (최대 1200px 너비, JPEG, 품질 85%)
+   */
+  async uploadEditorImage(
+    file: Express.Multer.File,
+    folder: 'qna' | 'announcements',
+  ): Promise<{ key: string; url: string }> {
+    try {
+      // 이미지 유효성 검증
+      const isValid = await this.imageOptimizer.validateImage(file.buffer);
+      if (!isValid) {
+        throw new BadRequestException('유효하지 않은 이미지 파일입니다');
+      }
+
+      // 에디터용 이미지 최적화
+      const optimizedBuffer = await this.imageOptimizer.optimizeEditorImage(
+        file.buffer,
+      );
+
+      // 파일명 생성: UUID + .jpg
+      const key = `${folder}/${randomUUID()}.jpg`;
+
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: optimizedBuffer,
+          ContentType: 'image/jpeg',
+          CacheControl: 'public, max-age=31536000, immutable', // 1년 캐싱 (파일명이 UUID이므로 immutable)
+        }),
+      );
+
+      const url = this.getPublicUrl(key);
+      this.logger.log(`Editor image uploaded: ${key}`);
+
+      return { key, url };
+    } catch (error) {
+      // 클라이언트 에러(4xx)는 warn, 서버 에러(5xx)는 error로 구분
+      if (error instanceof HttpException) {
+        this.logger.warn(`Editor image upload rejected: ${error.message}`);
+      } else {
+        this.logger.error(
+          `Failed to upload editor image: ${error.message}`,
+          error.stack,
+        );
+      }
       throw error;
     }
   }

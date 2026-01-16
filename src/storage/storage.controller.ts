@@ -3,7 +3,6 @@ import {
   Post,
   Get,
   Delete,
-  Param,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -18,16 +17,67 @@ import {
   ApiConsumes,
   ApiBody,
   ApiBearerAuth,
-  ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
 import { StorageService } from '@/storage/storage.service';
+import { FileUploadResponseDto } from '@/storage/dto/storage-response.dto';
+import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
+import {
+  ApiCreated,
+  ApiBadRequest,
+} from '@/common/decorators/api-responses.decorator';
 
+/**
+ * 스토리지 컨트롤러
+ * 파일 업로드, 다운로드, 삭제 API
+ */
 @ApiTags('Storage')
 @ApiBearerAuth()
+@ApiCommonAuthResponses()
 @Controller('storage')
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
+
+  @Post('editor-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: '에디터 이미지 업로드' })
+  @ApiConsumes('multipart/form-data')
+  @ApiQuery({
+    name: 'type',
+    description: '업로드 타입',
+    enum: ['qna', 'announcements'],
+    required: true,
+    example: 'qna',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: '업로드할 이미지 파일',
+        },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiCreated(FileUploadResponseDto, '이미지 업로드 성공')
+  @ApiBadRequest('파일이 제공되지 않음 또는 유효하지 않은 타입')
+  uploadEditorImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Query('type') type: 'qna' | 'announcements',
+  ) {
+    if (!file) {
+      throw new BadRequestException('파일이 필요합니다');
+    }
+
+    if (!['qna', 'announcements'].includes(type)) {
+      throw new BadRequestException('유효하지 않은 타입입니다');
+    }
+
+    return this.storageService.uploadEditorImage(file, type);
+  }
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
@@ -69,7 +119,7 @@ export class StorageController {
     },
   })
   @ApiResponse({ status: 400, description: '파일이 제공되지 않음' })
-  async uploadFile(
+  uploadFile(
     @UploadedFile() file: Express.Multer.File,
     @Query('folder') folder: string = 'uploads',
   ) {
@@ -112,7 +162,7 @@ export class StorageController {
       },
     },
   })
-  async getDownloadUrl(
+  getDownloadUrl(
     @Query('key') key: string,
     @Query('expiresIn', new ParseIntPipe({ optional: true }))
     expiresIn?: number,
@@ -120,8 +170,9 @@ export class StorageController {
     if (!key) {
       throw new BadRequestException('File key is required');
     }
-    const url = await this.storageService.getDownloadUrl(key, expiresIn);
-    return { url };
+    return this.storageService.getDownloadUrl(key, expiresIn).then((url) => ({
+      url,
+    }));
   }
 
   @Delete()
@@ -137,12 +188,13 @@ export class StorageController {
     example: 'avatars/uuid-123.jpg',
   })
   @ApiResponse({ status: 200, description: '파일 삭제 성공' })
-  async deleteFile(@Query('key') key: string) {
+  deleteFile(@Query('key') key: string) {
     if (!key) {
       throw new BadRequestException('File key is required');
     }
-    await this.storageService.deleteFile(key);
-    return { message: 'File deleted successfully' };
+    return this.storageService.deleteFile(key).then(() => ({
+      message: 'File deleted successfully',
+    }));
   }
 
   @Get('exists')
@@ -167,11 +219,10 @@ export class StorageController {
       },
     },
   })
-  async fileExists(@Query('key') key: string) {
+  fileExists(@Query('key') key: string) {
     if (!key) {
       throw new BadRequestException('File key is required');
     }
-    const exists = await this.storageService.fileExists(key);
-    return { exists };
+    return this.storageService.fileExists(key).then((exists) => ({ exists }));
   }
 }
