@@ -28,18 +28,22 @@ export class QnaService {
    * 통합 질문 목록 조회
    * @param userId - 사용자 ID (filter='my'일 때 필수)
    * @param query - 쿼리 파라미터 (filter: 'public' | 'my' | 'all')
-   * @param isAdmin - ADMIN 여부 (filter='all'일 때 검증용)
    */
-  async findQuestions(
-    userId: string | null,
-    query: QuestionQueryDto,
-    isAdmin: boolean = false,
-  ) {
+  async findQuestions(userId: string | null, query: QuestionQueryDto) {
     const filter = query.filter || 'public';
 
-    // filter='all'은 ADMIN 전용
-    if (filter === 'all' && !isAdmin) {
-      throw new ForbiddenException('관리자만 모든 질문을 조회할 수 있습니다');
+    // filter='all'은 ADMIN 전용 - DB에서 권한 확인
+    if (filter === 'all') {
+      if (!userId) {
+        throw new ForbiddenException('관리자만 모든 질문을 조회할 수 있습니다');
+      }
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { isAdmin: true },
+      });
+      if (!user?.isAdmin) {
+        throw new ForbiddenException('관리자만 모든 질문을 조회할 수 있습니다');
+      }
     }
 
     // filter='my'일 때 userId 필수
@@ -71,19 +75,16 @@ export class QnaService {
     }
     // filter === 'all'일 때는 추가 조건 없음 (모든 질문 조회)
 
-    // SELECT 및 정렬
-    const includeUser =
-      filter === 'public' || filter === 'all'
-        ? {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                ...(filter === 'all' ? { email: true } : {}),
-              },
-            },
-          }
-        : {};
+    // SELECT 및 정렬 (user 정보는 항상 조회 후 map에서 필터링)
+    const includeUser = {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          ...(filter === 'all' ? { email: true } : {}),
+        },
+      },
+    };
 
     const orderBy =
       filter === 'all'
@@ -108,15 +109,20 @@ export class QnaService {
     ]);
 
     return {
-      data: questions.map((q) => ({
-        ...q,
-        // 공개 질문은 미리보기만
-        ...(filter === 'public' && {
-          content: q.content.substring(0, 100),
-        }),
-        answerCount: q.answers.length,
-        answers: undefined,
-      })),
+      data: questions.map((q) => {
+        const isMyQuestion = q.userId === userId;
+        return {
+          ...q,
+          // 공개 질문 조회 시: 내 질문은 전체 내용, 타인 질문은 내용 숨김
+          ...(filter === 'public' && {
+            content: isMyQuestion ? q.content : null,
+          }),
+          // 내 질문이면 유저 정보 표시, 타인 질문이면 숨김 (ADMIN 제외)
+          user: isMyQuestion || filter === 'all' ? (q as any).user : null,
+          answerCount: q.answers.length,
+          answers: undefined,
+        };
+      }),
       meta: {
         total,
         page: query.page,
@@ -346,7 +352,10 @@ export class QnaService {
   }
 
   /**
-   * 질문 수정 (본인만, ANSWERED/RESOLVED 상태에서는 수정 불가)
+   * 질문 수정 (본인만)
+   * - PENDING: 일반 수정
+   * - ANSWERED: 수정 시 PENDING으로 상태 변경 (재질문)
+   * - RESOLVED: 수정 불가
    */
   async update(id: string, userId: string, dto: UpdateQuestionDto) {
     const question = await this.prisma.question.findFirst({
@@ -362,9 +371,13 @@ export class QnaService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-    if (question.status === QuestionStatus.ANSWERED) {
-      throw new BadRequestException('답변 완료된 질문은 수정할 수 없습니다');
+    if (question.status === QuestionStatus.RESOLVED) {
+      throw new BadRequestException('해결 완료된 질문은 수정할 수 없습니다');
     }
+
+    // ANSWERED 상태에서 수정 시 PENDING으로 변경 (재질문)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    const shouldReopen = question.status === QuestionStatus.ANSWERED;
 
     return this.prisma.question.update({
       where: { id },
@@ -374,6 +387,7 @@ export class QnaService {
         ...(dto.category && { category: dto.category }),
         ...(dto.visibility && { visibility: dto.visibility }),
         ...(dto.attachments && { attachments: dto.attachments as any }),
+        ...(shouldReopen && { status: QuestionStatus.PENDING }),
       },
     });
   }
@@ -398,6 +412,41 @@ export class QnaService {
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    return { message: '질문이 삭제되었습니다' };
+  }
+
+  /**
+   * 질문 해결완료 처리 (본인만, ANSWERED 상태에서만)
+   */
+  async resolve(id: string, userId: string) {
+    const question = await this.prisma.question.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    if (!question) {
+      throw new NotFoundException('질문을 찾을 수 없습니다');
+    }
+
+    if (question.userId !== userId) {
+      throw new ForbiddenException(
+        '본인 작성 질문만 해결완료 처리할 수 있습니다',
+      );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (question.status !== QuestionStatus.ANSWERED) {
+      throw new BadRequestException(
+        '답변 완료된 질문만 해결완료 처리할 수 있습니다',
+      );
+    }
+
+    await this.prisma.question.update({
+      where: { id },
+      data: { status: QuestionStatus.RESOLVED },
+    });
+
+    return { message: '질문이 해결완료 처리되었습니다' };
   }
 
   /**

@@ -48,8 +48,7 @@ export class QnaController {
   @ApiSuccess(PaginatedQuestionDto, '질문 목록 조회 성공')
   findQuestions(@Request() req, @Query() query: QuestionQueryDto) {
     const userId = req.user?.userId || null;
-    const isAdmin = req.user?.isAdmin || false;
-    return this.qnaService.findQuestions(userId, query, isAdmin);
+    return this.qnaService.findQuestions(userId, query);
   }
 
   @Get('questions/:id')
@@ -69,7 +68,11 @@ export class QnaController {
   }
 
   @Put('questions/:id')
-  @ApiOperation({ summary: '질문 수정 (본인만, PENDING 상태만)' })
+  @ApiOperation({
+    summary: '질문 수정 (본인만)',
+    description:
+      'PENDING: 일반 수정, ANSWERED: 수정 시 PENDING으로 변경 (재질문), RESOLVED: 수정 불가',
+  })
   @ApiSuccess(QuestionDetailDto, '질문 수정 성공')
   @ApiNotFound('질문을 찾을 수 없습니다')
   update(
@@ -78,6 +81,17 @@ export class QnaController {
     @Body() dto: UpdateQuestionDto,
   ) {
     return this.qnaService.update(id, req.user.userId, dto);
+  }
+
+  @Post('questions/:id/resolve')
+  @ApiOperation({
+    summary: '질문 해결완료 처리 (본인만)',
+    description: 'ANSWERED 상태의 질문을 RESOLVED로 변경',
+  })
+  @ApiSuccess(MessageResponseDto, '해결완료 처리 성공')
+  @ApiNotFound('질문을 찾을 수 없습니다')
+  resolve(@Param('id') id: string, @Request() req) {
+    return this.qnaService.resolve(id, req.user.userId);
   }
 
   @Delete('questions/:id')

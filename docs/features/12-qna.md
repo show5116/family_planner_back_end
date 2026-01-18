@@ -18,7 +18,7 @@
 - **공개/비공개**: 질문 작성 시 설정 가능
   - **공개**: 모든 사용자 조회 가능 (작성자명 표시)
   - **비공개**: 작성자와 ADMIN만 조회 가능
-- **상태 관리**: PENDING (대기 중), ANSWERED (답변 완료)
+- **상태 관리**: PENDING (대기 중), ANSWERED (답변 완료), RESOLVED (해결 완료)
 - **카테고리**: BUG (버그), FEATURE (개선 제안), USAGE (사용법), ACCOUNT (계정), PAYMENT (결제), ETC (기타)
 - **첨부 파일**: 스크린샷, 로그 파일 등
 - **알림 연동**:
@@ -81,7 +81,15 @@ GET /qna/questions?filter=all&search=로그인  // ADMIN 전용
 
 ### 질문 수정 (`PUT /qna/questions/:id`)
 - 본인 작성 질문만
-- ANSWERED 상태에서는 수정 불가
+- 상태별 수정 정책:
+  - **PENDING**: 일반 수정
+  - **ANSWERED**: 수정 시 PENDING으로 상태 변경 (재질문)
+  - **RESOLVED**: 수정 불가
+
+### 질문 해결완료 (`POST /qna/questions/:id/resolve`)
+- 본인 작성 질문만
+- ANSWERED 상태에서만 RESOLVED로 변경 가능
+- 질문자가 답변에 만족했음을 표시
 
 ### 질문 삭제 (`DELETE /qna/questions/:id`)
 - 본인 작성 질문만
@@ -146,7 +154,9 @@ enum QuestionCategory {
 }
 
 enum QuestionStatus {
-  PENDING, ANSWERED
+  PENDING,   // 대기 중 (답변 대기)
+  ANSWERED,  // 답변 완료 (ADMIN 답변 완료)
+  RESOLVED   // 해결 완료 (질문자 확인 또는 자동 처리)
 }
 
 enum QuestionVisibility {
@@ -182,7 +192,8 @@ model Answer {
 |        | `filter=all`                             | - 모든 질문 (ADMIN 전용)                  |                    |
 | GET    | `/qna/questions/:id`                     | 질문 상세 조회                            | JWT, Visibility    |
 | POST   | `/qna/questions`                         | 질문 작성                                 | JWT                |
-| PUT    | `/qna/questions/:id`                     | 질문 수정                                 | JWT                |
+| PUT    | `/qna/questions/:id`                     | 질문 수정 (재질문 가능)                   | JWT                |
+| POST   | `/qna/questions/:id/resolve`             | **질문 해결완료 처리**                    | JWT                |
 | DELETE | `/qna/questions/:id`                     | 질문 삭제                                 | JWT                |
 | GET    | `/qna/admin/questions`                   | ~~모든 질문 목록 조회~~ (deprecated)      | JWT, Admin         |
 | POST   | `/qna/questions/:questionId/answers`     | 답변 작성                                 | JWT, Admin         |
@@ -232,7 +243,7 @@ export class QuestionVisibilityGuard implements CanActivate {
 - [x] 답변 CRUD (생성, 수정, 삭제)
 - [x] 공개/비공개 질문 설정
 - [x] 카테고리 시스템 (BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC)
-- [x] 상태 관리 (PENDING, ANSWERED)
+- [x] 상태 관리 (PENDING, ANSWERED, RESOLVED)
 - [x] QuestionVisibilityGuard (공개/비공개 접근 제어)
 - [x] 질문 목록 조회 (통합 API: filter 파라미터)
 - [x] 질문 상세 조회 (답변 포함)
@@ -246,10 +257,12 @@ export class QuestionVisibilityGuard implements CanActivate {
 - [x] ADMIN 통계 조회
 - [x] Soft Delete (deletedAt)
 - [x] 첨부파일 지원 (attachments)
+- [x] 질문 해결완료 처리 (ANSWERED → RESOLVED)
+- [x] 재질문 기능 (ANSWERED 상태에서 수정 시 PENDING으로 변경)
+- [x] 자동 해결완료 스케줄러 (ANSWERED 1주일 경과 시 자동 RESOLVED)
 
 ### ⬜ TODO / 향후 고려
 - [ ] 질문 좋아요/투표 기능
-- [ ] 답변 채택 시스템
 - [ ] 질문 태그 시스템
 - [ ] 자주 묻는 질문 (FAQ) 자동 생성
 - [ ] 질문/답변 알림 설정 (카테고리별)
@@ -312,5 +325,28 @@ Discord로 전송되는 정보:
 
 ---
 
+## 자동 해결완료 스케줄러
+
+### 개요
+ANSWERED 상태로 1주일 이상 경과한 질문을 자동으로 RESOLVED로 변경합니다.
+
+### 동작 방식
+- **실행 주기**: 매일 자정 (EVERY_DAY_AT_MIDNIGHT)
+- **대상**: ANSWERED 상태이면서 updatedAt이 7일 이상 경과한 질문
+- **동작**: 상태를 RESOLVED로 일괄 변경
+
+### 구현 파일
+- `src/qna/qna.scheduler.ts` - QnaScheduler 클래스
+- `src/qna/qna.module.ts` - providers에 QnaScheduler 등록
+
+### 로그 출력
+```
+[QnaScheduler] ANSWERED 상태 자동 해결완료 처리 시작
+[QnaScheduler] 3개의 질문이 자동 해결완료 처리되었습니다
+```
+
+---
+
 **구현 완료**: 2025-12-29
 **Discord 웹훅 추가**: 2026-01-13
+**RESOLVED 상태 및 자동 해결완료 추가**: 2026-01-18
