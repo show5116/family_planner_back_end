@@ -370,7 +370,7 @@ export class TaskService {
         userId,
         '새 일정이 추가되었습니다',
         task.title,
-        { taskId: task.id, action: 'create' },
+        { category: 'SCHEDULE', scheduleId: task.id },
       );
     }
 
@@ -665,7 +665,7 @@ export class TaskService {
         userId,
         '반복 일정이 건너뛰기 되었습니다',
         `${dto.skipDate} 일정이 건너뛰기 되었습니다`,
-        { recurringId, skipDate: dto.skipDate },
+        { category: 'SCHEDULE', scheduleId: recurringId },
       );
     }
 

@@ -86,10 +86,7 @@ export class QnaService {
       },
     };
 
-    const orderBy =
-      filter === 'all'
-        ? [{ status: 'asc' as const }, { createdAt: 'desc' as const }] // PENDING 우선
-        : { createdAt: 'desc' as const };
+    const orderBy = { createdAt: 'desc' as const };
 
     const [questions, total] = await Promise.all([
       this.prisma.question.findMany({
@@ -258,7 +255,7 @@ export class QnaService {
             select: { id: true },
           },
         },
-        orderBy: [{ status: 'asc' }, { createdAt: 'desc' }], // PENDING 우선, 최신순
+        orderBy: { createdAt: 'desc' },
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),
@@ -492,7 +489,7 @@ export class QnaService {
     ]);
 
     // 질문 작성자에게 알림 발송 (비동기)
-    this.sendAnswerNotificationToUser(question, answer).catch((err) => {
+    this.sendAnswerNotificationToUser(question).catch((err) => {
       console.error('답변 알림 발송 실패:', err);
     });
 
@@ -622,8 +619,8 @@ export class QnaService {
           title: '새 질문 등록',
           body: question.title,
           data: {
+            category: 'SYSTEM',
             questionId: question.id,
-            action: 'view_question',
           },
         }),
       ),
@@ -633,16 +630,15 @@ export class QnaService {
   /**
    * 질문 작성자에게 답변 알림 발송
    */
-  private async sendAnswerNotificationToUser(question: any, answer: any) {
+  private async sendAnswerNotificationToUser(question: any) {
     await this.notificationService.sendNotification({
       userId: question.userId,
       category: NotificationCategory.SYSTEM,
       title: '답변이 등록되었습니다',
       body: question.title,
       data: {
+        category: 'SYSTEM',
         questionId: question.id,
-        answerId: answer.id,
-        action: 'view_answer',
       },
     });
   }

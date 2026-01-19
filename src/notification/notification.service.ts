@@ -322,8 +322,8 @@ export class NotificationService {
       title: '테스트 알림',
       body: '알림 시스템이 정상적으로 작동하고 있습니다.',
       data: {
+        category: 'SYSTEM',
         test: 'true',
-        timestamp: new Date().toISOString(),
       },
     });
 
@@ -369,8 +369,8 @@ export class NotificationService {
           body: announcement.title,
         },
         {
+          category: 'SYSTEM',
           announcementId: announcement.id,
-          action: 'view_announcement',
         },
       );
 

@@ -182,7 +182,7 @@ describe('QnaService', () => {
 
       expect(prismaService.question.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+          orderBy: { createdAt: 'desc' },
         }),
       );
     });
