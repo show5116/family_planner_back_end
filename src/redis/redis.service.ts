@@ -1,6 +1,4 @@
 import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import Redis from 'ioredis';
 import { REDIS_CLIENT, REDIS_BLOCKING_CLIENT } from './redis.module';
 
@@ -16,7 +14,6 @@ export class RedisService implements OnModuleInit {
   private readonly logger = new Logger(RedisService.name);
 
   constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(REDIS_CLIENT) private redisClient: Redis,
     @Inject(REDIS_BLOCKING_CLIENT) private blockingClient: Redis,
   ) {}
@@ -36,34 +33,47 @@ export class RedisService implements OnModuleInit {
   }
 
   /**
-   * 값 저장
+   * 값 저장 (ioredis 직접 사용 - cache-manager 버전 호환 문제 해결)
    *
    * @param key - 키
    * @param value - 값
-   * @param ttl - TTL (밀리초, 선택)
+   * @param ttl - TTL (초, 선택)
    */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
-    await this.cacheManager.set(key, value, ttl);
+    const serialized = JSON.stringify(value);
+    if (ttl) {
+      await this.redisClient.setex(key, ttl, serialized);
+    } else {
+      await this.redisClient.set(key, serialized);
+    }
   }
 
   /**
-   * 값 조회
+   * 값 조회 (ioredis 직접 사용)
    *
    * @param key - 키
    * @returns 값 (없으면 null)
    */
   async get<T>(key: string): Promise<T | null> {
-    const value = await this.cacheManager.get<T>(key);
-    return value ?? null;
+    const value = await this.redisClient.get(key);
+    if (value === null) {
+      return null;
+    }
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      // JSON 파싱 실패 시 문자열 그대로 반환
+      return value as T;
+    }
   }
 
   /**
-   * 값 삭제
+   * 값 삭제 (ioredis 직접 사용)
    *
    * @param key - 키
    */
   async del(key: string): Promise<void> {
-    await this.cacheManager.del(key);
+    await this.redisClient.del(key);
   }
 
   /**
@@ -78,25 +88,24 @@ export class RedisService implements OnModuleInit {
   }
 
   /**
-   * TTL(Time To Live) 설정
+   * TTL(Time To Live) 설정 (ioredis 직접 사용)
    *
    * @param key - 키
-   * @param ttl - TTL (밀리초)
+   * @param ttl - TTL (초)
    */
   async setTtl(key: string, ttl: number): Promise<void> {
-    const value = await this.cacheManager.get(key);
-    if (value !== undefined && value !== null) {
-      await this.cacheManager.set(key, value, ttl);
-    }
+    await this.redisClient.expire(key, ttl);
   }
 
   /**
-   * 여러 키 일괄 삭제
+   * 여러 키 일괄 삭제 (ioredis 직접 사용)
    *
    * @param keys - 키 배열
    */
   async delMany(keys: string[]): Promise<void> {
-    await Promise.all(keys.map((key) => this.cacheManager.del(key)));
+    if (keys.length > 0) {
+      await this.redisClient.del(...keys);
+    }
   }
 
   /**
@@ -188,7 +197,7 @@ export class RedisService implements OnModuleInit {
    */
   async cacheAnnouncement(announcementId: string, data: any): Promise<void> {
     const key = `announcement:content:${announcementId}`;
-    const ttl = 7 * 24 * 60 * 60 * 1000; // 7일 (밀리초)
+    const ttl = 7 * 24 * 60 * 60; // 7일 (초)
     await this.set(key, data, ttl);
   }
 
@@ -222,7 +231,7 @@ export class RedisService implements OnModuleInit {
    */
   async cacheAnnouncementList(cacheKey: string, data: any): Promise<void> {
     const key = `announcement:list:${cacheKey}`;
-    const ttl = 5 * 60 * 1000; // 5분 (밀리초)
+    const ttl = 5 * 60; // 5분 (초)
     await this.set(key, data, ttl);
   }
 

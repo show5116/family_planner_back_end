@@ -56,7 +56,12 @@ export class QnaService {
       deletedAt: null,
       ...(query.status && { status: query.status }),
       ...(query.category && { category: query.category }),
-      ...(query.search && {
+    };
+
+    // 검색 조건
+    if (query.search) {
+      where.AND = where.AND || [];
+      where.AND.push({
         OR: [
           { title: { contains: query.search } },
           { content: { contains: query.search } },
@@ -64,12 +69,20 @@ export class QnaService {
             ? [{ user: { name: { contains: query.search } } }]
             : []),
         ],
-      }),
-    };
+      });
+    }
 
     // 필터별 WHERE 조건 추가
     if (filter === 'public') {
-      where.visibility = QuestionVisibility.PUBLIC;
+      // 공개 질문 + 내 질문(비공개 포함)
+      if (userId) {
+        where.AND = where.AND || [];
+        where.AND.push({
+          OR: [{ visibility: QuestionVisibility.PUBLIC }, { userId: userId }],
+        });
+      } else {
+        where.visibility = QuestionVisibility.PUBLIC;
+      }
     } else if (filter === 'my') {
       where.userId = userId;
     }

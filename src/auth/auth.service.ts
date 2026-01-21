@@ -104,7 +104,7 @@ export class AuthService {
     await this.redisService.set(
       `email-verification:${email}`,
       verificationCode,
-      this.VERIFICATION_CODE_EXPIRY_HOURS * 60 * 60 * 1000,
+      this.VERIFICATION_CODE_EXPIRY_HOURS * 60 * 60, // 초 단위
     );
 
     // 이메일 인증 메일 발송
@@ -193,7 +193,7 @@ export class AuthService {
     await this.redisService.set(
       `refresh-token:${tokens.refreshToken}`,
       userId,
-      this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+      this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60, // 초 단위
     );
 
     return {
@@ -269,7 +269,7 @@ export class AuthService {
       this.redisService.set(
         `refresh-token:${tokens.refreshToken}`,
         user.id,
-        this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+        this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60, // 초 단위
       ),
       this.prisma.user.update({
         where: { id: user.id },
@@ -360,7 +360,7 @@ export class AuthService {
     await this.redisService.set(
       `email-verification:${email}`,
       verificationCode,
-      this.VERIFICATION_CODE_EXPIRY_HOURS * 60 * 60 * 1000,
+      this.VERIFICATION_CODE_EXPIRY_HOURS * 60 * 60, // 초 단위
     );
 
     // 이메일 발송
@@ -412,7 +412,7 @@ export class AuthService {
     await this.redisService.set(
       `password-reset:${email}`,
       resetCode,
-      this.PASSWORD_RESET_CODE_EXPIRY_HOURS * 60 * 60 * 1000,
+      this.PASSWORD_RESET_CODE_EXPIRY_HOURS * 60 * 60, // 초 단위
     );
 
     // 이메일 발송

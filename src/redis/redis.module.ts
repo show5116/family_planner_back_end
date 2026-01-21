@@ -144,14 +144,14 @@ export class RedisModule {
               },
               password: url.password || undefined,
               username: url.username || undefined,
-              ttl: 60 * 60 * 1000, // 기본 TTL: 1시간 (밀리초)
+              ttl: 60 * 60, // 기본 TTL: 1시간 (초)
             });
 
             RedisModule.logger.log('Redis 스토어 생성 완료');
 
             return {
               store: store as any,
-              ttl: 60 * 60 * 1000,
+              ttl: 60 * 60, // 1시간 (초)
             };
           },
         }),
