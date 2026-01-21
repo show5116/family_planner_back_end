@@ -120,3 +120,8 @@ export class UnreadCountResponseDto {
   @ApiProperty({ description: '읽지 않은 알림 개수', example: 5 })
   count: number;
 }
+
+export class MarkAllAsReadResponseDto {
+  @ApiProperty({ description: '읽음 처리된 알림 개수', example: 10 })
+  count: number;
+}

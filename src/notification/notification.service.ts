@@ -240,6 +240,24 @@ export class NotificationService {
   }
 
   /**
+   * 전체 알림 읽음 처리
+   */
+  async markAllAsRead(userId: string) {
+    const result = await this.prisma.notification.updateMany({
+      where: {
+        userId,
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+        readAt: new Date(),
+      },
+    });
+
+    return { count: result.count };
+  }
+
+  /**
    * 알림 삭제
    */
   async deleteNotification(userId: string, notificationId: string) {

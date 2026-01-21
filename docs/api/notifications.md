@@ -162,6 +162,22 @@
 
 ---
 
+### PUT `notifications/read-all`
+
+**요약:** 전체 알림 읽음 처리
+
+**Responses:**
+
+#### 200 - 전체 알림 읽음 처리 성공
+
+```json
+{
+  "count": 10 // 읽음 처리된 알림 개수 (number)
+}
+```
+
+---
+
 ### PUT `notifications/:id/read`
 
 **요약:** 알림 읽음 처리

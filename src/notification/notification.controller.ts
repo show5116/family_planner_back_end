@@ -24,6 +24,7 @@ import {
   NotificationDto,
   PaginatedNotificationsDto,
   UnreadCountResponseDto,
+  MarkAllAsReadResponseDto,
 } from './dto/notification-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -92,6 +93,13 @@ export class NotificationController {
   @ApiSuccess(UnreadCountResponseDto, '읽지 않은 알림 개수 반환')
   getUnreadCount(@Request() req) {
     return this.notificationService.getUnreadCount(req.user.userId);
+  }
+
+  @Put('read-all')
+  @ApiOperation({ summary: '전체 알림 읽음 처리' })
+  @ApiSuccess(MarkAllAsReadResponseDto, '전체 알림 읽음 처리 성공')
+  markAllAsRead(@Request() req) {
+    return this.notificationService.markAllAsRead(req.user.userId);
   }
 
   @Put(':id/read')

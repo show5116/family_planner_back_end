@@ -232,6 +232,11 @@ await this.notificationService.sendNotification({
 - 배지 표시용
 - isRead=false인 알림 개수 반환
 
+### 전체 알림 읽음 처리 (`PUT /notifications/read-all`)
+- 사용자의 모든 읽지 않은 알림을 읽음 처리
+- `isRead=true`, `readAt` 시간 기록
+- 읽음 처리된 알림 개수 반환
+
 ### 알림 읽음 처리 (`PUT /notifications/:id/read`)
 - `isRead=true`, `readAt` 시간 기록
 - 본인 알림만 처리 가능
@@ -310,6 +315,7 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour-Key\n-----END PRIVATE KE
 - [x] 읽지 않은 알림만 필터링
 - [x] 읽지 않은 알림 개수 조회
 - [x] 알림 읽음 처리
+- [x] 전체 알림 읽음 처리
 - [x] 알림 삭제
 - [x] Swagger 문서화
 - [x] 데이터베이스 마이그레이션
