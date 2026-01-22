@@ -250,11 +250,30 @@ export class RedisService implements OnModuleInit {
   /**
    * 공지사항 목록 캐시 전체 무효화
    * (새 공지 작성, 수정, 삭제 시)
+   * SCAN 명령어로 패턴 매칭 키 삭제 (프로덕션 안전)
    */
   async invalidateAllAnnouncementListCache(): Promise<void> {
-    // cache-manager는 패턴 삭제를 지원하지 않으므로
-    // 실제로는 버전 관리 또는 별도 구현 필요
-    // 여기서는 간단히 구현 (실제 프로덕션에서는 개선 필요)
+    const pattern = 'announcement:list:*';
+    let cursor = '0';
+    const keysToDelete: string[] = [];
+
+    // SCAN으로 패턴에 매칭되는 키 수집 (KEYS 명령어보다 안전)
+    do {
+      const [nextCursor, keys] = await this.redisClient.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+      keysToDelete.push(...keys);
+    } while (cursor !== '0');
+
+    // 일괄 삭제
+    if (keysToDelete.length > 0) {
+      await this.redisClient.del(...keysToDelete);
+    }
   }
 
   /**
