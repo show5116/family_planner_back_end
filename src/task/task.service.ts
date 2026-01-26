@@ -28,15 +28,11 @@ export class TaskService {
   // ==================== 카테고리 관리 ====================
 
   /**
-   * 카테고리 목록 조회 (개인 + 그룹)
+   * 카테고리 목록 조회
+   * - groupId가 null인 경우: 본인 userId로 등록된 개인 카테고리만 조회
+   * - groupId가 지정된 경우: 해당 그룹의 카테고리만 조회
    */
   async getCategories(userId: string, groupId?: string) {
-    const where: any = {
-      OR: [
-        { userId, groupId: null }, // 개인 카테고리
-      ],
-    };
-
     if (groupId) {
       // 그룹 ID가 지정된 경우: 해당 그룹의 카테고리만
       const isMember = await this.checkGroupMember(userId, groupId);
@@ -44,21 +40,15 @@ export class TaskService {
         throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
       }
 
-      where.OR.push({ groupId });
-    } else {
-      // 그룹 ID가 없는 경우: 소속된 모든 그룹의 카테고리
-      const memberships = await this.prisma.groupMember.findMany({
-        where: { userId },
-        select: { groupId: true },
+      return await this.prisma.category.findMany({
+        where: { groupId },
+        orderBy: { createdAt: 'desc' },
       });
-      const groupIds = memberships.map((m) => m.groupId);
-      if (groupIds.length > 0) {
-        where.OR.push({ groupId: { in: groupIds } });
-      }
     }
 
+    // 그룹 ID가 없는 경우: 본인의 개인 카테고리만
     return await this.prisma.category.findMany({
-      where,
+      where: { userId, groupId: null },
       orderBy: { createdAt: 'desc' },
     });
   }
