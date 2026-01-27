@@ -6,6 +6,8 @@ import {
   IsDateString,
   MinLength,
   MaxLength,
+  IsArray,
+  IsUUID,
 } from 'class-validator';
 import { TaskType, TaskPriority } from '@/task/enums';
 
@@ -66,4 +68,14 @@ export class UpdateTaskDto {
   @IsDateString()
   @IsOptional()
   dueAt?: string;
+
+  @ApiPropertyOptional({
+    description: '참여자 ID 목록 (그룹 Task에서만 사용 가능)',
+    example: ['uuid-1', 'uuid-2'],
+    type: [String],
+  })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  participantIds?: string[];
 }

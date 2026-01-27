@@ -12,7 +12,6 @@ import {
   UpdateCategoryDto,
   CreateTaskDto,
   UpdateTaskDto,
-  CompleteTaskDto,
   QueryTasksDto,
   SkipRecurringDto,
 } from './dto';
@@ -217,6 +216,13 @@ export class TaskService {
         include: {
           category: true,
           recurring: true,
+          participants: {
+            include: {
+              user: {
+                select: { id: true, name: true, profileImageKey: true },
+              },
+            },
+          },
         },
         orderBy,
         skip,
@@ -254,6 +260,13 @@ export class TaskService {
         reminders: true,
         histories: {
           orderBy: { createdAt: 'desc' },
+        },
+        participants: {
+          include: {
+            user: {
+              select: { id: true, name: true, profileImageKey: true },
+            },
+          },
         },
       },
     });
@@ -353,6 +366,26 @@ export class TaskService {
       });
     }
 
+    // 참여자 추가 (그룹 Task에서만 가능)
+    if (dto.participantIds && dto.participantIds.length > 0) {
+      if (!dto.groupId) {
+        throw new ForbiddenException(
+          '참여자는 그룹 Task에서만 지정할 수 있습니다',
+        );
+      }
+
+      await this.addParticipants(task.id, dto.groupId, dto.participantIds);
+
+      // 참여자에게 알림 발송
+      await this.sendParticipantNotifications(
+        dto.participantIds,
+        userId,
+        '새 일정에 참여자로 지정되었습니다',
+        task.title,
+        { category: 'SCHEDULE', scheduleId: task.id },
+      );
+    }
+
     // 그룹 Task인 경우 그룹 멤버에게 알림
     if (dto.groupId) {
       await this.sendGroupNotification(
@@ -364,8 +397,24 @@ export class TaskService {
       );
     }
 
+    // 참여자 포함하여 재조회
+    const taskWithParticipants = await this.prisma.task.findUnique({
+      where: { id: task.id },
+      include: {
+        category: true,
+        recurring: true,
+        participants: {
+          include: {
+            user: {
+              select: { id: true, name: true, profileImageKey: true },
+            },
+          },
+        },
+      },
+    });
+
     return {
-      ...task,
+      ...taskWithParticipants,
       daysUntilDue: this.calculateDaysUntilDue(task.dueAt),
     };
   }
@@ -428,8 +477,60 @@ export class TaskService {
         after: updateData,
       });
 
+      // 참여자 업데이트 (그룹 Task에서만 가능)
+      if (dto.participantIds !== undefined) {
+        if (!task.groupId) {
+          throw new ForbiddenException(
+            '참여자는 그룹 Task에서만 지정할 수 있습니다',
+          );
+        }
+
+        // 기존 참여자 조회
+        const existingParticipants = await this.prisma.taskParticipant.findMany(
+          {
+            where: { taskId },
+            select: { userId: true },
+          },
+        );
+        const existingIds = existingParticipants.map((p) => p.userId);
+
+        // 새로 추가된 참여자 계산
+        const newParticipantIds = dto.participantIds.filter(
+          (id) => !existingIds.includes(id),
+        );
+
+        await this.updateParticipants(taskId, task.groupId, dto.participantIds);
+
+        // 새로 추가된 참여자에게만 알림 발송
+        if (newParticipantIds.length > 0) {
+          await this.sendParticipantNotifications(
+            newParticipantIds,
+            userId,
+            '일정에 참여자로 지정되었습니다',
+            updated.title,
+            { category: 'SCHEDULE', scheduleId: taskId },
+          );
+        }
+      }
+
+      // 참여자 포함하여 재조회
+      const taskWithParticipants = await this.prisma.task.findUnique({
+        where: { id: taskId },
+        include: {
+          category: true,
+          recurring: true,
+          participants: {
+            include: {
+              user: {
+                select: { id: true, name: true, profileImageKey: true },
+              },
+            },
+          },
+        },
+      });
+
       return {
-        ...updated,
+        ...taskWithParticipants,
         daysUntilDue: this.calculateDaysUntilDue(updated.dueAt),
       };
     } else {
@@ -464,7 +565,7 @@ export class TaskService {
 
       return {
         ...updated,
-        daysUntilDue: this.calculateDaysUntilDue(updated.dueAt),
+        daysUntilDue: this.calculateDaysUntilDue(updated?.dueAt),
       };
     }
   }
@@ -741,6 +842,86 @@ export class TaskService {
         .map((m) =>
           this.notificationService.sendNotification({
             userId: m.userId,
+            category: NotificationCategory.SCHEDULE,
+            title,
+            body,
+            data,
+          }),
+        ),
+    );
+  }
+
+  /**
+   * Task에 참여자 추가
+   */
+  private async addParticipants(
+    taskId: string,
+    groupId: string,
+    participantIds: string[],
+  ) {
+    // 참여자들이 해당 그룹의 멤버인지 확인
+    const groupMembers = await this.prisma.groupMember.findMany({
+      where: {
+        groupId,
+        userId: { in: participantIds },
+      },
+      select: { userId: true },
+    });
+
+    const validUserIds = groupMembers.map((m) => m.userId);
+    const invalidUserIds = participantIds.filter(
+      (id) => !validUserIds.includes(id),
+    );
+
+    if (invalidUserIds.length > 0) {
+      throw new ForbiddenException('참여자는 그룹 멤버만 지정할 수 있습니다');
+    }
+
+    // 참여자 일괄 생성
+    await this.prisma.taskParticipant.createMany({
+      data: participantIds.map((userId) => ({
+        taskId,
+        userId,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  /**
+   * Task 참여자 업데이트 (기존 참여자 삭제 후 새로 추가)
+   */
+  private async updateParticipants(
+    taskId: string,
+    groupId: string,
+    participantIds: string[],
+  ) {
+    // 기존 참여자 삭제
+    await this.prisma.taskParticipant.deleteMany({
+      where: { taskId },
+    });
+
+    // 새 참여자 추가
+    if (participantIds.length > 0) {
+      await this.addParticipants(taskId, groupId, participantIds);
+    }
+  }
+
+  /**
+   * 특정 참여자들에게 알림 발송
+   */
+  private async sendParticipantNotifications(
+    participantIds: string[],
+    excludeUserId: string,
+    title: string,
+    body: string,
+    data: any,
+  ) {
+    await Promise.allSettled(
+      participantIds
+        .filter((userId) => userId !== excludeUserId)
+        .map((userId) =>
+          this.notificationService.sendNotification({
+            userId,
             category: NotificationCategory.SCHEDULE,
             title,
             body,

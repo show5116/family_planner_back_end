@@ -144,4 +144,14 @@ export class CreateTaskDto {
   @Type(() => TaskReminderDto)
   @IsOptional()
   reminders?: TaskReminderDto[];
+
+  @ApiPropertyOptional({
+    description: '참여자 ID 목록 (그룹 Task에서만 사용 가능)',
+    example: ['uuid-1', 'uuid-2'],
+    type: [String],
+  })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  participantIds?: string[];
 }

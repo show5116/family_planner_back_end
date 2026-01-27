@@ -32,6 +32,7 @@ model User {
   questions            Question[]
   recurrings           Recurring[]
   taskHistories        TaskHistory[]
+  taskParticipants     TaskParticipant[]
   taskReminders        TaskReminder[]
   taskSkips            TaskSkip[]
   tasks                Task[]
@@ -168,17 +169,18 @@ model Notification {
   title     String                 @db.VarChar(255)
   body      String                 @db.Text
   data      Json?
-  sent      Boolean                @default(false) // FCM 발송 성공 여부
   isRead    Boolean                @default(false)
-  createdAt DateTime               @default(now()) // 생성 시간 (히스토리 저장 시점)
-  sentAt    DateTime?              // FCM 발송 성공 시간
+  sentAt    DateTime?
   readAt    DateTime?
+  sent      Boolean                @default(false)
+  createdAt DateTime               @default(now())
   user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])
   @@index([sent])
   @@index([createdAt])
+  @@index([sentAt])
   @@map("notifications")
 }
 
@@ -281,29 +283,30 @@ model Category {
 }
 
 model Task {
-  id          String         @id @default(uuid())
-  userId      String
-  groupId     String?
-  categoryId  String
-  recurringId String?
-  title       String         @db.VarChar(200)
-  description String?        @db.Text
-  location    String?        @db.VarChar(255)
-  type        TaskType       @default(TODO_LINKED)
-  priority    TaskPriority   @default(MEDIUM)
-  scheduledAt DateTime?
-  dueAt       DateTime?
-  isCompleted Boolean        @default(false)
-  completedAt DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  deletedAt   DateTime?
-  histories   TaskHistory[]
-  reminders   TaskReminder[]
-  category    Category       @relation(fields: [categoryId], references: [id])
-  group       Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  recurring   Recurring?     @relation(fields: [recurringId], references: [id])
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String            @id @default(uuid())
+  userId       String
+  groupId      String?
+  categoryId   String
+  recurringId  String?
+  title        String            @db.VarChar(200)
+  description  String?           @db.Text
+  location     String?           @db.VarChar(255)
+  type         TaskType          @default(TODO_LINKED)
+  priority     TaskPriority      @default(MEDIUM)
+  scheduledAt  DateTime?
+  dueAt        DateTime?
+  isCompleted  Boolean           @default(false)
+  completedAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  deletedAt    DateTime?
+  histories    TaskHistory[]
+  participants TaskParticipant[]
+  reminders    TaskReminder[]
+  category     Category          @relation(fields: [categoryId], references: [id])
+  group        Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  recurring    Recurring?        @relation(fields: [recurringId], references: [id])
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, scheduledAt])
   @@index([groupId, scheduledAt])
@@ -312,6 +315,20 @@ model Task {
   @@index([isCompleted])
   @@index([deletedAt])
   @@map("tasks")
+}
+
+model TaskParticipant {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_participants")
 }
 
 model Recurring {

@@ -195,6 +195,13 @@
         "generationType": "AUTO_SCHEDULER",
         "isActive": true
       }, // 반복 정보 (RecurringDto | null)
+      "participants": {
+        "id": "uuid",
+        "taskId": "uuid",
+        "userId": "uuid",
+        "user": "<ParticipantUserDto>",
+        "createdAt": "2025-01-01T00:00:00Z"
+      }, // 참여자 목록 (TaskParticipantDto[]?)
       "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
     }
@@ -277,7 +284,8 @@
       "reminderType": null, // 알림 타입 (TaskReminderType)
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
-  ] // 알림 목록 (TaskReminderDto[]?)
+  ], // 알림 목록 (TaskReminderDto[]?)
+  "participantIds": ["uuid-1", "uuid-2"] // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
 }
 ```
 
@@ -318,6 +326,19 @@
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
     "isActive": true // 활성화 여부 (boolean)
   }, // 반복 정보 (RecurringDto | null)
+  "participants": [
+    {
+      "id": "uuid", // 참여자 ID (string)
+      "taskId": "uuid", // Task ID (string)
+      "userId": "uuid", // 사용자 ID (string)
+      "user": {
+        "id": "uuid",
+        "name": "홍길동",
+        "profileImageKey": "profile/uuid.jpg"
+      }, // 참여자 정보 (ParticipantUserDto)
+      "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
+    }
+  ], // 참여자 목록 (TaskParticipantDto[]?)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -347,7 +368,8 @@
   "type": null, // Task 타입 (TaskType?)
   "priority": null, // 우선순위 (TaskPriority?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (string?)
-  "dueAt": "2025-12-30T18:00:00Z" // 마감 날짜 (string?)
+  "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (string?)
+  "participantIds": ["uuid-1", "uuid-2"] // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
 }
 ```
 
@@ -388,6 +410,19 @@
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
     "isActive": true // 활성화 여부 (boolean)
   }, // 반복 정보 (RecurringDto | null)
+  "participants": [
+    {
+      "id": "uuid", // 참여자 ID (string)
+      "taskId": "uuid", // Task ID (string)
+      "userId": "uuid", // 사용자 ID (string)
+      "user": {
+        "id": "uuid",
+        "name": "홍길동",
+        "profileImageKey": "profile/uuid.jpg"
+      }, // 참여자 정보 (ParticipantUserDto)
+      "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
+    }
+  ], // 참여자 목록 (TaskParticipantDto[]?)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -452,6 +487,19 @@
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
     "isActive": true // 활성화 여부 (boolean)
   }, // 반복 정보 (RecurringDto | null)
+  "participants": [
+    {
+      "id": "uuid", // 참여자 ID (string)
+      "taskId": "uuid", // Task ID (string)
+      "userId": "uuid", // 사용자 ID (string)
+      "user": {
+        "id": "uuid",
+        "name": "홍길동",
+        "profileImageKey": "profile/uuid.jpg"
+      }, // 참여자 정보 (ParticipantUserDto)
+      "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
+    }
+  ], // 참여자 목록 (TaskParticipantDto[]?)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }

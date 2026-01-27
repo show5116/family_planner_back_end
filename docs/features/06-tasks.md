@@ -18,8 +18,9 @@
 - **이중 날짜 관리**:
   - `scheduled_at`: 수행 시작 날짜 (할일 목록 표시 시작)
   - `due_at`: 마감 날짜 (D-Day 계산 기준)
+- **참여자 기능**: 그룹 Task에서 그룹 멤버를 참여자로 지정 가능
 - **반복 일정**: 스케줄러 자동 생성 (매일 0시, 미래 3개월 분량)
-- **알림 시스템**: 시작 전/마감 전 알림
+- **알림 시스템**: 시작 전/마감 전 알림, 참여자 지정 시 알림
 - **변경 이력**: 모든 변경사항 자동 기록
 
 ---
@@ -42,21 +43,25 @@
 - 정렬: 캘린더(scheduledAt ASC), 할일(isCompleted ASC → priority DESC → dueAt ASC)
 
 ### 상세 조회 (`GET /tasks/:id`)
-- 알림 목록 + 변경 이력 포함
+- 알림 목록 + 변경 이력 + 참여자 목록 포함
 - 그룹 Task는 그룹 멤버만 조회 가능
 
 ### 생성 (`POST /tasks`)
 - 제목, 타입, 카테고리 필수
 - 반복 일정 설정 가능 (`recurring` 객체)
 - 알림 설정 가능 (`reminders` 배열)
+- 참여자 지정 가능 (`participantIds` 배열, 그룹 Task에서만)
 - TaskHistory 자동 생성 (action=CREATE)
 - 그룹 Task 생성 시 멤버에게 알림
+- 참여자 지정 시 참여자에게 별도 알림
 
 ### 수정 (`PUT /tasks/:id`)
 - 본인 Task만 수정
 - 반복 Task인 경우 `updateScope` 필수:
   - `current`: 현재 Task만
   - `future`: 현재 + 미래 모든 반복 Task
+- 참여자 변경 가능 (`participantIds` 배열, 그룹 Task에서만)
+- 새로 추가된 참여자에게만 알림 발송
 - TaskHistory 자동 생성 (action=UPDATE)
 
 ### 완료/미완료 (`PATCH /tasks/:id/complete`)
@@ -93,6 +98,13 @@
 - scheduledAt, dueAt
 - isCompleted, completedAt
 - deletedAt (Soft Delete)
+- participants (TaskParticipant 관계)
+
+### TaskParticipants
+- taskId, userId
+- createdAt
+- 그룹 멤버만 참여자로 지정 가능
+- Task 삭제 시 Cascade 삭제
 
 ### Recurrings
 - ruleType (DAILY, WEEKLY, MONTHLY, YEARLY)
@@ -118,7 +130,7 @@
 ## 구현 상태
 
 ### ✅ 완료
-- [x] 데이터베이스 스키마 (6개 Enum + 6개 테이블)
+- [x] 데이터베이스 스키마 (6개 Enum + 7개 테이블)
 - [x] 카테고리 CRUD (개인/그룹 카테고리)
 - [x] Task CRUD (생성, 조회, 수정, 삭제)
 - [x] Task 타입 구분 (CALENDAR_ONLY, TODO_LINKED)
@@ -137,6 +149,8 @@
 - [x] Soft Delete (deletedAt)
 - [x] 스케줄러 (매일 0시 자동 실행)
 - [x] 휴면 사용자 필터링
+- [x] 참여자 기능 (그룹 Task에서 멤버 지정)
+- [x] 참여자 지정/변경 시 알림 발송
 
 ### 🟨 진행 중
 - [ ] 반복 일정 자동 생성 로직 (`generateRecurringTasks`)
@@ -174,14 +188,22 @@
 
 ---
 
-## 구현 완료 요약 (2025-12-30)
+## 구현 완료 요약
 
+### 2025-12-30
 - 데이터베이스: 6개 Enum + 6개 테이블 설계 및 마이그레이션
 - 카테고리 관리: 개인/그룹 카테고리 CRUD
 - Task 관리: 캘린더/할일 뷰, D-Day 계산, 권한 관리, 변경 이력
 - 반복 일정: 일시정지, 건너뛰기
 - 스케줄러: 매일 0시 자동 실행, 휴면 사용자 필터링
 - 알림 연동: 그룹 Task 생성/건너뛰기 시 자동 알림
+
+### 2026-01-27
+- 참여자 기능 추가 (TaskParticipant 테이블)
+- 그룹 Task에서 그룹 멤버를 참여자로 지정 가능
+- Task 생성/수정 시 `participantIds` 배열로 참여자 지정
+- 참여자 지정 시 알림 발송 (새로 추가된 참여자에게만)
+- Task 목록/상세 조회 시 참여자 정보 포함
 
 ### TODO
 - `TaskService.generateRecurringTasks()`: 반복 날짜 계산 로직
@@ -191,4 +213,4 @@
 ---
 
 **작성일**: 2025-12-29
-**구현 완료**: 2025-12-30
+**최종 업데이트**: 2026-01-27

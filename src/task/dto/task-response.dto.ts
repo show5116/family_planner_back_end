@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TaskType, TaskPriority, TaskHistoryAction } from '@/task/enums';
 import { CategoryDto } from './category-response.dto';
 import { PaginationMetaDto } from './common-response.dto';
+import { TaskParticipantDto } from './participant-response.dto';
 
 export class RecurringDto {
   @ApiProperty({ description: 'ID', example: 'uuid' })
@@ -104,6 +105,13 @@ export class TaskDto {
 
   @ApiProperty({ description: '반복 정보', type: RecurringDto, nullable: true })
   recurring: RecurringDto | null;
+
+  @ApiProperty({
+    description: '참여자 목록',
+    type: [TaskParticipantDto],
+    required: false,
+  })
+  participants?: TaskParticipantDto[];
 
   @ApiProperty({ description: '생성일' })
   createdAt: Date;

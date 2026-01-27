@@ -8,3 +8,4 @@ export * from './complete-task.dto';
 export * from './skip-recurring.dto';
 export * from './task-response.dto';
 export * from './common-response.dto';
+export * from './participant-response.dto';
