@@ -191,9 +191,14 @@
       "recurring": {
         "id": "uuid",
         "ruleType": "WEEKLY",
-        "ruleConfig": { "daysOfWeek": [1, 3, 5] },
+        "ruleConfig": {
+          "interval": 1,
+          "endType": "NEVER",
+          "daysOfWeek": [1, 3, 5]
+        },
         "generationType": "AUTO_SCHEDULER",
-        "isActive": true
+        "isActive": true,
+        "lastGeneratedAt": "2025-01-01T00:00:00Z"
       }, // 반복 정보 (RecurringDto | null)
       "participants": {
         "id": "uuid",
@@ -276,7 +281,11 @@
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (string?)
   "recurring": {
     "ruleType": null, // 반복 타입 (RecurringRuleType)
-    "ruleConfig": { "daysOfWeek": [1, 3, 5] }, // 반복 설정 (Record<string, any>)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (RuleConfigDto)
     "generationType": null // 생성 방식 (RecurringGenerationType)
   }, // 반복 규칙 (RecurringRuleDto?)
   "reminders": [
@@ -322,9 +331,14 @@
   "recurring": {
     "id": "uuid", // ID (string)
     "ruleType": "WEEKLY", // 반복 타입 (string)
-    "ruleConfig": { "daysOfWeek": [1, 3, 5] }, // 반복 설정 (Record<string, any>)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (Record<string, any>)
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
-    "isActive": true // 활성화 여부 (boolean)
+    "isActive": true, // 활성화 여부 (boolean)
+    "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
   }, // 반복 정보 (RecurringDto | null)
   "participants": [
     {
@@ -406,9 +420,14 @@
   "recurring": {
     "id": "uuid", // ID (string)
     "ruleType": "WEEKLY", // 반복 타입 (string)
-    "ruleConfig": { "daysOfWeek": [1, 3, 5] }, // 반복 설정 (Record<string, any>)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (Record<string, any>)
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
-    "isActive": true // 활성화 여부 (boolean)
+    "isActive": true, // 활성화 여부 (boolean)
+    "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
   }, // 반복 정보 (RecurringDto | null)
   "participants": [
     {
@@ -483,9 +502,14 @@
   "recurring": {
     "id": "uuid", // ID (string)
     "ruleType": "WEEKLY", // 반복 타입 (string)
-    "ruleConfig": { "daysOfWeek": [1, 3, 5] }, // 반복 설정 (Record<string, any>)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (Record<string, any>)
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
-    "isActive": true // 활성화 여부 (boolean)
+    "isActive": true, // 활성화 여부 (boolean)
+    "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
   }, // 반복 정보 (RecurringDto | null)
   "participants": [
     {
@@ -553,9 +577,10 @@
 {
   "id": "uuid", // ID (string)
   "ruleType": "WEEKLY", // 반복 타입 (string)
-  "ruleConfig": { "daysOfWeek": [1, 3, 5] }, // 반복 설정 (Record<string, any>)
+  "ruleConfig": { "interval": 1, "endType": "NEVER", "daysOfWeek": [1, 3, 5] }, // 반복 설정 (Record<string, any>)
   "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
-  "isActive": true // 활성화 여부 (boolean)
+  "isActive": true, // 활성화 여부 (boolean)
+  "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
 }
 ```
 

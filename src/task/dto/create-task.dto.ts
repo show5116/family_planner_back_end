@@ -10,6 +10,11 @@ import {
   MinLength,
   MaxLength,
   IsInt,
+  Min,
+  Max,
+  ArrayMinSize,
+  ArrayMaxSize,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -19,7 +24,127 @@ import {
   RecurringGenerationType,
   TaskReminderType,
 } from '@/task/enums';
+import { RecurringEndType } from '@/task/interfaces';
 
+/**
+ * 반복 규칙 설정 DTO
+ */
+export class RuleConfigDto {
+  @ApiProperty({
+    description: '반복 간격 (1 = 매번, 2 = 격주/격월 등)',
+    example: 1,
+    minimum: 1,
+    maximum: 99,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  interval: number;
+
+  @ApiProperty({
+    description: '종료 조건',
+    enum: RecurringEndType,
+    example: RecurringEndType.NEVER,
+  })
+  @IsEnum(RecurringEndType)
+  endType: RecurringEndType;
+
+  @ApiPropertyOptional({
+    description: '종료 날짜 (endType이 DATE인 경우 필수)',
+    example: '2026-12-31',
+  })
+  @ValidateIf((o) => o.endType === RecurringEndType.DATE)
+  @IsDateString()
+  endDate?: string;
+
+  @ApiPropertyOptional({
+    description: '반복 횟수 (endType이 COUNT인 경우 필수)',
+    example: 10,
+    minimum: 1,
+    maximum: 999,
+  })
+  @ValidateIf((o) => o.endType === RecurringEndType.COUNT)
+  @IsInt()
+  @Min(1)
+  @Max(999)
+  count?: number;
+
+  @ApiPropertyOptional({
+    description: '반복할 요일 목록 (WEEKLY인 경우, 0=일요일 ~ 6=토요일)',
+    example: [1, 3, 5],
+    type: [Number],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(7)
+  @IsInt({ each: true })
+  @Min(0, { each: true })
+  @Max(6, { each: true })
+  daysOfWeek?: number[];
+
+  @ApiPropertyOptional({
+    description:
+      'MONTHLY 반복 타입 (dayOfMonth: 날짜 기준, weekOfMonth: 요일 기준)',
+    example: 'dayOfMonth',
+    enum: ['dayOfMonth', 'weekOfMonth'],
+  })
+  @IsOptional()
+  @IsEnum(['dayOfMonth', 'weekOfMonth'])
+  monthlyType?: 'dayOfMonth' | 'weekOfMonth';
+
+  @ApiPropertyOptional({
+    description: '날짜 (1-31, MONTHLY/YEARLY의 dayOfMonth 타입인 경우)',
+    example: 15,
+    minimum: 1,
+    maximum: 31,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(31)
+  dayOfMonth?: number;
+
+  @ApiPropertyOptional({
+    description: '주차 (1-5, MONTHLY의 weekOfMonth 타입인 경우, 5는 마지막 주)',
+    example: 2,
+    minimum: 1,
+    maximum: 5,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  weekOfMonth?: number;
+
+  @ApiPropertyOptional({
+    description: '요일 (0-6, MONTHLY의 weekOfMonth 타입인 경우)',
+    example: 1,
+    minimum: 0,
+    maximum: 6,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(6)
+  dayOfWeek?: number;
+
+  @ApiPropertyOptional({
+    description: '월 (1-12, YEARLY인 경우)',
+    example: 3,
+    minimum: 1,
+    maximum: 12,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month?: number;
+}
+
+/**
+ * 반복 규칙 DTO
+ */
 export class RecurringRuleDto {
   @ApiProperty({
     description: '반복 타입',
@@ -31,9 +156,16 @@ export class RecurringRuleDto {
 
   @ApiProperty({
     description: '반복 설정',
-    example: { daysOfWeek: [1, 3, 5] },
+    type: RuleConfigDto,
+    example: {
+      interval: 1,
+      endType: 'NEVER',
+      daysOfWeek: [1, 3, 5],
+    },
   })
-  ruleConfig: Record<string, any>;
+  @ValidateNested()
+  @Type(() => RuleConfigDto)
+  ruleConfig: RuleConfigDto;
 
   @ApiProperty({
     description: '생성 방식',

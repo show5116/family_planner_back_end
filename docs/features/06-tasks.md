@@ -1,6 +1,6 @@
 # 06. 일정 및 할일 통합 관리 (Tasks Management)
 
-> **상태**: 🟨 진행 중 (핵심 기능 완료, 반복 일정 로직 TODO)
+> **상태**: ✅ 완료
 > **Phase**: Phase 3
 
 ---
@@ -108,7 +108,18 @@
 
 ### Recurrings
 - ruleType (DAILY, WEEKLY, MONTHLY, YEARLY)
-- ruleConfig (요일, 날짜 등 JSON)
+- ruleConfig (JSON): 반복 규칙 상세 설정
+  - `interval`: 반복 간격 (1 = 매번, 2 = 격주/격월 등)
+  - `endType`: 종료 조건 (NEVER, DATE, COUNT)
+  - `endDate`: 종료 날짜 (endType이 DATE인 경우)
+  - `count`: 반복 횟수 (endType이 COUNT인 경우)
+  - `generatedCount`: 현재까지 생성된 횟수 (내부 추적용)
+  - `daysOfWeek`: 요일 목록 (WEEKLY, 0=일~6=토)
+  - `monthlyType`: MONTHLY 반복 타입 (dayOfMonth/weekOfMonth)
+  - `dayOfMonth`: 날짜 (1-31)
+  - `weekOfMonth`: 주차 (1-5, 5는 마지막 주)
+  - `dayOfWeek`: 요일 (0-6)
+  - `month`: 월 (1-12, YEARLY)
 - generationType (AUTO_SCHEDULER, AFTER_COMPLETION)
 - lastGeneratedAt, isActive
 
@@ -151,10 +162,10 @@
 - [x] 휴면 사용자 필터링
 - [x] 참여자 기능 (그룹 Task에서 멤버 지정)
 - [x] 참여자 지정/변경 시 알림 발송
-
-### 🟨 진행 중
-- [ ] 반복 일정 자동 생성 로직 (`generateRecurringTasks`)
-- [ ] AFTER_COMPLETION 타입 (Task 완료 시 다음 Task 자동 생성)
+- [x] 반복 일정 자동 생성 로직 (`generateRecurringTasks`)
+- [x] AFTER_COMPLETION 타입 (Task 완료 시 다음 Task 자동 생성)
+- [x] 반복 간격 설정 (격주, 3주마다 등)
+- [x] 반복 종료 조건 (계속 반복, 날짜 지정, 횟수 지정)
 
 ### ⬜ TODO / 향후 고려
 - [ ] 단위 테스트
@@ -205,12 +216,22 @@
 - 참여자 지정 시 알림 발송 (새로 추가된 참여자에게만)
 - Task 목록/상세 조회 시 참여자 정보 포함
 
+### 2026-01-28
+- 반복 일정 자동 생성 로직 완성 (`generateRecurringTasks`)
+- AFTER_COMPLETION 타입 구현 (Task 완료 시 다음 Task 자동 생성)
+- 반복 간격 설정 (interval: 1=매번, 2=격주/격월, 3=3주마다 등)
+- 반복 종료 조건 3가지 지원:
+  - `NEVER`: 계속 반복 (종료일 없음)
+  - `DATE`: 특정 날짜까지 반복
+  - `COUNT`: 지정 횟수만큼 반복
+- WEEKLY: 특정 요일들 선택 가능 (예: 월/수/금)
+- MONTHLY: 날짜 기준(15일마다) 또는 요일 기준(둘째 주 월요일) 선택 가능
+- YEARLY: 특정 월/일에 반복
+
 ### TODO
-- `TaskService.generateRecurringTasks()`: 반복 날짜 계산 로직
-- AFTER_COMPLETION 타입: Task 완료 시 다음 Task 자동 생성
 - 단위 테스트 및 E2E 테스트
 
 ---
 
 **작성일**: 2025-12-29
-**최종 업데이트**: 2026-01-27
+**최종 업데이트**: 2026-01-28

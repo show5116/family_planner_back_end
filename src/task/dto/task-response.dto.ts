@@ -11,7 +11,14 @@ export class RecurringDto {
   @ApiProperty({ description: '반복 타입', example: 'WEEKLY' })
   ruleType: string;
 
-  @ApiProperty({ description: '반복 설정', example: { daysOfWeek: [1, 3, 5] } })
+  @ApiProperty({
+    description: '반복 설정',
+    example: {
+      interval: 1,
+      endType: 'NEVER',
+      daysOfWeek: [1, 3, 5],
+    },
+  })
   ruleConfig: Record<string, any>;
 
   @ApiProperty({ description: '생성 방식', example: 'AUTO_SCHEDULER' })
@@ -19,6 +26,9 @@ export class RecurringDto {
 
   @ApiProperty({ description: '활성화 여부', example: true })
   isActive: boolean;
+
+  @ApiProperty({ description: '마지막 생성 날짜', nullable: true })
+  lastGeneratedAt: Date | null;
 }
 
 export class TaskReminderResponseDto {

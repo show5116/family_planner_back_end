@@ -15,7 +15,9 @@ import {
   QueryTasksDto,
   SkipRecurringDto,
 } from './dto';
-import { TaskHistoryAction } from './enums';
+import { TaskHistoryAction, RecurringRuleType } from './enums';
+import { RecurringDateUtil } from './recurring-date.util';
+import { RuleConfig, RecurringEndType } from './interfaces';
 
 @Injectable()
 export class TaskService {
@@ -323,7 +325,7 @@ export class TaskService {
           userId,
           groupId: dto.groupId || null,
           ruleType: dto.recurring.ruleType,
-          ruleConfig: dto.recurring.ruleConfig,
+          ruleConfig: dto.recurring.ruleConfig as object,
           generationType: dto.recurring.generationType,
         },
       });
@@ -600,7 +602,7 @@ export class TaskService {
       task.recurring &&
       task.recurring.generationType === 'AFTER_COMPLETION'
     ) {
-      // TODO: 다음 Task 자동 생성 로직 (향후 구현)
+      await this.generateNextTaskAfterCompletion(taskId);
     }
 
     return {
@@ -767,8 +769,275 @@ export class TaskService {
    * 반복 일정 Task 생성 (스케줄러용)
    */
   async generateRecurringTasks(recurringId: string) {
-    // TODO: 반복 날짜 계산 및 Task 생성 로직
-    // 미래 3개월 분량 생성, 건너뛰기 날짜 제외, 중복 방지
+    const recurring = await this.prisma.recurring.findUnique({
+      where: { id: recurringId },
+      include: {
+        tasks: {
+          where: { deletedAt: null },
+          orderBy: { scheduledAt: 'desc' },
+          take: 1,
+        },
+        skips: true,
+      },
+    });
+
+    if (!recurring || !recurring.isActive) return;
+
+    const ruleConfig = recurring.ruleConfig as unknown as RuleConfig;
+
+    // 종료 조건 확인: COUNT 타입이고 횟수 초과 시 종료
+    if (ruleConfig.endType === RecurringEndType.COUNT && ruleConfig.count) {
+      const generatedCount = ruleConfig.generatedCount || 0;
+      if (generatedCount >= ruleConfig.count) {
+        // 반복 규칙 비활성화
+        await this.prisma.recurring.update({
+          where: { id: recurringId },
+          data: { isActive: false },
+        });
+        return;
+      }
+    }
+
+    // 종료 조건 확인: DATE 타입이고 종료일 지났으면 종료
+    if (ruleConfig.endType === RecurringEndType.DATE && ruleConfig.endDate) {
+      if (new Date(ruleConfig.endDate) < new Date()) {
+        await this.prisma.recurring.update({
+          where: { id: recurringId },
+          data: { isActive: false },
+        });
+        return;
+      }
+    }
+
+    // 기준 Task (템플릿) 가져오기
+    const templateTask = recurring.tasks[0];
+    if (!templateTask) return;
+
+    // 기존 생성된 날짜들 수집
+    const existingTasks = await this.prisma.task.findMany({
+      where: { recurringId, deletedAt: null },
+      select: { scheduledAt: true },
+    });
+    const existingDates = new Set(
+      existingTasks
+        .filter((t) => t.scheduledAt)
+        .map((t) => RecurringDateUtil.formatDateString(t.scheduledAt)),
+    );
+
+    // 건너뛰기 날짜들 수집
+    const skipDates = new Set(
+      recurring.skips.map((s) =>
+        RecurringDateUtil.formatDateString(s.skipDate),
+      ),
+    );
+
+    // 시작 날짜 계산 (마지막 생성일 다음 날 또는 오늘)
+    const fromDate = recurring.lastGeneratedAt
+      ? new Date(recurring.lastGeneratedAt)
+      : new Date();
+    fromDate.setDate(fromDate.getDate() + 1);
+    fromDate.setHours(0, 0, 0, 0);
+
+    // 미래 3개월 분량 날짜 계산
+    const newDates = RecurringDateUtil.calculateNextDates(
+      recurring.ruleType as RecurringRuleType,
+      ruleConfig,
+      fromDate,
+      3, // 3개월
+      existingDates,
+      skipDates,
+    );
+
+    if (newDates.length === 0) return;
+
+    // Task 일괄 생성
+    const tasksToCreate = newDates.map((date) => {
+      // 템플릿 Task의 시간 정보 유지
+      const scheduledAt = new Date(date);
+      if (templateTask.scheduledAt) {
+        scheduledAt.setHours(
+          templateTask.scheduledAt.getHours(),
+          templateTask.scheduledAt.getMinutes(),
+          templateTask.scheduledAt.getSeconds(),
+        );
+      }
+
+      let dueAt: Date | null = null;
+      if (templateTask.dueAt && templateTask.scheduledAt) {
+        // 기존 scheduledAt과 dueAt의 차이 유지
+        const diff =
+          templateTask.dueAt.getTime() - templateTask.scheduledAt.getTime();
+        dueAt = new Date(scheduledAt.getTime() + diff);
+      } else if (templateTask.dueAt) {
+        dueAt = new Date(date);
+        dueAt.setHours(
+          templateTask.dueAt.getHours(),
+          templateTask.dueAt.getMinutes(),
+          templateTask.dueAt.getSeconds(),
+        );
+      }
+
+      return {
+        userId: recurring.userId,
+        groupId: recurring.groupId,
+        categoryId: templateTask.categoryId,
+        recurringId: recurring.id,
+        title: templateTask.title,
+        description: templateTask.description,
+        location: templateTask.location,
+        type: templateTask.type,
+        priority: templateTask.priority,
+        scheduledAt,
+        dueAt,
+      };
+    });
+
+    await this.prisma.task.createMany({
+      data: tasksToCreate,
+    });
+
+    // 생성 횟수 및 마지막 생성일 업데이트
+    const newGeneratedCount =
+      (ruleConfig.generatedCount || 0) + newDates.length;
+    const updatedRuleConfig = {
+      ...ruleConfig,
+      generatedCount: newGeneratedCount,
+    };
+
+    await this.prisma.recurring.update({
+      where: { id: recurringId },
+      data: {
+        lastGeneratedAt: new Date(),
+        ruleConfig: updatedRuleConfig,
+      },
+    });
+  }
+
+  /**
+   * AFTER_COMPLETION 타입: Task 완료 시 다음 Task 자동 생성
+   */
+  async generateNextTaskAfterCompletion(taskId: string) {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: { recurring: true },
+    });
+
+    if (
+      !task ||
+      !task.recurring ||
+      task.recurring.generationType !== 'AFTER_COMPLETION'
+    ) {
+      return null;
+    }
+
+    const recurring = task.recurring;
+    if (!recurring.isActive) return null;
+
+    const ruleConfig = recurring.ruleConfig as unknown as RuleConfig;
+
+    // 종료 조건 확인
+    if (ruleConfig.endType === RecurringEndType.COUNT && ruleConfig.count) {
+      const generatedCount = ruleConfig.generatedCount || 0;
+      if (generatedCount >= ruleConfig.count) {
+        await this.prisma.recurring.update({
+          where: { id: recurring.id },
+          data: { isActive: false },
+        });
+        return null;
+      }
+    }
+
+    if (ruleConfig.endType === RecurringEndType.DATE && ruleConfig.endDate) {
+      if (new Date(ruleConfig.endDate) < new Date()) {
+        await this.prisma.recurring.update({
+          where: { id: recurring.id },
+          data: { isActive: false },
+        });
+        return null;
+      }
+    }
+
+    // 다음 날짜 계산
+    const fromDate = task.completedAt || new Date();
+    const nextDate = RecurringDateUtil.calculateNextSingleDate(
+      recurring.ruleType as RecurringRuleType,
+      ruleConfig,
+      fromDate,
+    );
+
+    if (!nextDate) return null;
+
+    // 종료일 확인
+    if (ruleConfig.endType === RecurringEndType.DATE && ruleConfig.endDate) {
+      if (nextDate > new Date(ruleConfig.endDate)) return null;
+    }
+
+    // 새 Task 생성
+    const scheduledAt = new Date(nextDate);
+    if (task.scheduledAt) {
+      scheduledAt.setHours(
+        task.scheduledAt.getHours(),
+        task.scheduledAt.getMinutes(),
+        task.scheduledAt.getSeconds(),
+      );
+    }
+
+    let dueAt: Date | null = null;
+    if (task.dueAt && task.scheduledAt) {
+      const diff = task.dueAt.getTime() - task.scheduledAt.getTime();
+      dueAt = new Date(scheduledAt.getTime() + diff);
+    } else if (task.dueAt) {
+      dueAt = new Date(nextDate);
+      dueAt.setHours(
+        task.dueAt.getHours(),
+        task.dueAt.getMinutes(),
+        task.dueAt.getSeconds(),
+      );
+    }
+
+    const newTask = await this.prisma.task.create({
+      data: {
+        userId: task.userId,
+        groupId: task.groupId,
+        categoryId: task.categoryId,
+        recurringId: recurring.id,
+        title: task.title,
+        description: task.description,
+        location: task.location,
+        type: task.type,
+        priority: task.priority,
+        scheduledAt,
+        dueAt,
+      },
+      include: {
+        category: true,
+        recurring: true,
+      },
+    });
+
+    // TaskHistory 생성
+    await this.createTaskHistory(
+      newTask.id,
+      task.userId,
+      TaskHistoryAction.CREATE,
+    );
+
+    // 생성 횟수 업데이트
+    const newGeneratedCount = (ruleConfig.generatedCount || 0) + 1;
+    const updatedRuleConfig = {
+      ...ruleConfig,
+      generatedCount: newGeneratedCount,
+    };
+
+    await this.prisma.recurring.update({
+      where: { id: recurring.id },
+      data: {
+        lastGeneratedAt: new Date(),
+        ruleConfig: updatedRuleConfig,
+      },
+    });
+
+    return newTask;
   }
 
   // ==================== 헬퍼 메서드 ====================
