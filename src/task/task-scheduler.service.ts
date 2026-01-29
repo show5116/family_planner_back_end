@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '@/prisma/prisma.service';
-import { TaskService } from './task.service';
+import { RecurringService } from './recurring.service';
 
 /**
  * Task 스케줄러 서비스
@@ -13,7 +13,7 @@ export class TaskSchedulerService {
 
   constructor(
     private prisma: PrismaService,
-    private taskService: TaskService,
+    private recurringService: RecurringService,
   ) {}
 
   /**
@@ -51,7 +51,7 @@ export class TaskSchedulerService {
       // 각 반복 규칙에 대해 Task 생성
       for (const recurring of activeRecurrings) {
         try {
-          await this.taskService.generateRecurringTasks(recurring.id);
+          await this.recurringService.generateRecurringTasks(recurring.id);
         } catch (error) {
           this.logger.error(
             `반복 규칙 ${recurring.id} Task 생성 실패: ${error.message}`,

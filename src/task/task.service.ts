@@ -2,151 +2,21 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
-import {
-  CreateCategoryDto,
-  UpdateCategoryDto,
-  CreateTaskDto,
-  UpdateTaskDto,
-  QueryTasksDto,
-  SkipRecurringDto,
-} from './dto';
-import { TaskHistoryAction, RecurringRuleType } from './enums';
-import { RecurringDateUtil } from './recurring-date.util';
-import { RuleConfig, RecurringEndType } from './interfaces';
+import { CreateTaskDto, UpdateTaskDto, QueryTasksDto } from './dto';
+import { TaskHistoryAction } from './enums';
+import { RecurringService } from './recurring.service';
 
 @Injectable()
 export class TaskService {
   constructor(
     private prisma: PrismaService,
     private notificationService: NotificationService,
+    private recurringService: RecurringService,
   ) {}
-
-  // ==================== 카테고리 관리 ====================
-
-  /**
-   * 카테고리 목록 조회
-   * - groupId가 null인 경우: 본인 userId로 등록된 개인 카테고리만 조회
-   * - groupId가 지정된 경우: 해당 그룹의 카테고리만 조회
-   */
-  async getCategories(userId: string, groupId?: string) {
-    if (groupId) {
-      // 그룹 ID가 지정된 경우: 해당 그룹의 카테고리만
-      const isMember = await this.checkGroupMember(userId, groupId);
-      if (!isMember) {
-        throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
-      }
-
-      return await this.prisma.category.findMany({
-        where: { groupId },
-        orderBy: { createdAt: 'desc' },
-      });
-    }
-
-    // 그룹 ID가 없는 경우: 본인의 개인 카테고리만
-    return await this.prisma.category.findMany({
-      where: { userId, groupId: null },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  /**
-   * 카테고리 생성
-   */
-  async createCategory(userId: string, dto: CreateCategoryDto) {
-    // 그룹 카테고리 생성 시 그룹 멤버 확인
-    if (dto.groupId) {
-      const isMember = await this.checkGroupMember(userId, dto.groupId);
-      if (!isMember) {
-        throw new ForbiddenException(
-          '그룹 멤버만 카테고리를 생성할 수 있습니다',
-        );
-      }
-    }
-
-    return await this.prisma.category.create({
-      data: {
-        userId,
-        groupId: dto.groupId || null,
-        name: dto.name,
-        description: dto.description || null,
-        emoji: dto.emoji || null,
-        color: dto.color || null,
-      },
-    });
-  }
-
-  /**
-   * 카테고리 수정
-   */
-  async updateCategory(
-    userId: string,
-    categoryId: string,
-    dto: UpdateCategoryDto,
-  ) {
-    const category = await this.prisma.category.findUnique({
-      where: { id: categoryId },
-    });
-
-    if (!category) {
-      throw new NotFoundException('카테고리를 찾을 수 없습니다');
-    }
-
-    if (category.userId !== userId) {
-      throw new ForbiddenException(
-        '본인이 작성한 카테고리만 수정할 수 있습니다',
-      );
-    }
-
-    return await this.prisma.category.update({
-      where: { id: categoryId },
-      data: {
-        name: dto.name,
-        description: dto.description,
-        emoji: dto.emoji,
-        color: dto.color,
-      },
-    });
-  }
-
-  /**
-   * 카테고리 삭제
-   */
-  async deleteCategory(userId: string, categoryId: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { id: categoryId },
-      include: { tasks: true },
-    });
-
-    if (!category) {
-      throw new NotFoundException('카테고리를 찾을 수 없습니다');
-    }
-
-    if (category.userId !== userId) {
-      throw new ForbiddenException(
-        '본인이 작성한 카테고리만 삭제할 수 있습니다',
-      );
-    }
-
-    // 연결된 Task가 있으면 삭제 불가
-    if (category.tasks.length > 0) {
-      throw new ConflictException(
-        '카테고리에 연결된 Task가 있어 삭제할 수 없습니다',
-      );
-    }
-
-    await this.prisma.category.delete({
-      where: { id: categoryId },
-    });
-
-    return { message: '카테고리가 삭제되었습니다' };
-  }
-
-  // ==================== Task 관리 ====================
 
   /**
    * Task 목록 조회 (캘린더/할일 뷰)
@@ -167,9 +37,7 @@ export class TaskService {
 
     const where: any = {
       deletedAt: null,
-      OR: [
-        { userId }, // 개인 Task
-      ],
+      OR: [{ userId }],
     };
 
     // 그룹 Task 추가
@@ -178,7 +46,6 @@ export class TaskService {
       if (!isMember) {
         throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
       }
-
       where.OR.push({ groupId });
     } else {
       const memberships = await this.prisma.groupMember.findMany({
@@ -233,7 +100,6 @@ export class TaskService {
       this.prisma.task.count({ where }),
     ]);
 
-    // D-Day 계산
     const tasksWithDDay = tasks.map((task) => ({
       ...task,
       daysUntilDue: this.calculateDaysUntilDue(task.dueAt),
@@ -260,9 +126,7 @@ export class TaskService {
         category: true,
         recurring: true,
         reminders: true,
-        histories: {
-          orderBy: { createdAt: 'desc' },
-        },
+        histories: { orderBy: { createdAt: 'desc' } },
         participants: {
           include: {
             user: {
@@ -277,7 +141,7 @@ export class TaskService {
       throw new NotFoundException('Task를 찾을 수 없습니다');
     }
 
-    // 권한 확인: 본인 Task이거나 그룹 멤버인 경우
+    // 권한 확인
     if (task.userId !== userId) {
       if (task.groupId) {
         const isMember = await this.checkGroupMember(userId, task.groupId);
@@ -317,7 +181,7 @@ export class TaskService {
       throw new NotFoundException('카테고리를 찾을 수 없습니다');
     }
 
-    // 반복 규칙 생성 (있는 경우)
+    // 반복 규칙 생성
     let recurringId: string | null = null;
     if (dto.recurring) {
       const recurring = await this.prisma.recurring.create({
@@ -347,16 +211,13 @@ export class TaskService {
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
         dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
       },
-      include: {
-        category: true,
-        recurring: true,
-      },
+      include: { category: true, recurring: true },
     });
 
-    // TaskHistory 자동 생성
+    // TaskHistory 생성
     await this.createTaskHistory(task.id, userId, TaskHistoryAction.CREATE);
 
-    // 알림 생성 (있는 경우)
+    // 알림 생성
     if (dto.reminders && dto.reminders.length > 0) {
       await this.prisma.taskReminder.createMany({
         data: dto.reminders.map((r) => ({
@@ -368,17 +229,14 @@ export class TaskService {
       });
     }
 
-    // 참여자 추가 (그룹 Task에서만 가능)
+    // 참여자 추가
     if (dto.participantIds && dto.participantIds.length > 0) {
       if (!dto.groupId) {
         throw new ForbiddenException(
           '참여자는 그룹 Task에서만 지정할 수 있습니다',
         );
       }
-
       await this.addParticipants(task.id, dto.groupId, dto.participantIds);
-
-      // 참여자에게 알림 발송
       await this.sendParticipantNotifications(
         dto.participantIds,
         userId,
@@ -388,7 +246,7 @@ export class TaskService {
       );
     }
 
-    // 그룹 Task인 경우 그룹 멤버에게 알림
+    // 그룹 Task 알림
     if (dto.groupId) {
       await this.sendGroupNotification(
         dto.groupId,
@@ -443,7 +301,6 @@ export class TaskService {
       throw new ForbiddenException('본인이 작성한 Task만 수정할 수 있습니다');
     }
 
-    // 반복 Task인 경우 updateScope 확인
     if (task.recurringId && !updateScope) {
       throw new ForbiddenException(
         '반복 Task는 updateScope를 지정해야 합니다 (current 또는 future)',
@@ -459,7 +316,6 @@ export class TaskService {
     if (dto.scheduledAt) updateData.scheduledAt = new Date(dto.scheduledAt);
     if (dto.dueAt) updateData.dueAt = new Date(dto.dueAt);
 
-    // 변경 이력 기록용 before 데이터
     const before = {
       title: task.title,
       description: task.description,
@@ -467,7 +323,6 @@ export class TaskService {
     };
 
     if (updateScope === 'current' || !task.recurringId) {
-      // 현재 Task만 수정
       const updated = await this.prisma.task.update({
         where: { id: taskId },
         data: updateData,
@@ -479,7 +334,7 @@ export class TaskService {
         after: updateData,
       });
 
-      // 참여자 업데이트 (그룹 Task에서만 가능)
+      // 참여자 업데이트
       if (dto.participantIds !== undefined) {
         if (!task.groupId) {
           throw new ForbiddenException(
@@ -487,7 +342,6 @@ export class TaskService {
           );
         }
 
-        // 기존 참여자 조회
         const existingParticipants = await this.prisma.taskParticipant.findMany(
           {
             where: { taskId },
@@ -495,15 +349,12 @@ export class TaskService {
           },
         );
         const existingIds = existingParticipants.map((p) => p.userId);
-
-        // 새로 추가된 참여자 계산
         const newParticipantIds = dto.participantIds.filter(
           (id) => !existingIds.includes(id),
         );
 
         await this.updateParticipants(taskId, task.groupId, dto.participantIds);
 
-        // 새로 추가된 참여자에게만 알림 발송
         if (newParticipantIds.length > 0) {
           await this.sendParticipantNotifications(
             newParticipantIds,
@@ -515,7 +366,6 @@ export class TaskService {
         }
       }
 
-      // 참여자 포함하여 재조회
       const taskWithParticipants = await this.prisma.task.findUnique({
         where: { id: taskId },
         include: {
@@ -602,7 +452,7 @@ export class TaskService {
       task.recurring &&
       task.recurring.generationType === 'AFTER_COMPLETION'
     ) {
-      await this.generateNextTaskAfterCompletion(taskId);
+      await this.recurringService.generateNextTaskAfterCompletion(taskId);
     }
 
     return {
@@ -631,7 +481,6 @@ export class TaskService {
       throw new ForbiddenException('본인이 작성한 Task만 삭제할 수 있습니다');
     }
 
-    // 반복 Task인 경우 deleteScope 확인
     if (task.recurringId && !deleteScope) {
       throw new ForbiddenException(
         '반복 Task는 deleteScope를 지정해야 합니다 (current, future, all)',
@@ -641,15 +490,12 @@ export class TaskService {
     const now = new Date();
 
     if (deleteScope === 'current' || !task.recurringId) {
-      // 현재 Task만 삭제
       await this.prisma.task.update({
         where: { id: taskId },
         data: { deletedAt: now },
       });
-
       await this.createTaskHistory(taskId, userId, TaskHistoryAction.DELETE);
     } else if (deleteScope === 'future') {
-      // 현재 + 미래 삭제
       const futureTasks = await this.prisma.task.findMany({
         where: {
           recurringId: task.recurringId,
@@ -660,9 +506,7 @@ export class TaskService {
 
       await Promise.all([
         this.prisma.task.updateMany({
-          where: {
-            id: { in: futureTasks.map((t) => t.id) },
-          },
+          where: { id: { in: futureTasks.map((t) => t.id) } },
           data: { deletedAt: now },
         }),
         ...futureTasks.map((t) =>
@@ -670,19 +514,13 @@ export class TaskService {
         ),
       ]);
     } else {
-      // 과거 + 현재 + 미래 모두 삭제
       const allTasks = await this.prisma.task.findMany({
-        where: {
-          recurringId: task.recurringId,
-          deletedAt: null,
-        },
+        where: { recurringId: task.recurringId, deletedAt: null },
       });
 
       await Promise.all([
         this.prisma.task.updateMany({
-          where: {
-            id: { in: allTasks.map((t) => t.id) },
-          },
+          where: { id: { in: allTasks.map((t) => t.id) } },
           data: { deletedAt: now },
         }),
         ...allTasks.map((t) =>
@@ -692,352 +530,6 @@ export class TaskService {
     }
 
     return { message: 'Task가 삭제되었습니다' };
-  }
-
-  // ==================== 반복 일정 관리 ====================
-
-  /**
-   * 반복 일정 일시정지/재개
-   */
-  async pauseRecurring(userId: string, recurringId: string) {
-    const recurring = await this.prisma.recurring.findUnique({
-      where: { id: recurringId },
-    });
-
-    if (!recurring) {
-      throw new NotFoundException('반복 규칙을 찾을 수 없습니다');
-    }
-
-    if (recurring.userId !== userId) {
-      throw new ForbiddenException(
-        '본인이 작성한 반복 규칙만 변경할 수 있습니다',
-      );
-    }
-
-    return await this.prisma.recurring.update({
-      where: { id: recurringId },
-      data: { isActive: !recurring.isActive },
-    });
-  }
-
-  /**
-   * 반복 일정 건너뛰기
-   */
-  async skipRecurring(
-    userId: string,
-    recurringId: string,
-    dto: SkipRecurringDto,
-  ) {
-    const recurring = await this.prisma.recurring.findUnique({
-      where: { id: recurringId },
-    });
-
-    if (!recurring) {
-      throw new NotFoundException('반복 규칙을 찾을 수 없습니다');
-    }
-
-    if (recurring.userId !== userId) {
-      throw new ForbiddenException(
-        '본인이 작성한 반복 규칙만 건너뛸 수 있습니다',
-      );
-    }
-
-    const skip = await this.prisma.taskSkip.create({
-      data: {
-        recurringId,
-        skipDate: new Date(dto.skipDate),
-        reason: dto.reason || null,
-        createdBy: userId,
-      },
-    });
-
-    // 그룹 반복 일정인 경우 그룹 멤버에게 알림
-    if (recurring.groupId) {
-      await this.sendGroupNotification(
-        recurring.groupId,
-        userId,
-        '반복 일정이 건너뛰기 되었습니다',
-        `${dto.skipDate} 일정이 건너뛰기 되었습니다`,
-        { category: 'SCHEDULE', scheduleId: recurringId },
-      );
-    }
-
-    return skip;
-  }
-
-  /**
-   * 반복 일정 Task 생성 (스케줄러용)
-   */
-  async generateRecurringTasks(recurringId: string) {
-    const recurring = await this.prisma.recurring.findUnique({
-      where: { id: recurringId },
-      include: {
-        tasks: {
-          where: { deletedAt: null },
-          orderBy: { scheduledAt: 'desc' },
-          take: 1,
-        },
-        skips: true,
-      },
-    });
-
-    if (!recurring || !recurring.isActive) return;
-
-    const ruleConfig = recurring.ruleConfig as unknown as RuleConfig;
-
-    // 종료 조건 확인: COUNT 타입이고 횟수 초과 시 종료
-    if (ruleConfig.endType === RecurringEndType.COUNT && ruleConfig.count) {
-      const generatedCount = ruleConfig.generatedCount || 0;
-      if (generatedCount >= ruleConfig.count) {
-        // 반복 규칙 비활성화
-        await this.prisma.recurring.update({
-          where: { id: recurringId },
-          data: { isActive: false },
-        });
-        return;
-      }
-    }
-
-    // 종료 조건 확인: DATE 타입이고 종료일 지났으면 종료
-    if (ruleConfig.endType === RecurringEndType.DATE && ruleConfig.endDate) {
-      if (new Date(ruleConfig.endDate) < new Date()) {
-        await this.prisma.recurring.update({
-          where: { id: recurringId },
-          data: { isActive: false },
-        });
-        return;
-      }
-    }
-
-    // 기준 Task (템플릿) 가져오기
-    const templateTask = recurring.tasks[0];
-    if (!templateTask) return;
-
-    // 기존 생성된 날짜들 수집
-    const existingTasks = await this.prisma.task.findMany({
-      where: { recurringId, deletedAt: null },
-      select: { scheduledAt: true },
-    });
-    const existingDates = new Set(
-      existingTasks
-        .filter((t) => t.scheduledAt)
-        .map((t) => RecurringDateUtil.formatDateString(t.scheduledAt)),
-    );
-
-    // 건너뛰기 날짜들 수집
-    const skipDates = new Set(
-      recurring.skips.map((s) =>
-        RecurringDateUtil.formatDateString(s.skipDate),
-      ),
-    );
-
-    // 시작 날짜 계산 (마지막 생성일 다음 날 또는 오늘)
-    const fromDate = recurring.lastGeneratedAt
-      ? new Date(recurring.lastGeneratedAt)
-      : new Date();
-    fromDate.setDate(fromDate.getDate() + 1);
-    fromDate.setHours(0, 0, 0, 0);
-
-    // 미래 3개월 분량 날짜 계산
-    const newDates = RecurringDateUtil.calculateNextDates(
-      recurring.ruleType as RecurringRuleType,
-      ruleConfig,
-      fromDate,
-      3, // 3개월
-      existingDates,
-      skipDates,
-    );
-
-    if (newDates.length === 0) return;
-
-    // Task 일괄 생성
-    const tasksToCreate = newDates.map((date) => {
-      // 템플릿 Task의 시간 정보 유지
-      const scheduledAt = new Date(date);
-      if (templateTask.scheduledAt) {
-        scheduledAt.setHours(
-          templateTask.scheduledAt.getHours(),
-          templateTask.scheduledAt.getMinutes(),
-          templateTask.scheduledAt.getSeconds(),
-        );
-      }
-
-      let dueAt: Date | null = null;
-      if (templateTask.dueAt && templateTask.scheduledAt) {
-        // 기존 scheduledAt과 dueAt의 차이 유지
-        const diff =
-          templateTask.dueAt.getTime() - templateTask.scheduledAt.getTime();
-        dueAt = new Date(scheduledAt.getTime() + diff);
-      } else if (templateTask.dueAt) {
-        dueAt = new Date(date);
-        dueAt.setHours(
-          templateTask.dueAt.getHours(),
-          templateTask.dueAt.getMinutes(),
-          templateTask.dueAt.getSeconds(),
-        );
-      }
-
-      return {
-        userId: recurring.userId,
-        groupId: recurring.groupId,
-        categoryId: templateTask.categoryId,
-        recurringId: recurring.id,
-        title: templateTask.title,
-        description: templateTask.description,
-        location: templateTask.location,
-        type: templateTask.type,
-        priority: templateTask.priority,
-        scheduledAt,
-        dueAt,
-      };
-    });
-
-    await this.prisma.task.createMany({
-      data: tasksToCreate,
-    });
-
-    // 생성 횟수 및 마지막 생성일 업데이트
-    const newGeneratedCount =
-      (ruleConfig.generatedCount || 0) + newDates.length;
-    const updatedRuleConfig = {
-      ...ruleConfig,
-      generatedCount: newGeneratedCount,
-    };
-
-    await this.prisma.recurring.update({
-      where: { id: recurringId },
-      data: {
-        lastGeneratedAt: new Date(),
-        ruleConfig: updatedRuleConfig,
-      },
-    });
-  }
-
-  /**
-   * AFTER_COMPLETION 타입: Task 완료 시 다음 Task 자동 생성
-   */
-  async generateNextTaskAfterCompletion(taskId: string) {
-    const task = await this.prisma.task.findUnique({
-      where: { id: taskId },
-      include: { recurring: true },
-    });
-
-    if (
-      !task ||
-      !task.recurring ||
-      task.recurring.generationType !== 'AFTER_COMPLETION'
-    ) {
-      return null;
-    }
-
-    const recurring = task.recurring;
-    if (!recurring.isActive) return null;
-
-    const ruleConfig = recurring.ruleConfig as unknown as RuleConfig;
-
-    // 종료 조건 확인
-    if (ruleConfig.endType === RecurringEndType.COUNT && ruleConfig.count) {
-      const generatedCount = ruleConfig.generatedCount || 0;
-      if (generatedCount >= ruleConfig.count) {
-        await this.prisma.recurring.update({
-          where: { id: recurring.id },
-          data: { isActive: false },
-        });
-        return null;
-      }
-    }
-
-    if (ruleConfig.endType === RecurringEndType.DATE && ruleConfig.endDate) {
-      if (new Date(ruleConfig.endDate) < new Date()) {
-        await this.prisma.recurring.update({
-          where: { id: recurring.id },
-          data: { isActive: false },
-        });
-        return null;
-      }
-    }
-
-    // 다음 날짜 계산
-    const fromDate = task.completedAt || new Date();
-    const nextDate = RecurringDateUtil.calculateNextSingleDate(
-      recurring.ruleType as RecurringRuleType,
-      ruleConfig,
-      fromDate,
-    );
-
-    if (!nextDate) return null;
-
-    // 종료일 확인
-    if (ruleConfig.endType === RecurringEndType.DATE && ruleConfig.endDate) {
-      if (nextDate > new Date(ruleConfig.endDate)) return null;
-    }
-
-    // 새 Task 생성
-    const scheduledAt = new Date(nextDate);
-    if (task.scheduledAt) {
-      scheduledAt.setHours(
-        task.scheduledAt.getHours(),
-        task.scheduledAt.getMinutes(),
-        task.scheduledAt.getSeconds(),
-      );
-    }
-
-    let dueAt: Date | null = null;
-    if (task.dueAt && task.scheduledAt) {
-      const diff = task.dueAt.getTime() - task.scheduledAt.getTime();
-      dueAt = new Date(scheduledAt.getTime() + diff);
-    } else if (task.dueAt) {
-      dueAt = new Date(nextDate);
-      dueAt.setHours(
-        task.dueAt.getHours(),
-        task.dueAt.getMinutes(),
-        task.dueAt.getSeconds(),
-      );
-    }
-
-    const newTask = await this.prisma.task.create({
-      data: {
-        userId: task.userId,
-        groupId: task.groupId,
-        categoryId: task.categoryId,
-        recurringId: recurring.id,
-        title: task.title,
-        description: task.description,
-        location: task.location,
-        type: task.type,
-        priority: task.priority,
-        scheduledAt,
-        dueAt,
-      },
-      include: {
-        category: true,
-        recurring: true,
-      },
-    });
-
-    // TaskHistory 생성
-    await this.createTaskHistory(
-      newTask.id,
-      task.userId,
-      TaskHistoryAction.CREATE,
-    );
-
-    // 생성 횟수 업데이트
-    const newGeneratedCount = (ruleConfig.generatedCount || 0) + 1;
-    const updatedRuleConfig = {
-      ...ruleConfig,
-      generatedCount: newGeneratedCount,
-    };
-
-    await this.prisma.recurring.update({
-      where: { id: recurring.id },
-      data: {
-        lastGeneratedAt: new Date(),
-        ruleConfig: updatedRuleConfig,
-      },
-    });
-
-    return newTask;
   }
 
   // ==================== 헬퍼 메서드 ====================
@@ -1050,9 +542,7 @@ export class TaskService {
     groupId: string,
   ): Promise<boolean> {
     const member = await this.prisma.groupMember.findUnique({
-      where: {
-        groupId_userId: { groupId, userId },
-      },
+      where: { groupId_userId: { groupId, userId } },
     });
     return !!member;
   }
@@ -1062,17 +552,14 @@ export class TaskService {
    */
   private calculateDaysUntilDue(dueAt: Date | null): number | null {
     if (!dueAt) return null;
-
     const now = new Date();
     const due = new Date(dueAt);
     const diffTime = due.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays; // 양수: 남은 일수, 음수: 지난 일수
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
   /**
-   * Task 변경 이력 자동 기록
+   * Task 변경 이력 기록
    */
   private async createTaskHistory(
     taskId: string,
@@ -1128,12 +615,8 @@ export class TaskService {
     groupId: string,
     participantIds: string[],
   ) {
-    // 참여자들이 해당 그룹의 멤버인지 확인
     const groupMembers = await this.prisma.groupMember.findMany({
-      where: {
-        groupId,
-        userId: { in: participantIds },
-      },
+      where: { groupId, userId: { in: participantIds } },
       select: { userId: true },
     });
 
@@ -1146,30 +629,21 @@ export class TaskService {
       throw new ForbiddenException('참여자는 그룹 멤버만 지정할 수 있습니다');
     }
 
-    // 참여자 일괄 생성
     await this.prisma.taskParticipant.createMany({
-      data: participantIds.map((userId) => ({
-        taskId,
-        userId,
-      })),
+      data: participantIds.map((userId) => ({ taskId, userId })),
       skipDuplicates: true,
     });
   }
 
   /**
-   * Task 참여자 업데이트 (기존 참여자 삭제 후 새로 추가)
+   * Task 참여자 업데이트
    */
   private async updateParticipants(
     taskId: string,
     groupId: string,
     participantIds: string[],
   ) {
-    // 기존 참여자 삭제
-    await this.prisma.taskParticipant.deleteMany({
-      where: { taskId },
-    });
-
-    // 새 참여자 추가
+    await this.prisma.taskParticipant.deleteMany({ where: { taskId } });
     if (participantIds.length > 0) {
       await this.addParticipants(taskId, groupId, participantIds);
     }

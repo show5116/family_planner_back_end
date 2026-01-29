@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TaskService } from './task.service';
+import { CategoryService } from './category.service';
+import { RecurringService } from './recurring.service';
 import {
   CreateCategoryDto,
   UpdateCategoryDto,
@@ -44,7 +46,11 @@ import {
 @Controller('tasks')
 @ApiCommonAuthResponses()
 export class TaskController {
-  constructor(private readonly taskService: TaskService) {}
+  constructor(
+    private readonly taskService: TaskService,
+    private readonly categoryService: CategoryService,
+    private readonly recurringService: RecurringService,
+  ) {}
 
   // ==================== 카테고리 API ====================
 
@@ -52,14 +58,14 @@ export class TaskController {
   @ApiOperation({ summary: '카테고리 목록 조회' })
   @ApiSuccess(CategoryDto, '카테고리 목록 조회 성공', { isArray: true })
   getCategories(@Request() req, @Query('groupId') groupId?: string) {
-    return this.taskService.getCategories(req.user.userId, groupId);
+    return this.categoryService.getCategories(req.user.userId, groupId);
   }
 
   @Post('categories')
   @ApiOperation({ summary: '카테고리 생성' })
   @ApiCreated(CategoryDto, '카테고리 생성 성공')
   createCategory(@Request() req, @Body() dto: CreateCategoryDto) {
-    return this.taskService.createCategory(req.user.userId, dto);
+    return this.categoryService.createCategory(req.user.userId, dto);
   }
 
   @Put('categories/:id')
@@ -72,7 +78,7 @@ export class TaskController {
     @Request() req,
     @Body() dto: UpdateCategoryDto,
   ) {
-    return this.taskService.updateCategory(req.user.userId, id, dto);
+    return this.categoryService.updateCategory(req.user.userId, id, dto);
   }
 
   @Delete('categories/:id')
@@ -81,7 +87,7 @@ export class TaskController {
   @ApiNotFound('카테고리를 찾을 수 없음')
   @ApiForbidden('연결된 Task가 있으면 삭제 불가')
   deleteCategory(@Param('id') id: string, @Request() req) {
-    return this.taskService.deleteCategory(req.user.userId, id);
+    return this.categoryService.deleteCategory(req.user.userId, id);
   }
 
   // ==================== Task API ====================
@@ -156,7 +162,7 @@ export class TaskController {
   @ApiNotFound('반복 규칙을 찾을 수 없음')
   @ApiForbidden('본인 작성 반복 규칙만 변경 가능')
   pauseRecurring(@Param('id') id: string, @Request() req) {
-    return this.taskService.pauseRecurring(req.user.userId, id);
+    return this.recurringService.pauseRecurring(req.user.userId, id);
   }
 
   @Post('recurrings/:id/skip')
@@ -169,6 +175,6 @@ export class TaskController {
     @Request() req,
     @Body() dto: SkipRecurringDto,
   ) {
-    return this.taskService.skipRecurring(req.user.userId, id, dto);
+    return this.recurringService.skipRecurring(req.user.userId, id, dto);
   }
 }
