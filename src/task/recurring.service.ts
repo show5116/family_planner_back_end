@@ -3,19 +3,20 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { NotificationService } from '@/notification/notification.service';
-import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { SkipRecurringDto } from './dto';
 import { TaskHistoryAction, RecurringRuleType } from './enums';
 import { RecurringDateUtil } from './recurring-date.util';
 import { RuleConfig, RecurringEndType } from './interfaces';
+import { RecurringSkippedEvent, RecurringTasksGeneratedEvent } from './events';
 
 @Injectable()
 export class RecurringService {
   constructor(
     private prisma: PrismaService,
-    private notificationService: NotificationService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -73,31 +74,40 @@ export class RecurringService {
       },
     });
 
-    if (recurring.groupId) {
-      await this.sendGroupNotification(
-        recurring.groupId,
+    // Event Emitter로 알림 위임
+    this.eventEmitter.emit(
+      'recurring.skipped',
+      new RecurringSkippedEvent(
+        recurringId,
         userId,
-        '반복 일정이 건너뛰기 되었습니다',
-        `${dto.skipDate} 일정이 건너뛰기 되었습니다`,
-        { category: 'SCHEDULE', scheduleId: recurringId },
-      );
-    }
+        recurring.groupId,
+        dto.skipDate,
+        dto.reason || null,
+      ),
+    );
 
     return skip;
   }
 
   /**
-   * 반복 일정 Task 생성 (스케줄러용)
+   * 반복 일정 Task 생성 (스케줄러용, 트랜잭션 적용)
+   *
+   * 주의: 템플릿 Task는 가장 오래된(최초) Task를 사용합니다.
+   * 사용자가 특정 Task만 수정해도 이후 생성에 영향이 없습니다.
    */
   async generateRecurringTasks(recurringId: string) {
     const recurring = await this.prisma.recurring.findUnique({
       where: { id: recurringId },
       include: {
+        // 최초 생성된 Task를 템플릿으로 사용 (asc)
         tasks: {
           where: { deletedAt: null },
-          orderBy: { scheduledAt: 'desc' },
+          orderBy: { scheduledAt: 'asc' },
           take: 1,
-          include: { reminders: true },
+          include: {
+            reminders: true,
+            participants: true, // 참여자 포함
+          },
         },
         skips: true,
       },
@@ -170,33 +180,18 @@ export class RecurringService {
 
     if (newDates.length === 0) return;
 
-    // Task 일괄 생성
-    const createdTasks = await Promise.all(
-      newDates.map(async (date) => {
-        const scheduledAt = new Date(date);
-        if (templateTask.scheduledAt) {
-          scheduledAt.setHours(
-            templateTask.scheduledAt.getHours(),
-            templateTask.scheduledAt.getMinutes(),
-            templateTask.scheduledAt.getSeconds(),
-          );
-        }
+    // 트랜잭션으로 모든 DB 작업 수행
+    const createdTaskIds = await this.prisma.$transaction(async (tx) => {
+      const taskIds: string[] = [];
 
-        let dueAt: Date | null = null;
-        if (templateTask.dueAt && templateTask.scheduledAt) {
-          const diff =
-            templateTask.dueAt.getTime() - templateTask.scheduledAt.getTime();
-          dueAt = new Date(scheduledAt.getTime() + diff);
-        } else if (templateTask.dueAt) {
-          dueAt = new Date(date);
-          dueAt.setHours(
-            templateTask.dueAt.getHours(),
-            templateTask.dueAt.getMinutes(),
-            templateTask.dueAt.getSeconds(),
-          );
-        }
+      for (const date of newDates) {
+        const { scheduledAt, dueAt } = this.calculateTaskDates(
+          date,
+          templateTask.scheduledAt,
+          templateTask.dueAt,
+        );
 
-        const task = await this.prisma.task.create({
+        const task = await tx.task.create({
           data: {
             userId: recurring.userId,
             groupId: recurring.groupId,
@@ -212,9 +207,11 @@ export class RecurringService {
           },
         });
 
+        taskIds.push(task.id);
+
         // Reminder 복사
         if (templateTask.reminders.length > 0) {
-          await this.prisma.taskReminder.createMany({
+          await tx.taskReminder.createMany({
             data: templateTask.reminders.map((r) => ({
               taskId: task.id,
               userId: r.userId,
@@ -224,29 +221,64 @@ export class RecurringService {
           });
         }
 
-        return task;
-      }),
-    );
+        // 참여자 복사 (Critical Fix)
+        if (templateTask.participants.length > 0) {
+          await tx.taskParticipant.createMany({
+            data: templateTask.participants.map((p) => ({
+              taskId: task.id,
+              userId: p.userId,
+            })),
+          });
+        }
 
-    // 생성 횟수 및 마지막 생성일 업데이트
-    const newGeneratedCount =
-      (ruleConfig.generatedCount || 0) + createdTasks.length;
-    const updatedRuleConfig = {
-      ...ruleConfig,
-      generatedCount: newGeneratedCount,
-    };
+        // TaskHistory 생성
+        await tx.taskHistory.create({
+          data: {
+            taskId: task.id,
+            userId: recurring.userId,
+            action: TaskHistoryAction.CREATE,
+            changes: { source: 'SCHEDULER' } as Prisma.InputJsonValue,
+          },
+        });
+      }
 
-    await this.prisma.recurring.update({
-      where: { id: recurringId },
-      data: {
-        lastGeneratedAt: new Date(),
-        ruleConfig: updatedRuleConfig,
-      },
+      // 생성 횟수 및 마지막 생성일 업데이트
+      const newGeneratedCount =
+        (ruleConfig.generatedCount || 0) + taskIds.length;
+      const updatedRuleConfig = {
+        ...ruleConfig,
+        generatedCount: newGeneratedCount,
+      };
+
+      await tx.recurring.update({
+        where: { id: recurringId },
+        data: {
+          lastGeneratedAt: new Date(),
+          ruleConfig: updatedRuleConfig,
+        },
+      });
+
+      return taskIds;
     });
+
+    // 이벤트 발행
+    if (createdTaskIds.length > 0) {
+      this.eventEmitter.emit(
+        'recurring.tasks.generated',
+        new RecurringTasksGeneratedEvent(
+          createdTaskIds,
+          recurring.userId,
+          recurringId,
+        ),
+      );
+    }
   }
 
   /**
-   * AFTER_COMPLETION 타입: Task 완료 시 다음 Task 자동 생성
+   * AFTER_COMPLETION 타입: Task 완료 시 다음 Task 자동 생성 (트랜잭션 적용)
+   *
+   * 주의: 완료된 Task를 템플릿으로 사용합니다.
+   * 이 타입은 "이번 Task 완료 후 X일 뒤" 생성 방식이므로 가장 최근 Task가 적합합니다.
    */
   async generateNextTaskAfterCompletion(taskId: string) {
     const task = await this.prisma.task.findUnique({
@@ -254,6 +286,7 @@ export class RecurringService {
       include: {
         recurring: true,
         reminders: true,
+        participants: true, // 참여자 포함
       },
     });
 
@@ -307,116 +340,133 @@ export class RecurringService {
       if (nextDate > new Date(ruleConfig.endDate)) return null;
     }
 
-    // 새 Task 생성
-    const scheduledAt = new Date(nextDate);
-    if (task.scheduledAt) {
-      scheduledAt.setHours(
-        task.scheduledAt.getHours(),
-        task.scheduledAt.getMinutes(),
-        task.scheduledAt.getSeconds(),
-      );
-    }
+    // 날짜 계산
+    const { scheduledAt, dueAt } = this.calculateTaskDates(
+      nextDate,
+      task.scheduledAt,
+      task.dueAt,
+    );
 
-    let dueAt: Date | null = null;
-    if (task.dueAt && task.scheduledAt) {
-      const diff = task.dueAt.getTime() - task.scheduledAt.getTime();
-      dueAt = new Date(scheduledAt.getTime() + diff);
-    } else if (task.dueAt) {
-      dueAt = new Date(nextDate);
-      dueAt.setHours(
-        task.dueAt.getHours(),
-        task.dueAt.getMinutes(),
-        task.dueAt.getSeconds(),
-      );
-    }
-
-    const newTask = await this.prisma.task.create({
-      data: {
-        userId: task.userId,
-        groupId: task.groupId,
-        categoryId: task.categoryId,
-        recurringId: recurring.id,
-        title: task.title,
-        description: task.description,
-        location: task.location,
-        type: task.type,
-        priority: task.priority,
-        scheduledAt,
-        dueAt,
-      },
-      include: {
-        category: true,
-        recurring: true,
-      },
-    });
-
-    // Reminder 복사
-    if (task.reminders.length > 0) {
-      await this.prisma.taskReminder.createMany({
-        data: task.reminders.map((r) => ({
-          taskId: newTask.id,
-          userId: r.userId,
-          reminderType: r.reminderType,
-          offsetMinutes: r.offsetMinutes,
-        })),
+    // 트랜잭션으로 모든 DB 작업 수행
+    const newTask = await this.prisma.$transaction(async (tx) => {
+      const createdTask = await tx.task.create({
+        data: {
+          userId: task.userId,
+          groupId: task.groupId,
+          categoryId: task.categoryId,
+          recurringId: recurring.id,
+          title: task.title,
+          description: task.description,
+          location: task.location,
+          type: task.type,
+          priority: task.priority,
+          scheduledAt,
+          dueAt,
+        },
       });
+
+      // Reminder 복사
+      if (task.reminders.length > 0) {
+        await tx.taskReminder.createMany({
+          data: task.reminders.map((r) => ({
+            taskId: createdTask.id,
+            userId: r.userId,
+            reminderType: r.reminderType,
+            offsetMinutes: r.offsetMinutes,
+          })),
+        });
+      }
+
+      // 참여자 복사 (Critical Fix)
+      if (task.participants.length > 0) {
+        await tx.taskParticipant.createMany({
+          data: task.participants.map((p) => ({
+            taskId: createdTask.id,
+            userId: p.userId,
+          })),
+        });
+      }
+
+      // TaskHistory 생성
+      await tx.taskHistory.create({
+        data: {
+          taskId: createdTask.id,
+          userId: task.userId,
+          action: TaskHistoryAction.CREATE,
+          changes: { source: 'AFTER_COMPLETION' } as Prisma.InputJsonValue,
+        },
+      });
+
+      // 생성 횟수 업데이트
+      const newGeneratedCount = (ruleConfig.generatedCount || 0) + 1;
+      const updatedRuleConfig = {
+        ...ruleConfig,
+        generatedCount: newGeneratedCount,
+      };
+
+      await tx.recurring.update({
+        where: { id: recurring.id },
+        data: {
+          lastGeneratedAt: new Date(),
+          ruleConfig: updatedRuleConfig,
+        },
+      });
+
+      return tx.task.findUnique({
+        where: { id: createdTask.id },
+        include: {
+          category: true,
+          recurring: true,
+          participants: { include: { user: true } },
+        },
+      });
+    });
+
+    // 이벤트 발행
+    if (newTask) {
+      this.eventEmitter.emit(
+        'recurring.tasks.generated',
+        new RecurringTasksGeneratedEvent(
+          [newTask.id],
+          task.userId,
+          recurring.id,
+        ),
+      );
     }
-
-    // TaskHistory 생성
-    await this.prisma.taskHistory.create({
-      data: {
-        taskId: newTask.id,
-        userId: task.userId,
-        action: TaskHistoryAction.CREATE,
-        changes: null,
-      },
-    });
-
-    // 생성 횟수 업데이트
-    const newGeneratedCount = (ruleConfig.generatedCount || 0) + 1;
-    const updatedRuleConfig = {
-      ...ruleConfig,
-      generatedCount: newGeneratedCount,
-    };
-
-    await this.prisma.recurring.update({
-      where: { id: recurring.id },
-      data: {
-        lastGeneratedAt: new Date(),
-        ruleConfig: updatedRuleConfig,
-      },
-    });
 
     return newTask;
   }
 
   /**
-   * 그룹 멤버 전체에게 알림 발송
+   * Task 날짜 계산 헬퍼
    */
-  private async sendGroupNotification(
-    groupId: string,
-    excludeUserId: string,
-    title: string,
-    body: string,
-    data: any,
-  ) {
-    const members = await this.prisma.groupMember.findMany({
-      where: { groupId },
-      select: { userId: true },
-    });
+  private calculateTaskDates(
+    baseDate: Date,
+    templateScheduledAt: Date | null,
+    templateDueAt: Date | null,
+  ): { scheduledAt: Date; dueAt: Date | null } {
+    const scheduledAt = new Date(baseDate);
+    if (templateScheduledAt) {
+      scheduledAt.setHours(
+        templateScheduledAt.getHours(),
+        templateScheduledAt.getMinutes(),
+        templateScheduledAt.getSeconds(),
+      );
+    }
 
-    await Promise.allSettled(
-      members
-        .filter((m) => m.userId !== excludeUserId)
-        .map((m) =>
-          this.notificationService.sendNotification({
-            userId: m.userId,
-            category: NotificationCategory.SCHEDULE,
-            title,
-            body,
-            data,
-          }),
-        ),
-    );
+    let dueAt: Date | null = null;
+    if (templateDueAt && templateScheduledAt) {
+      const diff = templateDueAt.getTime() - templateScheduledAt.getTime();
+      dueAt = new Date(scheduledAt.getTime() + diff);
+    } else if (templateDueAt) {
+      dueAt = new Date(baseDate);
+      dueAt.setHours(
+        templateDueAt.getHours(),
+        templateDueAt.getMinutes(),
+        templateDueAt.getSeconds(),
+      );
+    }
+
+    return { scheduledAt, dueAt };
   }
 }

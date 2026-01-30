@@ -3,12 +3,12 @@ import {
   IsString,
   IsEnum,
   IsOptional,
-  IsDateString,
   MinLength,
   MaxLength,
   IsArray,
   IsUUID,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TaskType, TaskPriority } from '@/task/enums';
 
 export class UpdateTaskDto {
@@ -57,17 +57,17 @@ export class UpdateTaskDto {
     description: '수행 시작 날짜',
     example: '2025-12-30T09:00:00Z',
   })
-  @IsDateString()
   @IsOptional()
-  scheduledAt?: string;
+  @Type(() => Date)
+  scheduledAt?: Date;
 
   @ApiPropertyOptional({
     description: '마감 날짜',
     example: '2025-12-30T18:00:00Z',
   })
-  @IsDateString()
   @IsOptional()
-  dueAt?: string;
+  @Type(() => Date)
+  dueAt?: Date;
 
   @ApiPropertyOptional({
     description: '참여자 ID 목록 (그룹 Task에서만 사용 가능)',

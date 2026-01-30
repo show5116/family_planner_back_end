@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -112,6 +113,7 @@ import { WebhookModule } from '@/webhook/webhook.module';
         };
       },
     }),
+    EventEmitterModule.forRoot(),
     SentryModule,
     PrismaModule,
     FirebaseModule,

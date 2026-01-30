@@ -883,4 +883,65 @@ export class RedisService implements OnModuleInit {
   async getScheduledNotificationCount(): Promise<number> {
     return await this.redisClient.zcard(this.SCHEDULED_NOTIFICATIONS_KEY);
   }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * 7. Distributed Lock (분산 락)
+   * ───────────────────────────────────────────────────────────────────────── */
+
+  /**
+   * 분산 락 획득 (SET NX EX 사용)
+   * Scale-out 환경에서 크론잡 중복 실행 방지
+   *
+   * @param lockKey - 락 키
+   * @param ttlSeconds - 락 만료 시간 (초)
+   * @param lockValue - 락 값 (릴리즈 시 검증용, 기본값: 현재 타임스탬프)
+   * @returns 락 획득 성공 여부
+   */
+  async acquireLock(
+    lockKey: string,
+    ttlSeconds: number,
+    lockValue?: string,
+  ): Promise<boolean> {
+    const value = lockValue || Date.now().toString();
+    // SET key value NX EX ttl - 키가 없을 때만 설정하고 TTL 지정
+    const result = await this.redisClient.set(
+      lockKey,
+      value,
+      'EX',
+      ttlSeconds,
+      'NX',
+    );
+    return result === 'OK';
+  }
+
+  /**
+   * 분산 락 해제
+   * Lua 스크립트로 원자적 처리 (본인의 락만 해제)
+   *
+   * @param lockKey - 락 키
+   * @param lockValue - 락 획득 시 사용한 값
+   * @returns 락 해제 성공 여부
+   */
+  async releaseLock(lockKey: string, lockValue: string): Promise<boolean> {
+    // Lua 스크립트: 값이 일치할 때만 삭제 (원자성 보장)
+    const script = `
+      if redis.call("GET", KEYS[1]) == ARGV[1] then
+        return redis.call("DEL", KEYS[1])
+      else
+        return 0
+      end
+    `;
+    const result = await this.redisClient.eval(script, 1, lockKey, lockValue);
+    return result === 1;
+  }
+
+  /**
+   * 락 보유 여부 확인
+   *
+   * @param lockKey - 락 키
+   * @returns 락이 설정되어 있으면 true
+   */
+  async isLocked(lockKey: string): Promise<boolean> {
+    return await this.has(lockKey);
+  }
 }

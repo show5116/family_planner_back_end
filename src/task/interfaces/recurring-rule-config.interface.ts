@@ -65,8 +65,14 @@ export interface MonthlyRuleConfig extends BaseRuleConfig {
 export interface YearlyRuleConfig extends BaseRuleConfig {
   /** 월 (1-12) */
   month: number;
-  /** 날짜 (1-31) */
-  dayOfMonth: number;
+  /** 반복 타입: 날짜 기준 또는 요일 기준 */
+  yearlyType?: 'dayOfMonth' | 'weekOfMonth';
+  /** 날짜 (1-31, yearlyType이 dayOfMonth인 경우) */
+  dayOfMonth?: number;
+  /** 주차 (1-5, yearlyType이 weekOfMonth인 경우, 5는 마지막 주) */
+  weekOfMonth?: number;
+  /** 요일 (0-6, yearlyType이 weekOfMonth인 경우) */
+  dayOfWeek?: number;
 }
 
 /**

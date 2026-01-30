@@ -9,8 +9,49 @@ import {
 
 /**
  * 반복 일정 날짜 계산 유틸리티
+ *
+ * 개선 사항:
+ * 1. interval 검증으로 무한 루프 방지
+ * 2. DST(썸머타임) 이슈 해결을 위한 시간 정규화
+ * 3. Yearly의 weekOfMonth 지원 추가
+ * 4. 최대 반복 횟수 제한으로 안전성 확보
  */
 export class RecurringDateUtil {
+  /** 한 번 계산에서 생성할 수 있는 최대 날짜 수 (안전장치) */
+  private static readonly MAX_DATES_PER_CALCULATION = 1000;
+
+  /**
+   * interval 값을 검증하고 안전한 값으로 반환
+   * 무한 루프 방지를 위해 최소 1 이상 보장
+   */
+  private static sanitizeInterval(interval: number | undefined): number {
+    if (!interval || interval < 1 || !Number.isFinite(interval)) {
+      return 1;
+    }
+    return Math.floor(interval);
+  }
+
+  /**
+   * DST(썸머타임) 이슈를 방지하기 위해 날짜의 시간을 정오(12:00)로 설정
+   * 이렇게 하면 +/- 1시간 변동이 있어도 날짜가 바뀌지 않음
+   */
+  private static normalizeDate(date: Date): Date {
+    const normalized = new Date(date);
+    normalized.setHours(12, 0, 0, 0);
+    return normalized;
+  }
+
+  /**
+   * 날짜를 안전하게 n일 후로 이동 (DST 고려)
+   */
+  private static addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    // DST로 인한 시간 변동 보정
+    result.setHours(12, 0, 0, 0);
+    return result;
+  }
+
   /**
    * 다음 반복 날짜들을 계산
    * @param ruleType 반복 타입
@@ -28,6 +69,12 @@ export class RecurringDateUtil {
     existingDates: Set<string>,
     skipDates: Set<string>,
   ): Date[] {
+    // interval 검증
+    const safeConfig = {
+      ...ruleConfig,
+      interval: this.sanitizeInterval(ruleConfig.interval),
+    };
+
     const endDate = new Date(fromDate);
     endDate.setMonth(endDate.getMonth() + monthsAhead);
 
@@ -37,7 +84,7 @@ export class RecurringDateUtil {
       endDate: configEndDate,
       count,
       generatedCount = 0,
-    } = ruleConfig;
+    } = safeConfig;
 
     // endType이 DATE인 경우, endDate로 제한
     if (endType === RecurringEndType.DATE && configEndDate) {
@@ -48,67 +95,58 @@ export class RecurringDateUtil {
     }
 
     // endType이 COUNT인 경우, 남은 횟수 계산
-    let remainingCount = Infinity;
+    let remainingCount = this.MAX_DATES_PER_CALCULATION;
     if (endType === RecurringEndType.COUNT && count) {
-      remainingCount = count - generatedCount;
+      remainingCount = Math.min(
+        count - generatedCount,
+        this.MAX_DATES_PER_CALCULATION,
+      );
       if (remainingCount <= 0) return [];
     }
 
-    const dates: Date[] = [];
-    const currentDate = new Date(fromDate);
+    const normalizedFromDate = this.normalizeDate(fromDate);
+    const normalizedEndDate = this.normalizeDate(endDate);
 
     switch (ruleType) {
       case RecurringRuleType.DAILY:
-        dates.push(
-          ...this.calculateDailyDates(
-            currentDate,
-            endDate,
-            ruleConfig,
-            remainingCount,
-            existingDates,
-            skipDates,
-          ),
+        return this.calculateDailyDates(
+          normalizedFromDate,
+          normalizedEndDate,
+          safeConfig,
+          remainingCount,
+          existingDates,
+          skipDates,
         );
-        break;
       case RecurringRuleType.WEEKLY:
-        dates.push(
-          ...this.calculateWeeklyDates(
-            currentDate,
-            endDate,
-            ruleConfig as WeeklyRuleConfig,
-            remainingCount,
-            existingDates,
-            skipDates,
-          ),
+        return this.calculateWeeklyDates(
+          normalizedFromDate,
+          normalizedEndDate,
+          safeConfig as WeeklyRuleConfig,
+          remainingCount,
+          existingDates,
+          skipDates,
         );
-        break;
       case RecurringRuleType.MONTHLY:
-        dates.push(
-          ...this.calculateMonthlyDates(
-            currentDate,
-            endDate,
-            ruleConfig as MonthlyRuleConfig,
-            remainingCount,
-            existingDates,
-            skipDates,
-          ),
+        return this.calculateMonthlyDates(
+          normalizedFromDate,
+          normalizedEndDate,
+          safeConfig as MonthlyRuleConfig,
+          remainingCount,
+          existingDates,
+          skipDates,
         );
-        break;
       case RecurringRuleType.YEARLY:
-        dates.push(
-          ...this.calculateYearlyDates(
-            currentDate,
-            endDate,
-            ruleConfig as YearlyRuleConfig,
-            remainingCount,
-            existingDates,
-            skipDates,
-          ),
+        return this.calculateYearlyDates(
+          normalizedFromDate,
+          normalizedEndDate,
+          safeConfig as YearlyRuleConfig,
+          remainingCount,
+          existingDates,
+          skipDates,
         );
-        break;
+      default:
+        return [];
     }
-
-    return dates;
   }
 
   /**
@@ -123,11 +161,16 @@ export class RecurringDateUtil {
     skipDates: Set<string>,
   ): Date[] {
     const dates: Date[] = [];
-    const { interval } = config;
-    const currentDate = new Date(fromDate);
+    const interval = this.sanitizeInterval(config.interval);
+    let currentDate = new Date(fromDate);
     let addedCount = 0;
+    let iterationCount = 0;
 
-    while (currentDate <= endDate && addedCount < remainingCount) {
+    while (
+      currentDate <= endDate &&
+      addedCount < remainingCount &&
+      iterationCount < this.MAX_DATES_PER_CALCULATION
+    ) {
       const dateStr = this.formatDateString(currentDate);
 
       if (!existingDates.has(dateStr) && !skipDates.has(dateStr)) {
@@ -135,7 +178,8 @@ export class RecurringDateUtil {
         addedCount++;
       }
 
-      currentDate.setDate(currentDate.getDate() + interval);
+      currentDate = this.addDays(currentDate, interval);
+      iterationCount++;
     }
 
     return dates;
@@ -143,6 +187,10 @@ export class RecurringDateUtil {
 
   /**
    * WEEKLY 날짜 계산
+   *
+   * 주의: 현재 구현은 "상대적 주기" 방식입니다.
+   * 예: 2주 간격 = fromDate 기준으로 2주 뒤
+   * 절대적 주기(올해의 짝수 주차 등)가 필요하면 별도 구현 필요
    */
   private static calculateWeeklyDates(
     fromDate: Date,
@@ -153,31 +201,37 @@ export class RecurringDateUtil {
     skipDates: Set<string>,
   ): Date[] {
     const dates: Date[] = [];
-    const { interval, daysOfWeek } = config;
+    const interval = this.sanitizeInterval(config.interval);
+    const { daysOfWeek } = config;
 
     if (!daysOfWeek || daysOfWeek.length === 0) return dates;
 
-    const currentDate = new Date(fromDate);
+    // 요일 정렬 (일요일 0 ~ 토요일 6)
+    const sortedDaysOfWeek = [...daysOfWeek].sort((a, b) => a - b);
+
     let addedCount = 0;
     let weekCount = 0;
+    let iterationCount = 0;
 
     // 현재 주의 시작(일요일)으로 이동
-    const startOfWeek = new Date(currentDate);
+    const startOfWeek = new Date(fromDate);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    startOfWeek.setHours(12, 0, 0, 0);
 
-    while (addedCount < remainingCount) {
+    while (
+      addedCount < remainingCount &&
+      iterationCount < this.MAX_DATES_PER_CALCULATION
+    ) {
       // interval 간격의 주에만 생성
-      const weekDate = new Date(startOfWeek);
-      weekDate.setDate(weekDate.getDate() + weekCount * 7 * interval);
+      const weekDate = this.addDays(startOfWeek, weekCount * 7 * interval);
 
       if (weekDate > endDate) break;
 
       // 해당 주의 지정된 요일들에 대해 생성
-      for (const dayOfWeek of daysOfWeek) {
+      for (const dayOfWeek of sortedDaysOfWeek) {
         if (addedCount >= remainingCount) break;
 
-        const targetDate = new Date(weekDate);
-        targetDate.setDate(targetDate.getDate() + dayOfWeek);
+        const targetDate = this.addDays(weekDate, dayOfWeek);
 
         // fromDate 이전이거나 endDate 이후면 스킵
         if (targetDate < fromDate || targetDate > endDate) continue;
@@ -191,6 +245,7 @@ export class RecurringDateUtil {
       }
 
       weekCount++;
+      iterationCount++;
     }
 
     return dates;
@@ -208,18 +263,25 @@ export class RecurringDateUtil {
     skipDates: Set<string>,
   ): Date[] {
     const dates: Date[] = [];
-    const { interval, monthlyType, dayOfMonth, weekOfMonth, dayOfWeek } =
-      config;
+    const interval = this.sanitizeInterval(config.interval);
+    const { monthlyType, dayOfMonth, weekOfMonth, dayOfWeek } = config;
 
-    const currentDate = new Date(fromDate);
     let addedCount = 0;
     let monthCount = 0;
+    let iterationCount = 0;
 
-    while (addedCount < remainingCount) {
+    while (
+      addedCount < remainingCount &&
+      iterationCount < this.MAX_DATES_PER_CALCULATION
+    ) {
       const targetMonth = new Date(
         fromDate.getFullYear(),
         fromDate.getMonth() + monthCount * interval,
         1,
+        12,
+        0,
+        0,
+        0,
       );
 
       if (targetMonth > endDate) break;
@@ -257,6 +319,7 @@ export class RecurringDateUtil {
       }
 
       monthCount++;
+      iterationCount++;
     }
 
     return dates;
@@ -264,6 +327,7 @@ export class RecurringDateUtil {
 
   /**
    * YEARLY 날짜 계산
+   * 날짜 기준(12월 25일) 또는 주차/요일 기준(5월 2번째 일요일) 지원
    */
   private static calculateYearlyDates(
     fromDate: Date,
@@ -274,15 +338,37 @@ export class RecurringDateUtil {
     skipDates: Set<string>,
   ): Date[] {
     const dates: Date[] = [];
-    const { interval, month, dayOfMonth } = config;
+    const interval = this.sanitizeInterval(config.interval);
+    const { month, yearlyType, dayOfMonth, weekOfMonth, dayOfWeek } = config;
 
     const currentYear = fromDate.getFullYear();
     let addedCount = 0;
     let yearCount = 0;
+    let iterationCount = 0;
 
-    while (addedCount < remainingCount) {
+    while (
+      addedCount < remainingCount &&
+      iterationCount < this.MAX_DATES_PER_CALCULATION
+    ) {
       const targetYear = currentYear + yearCount * interval;
-      const targetDate = this.getDateOfMonth(targetYear, month - 1, dayOfMonth);
+      let targetDate: Date | null = null;
+
+      if (
+        yearlyType === 'weekOfMonth' &&
+        weekOfMonth !== undefined &&
+        dayOfWeek !== undefined
+      ) {
+        // 주차/요일 기준 (예: 5월 2번째 일요일)
+        targetDate = this.getNthDayOfMonth(
+          targetYear,
+          month - 1,
+          weekOfMonth,
+          dayOfWeek,
+        );
+      } else if (dayOfMonth) {
+        // 날짜 기준 (예: 12월 25일) - 기본값
+        targetDate = this.getDateOfMonth(targetYear, month - 1, dayOfMonth);
+      }
 
       if (targetDate && targetDate > endDate) break;
 
@@ -296,6 +382,7 @@ export class RecurringDateUtil {
       }
 
       yearCount++;
+      iterationCount++;
     }
 
     return dates;
@@ -311,7 +398,9 @@ export class RecurringDateUtil {
   ): Date {
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
     const actualDay = Math.min(day, lastDayOfMonth);
-    return new Date(year, month, actualDay);
+    const date = new Date(year, month, actualDay);
+    date.setHours(12, 0, 0, 0); // DST 보정
+    return date;
   }
 
   /**
@@ -334,6 +423,7 @@ export class RecurringDateUtil {
       const diff = lastDayOfWeek - dayOfWeek;
       const targetDate = new Date(lastDay);
       targetDate.setDate(lastDay.getDate() - (diff >= 0 ? diff : 7 + diff));
+      targetDate.setHours(12, 0, 0, 0); // DST 보정
       return targetDate;
     }
 
@@ -348,6 +438,7 @@ export class RecurringDateUtil {
     // 해당 월을 벗어나면 null
     if (targetDate.getMonth() !== month) return null;
 
+    targetDate.setHours(12, 0, 0, 0); // DST 보정
     return targetDate;
   }
 
@@ -369,43 +460,54 @@ export class RecurringDateUtil {
     ruleConfig: RuleConfig,
     fromDate: Date,
   ): Date | null {
-    const { interval } = ruleConfig;
-    const nextDate = new Date(fromDate);
+    const interval = this.sanitizeInterval(ruleConfig.interval);
+    const nextDate = this.normalizeDate(fromDate);
 
     switch (ruleType) {
       case RecurringRuleType.DAILY:
-        nextDate.setDate(nextDate.getDate() + interval);
-        break;
+        return this.addDays(nextDate, interval);
 
       case RecurringRuleType.WEEKLY: {
         const weeklyConfig = ruleConfig as WeeklyRuleConfig;
         const { daysOfWeek } = weeklyConfig;
         if (!daysOfWeek || daysOfWeek.length === 0) return null;
 
-        // 다음 요일 찾기
-        let found = false;
-        for (let i = 1; i <= 7 * interval; i++) {
-          const checkDate = new Date(fromDate);
-          checkDate.setDate(checkDate.getDate() + i);
+        // 다음 요일 찾기 (최대 7주까지 탐색)
+        const maxDays = 7 * interval;
+        for (let i = 1; i <= maxDays; i++) {
+          const checkDate = this.addDays(fromDate, i);
           if (daysOfWeek.includes(checkDate.getDay())) {
-            nextDate.setTime(checkDate.getTime());
-            found = true;
-            break;
+            return checkDate;
           }
         }
-        if (!found) return null;
-        break;
+        return null;
       }
 
-      case RecurringRuleType.MONTHLY:
-        nextDate.setMonth(nextDate.getMonth() + interval);
-        break;
+      case RecurringRuleType.MONTHLY: {
+        // 월말 Clamp 처리: 1월 31일 + 1개월 = 2월 28일 (JS 기본: 3월 3일로 overflow)
+        const targetMonth = nextDate.getMonth() + interval;
+        const targetYear =
+          nextDate.getFullYear() + Math.floor(targetMonth / 12);
+        const normalizedMonth = targetMonth % 12;
+        return this.getDateOfMonth(
+          targetYear,
+          normalizedMonth,
+          nextDate.getDate(),
+        );
+      }
 
-      case RecurringRuleType.YEARLY:
-        nextDate.setFullYear(nextDate.getFullYear() + interval);
-        break;
+      case RecurringRuleType.YEARLY: {
+        // 윤년 Clamp 처리: 2024년 2월 29일 + 1년 = 2025년 2월 28일
+        const targetYear = nextDate.getFullYear() + interval;
+        return this.getDateOfMonth(
+          targetYear,
+          nextDate.getMonth(),
+          nextDate.getDate(),
+        );
+      }
+
+      default:
+        return null;
     }
-
-    return nextDate;
   }
 }
