@@ -3112,8 +3112,9 @@ R2에 파일이 존재하는지 확인합니다.
 **Query Parameters:**
 
 - `view` (`'calendar' | 'todo'`) (Optional): 뷰 타입
-- `groupId` (`string`) (Optional): 그룹 ID
-- `categoryId` (`string`) (Optional): 카테고리 ID
+- `groupIds` (`string[]`) (Optional): 그룹 ID 목록 (콤마로 구분)
+- `includePersonal` (`boolean`) (Optional): 개인 일정 포함 여부 (기본값: true)
+- `categoryIds` (`string[]`) (Optional): 카테고리 ID 목록 (콤마로 구분)
 - `type` (`TaskType`) (Optional): Task 타입
 - `priority` (`TaskPriority`) (Optional): 우선순위
 - `isCompleted` (`boolean`) (Optional): 완료 여부
@@ -3243,8 +3244,8 @@ R2에 파일이 존재하는지 확인합니다.
   "priority": null, // 우선순위 (TaskPriority?)
   "categoryId": "uuid", // 카테고리 ID (string)
   "groupId": "uuid", // 그룹 ID (그룹 Task 생성 시) (string?)
-  "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (string?)
-  "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (string?)
+  "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
+  "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "recurring": {
     "ruleType": null, // 반복 타입 (RecurringRuleType)
     "ruleConfig": {
@@ -3347,8 +3348,8 @@ R2에 파일이 존재하는지 확인합니다.
   "location": "본사 2층 회의실", // 장소 (string?)
   "type": null, // Task 타입 (TaskType?)
   "priority": null, // 우선순위 (TaskPriority?)
-  "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (string?)
-  "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (string?)
+  "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
+  "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "participantIds": ["uuid-1", "uuid-2"] // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
 }
 ```

@@ -30,29 +30,30 @@ export class TaskService {
    * Task 목록 조회 (캘린더/할일 뷰)
    */
   async getTasks(userId: string, query: QueryTasksDto) {
-    const { view = 'calendar', groupId, page = 1, limit = 20 } = query;
-
-    // 그룹 검증
-    if (groupId) {
-      const isMember = await this.checkGroupMember(userId, groupId);
-      if (!isMember) {
-        throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
-      }
-    }
+    const { view = 'calendar', page = 1, limit = 20 } = query;
 
     // 사용자가 속한 그룹 목록 조회
     const memberships = await this.prisma.groupMember.findMany({
       where: { userId },
       select: { groupId: true },
     });
-    const groupIds = memberships.map((m) => m.groupId);
+    const userGroupIds = memberships.map((m) => m.groupId);
+
+    // 요청된 groupIds 검증 (사용자가 속하지 않은 그룹 요청 시 에러)
+    if (query.groupIds && query.groupIds.length > 0) {
+      const invalidGroupIds = query.groupIds.filter(
+        (gid) => !userGroupIds.includes(gid),
+      );
+      if (invalidGroupIds.length > 0) {
+        throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
+      }
+    }
 
     // 쿼리 빌더로 조건 생성
     const where = TaskQueryBuilder.buildWhereClause(
       userId,
-      groupIds,
+      userGroupIds,
       query,
-      groupId,
     );
     const orderBy = TaskQueryBuilder.buildOrderBy(view);
     const skip = (page - 1) * limit;

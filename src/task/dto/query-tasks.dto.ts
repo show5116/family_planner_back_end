@@ -1,6 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsUUID, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsOptional,
+  IsUUID,
+  IsBoolean,
+  IsArray,
+} from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { TaskType, TaskPriority } from '@/task/enums';
 
 export class QueryTasksDto {
@@ -13,15 +19,44 @@ export class QueryTasksDto {
   @IsOptional()
   view?: 'calendar' | 'todo';
 
-  @ApiPropertyOptional({ description: '그룹 ID', example: 'uuid' })
-  @IsUUID()
+  @ApiPropertyOptional({
+    description: '그룹 ID 목록 (콤마로 구분)',
+    example: 'uuid1,uuid2',
+    type: [String],
+  })
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    return value.split(',').map((v: string) => v.trim());
+  })
+  @IsArray()
+  @IsUUID('4', { each: true })
   @IsOptional()
-  groupId?: string;
+  groupIds?: string[];
 
-  @ApiPropertyOptional({ description: '카테고리 ID', example: 'uuid' })
-  @IsUUID()
+  @ApiPropertyOptional({
+    description: '개인 일정 포함 여부 (기본값: true)',
+    example: true,
+  })
+  @Type(() => Boolean)
+  @IsBoolean()
   @IsOptional()
-  categoryId?: string;
+  includePersonal?: boolean;
+
+  @ApiPropertyOptional({
+    description: '카테고리 ID 목록 (콤마로 구분)',
+    example: 'uuid1,uuid2',
+    type: [String],
+  })
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    return value.split(',').map((v: string) => v.trim());
+  })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  categoryIds?: string[];
 
   @ApiPropertyOptional({
     description: 'Task 타입',

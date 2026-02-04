@@ -8,20 +8,40 @@ import { QueryTasksDto } from '../dto';
 export class TaskQueryBuilder {
   /**
    * 사용자/그룹 기반 Task 조회 조건 생성
+   * @param userId 사용자 ID
+   * @param userGroupIds 사용자가 속한 그룹 ID 목록
+   * @param query 조회 조건
    */
   static buildWhereClause(
     userId: string,
-    groupIds: string[],
+    userGroupIds: string[],
     query: QueryTasksDto,
-    specificGroupId?: string,
   ): Prisma.TaskWhereInput {
-    const orConditions: Prisma.TaskWhereInput[] = [{ userId }];
+    const orConditions: Prisma.TaskWhereInput[] = [];
+    const includePersonal = query.includePersonal ?? true;
 
-    // 특정 그룹 지정 또는 사용자가 속한 모든 그룹
-    if (specificGroupId) {
-      orConditions.push({ groupId: specificGroupId });
-    } else if (groupIds.length > 0) {
-      orConditions.push({ groupId: { in: groupIds } });
+    // 개인 일정 포함
+    if (includePersonal) {
+      orConditions.push({ userId, groupId: null });
+    }
+
+    // 그룹 일정 필터링
+    if (query.groupIds && query.groupIds.length > 0) {
+      // 요청된 그룹 중 사용자가 속한 그룹만 필터링
+      const validGroupIds = query.groupIds.filter((gid) =>
+        userGroupIds.includes(gid),
+      );
+      if (validGroupIds.length > 0) {
+        orConditions.push({ groupId: { in: validGroupIds } });
+      }
+    } else if (userGroupIds.length > 0) {
+      // groupIds가 없으면 사용자가 속한 모든 그룹 조회
+      orConditions.push({ groupId: { in: userGroupIds } });
+    }
+
+    // 조건이 없으면 빈 결과 반환
+    if (orConditions.length === 0) {
+      return { deletedAt: null, id: 'none' };
     }
 
     const where: Prisma.TaskWhereInput = {
@@ -30,7 +50,9 @@ export class TaskQueryBuilder {
     };
 
     // 필터링 조건 추가
-    if (query.categoryId) where.categoryId = query.categoryId;
+    if (query.categoryIds && query.categoryIds.length > 0) {
+      where.categoryId = { in: query.categoryIds };
+    }
     if (query.type) where.type = query.type;
     if (query.priority) where.priority = query.priority;
     if (query.isCompleted !== undefined) where.isCompleted = query.isCompleted;
