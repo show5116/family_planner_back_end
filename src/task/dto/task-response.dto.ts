@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TaskType, TaskPriority, TaskHistoryAction } from '@/task/enums';
+import {
+  TaskType,
+  TaskStatus,
+  TaskPriority,
+  TaskHistoryAction,
+} from '@/task/enums';
 import { CategoryDto } from './category-response.dto';
 import { PaginationMetaDto } from './common-response.dto';
 import { TaskParticipantDto } from './participant-response.dto';
@@ -107,8 +112,12 @@ export class TaskDto {
   })
   daysUntilDue: number | null;
 
-  @ApiProperty({ description: '완료 여부', example: false })
-  isCompleted: boolean;
+  @ApiProperty({
+    description: 'Task 상태',
+    enum: TaskStatus,
+    example: 'PENDING',
+  })
+  status: TaskStatus;
 
   @ApiProperty({ description: '완료 시간', nullable: true })
   completedAt: Date | null;

@@ -151,7 +151,7 @@
 - `categoryIds` (`string[]`) (Optional): 카테고리 ID 목록 (콤마로 구분)
 - `type` (`TaskType`) (Optional): Task 타입
 - `priority` (`TaskPriority`) (Optional): 우선순위
-- `isCompleted` (`boolean`) (Optional): 완료 여부
+- `status` (`TaskStatus`) (Optional): Task 상태
 - `startDate` (`string`) (Optional): 시작 날짜
 - `endDate` (`string`) (Optional): 종료 날짜
 - `page` (`number`) (Optional): 페이지
@@ -187,7 +187,7 @@
       "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
       "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
       "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-      "isCompleted": false, // 완료 여부 (boolean)
+      "status": "PENDING", // Task 상태 (TaskStatus)
       "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
       "recurring": {
         "id": "uuid",
@@ -327,7 +327,7 @@
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "isCompleted": false, // 완료 여부 (boolean)
+  "status": "PENDING", // Task 상태 (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -416,7 +416,7 @@
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "isCompleted": false, // 완료 여부 (boolean)
+  "status": "PENDING", // Task 상태 (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -454,9 +454,9 @@
 
 ---
 
-### PATCH `tasks/:id/complete`
+### PATCH `tasks/:id/status`
 
-**요약:** Task 완료/미완료 처리
+**요약:** Task 상태 변경
 
 **Path Parameters:**
 
@@ -466,13 +466,13 @@
 
 ```json
 {
-  "isCompleted": true // 완료 여부 (boolean)
+  "status": "COMPLETED" // Task 상태 (TaskStatus)
 }
 ```
 
 **Responses:**
 
-#### 200 - Task 완료 처리 성공
+#### 200 - Task 상태 변경 성공
 
 ```json
 {
@@ -498,7 +498,7 @@
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "isCompleted": false, // 완료 여부 (boolean)
+  "status": "PENDING", // Task 상태 (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)

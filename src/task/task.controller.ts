@@ -21,7 +21,7 @@ import {
   CreateTaskDto,
   UpdateTaskDto,
   QueryTasksDto,
-  CompleteTaskDto,
+  UpdateTaskStatusDto,
   SkipRecurringDto,
   TaskDto,
   TaskDetailDto,
@@ -129,16 +129,16 @@ export class TaskController {
     return this.taskService.updateTask(req.user.userId, id, dto, updateScope);
   }
 
-  @Patch(':id/complete')
-  @ApiOperation({ summary: 'Task 완료/미완료 처리' })
-  @ApiSuccess(TaskDto, 'Task 완료 처리 성공')
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Task 상태 변경' })
+  @ApiSuccess(TaskDto, 'Task 상태 변경 성공')
   @ApiNotFound('Task를 찾을 수 없음')
-  completeTask(
+  updateStatus(
     @Param('id') id: string,
     @Request() req,
-    @Body() dto: CompleteTaskDto,
+    @Body() dto: UpdateTaskStatusDto,
   ) {
-    return this.taskService.completeTask(req.user.userId, id, dto.isCompleted);
+    return this.taskService.updateStatus(req.user.userId, id, dto.status);
   }
 
   @Delete(':id')

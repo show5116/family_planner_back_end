@@ -10,10 +10,11 @@ import { CreateTaskDto, UpdateTaskDto, QueryTasksDto } from './dto';
 import { RecurringGenerationType } from './enums';
 import { RecurringService } from './recurring.service';
 import { TaskQueryBuilder } from './builders';
+import { TaskStatus } from './enums';
 import {
   TaskCreatedEvent,
   TaskUpdatedEvent,
-  TaskCompletedEvent,
+  TaskStatusChangedEvent,
   TaskDeletedEvent,
   TaskBulkUpdatedEvent,
 } from './events';
@@ -375,9 +376,9 @@ export class TaskService {
   }
 
   /**
-   * Task 완료/미완료 처리
+   * Task 상태 변경
    */
-  async completeTask(userId: string, taskId: string, isCompleted: boolean) {
+  async updateStatus(userId: string, taskId: string, status: TaskStatus) {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId, deletedAt: null },
       include: { recurring: true },
@@ -387,10 +388,12 @@ export class TaskService {
       throw new NotFoundException('Task를 찾을 수 없습니다');
     }
 
+    const isCompleted = status === TaskStatus.COMPLETED;
+
     const updated = await this.prisma.task.update({
       where: { id: taskId },
       data: {
-        isCompleted,
+        status,
         completedAt: isCompleted ? new Date() : null,
       },
       include: { category: true, recurring: true },
@@ -398,8 +401,8 @@ export class TaskService {
 
     // 이벤트 발행
     this.eventEmitter.emit(
-      'task.completed',
-      new TaskCompletedEvent(updated, userId, isCompleted),
+      'task.status-changed',
+      new TaskStatusChangedEvent(updated, userId, status),
     );
 
     // AFTER_COMPLETION 타입: 다음 Task 생성

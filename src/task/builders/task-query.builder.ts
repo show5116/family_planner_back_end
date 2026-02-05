@@ -44,35 +44,31 @@ export class TaskQueryBuilder {
       return { deletedAt: null, id: 'none' };
     }
 
-    const where: Prisma.TaskWhereInput = {
-      deletedAt: null,
-      OR: orConditions,
-    };
+    const andConditions: Prisma.TaskWhereInput[] = [
+      { deletedAt: null },
+      { OR: orConditions },
+    ];
 
     // 필터링 조건 추가
     if (query.categoryIds && query.categoryIds.length > 0) {
-      where.categoryId = { in: query.categoryIds };
+      andConditions.push({ categoryId: { in: query.categoryIds } });
     }
-    if (query.type) where.type = query.type;
-    if (query.priority) where.priority = query.priority;
-    if (query.isCompleted !== undefined) where.isCompleted = query.isCompleted;
+    if (query.type) andConditions.push({ type: query.type });
+    if (query.priority) andConditions.push({ priority: query.priority });
+    if (query.status) andConditions.push({ status: query.status });
 
-    // 날짜 범위 필터
+    // 날짜 범위 필터 (scheduledAt 또는 dueAt 기준)
     if (query.startDate || query.endDate) {
-      where.scheduledAt = {};
-      if (query.startDate) {
-        (where.scheduledAt as Prisma.DateTimeNullableFilter).gte = new Date(
-          query.startDate,
-        );
-      }
-      if (query.endDate) {
-        (where.scheduledAt as Prisma.DateTimeNullableFilter).lte = new Date(
-          query.endDate,
-        );
-      }
+      const dateFilter: Prisma.DateTimeNullableFilter = {};
+      if (query.startDate) dateFilter.gte = new Date(query.startDate);
+      if (query.endDate) dateFilter.lte = new Date(query.endDate);
+
+      andConditions.push({
+        OR: [{ scheduledAt: dateFilter }, { dueAt: dateFilter }],
+      });
     }
 
-    return where;
+    return { AND: andConditions };
   }
 
   /**
@@ -83,7 +79,7 @@ export class TaskQueryBuilder {
   ): Prisma.TaskOrderByWithRelationInput[] {
     return view === 'calendar'
       ? [{ scheduledAt: 'asc' }]
-      : [{ isCompleted: 'asc' }, { priority: 'desc' }, { dueAt: 'asc' }];
+      : [{ status: 'asc' }, { priority: 'desc' }, { dueAt: 'asc' }];
   }
 
   /**

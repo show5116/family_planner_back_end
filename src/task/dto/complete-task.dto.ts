@@ -1,8 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { TaskStatus } from '@/task/enums';
 
-export class CompleteTaskDto {
-  @ApiProperty({ description: '완료 여부', example: true })
-  @IsBoolean()
-  isCompleted: boolean;
+export class UpdateTaskStatusDto {
+  @ApiProperty({
+    description: 'Task 상태',
+    enum: TaskStatus,
+    example: 'COMPLETED',
+  })
+  @IsEnum(TaskStatus)
+  status: TaskStatus;
 }

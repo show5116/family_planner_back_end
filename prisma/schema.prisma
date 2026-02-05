@@ -295,7 +295,7 @@ model Task {
   priority     TaskPriority      @default(MEDIUM)
   scheduledAt  DateTime?
   dueAt        DateTime?
-  isCompleted  Boolean           @default(false)
+  status       TaskStatus        @default(PENDING)
   completedAt  DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
@@ -312,7 +312,7 @@ model Task {
   @@index([groupId, scheduledAt])
   @@index([categoryId])
   @@index([recurringId])
-  @@index([isCompleted])
+  @@index([status])
   @@index([deletedAt])
   @@map("tasks")
 }
@@ -472,6 +472,15 @@ enum AnnouncementCategory {
 enum TaskType {
   CALENDAR_ONLY
   TODO_LINKED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  HOLD
+  DROP
+  FAILED
 }
 
 enum TaskPriority {

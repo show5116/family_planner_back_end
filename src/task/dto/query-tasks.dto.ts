@@ -7,7 +7,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { TaskType, TaskPriority } from '@/task/enums';
+import { TaskType, TaskStatus, TaskPriority } from '@/task/enums';
 
 export class QueryTasksDto {
   @ApiPropertyOptional({
@@ -38,7 +38,11 @@ export class QueryTasksDto {
     description: '개인 일정 포함 여부 (기본값: true)',
     example: true,
   })
-  @Type(() => Boolean)
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return undefined;
+  })
   @IsBoolean()
   @IsOptional()
   includePersonal?: boolean;
@@ -74,11 +78,14 @@ export class QueryTasksDto {
   @IsOptional()
   priority?: TaskPriority;
 
-  @ApiPropertyOptional({ description: '완료 여부', type: Boolean })
-  @Type(() => Boolean)
-  @IsBoolean()
+  @ApiPropertyOptional({
+    description: 'Task 상태',
+    enum: TaskStatus,
+    example: 'PENDING',
+  })
+  @IsEnum(TaskStatus)
   @IsOptional()
-  isCompleted?: boolean;
+  status?: TaskStatus;
 
   @ApiPropertyOptional({ description: '시작 날짜', example: '2025-12-01' })
   @IsOptional()

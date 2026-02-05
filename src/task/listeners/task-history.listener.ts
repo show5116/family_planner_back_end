@@ -5,7 +5,7 @@ import { TaskHistoryAction } from '../enums';
 import {
   TaskCreatedEvent,
   TaskUpdatedEvent,
-  TaskCompletedEvent,
+  TaskStatusChangedEvent,
   TaskDeletedEvent,
   TaskBulkUpdatedEvent,
 } from '../events';
@@ -38,14 +38,14 @@ export class TaskHistoryListener {
     });
   }
 
-  @OnEvent('task.completed')
-  async handleTaskCompleted(event: TaskCompletedEvent) {
+  @OnEvent('task.status-changed')
+  async handleTaskStatusChanged(event: TaskStatusChangedEvent) {
     await this.prisma.taskHistory.create({
       data: {
         taskId: event.task.id,
         userId: event.userId,
         action: TaskHistoryAction.COMPLETE,
-        changes: null,
+        changes: { status: event.status },
       },
     });
   }

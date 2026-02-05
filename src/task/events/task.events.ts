@@ -1,4 +1,4 @@
-import { Task, Prisma } from '@prisma/client';
+import { Task, Prisma, TaskStatus } from '@prisma/client';
 
 // Prisma JSON 호환 타입
 type JsonRecord = Prisma.InputJsonObject;
@@ -29,13 +29,13 @@ export class TaskUpdatedEvent {
 }
 
 /**
- * Task 완료 이벤트
+ * Task 상태 변경 이벤트
  */
-export class TaskCompletedEvent {
+export class TaskStatusChangedEvent {
   constructor(
     public readonly task: Task,
     public readonly userId: string,
-    public readonly isCompleted: boolean,
+    public readonly status: TaskStatus,
   ) {}
 }
 
