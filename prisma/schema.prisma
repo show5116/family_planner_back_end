@@ -36,6 +36,7 @@ model User {
   taskReminders        TaskReminder[]
   taskSkips            TaskSkip[]
   tasks                Task[]
+  memos                Memo[]
 
   @@unique([provider, providerId])
   @@index([email])
@@ -57,6 +58,7 @@ model Group {
   recurrings          Recurring[]
   customRoles         Role[]
   tasks               Task[]
+  memos               Memo[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -533,4 +535,67 @@ enum notifications_category {
   CHILDCARE
   GROUP
   SYSTEM
+}
+
+model Memo {
+  id          String         @id @default(uuid())
+  userId      String
+  groupId     String?
+  title       String         @db.VarChar(200)
+  content     String         @db.Text
+  format      MemoFormat     @default(MARKDOWN)
+  category    String?        @db.VarChar(50)
+  visibility  MemoVisibility @default(PRIVATE)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group       Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  tags        MemoTag[]
+  attachments MemoAttachment[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([groupId, createdAt(sort: Desc)])
+  @@index([visibility])
+  @@index([deletedAt])
+  @@map("memos")
+}
+
+model MemoTag {
+  id     String  @id @default(uuid())
+  memoId String
+  name   String  @db.VarChar(50)
+  color  String? @db.VarChar(7)
+  memo   Memo    @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@unique([memoId, name])
+  @@index([memoId])
+  @@index([name])
+  @@map("memo_tags")
+}
+
+model MemoAttachment {
+  id        String   @id @default(uuid())
+  memoId    String
+  fileName  String   @db.VarChar(255)
+  fileUrl   String   @db.VarChar(500)
+  fileSize  Int
+  mimeType  String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+  memo      Memo     @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@index([memoId])
+  @@map("memo_attachments")
+}
+
+enum MemoFormat {
+  MARKDOWN
+  HTML
+  PLAIN
+}
+
+enum MemoVisibility {
+  PRIVATE
+  GROUP
 }

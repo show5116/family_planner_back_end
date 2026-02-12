@@ -34,6 +34,7 @@ import { AnnouncementModule } from '@/announcement/announcement.module';
 import { QnaModule } from '@/qna/qna.module';
 import { TaskModule } from '@/task/task.module';
 import { RedisModule } from '@/redis/redis.module';
+import { MemoModule } from '@/memo/memo.module';
 import { WebhookModule } from '@/webhook/webhook.module';
 
 @Module({
@@ -128,6 +129,7 @@ import { WebhookModule } from '@/webhook/webhook.module';
     AnnouncementModule,
     QnaModule,
     TaskModule,
+    MemoModule,
     WebhookModule,
   ],
   controllers: [AppController],
