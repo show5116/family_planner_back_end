@@ -57,6 +57,18 @@ export class TaskQueryBuilder {
     if (query.priority) andConditions.push({ priority: query.priority });
     if (query.status) andConditions.push({ status: query.status });
 
+    // 검색어 필터 (title, description, location)
+    if (query.search) {
+      const searchKeyword = query.search.trim();
+      andConditions.push({
+        OR: [
+          { title: { contains: searchKeyword } },
+          { description: { contains: searchKeyword } },
+          { location: { contains: searchKeyword } },
+        ],
+      });
+    }
+
     // 날짜 범위 필터 (scheduledAt 또는 dueAt 기준)
     if (query.startDate || query.endDate) {
       const dateFilter: Prisma.DateTimeNullableFilter = {};

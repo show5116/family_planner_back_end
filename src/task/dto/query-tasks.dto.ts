@@ -5,6 +5,8 @@ import {
   IsUUID,
   IsBoolean,
   IsArray,
+  IsString,
+  MaxLength,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { TaskType, TaskStatus, TaskPriority } from '@/task/enums';
@@ -86,6 +88,15 @@ export class QueryTasksDto {
   @IsEnum(TaskStatus)
   @IsOptional()
   status?: TaskStatus;
+
+  @ApiPropertyOptional({
+    description: '검색어 (제목, 설명, 장소)',
+    example: '병원',
+  })
+  @IsString()
+  @MaxLength(100)
+  @IsOptional()
+  search?: string;
 
   @ApiPropertyOptional({ description: '시작 날짜', example: '2025-12-01' })
   @IsOptional()
