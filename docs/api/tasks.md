@@ -152,6 +152,7 @@
 - `type` (`TaskType`) (Optional): Task 타입
 - `priority` (`TaskPriority`) (Optional): 우선순위
 - `status` (`TaskStatus`) (Optional): Task 상태
+- `search` (`string`) (Optional): 검색어 (제목, 설명, 장소)
 - `startDate` (`string`) (Optional): 시작 날짜
 - `endDate` (`string`) (Optional): 종료 날짜
 - `page` (`number`) (Optional): 페이지
