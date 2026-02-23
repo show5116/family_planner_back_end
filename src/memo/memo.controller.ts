@@ -17,11 +17,14 @@ import { UpdateMemoDto } from './dto/update-memo.dto';
 import { MemoQueryDto } from './dto/memo-query.dto';
 import { CreateMemoTagDto } from './dto/create-memo-tag.dto';
 import { CreateMemoAttachmentDto } from './dto/create-memo-attachment.dto';
+import { CreateChecklistItemDto } from './dto/create-checklist-item.dto';
+import { UpdateChecklistItemDto } from './dto/update-checklist-item.dto';
 import {
   MemoDto,
   PaginatedMemoDto,
   MemoTagDto,
   MemoAttachmentDto,
+  ChecklistItemDto,
 } from './dto/memo-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -131,5 +134,72 @@ export class MemoController {
     @Param('attachmentId') attachmentId: string,
   ) {
     return this.memoService.removeAttachment(req.user.userId, id, attachmentId);
+  }
+
+  @Post(':id/checklist')
+  @ApiOperation({ summary: '체크리스트 항목 추가' })
+  @ApiCreated(ChecklistItemDto, '항목 추가 성공')
+  @ApiNotFound('메모를 찾을 수 없습니다')
+  @ApiForbidden('본인의 메모만 수정할 수 있습니다')
+  addChecklistItem(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: CreateChecklistItemDto,
+  ) {
+    return this.memoService.addChecklistItem(req.user.userId, id, dto);
+  }
+
+  @Patch(':id/checklist/:itemId')
+  @ApiOperation({ summary: '체크리스트 항목 수정 (내용/순서)' })
+  @ApiSuccess(ChecklistItemDto, '항목 수정 성공')
+  @ApiNotFound('항목을 찾을 수 없습니다')
+  @ApiForbidden('본인의 메모만 수정할 수 있습니다')
+  updateChecklistItem(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+    @Body() dto: UpdateChecklistItemDto,
+  ) {
+    return this.memoService.updateChecklistItem(
+      req.user.userId,
+      id,
+      itemId,
+      dto,
+    );
+  }
+
+  @Delete(':id/checklist/:itemId')
+  @ApiOperation({ summary: '체크리스트 항목 삭제' })
+  @ApiSuccess(MessageResponseDto, '항목 삭제 성공')
+  @ApiNotFound('항목을 찾을 수 없습니다')
+  @ApiForbidden('본인의 메모만 수정할 수 있습니다')
+  removeChecklistItem(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+  ) {
+    return this.memoService.removeChecklistItem(req.user.userId, id, itemId);
+  }
+
+  @Post(':id/checklist/:itemId/toggle')
+  @ApiOperation({ summary: '체크리스트 항목 체크/해제 토글' })
+  @ApiSuccess(ChecklistItemDto, '토글 성공')
+  @ApiNotFound('항목을 찾을 수 없습니다')
+  @ApiForbidden('본인의 메모만 수정할 수 있습니다')
+  toggleChecklistItem(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+  ) {
+    return this.memoService.toggleChecklistItem(req.user.userId, id, itemId);
+  }
+
+  @Post(':id/checklist/reset')
+  @ApiOperation({ summary: '체크리스트 전체 체크 해제' })
+  @ApiSuccess(MessageResponseDto, '전체 체크 해제 성공')
+  @ApiNotFound('메모를 찾을 수 없습니다')
+  @ApiForbidden('본인의 메모만 수정할 수 있습니다')
+  resetChecklist(@Request() req, @Param('id') id: string) {
+    return this.memoService.resetChecklist(req.user.userId, id);
   }
 }

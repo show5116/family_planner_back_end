@@ -538,22 +538,24 @@ enum notifications_category {
 }
 
 model Memo {
-  id          String         @id @default(uuid())
-  userId      String
-  groupId     String?
-  title       String         @db.VarChar(200)
-  content     String         @db.Text
-  format      MemoFormat     @default(MARKDOWN)
-  category    String?        @db.VarChar(50)
-  visibility  MemoVisibility @default(PRIVATE)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  deletedAt   DateTime?
+  id             String         @id @default(uuid())
+  userId         String
+  groupId        String?
+  title          String         @db.VarChar(200)
+  content        String         @db.Text
+  format         MemoFormat     @default(MARKDOWN)
+  type           MemoType       @default(NOTE)
+  category       String?        @db.VarChar(50)
+  visibility     MemoVisibility @default(PRIVATE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
 
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group       Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  tags        MemoTag[]
-  attachments MemoAttachment[]
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group          Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  tags           MemoTag[]
+  attachments    MemoAttachment[]
+  checklistItems ChecklistItem[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([groupId, createdAt(sort: Desc)])
@@ -595,7 +597,27 @@ enum MemoFormat {
   PLAIN
 }
 
+enum MemoType {
+  NOTE
+  CHECKLIST
+}
+
 enum MemoVisibility {
   PRIVATE
   GROUP
+}
+
+model ChecklistItem {
+  id        String   @id @default(uuid())
+  memoId    String
+  content   String   @db.VarChar(300)
+  isChecked Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memo      Memo     @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@index([memoId, order])
+  @@map("checklist_items")
 }

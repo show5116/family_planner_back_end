@@ -1,6 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MemoFormat } from '@/memo/enums/memo-format.enum';
+import { MemoType } from '@/memo/enums/memo-type.enum';
 import { MemoVisibility } from '@/memo/enums/memo-visibility.enum';
+
+export class ChecklistItemDto {
+  @ApiProperty({ description: '항목 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '항목 내용', example: '여권 챙기기' })
+  content: string;
+
+  @ApiProperty({ description: '체크 여부', example: false })
+  isChecked: boolean;
+
+  @ApiProperty({ description: '정렬 순서', example: 0 })
+  order: number;
+
+  @ApiProperty({ description: '생성일' })
+  createdAt: Date;
+
+  @ApiProperty({ description: '수정일' })
+  updatedAt: Date;
+}
 
 export class MemoTagDto {
   @ApiProperty({ description: '태그 ID', example: 'uuid-1234' })
@@ -54,6 +75,9 @@ export class MemoDto {
   @ApiProperty({ description: '메모 형식', enum: MemoFormat })
   format: MemoFormat;
 
+  @ApiProperty({ description: '메모 타입', enum: MemoType })
+  type: MemoType;
+
   @ApiProperty({ description: '카테고리', example: '회의록', nullable: true })
   category: string | null;
 
@@ -71,6 +95,12 @@ export class MemoDto {
 
   @ApiProperty({ description: '첨부파일 목록', type: [MemoAttachmentDto] })
   attachments: MemoAttachmentDto[];
+
+  @ApiProperty({
+    description: '체크리스트 항목 목록 (type=CHECKLIST일 때)',
+    type: [ChecklistItemDto],
+  })
+  checklistItems: ChecklistItemDto[];
 
   @ApiProperty({ description: '생성일' })
   createdAt: Date;

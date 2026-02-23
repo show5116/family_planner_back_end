@@ -10,7 +10,10 @@ import { UpdateMemoDto } from './dto/update-memo.dto';
 import { MemoQueryDto } from './dto/memo-query.dto';
 import { CreateMemoTagDto } from './dto/create-memo-tag.dto';
 import { CreateMemoAttachmentDto } from './dto/create-memo-attachment.dto';
+import { CreateChecklistItemDto } from './dto/create-checklist-item.dto';
+import { UpdateChecklistItemDto } from './dto/update-checklist-item.dto';
 import { MemoVisibility } from './enums/memo-visibility.enum';
+import { MemoType } from './enums/memo-type.enum';
 
 @Injectable()
 export class MemoService {
@@ -34,6 +37,7 @@ export class MemoService {
         title: dto.title,
         content: dto.content,
         format: dto.format,
+        type: dto.type,
         category: dto.category,
         visibility: dto.visibility,
         tags: dto.tags?.length
@@ -49,6 +53,7 @@ export class MemoService {
         user: { select: { id: true, name: true } },
         tags: true,
         attachments: true,
+        checklistItems: { orderBy: { order: 'asc' } },
       },
     });
   }
@@ -118,6 +123,7 @@ export class MemoService {
           user: { select: { id: true, name: true } },
           tags: true,
           attachments: true,
+          checklistItems: { orderBy: { order: 'asc' } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (query.page - 1) * query.limit,
@@ -147,6 +153,7 @@ export class MemoService {
         user: { select: { id: true, name: true } },
         tags: true,
         attachments: true,
+        checklistItems: { orderBy: { order: 'asc' } },
       },
     });
 
@@ -208,6 +215,7 @@ export class MemoService {
         user: { select: { id: true, name: true } },
         tags: true,
         attachments: true,
+        checklistItems: { orderBy: { order: 'asc' } },
       },
     });
   }
@@ -308,6 +316,106 @@ export class MemoService {
     await this.prisma.memoAttachment.delete({ where: { id: attachmentId } });
 
     return { message: '첨부파일이 삭제되었습니다' };
+  }
+
+  /**
+   * 체크리스트 항목 추가
+   */
+  async addChecklistItem(
+    userId: string,
+    memoId: string,
+    dto: CreateChecklistItemDto,
+  ) {
+    const memo = await this.findOwnMemo(userId, memoId);
+
+    if ((memo.type as MemoType) !== MemoType.CHECKLIST) {
+      throw new BadRequestException(
+        '체크리스트 타입의 메모에만 항목을 추가할 수 있습니다',
+      );
+    }
+
+    const order =
+      dto.order ??
+      (await this.prisma.checklistItem.count({ where: { memoId } }));
+
+    return this.prisma.checklistItem.create({
+      data: { memoId, content: dto.content, order },
+    });
+  }
+
+  /**
+   * 체크리스트 항목 수정 (내용/순서)
+   */
+  async updateChecklistItem(
+    userId: string,
+    memoId: string,
+    itemId: string,
+    dto: UpdateChecklistItemDto,
+  ) {
+    await this.findOwnMemo(userId, memoId);
+    const item = await this.findChecklistItem(itemId, memoId);
+
+    return this.prisma.checklistItem.update({
+      where: { id: item.id },
+      data: {
+        ...(dto.content !== undefined && { content: dto.content }),
+        ...(dto.order !== undefined && { order: dto.order }),
+      },
+    });
+  }
+
+  /**
+   * 체크리스트 항목 삭제
+   */
+  async removeChecklistItem(userId: string, memoId: string, itemId: string) {
+    await this.findOwnMemo(userId, memoId);
+    await this.findChecklistItem(itemId, memoId);
+
+    await this.prisma.checklistItem.delete({ where: { id: itemId } });
+
+    return { message: '항목이 삭제되었습니다' };
+  }
+
+  /**
+   * 체크리스트 항목 체크/해제 토글
+   */
+  async toggleChecklistItem(userId: string, memoId: string, itemId: string) {
+    await this.findOwnMemo(userId, memoId);
+    const item = await this.findChecklistItem(itemId, memoId);
+
+    return this.prisma.checklistItem.update({
+      where: { id: item.id },
+      data: { isChecked: !item.isChecked },
+    });
+  }
+
+  /**
+   * 체크리스트 전체 체크 해제
+   */
+  async resetChecklist(userId: string, memoId: string) {
+    await this.findOwnMemo(userId, memoId);
+
+    await this.prisma.checklistItem.updateMany({
+      where: { memoId },
+      data: { isChecked: false },
+    });
+
+    return { message: '전체 체크가 해제되었습니다' };
+  }
+
+  /**
+   * 체크리스트 항목 조회 (존재 확인)
+   */
+  private async findChecklistItem(itemId: string, memoId: string) {
+    const item = await this.prisma.checklistItem.findFirst({
+      where: { id: itemId, memoId },
+    });
+
+    if (!item) {
+      throw new NotFoundException('항목을 찾을 수 없습니다');
+    }
+
+    return item;
   }
 
   /**

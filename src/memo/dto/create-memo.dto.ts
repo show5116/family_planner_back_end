@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MemoFormat } from '@/memo/enums/memo-format.enum';
+import { MemoType } from '@/memo/enums/memo-type.enum';
 import { MemoVisibility } from '@/memo/enums/memo-visibility.enum';
 
 class CreateMemoTagDto {
@@ -59,6 +60,16 @@ export class CreateMemoDto {
   @IsOptional()
   @IsEnum(MemoFormat)
   format?: MemoFormat = MemoFormat.MARKDOWN;
+
+  @ApiProperty({
+    description: '메모 타입 (NOTE: 일반, CHECKLIST: 체크리스트)',
+    enum: MemoType,
+    default: MemoType.NOTE,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(MemoType)
+  type?: MemoType = MemoType.NOTE;
 
   @ApiProperty({ description: '카테고리', example: '회의록', required: false })
   @IsOptional()
