@@ -37,6 +37,7 @@ model User {
   taskSkips            TaskSkip[]
   tasks                Task[]
   memos                Memo[]
+  expenses             Expense[]
 
   @@unique([provider, providerId])
   @@index([email])
@@ -59,6 +60,8 @@ model Group {
   customRoles         Role[]
   tasks               Task[]
   memos               Memo[]
+  expenses            Expense[]
+  budgets             Budget[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -620,4 +623,76 @@ model ChecklistItem {
 
   @@index([memoId, order])
   @@map("checklist_items")
+}
+
+model Expense {
+  id            String          @id @default(uuid())
+  groupId       String
+  userId        String
+  amount        Decimal         @db.Decimal(10, 2)
+  category      ExpenseCategory
+  date          DateTime        @db.Date
+  description   String?         @db.VarChar(200)
+  paymentMethod PaymentMethod?
+  isRecurring   Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  group         Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  receipts      ExpenseReceipt[]
+
+  @@index([groupId, date(sort: Desc)])
+  @@index([userId])
+  @@index([category])
+  @@index([date(sort: Desc)])
+  @@map("expenses")
+}
+
+model ExpenseReceipt {
+  id        String   @id @default(uuid())
+  expenseId String
+  fileKey   String   @db.VarChar(500)
+  fileUrl   String   @db.VarChar(500)
+  fileName  String   @db.VarChar(255)
+  fileSize  Int
+  mimeType  String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+
+  @@index([expenseId])
+  @@map("expense_receipts")
+}
+
+model Budget {
+  id        String          @id @default(uuid())
+  groupId   String
+  category  ExpenseCategory
+  amount    Decimal         @db.Decimal(10, 2)
+  month     DateTime        @db.Date
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  group     Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, category, month])
+  @@index([groupId, month])
+  @@map("budgets")
+}
+
+enum ExpenseCategory {
+  TRANSPORTATION
+  FOOD
+  LEISURE
+  LIVING
+  MEDICAL
+  EDUCATION
+  OTHER
+}
+
+enum PaymentMethod {
+  CARD
+  CASH
+  TRANSFER
 }

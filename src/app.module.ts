@@ -36,6 +36,7 @@ import { TaskModule } from '@/task/task.module';
 import { RedisModule } from '@/redis/redis.module';
 import { MemoModule } from '@/memo/memo.module';
 import { WebhookModule } from '@/webhook/webhook.module';
+import { HouseholdModule } from '@/household/household.module';
 
 @Module({
   imports: [
@@ -131,6 +132,7 @@ import { WebhookModule } from '@/webhook/webhook.module';
     TaskModule,
     MemoModule,
     WebhookModule,
+    HouseholdModule,
   ],
   controllers: [AppController],
   providers: [

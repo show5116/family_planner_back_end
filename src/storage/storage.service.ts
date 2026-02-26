@@ -315,6 +315,27 @@ export class StorageService {
   }
 
   /**
+   * 업로드용 Presigned PUT URL 생성 (클라이언트 직접 업로드)
+   * @param key - 저장할 파일 키
+   * @param contentType - 파일 MIME 타입
+   * @param expiresIn - URL 유효 시간 (초, 기본 10분)
+   * @returns Presigned PUT URL
+   */
+  async getUploadUrl(
+    key: string,
+    contentType: string,
+    expiresIn: number = 600,
+  ): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    return await getSignedUrl(this.s3Client, command, { expiresIn });
+  }
+
+  /**
    * Public URL 생성
    * @param key - 파일 키
    * @returns Public URL (Custom domain 또는 R2 기본 URL)

@@ -1697,6 +1697,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 - 항목 1
 - 항목 2", // 메모 본문 (string)
   "format": null, // 메모 형식 (MemoFormat?)
+  "type": null, // 메모 타입 (NOTE: 일반, CHECKLIST: 체크리스트) (MemoType?)
   "category": "회의록", // 카테고리 (string?)
   "visibility": null, // 공개 범위 (MemoVisibility?)
   "groupId": "", // 그룹 ID (GROUP 공개 시 필수) (string?)
@@ -1719,6 +1720,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "title": "회의 메모", // 제목 (string)
   "content": "", // 본문 (string)
   "format": null, // 메모 형식 (MemoFormat)
+  "type": null, // 메모 타입 (MemoType)
   "category": "회의록", // 카테고리 (string | null)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "groupId": null, // 그룹 ID (string | null)
@@ -1743,6 +1745,16 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
       "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
     }
   ], // 첨부파일 목록 (MemoAttachmentDto[])
+  "checklistItems": [
+    {
+      "id": "uuid-1234", // 항목 ID (string)
+      "content": "여권 챙기기", // 항목 내용 (string)
+      "isChecked": false, // 체크 여부 (boolean)
+      "order": 0, // 정렬 순서 (number)
+      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -1776,6 +1788,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
       "title": "회의 메모", // 제목 (string)
       "content": "", // 본문 (string)
       "format": null, // 메모 형식 (MemoFormat)
+      "type": null, // 메모 타입 (MemoType)
       "category": "회의록", // 카테고리 (string | null)
       "visibility": null, // 공개 범위 (MemoVisibility)
       "groupId": null, // 그룹 ID (string | null)
@@ -1796,6 +1809,14 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "mimeType": "application/pdf",
         "createdAt": "2025-01-01T00:00:00Z"
       }, // 첨부파일 목록 (MemoAttachmentDto[])
+      "checklistItems": {
+        "id": "uuid-1234",
+        "content": "여권 챙기기",
+        "isChecked": false,
+        "order": 0,
+        "createdAt": "2025-01-01T00:00:00Z",
+        "updatedAt": "2025-01-01T00:00:00Z"
+      }, // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
       "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
     }
@@ -1824,6 +1845,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "title": "회의 메모", // 제목 (string)
   "content": "", // 본문 (string)
   "format": null, // 메모 형식 (MemoFormat)
+  "type": null, // 메모 타입 (MemoType)
   "category": "회의록", // 카테고리 (string | null)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "groupId": null, // 그룹 ID (string | null)
@@ -1848,6 +1870,16 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
       "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
     }
   ], // 첨부파일 목록 (MemoAttachmentDto[])
+  "checklistItems": [
+    {
+      "id": "uuid-1234", // 항목 ID (string)
+      "content": "여권 챙기기", // 항목 내용 (string)
+      "isChecked": false, // 체크 여부 (boolean)
+      "order": 0, // 정렬 순서 (number)
+      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -1883,6 +1915,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "title": "회의 메모", // 제목 (string)
   "content": "", // 본문 (string)
   "format": null, // 메모 형식 (MemoFormat)
+  "type": null, // 메모 타입 (MemoType)
   "category": "회의록", // 카테고리 (string | null)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "groupId": null, // 그룹 ID (string | null)
@@ -1907,6 +1940,16 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
       "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
     }
   ], // 첨부파일 목록 (MemoAttachmentDto[])
+  "checklistItems": [
+    {
+      "id": "uuid-1234", // 항목 ID (string)
+      "content": "여권 챙기기", // 항목 내용 (string)
+      "isChecked": false, // 체크 여부 (boolean)
+      "order": 0, // 정렬 순서 (number)
+      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+    }
+  ], // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -2060,6 +2103,162 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```
 
 #### 404 - 첨부파일을 찾을 수 없습니다
+
+---
+
+### POST `memos/:id/checklist`
+
+**요약:** 체크리스트 항목 추가
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "content": "여권 챙기기", // 항목 내용 (string)
+  "order": 0 // 정렬 순서 (number?)
+}
+```
+
+**Responses:**
+
+#### 201 - 항목 추가 성공
+
+```json
+{
+  "id": "uuid-1234", // 항목 ID (string)
+  "content": "여권 챙기기", // 항목 내용 (string)
+  "isChecked": false, // 체크 여부 (boolean)
+  "order": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 메모를 찾을 수 없습니다
+
+#### 403 - 본인의 메모만 수정할 수 있습니다
+
+---
+
+### PATCH `memos/:id/checklist/:itemId`
+
+**요약:** 체크리스트 항목 수정 (내용/순서)
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `itemId` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "content": "여권 챙기기", // 항목 내용 (string?)
+  "order": 1 // 정렬 순서 (number?)
+}
+```
+
+**Responses:**
+
+#### 200 - 항목 수정 성공
+
+```json
+{
+  "id": "uuid-1234", // 항목 ID (string)
+  "content": "여권 챙기기", // 항목 내용 (string)
+  "isChecked": false, // 체크 여부 (boolean)
+  "order": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 항목을 찾을 수 없습니다
+
+#### 403 - 본인의 메모만 수정할 수 있습니다
+
+---
+
+### DELETE `memos/:id/checklist/:itemId`
+
+**요약:** 체크리스트 항목 삭제
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `itemId` (`string`)
+
+**Responses:**
+
+#### 200 - 항목 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 항목을 찾을 수 없습니다
+
+#### 403 - 본인의 메모만 수정할 수 있습니다
+
+---
+
+### POST `memos/:id/checklist/:itemId/toggle`
+
+**요약:** 체크리스트 항목 체크/해제 토글
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `itemId` (`string`)
+
+**Responses:**
+
+#### 200 - 토글 성공
+
+```json
+{
+  "id": "uuid-1234", // 항목 ID (string)
+  "content": "여권 챙기기", // 항목 내용 (string)
+  "isChecked": false, // 체크 여부 (boolean)
+  "order": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 항목을 찾을 수 없습니다
+
+#### 403 - 본인의 메모만 수정할 수 있습니다
+
+---
+
+### POST `memos/:id/checklist/reset`
+
+**요약:** 체크리스트 전체 체크 해제
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 전체 체크 해제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 메모를 찾을 수 없습니다
+
+#### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---
 
