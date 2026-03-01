@@ -38,6 +38,7 @@ model User {
   tasks                Task[]
   memos                Memo[]
   expenses             Expense[]
+  accounts             Account[]
 
   @@unique([provider, providerId])
   @@index([email])
@@ -62,6 +63,7 @@ model Group {
   memos               Memo[]
   expenses            Expense[]
   budgets             Budget[]
+  accounts            Account[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -695,4 +697,49 @@ enum PaymentMethod {
   CARD
   CASH
   TRANSFER
+}
+
+model Account {
+  id            String        @id @default(uuid())
+  groupId       String
+  userId        String
+  name          String        @db.VarChar(100)
+  accountNumber String?       @db.VarChar(50)
+  institution   String        @db.VarChar(100)
+  type          AccountType
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  group         Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  records       AccountRecord[]
+
+  @@index([groupId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+enum AccountType {
+  SAVINGS
+  DEPOSIT
+  STOCK
+  FUND
+  REAL_ESTATE
+  OTHER
+}
+
+model AccountRecord {
+  id         String   @id @default(uuid())
+  accountId  String
+  recordDate DateTime @db.Date
+  balance    Decimal  @db.Decimal(15, 2)
+  principal  Decimal  @db.Decimal(15, 2)
+  profit     Decimal  @db.Decimal(15, 2)
+  note       String?  @db.VarChar(200)
+  createdAt  DateTime @default(now())
+
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, recordDate(sort: Desc)])
+  @@map("account_records")
 }

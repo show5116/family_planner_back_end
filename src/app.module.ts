@@ -37,6 +37,7 @@ import { RedisModule } from '@/redis/redis.module';
 import { MemoModule } from '@/memo/memo.module';
 import { WebhookModule } from '@/webhook/webhook.module';
 import { HouseholdModule } from '@/household/household.module';
+import { AssetsModule } from '@/assets/assets.module';
 
 @Module({
   imports: [
@@ -133,6 +134,7 @@ import { HouseholdModule } from '@/household/household.module';
     MemoModule,
     WebhookModule,
     HouseholdModule,
+    AssetsModule,
   ],
   controllers: [AppController],
   providers: [
