@@ -38,6 +38,7 @@ import { MemoModule } from '@/memo/memo.module';
 import { WebhookModule } from '@/webhook/webhook.module';
 import { HouseholdModule } from '@/household/household.module';
 import { AssetsModule } from '@/assets/assets.module';
+import { InvestmentModule } from '@/investment/investment.module';
 
 @Module({
   imports: [
@@ -135,6 +136,7 @@ import { AssetsModule } from '@/assets/assets.module';
     WebhookModule,
     HouseholdModule,
     AssetsModule,
+    InvestmentModule,
   ],
   controllers: [AppController],
   providers: [

@@ -70,6 +70,9 @@ export const validationSchema = Joi.object({
 
   // Redis 설정
   REDIS_URL: Joi.string().required(),
+
+  // FRED API (버핏 지수용, 선택적)
+  FRED_API_KEY: Joi.string().optional(),
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {

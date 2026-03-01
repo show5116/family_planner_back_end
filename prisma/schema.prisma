@@ -39,6 +39,7 @@ model User {
   memos                Memo[]
   expenses             Expense[]
   accounts             Account[]
+  indicatorBookmarks   IndicatorBookmark[]
 
   @@unique([provider, providerId])
   @@index([email])
@@ -742,4 +743,68 @@ model AccountRecord {
 
   @@index([accountId, recordDate(sort: Desc)])
   @@map("account_records")
+}
+
+// ============================================================
+// 투자 지표
+// ============================================================
+
+model Indicator {
+  id        String            @id @default(uuid())
+  symbol    String            @unique @db.VarChar(20)
+  name      String            @db.VarChar(100)
+  nameKo    String            @db.VarChar(100)
+  category  IndicatorCategory
+  unit      String            @db.VarChar(20)
+  isActive  Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  prices    IndicatorPrice[]
+  bookmarks IndicatorBookmark[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("indicators")
+}
+
+enum IndicatorCategory {
+  INDEX
+  CURRENCY
+  COMMODITY
+  BOND
+  VOLATILITY
+  CRYPTO
+  MACRO
+}
+
+model IndicatorPrice {
+  id          String    @id @default(uuid())
+  indicatorId String
+  price       Decimal   @db.Decimal(20, 6)
+  prevPrice   Decimal?  @db.Decimal(20, 6)
+  change      Decimal?  @db.Decimal(20, 6)
+  changeRate  Decimal?  @db.Decimal(10, 4)
+  recordedAt  DateTime
+  createdAt   DateTime  @default(now())
+
+  indicator   Indicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+
+  @@index([indicatorId, recordedAt(sort: Desc)])
+  @@index([recordedAt(sort: Desc)])
+  @@map("indicator_prices")
+}
+
+model IndicatorBookmark {
+  id          String    @id @default(uuid())
+  userId      String
+  indicatorId String
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  indicator   Indicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, indicatorId])
+  @@index([userId])
+  @@map("indicator_bookmarks")
 }
