@@ -121,6 +121,13 @@ const INDICATORS: {
     unit: '%',
   },
   {
+    symbol: 'KR3Y',
+    name: 'Korea 3Y Treasury',
+    nameKo: '한국채 3년물',
+    category: 'BOND',
+    unit: '%',
+  },
+  {
     symbol: 'VIX',
     name: 'VIX',
     nameKo: 'VIX 지수',

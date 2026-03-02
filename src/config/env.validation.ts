@@ -73,6 +73,9 @@ export const validationSchema = Joi.object({
 
   // FRED API (버핏 지수용, 선택적)
   FRED_API_KEY: Joi.string().optional(),
+
+  // 한국은행 Open API (한국채 3년물용, 선택적)
+  BOK_API_KEY: Joi.string().optional(),
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {

@@ -4,6 +4,7 @@ import { InvestmentService } from '@/investment/investment.service';
 import { YahooCollector } from './collectors/yahoo.collector';
 import { CoinGeckoCollector } from './collectors/coingecko.collector';
 import { FredCollector } from './collectors/fred.collector';
+import { BokCollector } from './collectors/bok.collector';
 
 const OZ_TO_GRAM = 31.1035;
 
@@ -16,6 +17,7 @@ export class InvestmentScheduler {
     private readonly yahoo: YahooCollector,
     private readonly coinGecko: CoinGeckoCollector,
     private readonly fred: FredCollector,
+    private readonly bok: BokCollector,
   ) {}
 
   /**
@@ -108,5 +110,25 @@ export class InvestmentScheduler {
     );
 
     this.logger.debug(`Buffett Indicator: ${buffett.toFixed(2)}%`);
+  }
+
+  /**
+   * 한국채 3년물 수집 (매일 18:00 KST = 09:00 UTC, 장 마감 후)
+   */
+  @Cron('0 9 * * 1-5')
+  async collectBond() {
+    this.logger.debug('Collecting BOK KR3Y...');
+    const result = await this.bok.getKr3yRate();
+
+    if (!result) return;
+
+    await this.investmentService.savePrice(
+      'KR3Y',
+      result.rate,
+      null,
+      new Date(),
+    );
+
+    this.logger.debug(`KR3Y: ${result.rate}% (${result.date})`);
   }
 }

@@ -7,6 +7,7 @@ import { InvestmentScheduler } from './scheduler/investment.scheduler';
 import { YahooCollector } from './scheduler/collectors/yahoo.collector';
 import { CoinGeckoCollector } from './scheduler/collectors/coingecko.collector';
 import { FredCollector } from './scheduler/collectors/fred.collector';
+import { BokCollector } from './scheduler/collectors/bok.collector';
 
 @Module({
   imports: [PrismaModule, ScheduleModule.forRoot()],
@@ -17,6 +18,7 @@ import { FredCollector } from './scheduler/collectors/fred.collector';
     YahooCollector,
     CoinGeckoCollector,
     FredCollector,
+    BokCollector,
   ],
   exports: [InvestmentService],
 })
