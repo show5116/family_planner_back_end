@@ -188,3 +188,33 @@
 #### 404 - 지표를 찾을 수 없음
 
 ---
+
+### POST `indicators/admin/init-history`
+
+**요약:** [어드민] 과거 데이터 일괄 초기화
+
+**설명:**
+배포 후 1회 실행. Yahoo/CoinGecko/BOK에서 지정 기간 과거 시세를 수집해 DB에 저장합니다.
+
+**인증/권한:**
+
+- AdminGuard
+
+**Query Parameters:**
+
+- `days` (`number`) (Optional): 수집할 과거 일수 (1~3650, 기본 365)
+
+**Responses:**
+
+#### 200 - 히스토리 초기화 완료
+
+```json
+{
+  "yahoo": 5400, // 저장된 Yahoo 시세 건수 (number)
+  "crypto": 365, // 저장된 BTC/KRW 건수 (number)
+  "bond": 250, // 저장된 한국채 건수 (number)
+  "goldKrw": 360 // 저장된 국내 금값 건수 (number)
+}
+```
+
+---

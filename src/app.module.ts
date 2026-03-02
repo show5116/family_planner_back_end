@@ -39,6 +39,7 @@ import { WebhookModule } from '@/webhook/webhook.module';
 import { HouseholdModule } from '@/household/household.module';
 import { AssetsModule } from '@/assets/assets.module';
 import { InvestmentModule } from '@/investment/investment.module';
+import { ChildcareModule } from '@/childcare/childcare.module';
 
 @Module({
   imports: [
@@ -137,6 +138,7 @@ import { InvestmentModule } from '@/investment/investment.module';
     HouseholdModule,
     AssetsModule,
     InvestmentModule,
+    ChildcareModule,
   ],
   controllers: [AppController],
   providers: [

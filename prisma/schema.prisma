@@ -40,6 +40,9 @@ model User {
   expenses             Expense[]
   accounts             Account[]
   indicatorBookmarks   IndicatorBookmark[]
+  childcareAsChild     ChildcareAccount[]          @relation("ChildcareChild")
+  childcareAsParent    ChildcareAccount[]          @relation("ChildcareParent")
+  childcareTransactions ChildcareTransaction[]     @relation("ChildcareTransactionCreator")
 
   @@unique([provider, providerId])
   @@index([email])
@@ -65,6 +68,7 @@ model Group {
   expenses            Expense[]
   budgets             Budget[]
   accounts            Account[]
+  childcareAccounts   ChildcareAccount[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -807,4 +811,92 @@ model IndicatorBookmark {
   @@unique([userId, indicatorId])
   @@index([userId])
   @@map("indicator_bookmarks")
+}
+
+// ============================================================
+// 육아 포인트
+// ============================================================
+
+model ChildcareAccount {
+  id                  String   @id @default(uuid())
+  groupId             String
+  childUserId         String
+  parentUserId        String
+  balance             Int      @default(0)
+  monthlyAllowance    Int
+  savingsBalance      Int      @default(0)
+  savingsInterestRate Decimal  @db.Decimal(5, 2)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  group        Group                  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  childUser    User                   @relation("ChildcareChild", fields: [childUserId], references: [id], onDelete: Cascade)
+  parentUser   User                   @relation("ChildcareParent", fields: [parentUserId], references: [id], onDelete: Cascade)
+  transactions ChildcareTransaction[]
+  rewards      ChildcareReward[]
+  rules        ChildcareRule[]
+
+  @@index([groupId])
+  @@index([childUserId])
+  @@index([parentUserId])
+  @@map("childcare_accounts")
+}
+
+model ChildcareTransaction {
+  id          String                   @id @default(uuid())
+  accountId   String
+  type        ChildcareTransactionType
+  amount      Int
+  description String                   @db.VarChar(200)
+  createdBy   String
+  createdAt   DateTime                 @default(now())
+
+  account User @relation("ChildcareTransactionCreator", fields: [createdBy], references: [id])
+  childcareAccount ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, createdAt(sort: Desc)])
+  @@index([type])
+  @@map("childcare_transactions")
+}
+
+enum ChildcareTransactionType {
+  ALLOWANCE
+  REWARD
+  PENALTY
+  PURCHASE
+  SAVINGS_DEPOSIT
+  SAVINGS_WITHDRAW
+  INTEREST
+}
+
+model ChildcareReward {
+  id          String   @id @default(uuid())
+  accountId   String
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(200)
+  points      Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("childcare_rewards")
+}
+
+model ChildcareRule {
+  id          String   @id @default(uuid())
+  accountId   String
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(200)
+  penalty     Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("childcare_rules")
 }
