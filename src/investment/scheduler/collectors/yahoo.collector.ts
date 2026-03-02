@@ -7,6 +7,12 @@ export interface YahooQuoteResult {
   prevPrice: number | null;
 }
 
+export interface YahooHistoricalPoint {
+  symbol: string;
+  date: Date;
+  close: number;
+}
+
 const YAHOO_SYMBOLS: { symbol: string; ticker: string }[] = [
   { symbol: 'KOSPI', ticker: '^KS11' },
   { symbol: 'KOSDAQ', ticker: '^KQ11' },
@@ -68,6 +74,50 @@ export class YahooCollector {
       } catch (err) {
         this.logger.error(
           `Failed to fetch ${symbol} (${ticker}): ${(err as Error).message}`,
+        );
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Yahoo Finance historical() — 날짜 범위 일별 종가 수집
+   * BUFFETT_W5000은 제외 (버핏 지수는 별도 계산)
+   */
+  async collectHistorical(
+    from: Date,
+    to: Date,
+  ): Promise<YahooHistoricalPoint[]> {
+    const results: YahooHistoricalPoint[] = [];
+
+    // GOLD_KRW는 계산값이므로 Yahoo 직접 수집 대상에서 제외
+    const targets = YAHOO_SYMBOLS.filter((s) => s.symbol !== 'BUFFETT_W5000');
+
+    for (const { symbol, ticker } of targets) {
+      try {
+        const histPromise = YahooFinance.historical(ticker, {
+          period1: from,
+          period2: to,
+          interval: '1d',
+        }) as unknown as Promise<any[]>;
+
+        const rows = await histPromise;
+
+        for (const row of rows) {
+          if (row.close == null) continue;
+
+          results.push({
+            symbol,
+            date: row.date as Date,
+            close: row.close as number,
+          });
+        }
+
+        this.logger.debug(`Historical ${symbol}: ${rows.length} rows`);
+      } catch (err) {
+        this.logger.error(
+          `Historical fetch failed ${symbol} (${ticker}): ${(err as Error).message}`,
         );
       }
     }

@@ -58,3 +58,17 @@ export class IndicatorHistoryDto {
   @ApiProperty({ description: '시계열 데이터', type: [IndicatorPricePointDto] })
   history: IndicatorPricePointDto[];
 }
+
+export class HistoricalInitResultDto {
+  @ApiProperty({ description: '저장된 Yahoo 시세 건수', example: 5400 })
+  yahoo: number;
+
+  @ApiProperty({ description: '저장된 BTC/KRW 건수', example: 365 })
+  crypto: number;
+
+  @ApiProperty({ description: '저장된 한국채 건수', example: 250 })
+  bond: number;
+
+  @ApiProperty({ description: '저장된 국내 금값 건수', example: 360 })
+  goldKrw: number;
+}

@@ -1,12 +1,16 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { IndicatorCategory } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
+import { YahooCollector } from './scheduler/collectors/yahoo.collector';
+import { CoinGeckoCollector } from './scheduler/collectors/coingecko.collector';
+import { BokCollector } from './scheduler/collectors/bok.collector';
 
 const INDICATORS: {
   symbol: string;
@@ -158,16 +162,27 @@ type LatestPrice = {
   recordedAt: Date;
 } | null;
 
+const OZ_TO_GRAM = 31.1035;
+
 @Injectable()
 export class InvestmentService implements OnModuleInit {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(InvestmentService.name);
+  // symbol → indicatorId 캐시 (마스터 데이터는 변경 없으므로 메모리에 유지)
+  private indicatorIdCache = new Map<string, string>();
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly yahoo: YahooCollector,
+    private readonly coinGecko: CoinGeckoCollector,
+    private readonly bok: BokCollector,
+  ) {}
 
   /**
-   * 앱 시작 시 지표 마스터 데이터 upsert
+   * 앱 시작 시 지표 마스터 데이터 upsert + 캐시 초기화
    */
   async onModuleInit() {
     for (const ind of INDICATORS) {
-      await this.prisma.indicator.upsert({
+      const result = await this.prisma.indicator.upsert({
         where: { symbol: ind.symbol },
         update: {
           name: ind.name,
@@ -177,6 +192,7 @@ export class InvestmentService implements OnModuleInit {
         },
         create: ind,
       });
+      this.indicatorIdCache.set(ind.symbol, result.id);
     }
   }
 
@@ -244,7 +260,7 @@ export class InvestmentService implements OnModuleInit {
   /**
    * 시세 히스토리 (시계열)
    */
-  async findHistory(userId: string, symbol: string, days: number) {
+  async findHistory(_userId: string, symbol: string, days: number) {
     const ind = await this.prisma.indicator.findUnique({ where: { symbol } });
 
     if (!ind) {
@@ -348,7 +364,7 @@ export class InvestmentService implements OnModuleInit {
   }
 
   /**
-   * 시세 저장 (Collector에서 호출)
+   * 시세 저장 (Collector에서 호출) — indicatorId는 캐시에서 조회
    */
   async savePrice(
     symbol: string,
@@ -356,8 +372,8 @@ export class InvestmentService implements OnModuleInit {
     prevPrice: number | null,
     recordedAt?: Date,
   ) {
-    const ind = await this.prisma.indicator.findUnique({ where: { symbol } });
-    if (!ind) return;
+    const indicatorId = this.indicatorIdCache.get(symbol);
+    if (!indicatorId) return;
 
     const change = prevPrice != null ? price - prevPrice : null;
     const changeRate =
@@ -367,7 +383,7 @@ export class InvestmentService implements OnModuleInit {
 
     await this.prisma.indicatorPrice.create({
       data: {
-        indicatorId: ind.id,
+        indicatorId,
         price,
         prevPrice,
         change,
@@ -375,6 +391,154 @@ export class InvestmentService implements OnModuleInit {
         recordedAt: recordedAt ?? new Date(),
       },
     });
+  }
+
+  /**
+   * 과거 데이터 일괄 초기화 (어드민 1회 호출용)
+   * - Yahoo: 지정 기간 일별 종가
+   * - CoinGecko: 최대 365일
+   * - BOK: 지정 기간 국고채 3년물
+   * - GOLD_KRW: Yahoo GOLD_USD × USD_KRW 기반 계산
+   */
+  async initializeHistoricalData(days: number = 365): Promise<{
+    yahoo: number;
+    crypto: number;
+    bond: number;
+    goldKrw: number;
+  }> {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - days);
+
+    // 이미 있는 indicatorId를 캐싱 (매 row마다 findUnique 방지)
+    const indicators = await this.prisma.indicator.findMany({
+      select: { id: true, symbol: true },
+    });
+    const idMap = new Map(indicators.map((i) => [i.symbol, i.id]));
+
+    let yahooCount = 0;
+    let goldKrwCount = 0;
+
+    // ── Yahoo historical ─────────────────────────────────────────
+    this.logger.log(`[HistInit] Yahoo historical ${days}d ...`);
+    const yahooRows = await this.yahoo.collectHistorical(from, to);
+
+    // date별로 GOLD_USD, USD_KRW 값을 저장해 GOLD_KRW 계산
+    const goldUsdByDate = new Map<string, number>();
+    const usdKrwByDate = new Map<string, number>();
+
+    const yahooInserts = yahooRows
+      .filter((r) => idMap.has(r.symbol))
+      .map((r) => {
+        const dateKey = r.date.toISOString().slice(0, 10);
+        if (r.symbol === 'GOLD_USD') goldUsdByDate.set(dateKey, r.close);
+        if (r.symbol === 'USD_KRW') usdKrwByDate.set(dateKey, r.close);
+
+        return {
+          indicatorId: idMap.get(r.symbol),
+          price: r.close,
+          prevPrice: null,
+          change: null,
+          changeRate: null,
+          recordedAt: r.date,
+        };
+      });
+
+    if (yahooInserts.length > 0) {
+      await this.prisma.indicatorPrice.createMany({
+        data: yahooInserts,
+        skipDuplicates: true,
+      });
+      yahooCount = yahooInserts.length;
+    }
+
+    // ── GOLD_KRW 계산 삽입 ───────────────────────────────────────
+    const goldKrwId = idMap.get('GOLD_KRW');
+    if (goldKrwId) {
+      const goldKrwInserts: {
+        indicatorId: string;
+        price: number;
+        prevPrice: null;
+        change: null;
+        changeRate: null;
+        recordedAt: Date;
+      }[] = [];
+
+      for (const [dateKey, goldUsd] of goldUsdByDate) {
+        const usdKrw = usdKrwByDate.get(dateKey);
+        if (usdKrw == null) continue;
+        const goldKrw = (goldUsd * usdKrw) / OZ_TO_GRAM;
+        goldKrwInserts.push({
+          indicatorId: goldKrwId,
+          price: goldKrw,
+          prevPrice: null,
+          change: null,
+          changeRate: null,
+          recordedAt: new Date(`${dateKey}T00:00:00Z`),
+        });
+      }
+
+      if (goldKrwInserts.length > 0) {
+        await this.prisma.indicatorPrice.createMany({
+          data: goldKrwInserts,
+          skipDuplicates: true,
+        });
+        goldKrwCount = goldKrwInserts.length;
+      }
+    }
+
+    // ── CoinGecko BTC/KRW ────────────────────────────────────────
+    this.logger.log(`[HistInit] CoinGecko historical ${days}d ...`);
+    const btcRows = await this.coinGecko.collectHistorical(Math.min(days, 365));
+    const btcId = idMap.get('BTC_KRW');
+    let cryptoCount = 0;
+
+    if (btcId && btcRows.length > 0) {
+      await this.prisma.indicatorPrice.createMany({
+        data: btcRows.map((r) => ({
+          indicatorId: btcId,
+          price: r.price,
+          prevPrice: null,
+          change: null,
+          changeRate: null,
+          recordedAt: r.date,
+        })),
+        skipDuplicates: true,
+      });
+      cryptoCount = btcRows.length;
+    }
+
+    // ── BOK KR3Y ─────────────────────────────────────────────────
+    this.logger.log(`[HistInit] BOK KR3Y historical ${days}d ...`);
+    const bokRows = await this.bok.getKr3yHistory(from, to);
+    const kr3yId = idMap.get('KR3Y');
+    let bondCount = 0;
+
+    if (kr3yId && bokRows.length > 0) {
+      await this.prisma.indicatorPrice.createMany({
+        data: bokRows.map((r) => ({
+          indicatorId: kr3yId,
+          price: r.rate,
+          prevPrice: null,
+          change: null,
+          changeRate: null,
+          recordedAt: r.date,
+        })),
+        skipDuplicates: true,
+      });
+      bondCount = bokRows.length;
+    }
+
+    this.logger.log(
+      `[HistInit] Done — yahoo:${yahooCount} goldKrw:${goldKrwCount} crypto:${cryptoCount} bond:${bondCount}`,
+    );
+
+    return {
+      yahoo: yahooCount,
+      crypto: cryptoCount,
+      bond: bondCount,
+      goldKrw: goldKrwCount,
+    };
   }
 
   private formatIndicator(

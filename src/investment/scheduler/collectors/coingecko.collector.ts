@@ -8,6 +8,16 @@ interface CoinGeckoResponse {
   };
 }
 
+// [timestamp_ms, price][]
+type CoinGeckoMarketChart = {
+  prices: [number, number][];
+};
+
+export interface CoinGeckoHistoricalPoint {
+  date: Date;
+  price: number;
+}
+
 @Injectable()
 export class CoinGeckoCollector {
   private readonly logger = new Logger(CoinGeckoCollector.name);
@@ -45,6 +55,39 @@ export class CoinGeckoCollector {
     } catch (err) {
       this.logger.error(`CoinGecko collect failed: ${(err as Error).message}`);
       return null;
+    }
+  }
+
+  /**
+   * CoinGecko market_chart — 과거 N일 일별 BTC/KRW 시세 수집
+   * 무료 티어: 최대 365일
+   */
+  async collectHistorical(days: number): Promise<CoinGeckoHistoricalPoint[]> {
+    try {
+      const url =
+        `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart` +
+        `?vs_currency=krw&days=${days}&interval=daily`;
+
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as CoinGeckoMarketChart;
+
+      return data.prices.map(([ts, price]) => ({
+        date: new Date(ts),
+        price,
+      }));
+    } catch (err) {
+      this.logger.error(
+        `CoinGecko historical failed: ${(err as Error).message}`,
+      );
+      return [];
     }
   }
 }

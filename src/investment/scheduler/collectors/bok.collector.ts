@@ -87,6 +87,62 @@ export class BokCollector {
     }
   }
 
+  /**
+   * 날짜 범위 국고채 3년물 히스토리 조회 (과거 데이터 초기화용)
+   * ECOS API 최대 조회 건수(10000) 이내로 자동 분할
+   */
+  async getKr3yHistory(
+    from: Date,
+    to: Date,
+  ): Promise<{ rate: number; date: Date }[]> {
+    if (!this.apiKey) {
+      this.logger.debug('BOK_API_KEY not set — skipping KR3Y history');
+      return [];
+    }
+
+    try {
+      const startDate = this.formatDate(from);
+      const endDate = this.formatDate(to);
+
+      // ECOS: 최대 10000건 조회 가능, 일별 데이터라 1년=약 250건으로 충분
+      const url =
+        `https://ecos.bok.or.kr/api/StatisticSearch/${this.apiKey}/json/kr` +
+        `/1/10000/${STAT_CODE}/DD/${startDate}/${endDate}/${ITEM_CODE}`;
+
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = (await res.json()) as BokResponse;
+      const rows = data?.StatisticSearch?.row;
+
+      if (!rows?.length) {
+        this.logger.warn('BOK: no KR3Y history data');
+        return [];
+      }
+
+      return rows
+        .map((row) => {
+          const rate = parseFloat(row.DATA_VALUE);
+          if (isNaN(rate)) return null;
+          // TIME 형식: YYYYMMDD
+          const y = row.TIME.slice(0, 4);
+          const m = row.TIME.slice(4, 6);
+          const d = row.TIME.slice(6, 8);
+          return { rate, date: new Date(`${y}-${m}-${d}T00:00:00Z`) };
+        })
+        .filter((r): r is { rate: number; date: Date } => r !== null);
+    } catch (err) {
+      this.logger.error(`BOK KR3Y history failed: ${(err as Error).message}`);
+      return [];
+    }
+  }
+
   private formatDate(date: Date): string {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');

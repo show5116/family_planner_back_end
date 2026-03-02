@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { AdminGuard } from '@/auth/admin.guard';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiSuccess,
@@ -21,8 +22,10 @@ import { InvestmentService } from './investment.service';
 import {
   IndicatorDto,
   IndicatorHistoryDto,
+  HistoricalInitResultDto,
 } from './dto/indicator-response.dto';
 import { IndicatorHistoryQueryDto } from './dto/indicator-history-query.dto';
+import { HistoricalInitQueryDto } from './dto/historical-init-query.dto';
 
 @ApiTags('투자지표')
 @Controller('indicators')
@@ -84,5 +87,18 @@ export class InvestmentController {
   @ApiNotFound('지표를 찾을 수 없음')
   removeBookmark(@Request() req, @Param('symbol') symbol: string) {
     return this.investmentService.removeBookmark(req.user.userId, symbol);
+  }
+
+  @Post('admin/init-history')
+  @HttpCode(200)
+  @UseGuards(AdminGuard)
+  @ApiOperation({
+    summary: '[어드민] 과거 데이터 일괄 초기화',
+    description:
+      '배포 후 1회 실행. Yahoo/CoinGecko/BOK에서 지정 기간 과거 시세를 수집해 DB에 저장합니다.',
+  })
+  @ApiSuccess(HistoricalInitResultDto, '히스토리 초기화 완료')
+  initHistory(@Query() query: HistoricalInitQueryDto) {
+    return this.investmentService.initializeHistoricalData(query.days ?? 365);
   }
 }
