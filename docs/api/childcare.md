@@ -17,10 +17,9 @@
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "name": "주택청약", // 계좌명 (string)
-  "accountNumber": "123-456-789", // 계좌번호 (string?)
-  "institution": "국민은행", // 금융기관명 (string)
-  "type": null // 계좌 유형 (AccountType)
+  "childUserId": "uuid-1234", // 자녀 사용자 ID (string)
+  "monthlyAllowance": 100, // 월별 용돈 포인트 (number)
+  "savingsInterestRate": 2 // 적금 이자율 (%) (number)
 }
 ```
 
@@ -123,10 +122,8 @@
 
 ```json
 {
-  "name": "주택청약", // 계좌명 (string?)
-  "accountNumber": "123-456-789", // 계좌번호 (string?)
-  "institution": "국민은행", // 금융기관명 (string?)
-  "type": null // 계좌 유형 (AccountType?)
+  "monthlyAllowance": 150, // 월별 용돈 포인트 (number?)
+  "savingsInterestRate": 3 // 적금 이자율 (%) (number?)
 }
 ```
 

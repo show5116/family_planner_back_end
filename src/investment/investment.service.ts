@@ -213,19 +213,31 @@ export class InvestmentService implements OnModuleInit {
       }),
       this.prisma.indicatorBookmark.findMany({
         where: { userId },
-        select: { indicatorId: true },
+        select: { indicatorId: true, sortOrder: true },
       }),
     ]);
 
-    const bookmarkedIds = new Set(bookmarks.map((b) => b.indicatorId));
-
-    return indicators.map((ind) =>
-      this.formatIndicator(
-        ind,
-        ind.prices[0] ?? null,
-        bookmarkedIds.has(ind.id),
-      ),
+    const bookmarkMap = new Map(
+      bookmarks.map((b) => [b.indicatorId, b.sortOrder]),
     );
+
+    return indicators
+      .map((ind) => ({
+        dto: this.formatIndicator(
+          ind,
+          ind.prices[0] ?? null,
+          bookmarkMap.has(ind.id),
+        ),
+        sortOrder: bookmarkMap.get(ind.id),
+      }))
+      .sort((a, b) => {
+        if (a.sortOrder !== undefined && b.sortOrder !== undefined)
+          return a.sortOrder - b.sortOrder;
+        if (a.sortOrder !== undefined) return -1;
+        if (b.sortOrder !== undefined) return 1;
+        return 0;
+      })
+      .map((item) => item.dto);
   }
 
   /**
@@ -305,7 +317,7 @@ export class InvestmentService implements OnModuleInit {
           },
         },
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { sortOrder: 'asc' },
     });
 
     return bookmarks.map((b) =>
@@ -331,8 +343,14 @@ export class InvestmentService implements OnModuleInit {
       throw new ConflictException('이미 즐겨찾기에 등록된 지표입니다');
     }
 
+    const maxOrder = await this.prisma.indicatorBookmark.aggregate({
+      where: { userId },
+      _max: { sortOrder: true },
+    });
+    const nextOrder = (maxOrder._max.sortOrder ?? -1) + 1;
+
     await this.prisma.indicatorBookmark.create({
-      data: { userId, indicatorId: ind.id },
+      data: { userId, indicatorId: ind.id, sortOrder: nextOrder },
     });
 
     return { message: '즐겨찾기에 등록되었습니다' };
@@ -361,6 +379,39 @@ export class InvestmentService implements OnModuleInit {
     });
 
     return { message: '즐겨찾기에서 해제되었습니다' };
+  }
+
+  /**
+   * 즐겨찾기 순서 변경
+   */
+  async reorderBookmarks(userId: string, symbols: string[]) {
+    const indicators = await this.prisma.indicator.findMany({
+      where: { symbol: { in: symbols } },
+      select: { id: true, symbol: true },
+    });
+
+    const symbolToId = new Map(indicators.map((i) => [i.symbol, i.id]));
+
+    const bookmarks = await this.prisma.indicatorBookmark.findMany({
+      where: { userId },
+      select: { indicatorId: true },
+    });
+    const bookmarkedIds = new Set(bookmarks.map((b) => b.indicatorId));
+
+    const updates = symbols.flatMap((symbol, index) => {
+      const indicatorId = symbolToId.get(symbol);
+      if (!indicatorId || !bookmarkedIds.has(indicatorId)) return [];
+      return [
+        this.prisma.indicatorBookmark.update({
+          where: { userId_indicatorId: { userId, indicatorId } },
+          data: { sortOrder: index },
+        }),
+      ];
+    });
+
+    await this.prisma.$transaction(updates);
+
+    return { message: '즐겨찾기 순서가 변경되었습니다' };
   }
 
   /**

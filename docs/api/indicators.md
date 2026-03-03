@@ -60,6 +60,27 @@
 
 ---
 
+### PATCH `indicators/bookmarks/reorder`
+
+**요약:** 즐겨찾기 순서 변경
+
+**설명:**
+즐겨찾기된 symbol 배열을 원하는 순서대로 전달하면 해당 순서로 저장됩니다.
+
+**Request Body:**
+
+```json
+{
+  "symbols": ["KOSPI", "BTC", "GOLD_USD"] // 즐겨찾기 symbol 배열 (순서대로) (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 즐겨찾기 순서 변경 성공
+
+---
+
 ### GET `indicators/:symbol`
 
 **요약:** 지표 상세 + 최신 시세

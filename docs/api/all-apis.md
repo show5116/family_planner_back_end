@@ -937,10 +937,9 @@
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "name": "주택청약", // 계좌명 (string)
-  "accountNumber": "123-456-789", // 계좌번호 (string?)
-  "institution": "국민은행", // 금융기관명 (string)
-  "type": null // 계좌 유형 (AccountType)
+  "childUserId": "uuid-1234", // 자녀 사용자 ID (string)
+  "monthlyAllowance": 100, // 월별 용돈 포인트 (number)
+  "savingsInterestRate": 2 // 적금 이자율 (%) (number)
 }
 ```
 
@@ -1043,10 +1042,8 @@
 
 ```json
 {
-  "name": "주택청약", // 계좌명 (string?)
-  "accountNumber": "123-456-789", // 계좌번호 (string?)
-  "institution": "국민은행", // 금융기관명 (string?)
-  "type": null // 계좌 유형 (AccountType?)
+  "monthlyAllowance": 150, // 월별 용돈 포인트 (number?)
+  "savingsInterestRate": 3 // 적금 이자율 (%) (number?)
 }
 ```
 
@@ -3048,6 +3045,27 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "isBookmarked": false // 즐겨찾기 여부 (boolean)
 }
 ```
+
+---
+
+### PATCH `indicators/bookmarks/reorder`
+
+**요약:** 즐겨찾기 순서 변경
+
+**설명:**
+즐겨찾기된 symbol 배열을 원하는 순서대로 전달하면 해당 순서로 저장됩니다.
+
+**Request Body:**
+
+```json
+{
+  "symbols": ["KOSPI", "BTC", "GOLD_USD"] // 즐겨찾기 symbol 배열 (순서대로) (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 즐겨찾기 순서 변경 성공
 
 ---
 

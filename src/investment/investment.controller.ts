@@ -1,9 +1,11 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   Request,
@@ -26,6 +28,7 @@ import {
 } from './dto/indicator-response.dto';
 import { IndicatorHistoryQueryDto } from './dto/indicator-history-query.dto';
 import { HistoricalInitQueryDto } from './dto/historical-init-query.dto';
+import { ReorderBookmarksDto } from './dto/reorder-bookmarks.dto';
 
 @ApiTags('투자지표')
 @Controller('indicators')
@@ -46,6 +49,20 @@ export class InvestmentController {
   @ApiSuccess(IndicatorDto, '즐겨찾기 목록 조회 성공', { isArray: true })
   findBookmarks(@Request() req) {
     return this.investmentService.findBookmarks(req.user.userId);
+  }
+
+  @Patch('bookmarks/reorder')
+  @ApiOperation({
+    summary: '즐겨찾기 순서 변경',
+    description:
+      '즐겨찾기된 symbol 배열을 원하는 순서대로 전달하면 해당 순서로 저장됩니다.',
+  })
+  @ApiSuccess(Object, '즐겨찾기 순서 변경 성공')
+  reorderBookmarks(@Request() req, @Body() dto: ReorderBookmarksDto) {
+    return this.investmentService.reorderBookmarks(
+      req.user.userId,
+      dto.symbols,
+    );
   }
 
   @Get(':symbol')
