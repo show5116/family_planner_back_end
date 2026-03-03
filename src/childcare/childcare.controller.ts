@@ -12,8 +12,8 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 import { ChildcareService } from './childcare.service';
-import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { CreateChildcareAccountDto } from './dto/create-account.dto';
+import { UpdateChildcareAccountDto } from './dto/update-account.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { CreateRewardDto } from './dto/create-reward.dto';
@@ -52,7 +52,7 @@ export class ChildcareController {
   @ApiOperation({ summary: '육아 계정 생성 (부모만 가능)' })
   @ApiCreated(ChildcareAccountDto, '육아 계정 생성 성공')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  createAccount(@Request() req, @Body() dto: CreateAccountDto) {
+  createAccount(@Request() req, @Body() dto: CreateChildcareAccountDto) {
     return this.childcareService.createAccount(req.user.userId, dto);
   }
 
@@ -83,7 +83,7 @@ export class ChildcareController {
   updateAccount(
     @Request() req,
     @Param('id') id: string,
-    @Body() dto: UpdateAccountDto,
+    @Body() dto: UpdateChildcareAccountDto,
   ) {
     return this.childcareService.updateAccount(req.user.userId, id, dto);
   }

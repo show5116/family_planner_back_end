@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import YahooFinance from 'yahoo-finance2';
+import YahooFinanceClass from 'yahoo-finance2';
+
+const yahooFinance = new YahooFinanceClass();
 
 export interface YahooQuoteResult {
   symbol: string;
@@ -47,7 +49,7 @@ export class YahooCollector {
         // validateResult: false 오버로드는 Promise<any>를 반환하나,
         // 타입 추론이 실패하는 경우가 있어 명시적으로 캐스팅
 
-        const quotePromise = YahooFinance.quote(
+        const quotePromise = yahooFinance.quote(
           ticker,
           {},
           {
@@ -96,7 +98,7 @@ export class YahooCollector {
 
     for (const { symbol, ticker } of targets) {
       try {
-        const histPromise = YahooFinance.historical(ticker, {
+        const histPromise = yahooFinance.historical(ticker, {
           period1: from,
           period2: to,
           interval: '1d',
@@ -130,7 +132,7 @@ export class YahooCollector {
    */
   async getWilshire5000(): Promise<number | null> {
     try {
-      const w5000Promise = YahooFinance.quote(
+      const w5000Promise = yahooFinance.quote(
         '^W5000',
         {},
         {

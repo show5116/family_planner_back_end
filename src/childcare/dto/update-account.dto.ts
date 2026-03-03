@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNumber, IsOptional, Min, Max } from 'class-validator';
 
-export class UpdateAccountDto {
+export class UpdateChildcareAccountDto {
   @ApiProperty({
     description: '월별 용돈 포인트',
     example: 150,

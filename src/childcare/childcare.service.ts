@@ -8,8 +8,8 @@ import { ChildcareTransactionType } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
-import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { CreateChildcareAccountDto } from './dto/create-account.dto';
+import { UpdateChildcareAccountDto } from './dto/update-account.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { CreateRewardDto } from './dto/create-reward.dto';
@@ -30,7 +30,7 @@ export class ChildcareService {
   /**
    * 육아 계정 생성 (부모만 가능)
    */
-  async createAccount(userId: string, dto: CreateAccountDto) {
+  async createAccount(userId: string, dto: CreateChildcareAccountDto) {
     await this.validateGroupMember(userId, dto.groupId);
     await this.validateGroupMember(dto.childUserId, dto.groupId);
 
@@ -80,7 +80,7 @@ export class ChildcareService {
   async updateAccount(
     userId: string,
     accountId: string,
-    dto: UpdateAccountDto,
+    dto: UpdateChildcareAccountDto,
   ) {
     const account = await this.prisma.childcareAccount.findUnique({
       where: { id: accountId },

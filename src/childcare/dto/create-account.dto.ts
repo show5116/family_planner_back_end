@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsInt, IsNumber, Min, Max } from 'class-validator';
 
-export class CreateAccountDto {
+export class CreateChildcareAccountDto {
   @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
   @IsString()
   groupId: string;
