@@ -38,6 +38,14 @@ export class IndicatorDto {
 
   @ApiProperty({ description: '즐겨찾기 여부', example: false })
   isBookmarked: boolean;
+
+  @ApiProperty({
+    description:
+      'GOLD_KRW 전용: 국내 현물가 대비 이격률 (%). 양수 = 환산가가 현물가보다 높음',
+    example: '1.23',
+    nullable: true,
+  })
+  spread: string | null;
 }
 
 export class IndicatorPricePointDto {

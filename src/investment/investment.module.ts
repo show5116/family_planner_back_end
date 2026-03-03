@@ -8,6 +8,7 @@ import { YahooCollector } from './scheduler/collectors/yahoo.collector';
 import { CoinGeckoCollector } from './scheduler/collectors/coingecko.collector';
 import { FredCollector } from './scheduler/collectors/fred.collector';
 import { BokCollector } from './scheduler/collectors/bok.collector';
+import { KoreaGoldCollector } from './scheduler/collectors/korea-gold.collector';
 
 @Module({
   imports: [PrismaModule, ScheduleModule.forRoot()],
@@ -19,6 +20,7 @@ import { BokCollector } from './scheduler/collectors/bok.collector';
     CoinGeckoCollector,
     FredCollector,
     BokCollector,
+    KoreaGoldCollector,
   ],
   exports: [InvestmentService],
 })

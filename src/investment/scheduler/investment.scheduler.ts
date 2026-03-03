@@ -6,6 +6,7 @@ import { YahooCollector } from './collectors/yahoo.collector';
 import { CoinGeckoCollector } from './collectors/coingecko.collector';
 import { FredCollector } from './collectors/fred.collector';
 import { BokCollector } from './collectors/bok.collector';
+import { KoreaGoldCollector } from './collectors/korea-gold.collector';
 
 const OZ_TO_GRAM = 31.1035;
 
@@ -15,6 +16,7 @@ const LOCK_TTL = {
   crypto: 55 * 60, // 55분 (1시간 주기 크론)
   macro: 10 * 60, // 10분
   bond: 10 * 60, // 10분
+  goldSpot: 10 * 60, // 10분 (15분 주기 크론)
 } as const;
 
 @Injectable()
@@ -28,6 +30,7 @@ export class InvestmentScheduler {
     private readonly coinGecko: CoinGeckoCollector,
     private readonly fred: FredCollector,
     private readonly bok: BokCollector,
+    private readonly koreaGold: KoreaGoldCollector,
   ) {}
 
   /**
@@ -156,6 +159,42 @@ export class InvestmentScheduler {
       );
 
       this.logger.debug(`Buffett Indicator: ${buffett.toFixed(2)}%`);
+    } finally {
+      await this.redis.releaseLock(lockKey, lockValue);
+    }
+  }
+
+  /**
+   * 국내 금 현물가 수집 (15분마다, KST 09:00~16:00 평일)
+   * 한국금거래소(koreagoldx.co.kr) 기준 순금 매수가 (원/g)
+   */
+  @Cron('*/15 0-7 * * 1-5')
+  async collectGoldSpot() {
+    const lockKey = 'lock:indicator:gold-spot';
+    const lockValue = Date.now().toString();
+    const acquired = await this.redis.acquireLock(
+      lockKey,
+      LOCK_TTL.goldSpot,
+      lockValue,
+    );
+    if (!acquired) return;
+
+    try {
+      this.logger.debug('Collecting Korea Gold spot price...');
+      const result = await this.koreaGold.collect();
+
+      if (!result) return;
+
+      await this.investmentService.savePrice(
+        'GOLD_KRW_SPOT',
+        result.pricePerGram,
+        null,
+        new Date(),
+      );
+
+      this.logger.debug(
+        `GOLD_KRW_SPOT: ${result.pricePerGram.toFixed(0)} 원/g`,
+      );
     } finally {
       await this.redis.releaseLock(lockKey, lockValue);
     }

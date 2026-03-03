@@ -91,8 +91,15 @@ const INDICATORS: {
   },
   {
     symbol: 'GOLD_KRW',
-    name: 'Gold (KRW)',
-    nameKo: '금 (국내)',
+    name: 'Gold (KRW, calculated)',
+    nameKo: '금 (국내 환산)',
+    category: 'COMMODITY',
+    unit: '원/g',
+  },
+  {
+    symbol: 'GOLD_KRW_SPOT',
+    name: 'Gold (KRW, spot)',
+    nameKo: '금 (국내 현물)',
     category: 'COMMODITY',
     unit: '원/g',
   },
@@ -221,12 +228,20 @@ export class InvestmentService implements OnModuleInit {
       bookmarks.map((b) => [b.indicatorId, b.sortOrder]),
     );
 
+    const goldKrw = indicators.find((i) => i.symbol === 'GOLD_KRW');
+    const goldSpot = indicators.find((i) => i.symbol === 'GOLD_KRW_SPOT');
+    const goldSpread = this.calcGoldSpread(
+      goldKrw?.prices[0] ?? null,
+      goldSpot?.prices[0] ?? null,
+    );
+
     return indicators
       .map((ind) => ({
         dto: this.formatIndicator(
           ind,
           ind.prices[0] ?? null,
           bookmarkMap.has(ind.id),
+          ind.symbol === 'GOLD_KRW' ? goldSpread : null,
         ),
         sortOrder: bookmarkMap.get(ind.id),
       }))
@@ -262,10 +277,23 @@ export class InvestmentService implements OnModuleInit {
       throw new NotFoundException('지표를 찾을 수 없습니다');
     }
 
+    let spread: string | null = null;
+    if (ind.symbol === 'GOLD_KRW') {
+      const spotInd = await this.prisma.indicator.findUnique({
+        where: { symbol: 'GOLD_KRW_SPOT' },
+        include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
+      });
+      spread = this.calcGoldSpread(
+        ind.prices[0] ?? null,
+        spotInd?.prices[0] ?? null,
+      );
+    }
+
     return this.formatIndicator(
       ind,
       ind.prices[0] ?? null,
       ind.bookmarks.length > 0,
+      spread,
     );
   }
 
@@ -305,24 +333,44 @@ export class InvestmentService implements OnModuleInit {
    * 즐겨찾기 목록 + 최신 시세
    */
   async findBookmarks(userId: string) {
-    const bookmarks = await this.prisma.indicatorBookmark.findMany({
-      where: { userId },
-      include: {
-        indicator: {
-          include: {
-            prices: {
-              orderBy: { recordedAt: 'desc' },
-              take: 1,
+    const [bookmarks, goldSpotInd] = await Promise.all([
+      this.prisma.indicatorBookmark.findMany({
+        where: { userId },
+        include: {
+          indicator: {
+            include: {
+              prices: {
+                orderBy: { recordedAt: 'desc' },
+                take: 1,
+              },
             },
           },
         },
-      },
-      orderBy: { sortOrder: 'asc' },
-    });
+        orderBy: { sortOrder: 'asc' },
+      }),
+      this.prisma.indicator.findUnique({
+        where: { symbol: 'GOLD_KRW_SPOT' },
+        include: {
+          prices: { orderBy: { recordedAt: 'desc' }, take: 1 },
+        },
+      }),
+    ]);
 
-    return bookmarks.map((b) =>
-      this.formatIndicator(b.indicator, b.indicator.prices[0] ?? null, true),
-    );
+    return bookmarks.map((b) => {
+      const spread =
+        b.indicator.symbol === 'GOLD_KRW'
+          ? this.calcGoldSpread(
+              b.indicator.prices[0] ?? null,
+              goldSpotInd?.prices[0] ?? null,
+            )
+          : null;
+      return this.formatIndicator(
+        b.indicator,
+        b.indicator.prices[0] ?? null,
+        true,
+        spread,
+      );
+    });
   }
 
   /**
@@ -602,6 +650,7 @@ export class InvestmentService implements OnModuleInit {
     },
     latestPrice: LatestPrice,
     isBookmarked: boolean,
+    spread: string | null = null,
   ) {
     return {
       symbol: ind.symbol,
@@ -621,6 +670,23 @@ export class InvestmentService implements OnModuleInit {
         : null,
       recordedAt: latestPrice?.recordedAt ?? null,
       isBookmarked,
+      spread,
     };
+  }
+
+  /**
+   * GOLD_KRW (환산가) vs GOLD_KRW_SPOT (현물가) 이격률 계산
+   * 양수: 환산가가 현물가보다 높음 (프리미엄)
+   * 음수: 환산가가 현물가보다 낮음 (디스카운트)
+   */
+  private calcGoldSpread(
+    goldKrwPrice: LatestPrice,
+    goldSpotPrice: LatestPrice,
+  ): string | null {
+    if (!goldKrwPrice || !goldSpotPrice) return null;
+    const calc = Number(goldKrwPrice.price);
+    const spot = Number(goldSpotPrice.price);
+    if (spot <= 0) return null;
+    return (((calc - spot) / spot) * 100).toFixed(2);
   }
 }
