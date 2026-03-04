@@ -324,29 +324,33 @@ export class InvestmentService implements OnModuleInit {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    // 기간별 집계 포맷 결정
-    const fmt =
-      days <= 7
-        ? '%Y-%m-%d %H:00:00' // 1시간 단위
-        : days <= 30
-          ? '%Y-%m-%d %H:00:00' // 6시간 단위 (bucket 처리)
-          : '%Y-%m-%d'; // 1일 단위
-
     type RawRow = { bucket: string; price: string };
 
+    // 기간별 집계 버킷 결정 (INTERVAL/FORMAT은 파라미터 바인딩 불가 → Prisma.raw 사용)
     let rows: RawRow[];
 
-    if (days <= 30) {
-      // 6시간 버킷: HOUR를 4로 나눈 몫 × 6
-      const bucketHours = days <= 7 ? 1 : 6;
+    if (days <= 7) {
+      // 1시간 단위
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
           DATE_FORMAT(
-            DATE_ADD(
-              DATE(recorded_at),
-              INTERVAL (HOUR(recorded_at) DIV ${bucketHours}) * ${bucketHours} HOUR
-            ),
-            ${fmt}
+            DATE_ADD(DATE(recorded_at), INTERVAL HOUR(recorded_at) HOUR),
+            '%Y-%m-%d %H:00:00'
+          ) AS bucket,
+          CAST(AVG(price) AS CHAR) AS price
+        FROM indicator_prices
+        WHERE indicator_id = ${ind.id}
+          AND recorded_at >= ${since}
+        GROUP BY bucket
+        ORDER BY bucket ASC
+      `;
+    } else if (days <= 30) {
+      // 6시간 단위
+      rows = await this.prisma.$queryRaw<RawRow[]>`
+        SELECT
+          DATE_FORMAT(
+            DATE_ADD(DATE(recorded_at), INTERVAL (HOUR(recorded_at) DIV 6) * 6 HOUR),
+            '%Y-%m-%d %H:00:00'
           ) AS bucket,
           CAST(AVG(price) AS CHAR) AS price
         FROM indicator_prices
@@ -356,9 +360,10 @@ export class InvestmentService implements OnModuleInit {
         ORDER BY bucket ASC
       `;
     } else {
+      // 1일 단위
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
-          DATE_FORMAT(recorded_at, ${fmt}) AS bucket,
+          DATE_FORMAT(recorded_at, '%Y-%m-%d') AS bucket,
           CAST(AVG(price) AS CHAR) AS price
         FROM indicator_prices
         WHERE indicator_id = ${ind.id}
