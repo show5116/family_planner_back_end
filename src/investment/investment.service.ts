@@ -308,6 +308,11 @@ export class InvestmentService implements OnModuleInit {
 
   /**
    * 시세 히스토리 (시계열)
+   *
+   * 조회 기간에 따라 집계 단위를 자동 결정해 포인트 수를 제한:
+   *  - ~7일  : 1시간 단위
+   *  - ~30일 : 6시간 단위
+   *  - 그 외 : 1일 단위 (과거 초기화 데이터와 동일 밀도)
    */
   async findHistory(_userId: string, symbol: string, days: number) {
     const ind = await this.prisma.indicator.findUnique({ where: { symbol } });
@@ -319,21 +324,56 @@ export class InvestmentService implements OnModuleInit {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const prices = await this.prisma.indicatorPrice.findMany({
-      where: {
-        indicatorId: ind.id,
-        recordedAt: { gte: since },
-      },
-      orderBy: { recordedAt: 'asc' },
-      select: { price: true, recordedAt: true },
-    });
+    // 기간별 집계 포맷 결정
+    const fmt =
+      days <= 7
+        ? '%Y-%m-%d %H:00:00' // 1시간 단위
+        : days <= 30
+          ? '%Y-%m-%d %H:00:00' // 6시간 단위 (bucket 처리)
+          : '%Y-%m-%d'; // 1일 단위
+
+    type RawRow = { bucket: string; price: string };
+
+    let rows: RawRow[];
+
+    if (days <= 30) {
+      // 6시간 버킷: HOUR를 4로 나눈 몫 × 6
+      const bucketHours = days <= 7 ? 1 : 6;
+      rows = await this.prisma.$queryRaw<RawRow[]>`
+        SELECT
+          DATE_FORMAT(
+            DATE_ADD(
+              DATE(recorded_at),
+              INTERVAL (HOUR(recorded_at) DIV ${bucketHours}) * ${bucketHours} HOUR
+            ),
+            ${fmt}
+          ) AS bucket,
+          CAST(AVG(price) AS CHAR) AS price
+        FROM indicator_prices
+        WHERE indicator_id = ${ind.id}
+          AND recorded_at >= ${since}
+        GROUP BY bucket
+        ORDER BY bucket ASC
+      `;
+    } else {
+      rows = await this.prisma.$queryRaw<RawRow[]>`
+        SELECT
+          DATE_FORMAT(recorded_at, ${fmt}) AS bucket,
+          CAST(AVG(price) AS CHAR) AS price
+        FROM indicator_prices
+        WHERE indicator_id = ${ind.id}
+          AND recorded_at >= ${since}
+        GROUP BY bucket
+        ORDER BY bucket ASC
+      `;
+    }
 
     return {
       symbol: ind.symbol,
       nameKo: ind.nameKo,
-      history: prices.map((p) => ({
-        price: Number(p.price).toString(),
-        recordedAt: p.recordedAt,
+      history: rows.map((r) => ({
+        price: Number(r.price).toString(),
+        recordedAt: new Date(r.bucket),
       })),
     };
   }
