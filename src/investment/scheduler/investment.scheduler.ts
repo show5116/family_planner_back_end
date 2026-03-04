@@ -8,8 +8,6 @@ import { FredCollector } from './collectors/fred.collector';
 import { BokCollector } from './collectors/bok.collector';
 import { KoreaGoldCollector } from './collectors/korea-gold.collector';
 
-const OZ_TO_GRAM = 31.1035;
-
 // 각 크론잡의 락 TTL (초) — 실행 최대 소요 시간보다 넉넉하게 설정
 const LOCK_TTL = {
   yahoo: 4 * 60, // 4분 (5분 주기 크론)
@@ -52,8 +50,6 @@ export class InvestmentScheduler {
       const quotes = await this.yahoo.collect();
 
       const now = new Date();
-      let goldUsd: number | null = null;
-      let usdKrw: number | null = null;
 
       for (const q of quotes) {
         if (q.symbol === 'BUFFETT_W5000') continue;
@@ -64,15 +60,6 @@ export class InvestmentScheduler {
           q.prevPrice,
           now,
         );
-
-        if (q.symbol === 'GOLD_USD') goldUsd = q.price;
-        if (q.symbol === 'USD_KRW') usdKrw = q.price;
-      }
-
-      // 국내 금값 계산: GOLD_USD × USD_KRW ÷ 31.1035 (oz → g)
-      if (goldUsd != null && usdKrw != null) {
-        const goldKrw = (goldUsd * usdKrw) / OZ_TO_GRAM;
-        await this.investmentService.savePrice('GOLD_KRW', goldKrw, null, now);
       }
 
       this.logger.debug(`Collected ${quotes.length} Yahoo quotes`);

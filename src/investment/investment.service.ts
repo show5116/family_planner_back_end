@@ -11,6 +11,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { YahooCollector } from './scheduler/collectors/yahoo.collector';
 import { CoinGeckoCollector } from './scheduler/collectors/coingecko.collector';
 import { BokCollector } from './scheduler/collectors/bok.collector';
+import { KoreaGoldCollector } from './scheduler/collectors/korea-gold.collector';
 
 const INDICATORS: {
   symbol: string;
@@ -44,6 +45,13 @@ const INDICATORS: {
     symbol: 'NASDAQ',
     name: 'NASDAQ',
     nameKo: '나스닥',
+    category: 'INDEX',
+    unit: 'pt',
+  },
+  {
+    symbol: 'NQ100',
+    name: 'Nasdaq 100 Futures',
+    nameKo: '나스닥 100 선물',
     category: 'INDEX',
     unit: 'pt',
   },
@@ -90,16 +98,9 @@ const INDICATORS: {
     unit: 'USD/oz',
   },
   {
-    symbol: 'GOLD_KRW',
-    name: 'Gold (KRW, calculated)',
-    nameKo: '금 (국내 환산)',
-    category: 'COMMODITY',
-    unit: '원/g',
-  },
-  {
     symbol: 'GOLD_KRW_SPOT',
-    name: 'Gold (KRW, spot)',
-    nameKo: '금 (국내 현물)',
+    name: 'Gold (KRW)',
+    nameKo: '금 (국내)',
     category: 'COMMODITY',
     unit: '원/g',
   },
@@ -169,8 +170,6 @@ type LatestPrice = {
   recordedAt: Date;
 } | null;
 
-const OZ_TO_GRAM = 31.1035;
-
 @Injectable()
 export class InvestmentService implements OnModuleInit {
   private readonly logger = new Logger(InvestmentService.name);
@@ -182,6 +181,7 @@ export class InvestmentService implements OnModuleInit {
     private readonly yahoo: YahooCollector,
     private readonly coinGecko: CoinGeckoCollector,
     private readonly bok: BokCollector,
+    private readonly koreaGold: KoreaGoldCollector,
   ) {}
 
   /**
@@ -228,12 +228,8 @@ export class InvestmentService implements OnModuleInit {
       bookmarks.map((b) => [b.indicatorId, b.sortOrder]),
     );
 
-    const goldKrw = indicators.find((i) => i.symbol === 'GOLD_KRW');
-    const goldSpot = indicators.find((i) => i.symbol === 'GOLD_KRW_SPOT');
-    const goldSpread = this.calcGoldSpread(
-      goldKrw?.prices[0] ?? null,
-      goldSpot?.prices[0] ?? null,
-    );
+    const goldUsd = indicators.find((i) => i.symbol === 'GOLD_USD');
+    const usdKrw = indicators.find((i) => i.symbol === 'USD_KRW');
 
     return indicators
       .map((ind) => ({
@@ -241,7 +237,13 @@ export class InvestmentService implements OnModuleInit {
           ind,
           ind.prices[0] ?? null,
           bookmarkMap.has(ind.id),
-          ind.symbol === 'GOLD_KRW' ? goldSpread : null,
+          ind.symbol === 'GOLD_KRW_SPOT'
+            ? this.calcGoldSpread(
+                ind.prices[0] ?? null,
+                goldUsd?.prices[0] ?? null,
+                usdKrw?.prices[0] ?? null,
+              )
+            : null,
         ),
         sortOrder: bookmarkMap.get(ind.id),
       }))
@@ -278,14 +280,21 @@ export class InvestmentService implements OnModuleInit {
     }
 
     let spread: string | null = null;
-    if (ind.symbol === 'GOLD_KRW') {
-      const spotInd = await this.prisma.indicator.findUnique({
-        where: { symbol: 'GOLD_KRW_SPOT' },
-        include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
-      });
+    if (ind.symbol === 'GOLD_KRW_SPOT') {
+      const [goldUsdInd, usdKrwInd] = await Promise.all([
+        this.prisma.indicator.findUnique({
+          where: { symbol: 'GOLD_USD' },
+          include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
+        }),
+        this.prisma.indicator.findUnique({
+          where: { symbol: 'USD_KRW' },
+          include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
+        }),
+      ]);
       spread = this.calcGoldSpread(
         ind.prices[0] ?? null,
-        spotInd?.prices[0] ?? null,
+        goldUsdInd?.prices[0] ?? null,
+        usdKrwInd?.prices[0] ?? null,
       );
     }
 
@@ -333,44 +342,56 @@ export class InvestmentService implements OnModuleInit {
    * 즐겨찾기 목록 + 최신 시세
    */
   async findBookmarks(userId: string) {
-    const [bookmarks, goldSpotInd] = await Promise.all([
-      this.prisma.indicatorBookmark.findMany({
-        where: { userId },
-        include: {
-          indicator: {
-            include: {
-              prices: {
-                orderBy: { recordedAt: 'desc' },
-                take: 1,
-              },
+    const bookmarks = await this.prisma.indicatorBookmark.findMany({
+      where: { userId },
+      include: {
+        indicator: {
+          include: {
+            prices: {
+              orderBy: { recordedAt: 'desc' },
+              take: 1,
             },
           },
         },
-        orderBy: { sortOrder: 'asc' },
-      }),
-      this.prisma.indicator.findUnique({
-        where: { symbol: 'GOLD_KRW_SPOT' },
-        include: {
-          prices: { orderBy: { recordedAt: 'desc' }, take: 1 },
-        },
-      }),
-    ]);
+      },
+      orderBy: { sortOrder: 'asc' },
+    });
 
-    return bookmarks.map((b) => {
-      const spread =
-        b.indicator.symbol === 'GOLD_KRW'
-          ? this.calcGoldSpread(
-              b.indicator.prices[0] ?? null,
-              goldSpotInd?.prices[0] ?? null,
-            )
-          : null;
-      return this.formatIndicator(
+    const hasGoldSpot = bookmarks.some(
+      (b) => b.indicator.symbol === 'GOLD_KRW_SPOT',
+    );
+    let goldUsdPrice: LatestPrice = null;
+    let usdKrwPrice: LatestPrice = null;
+
+    if (hasGoldSpot) {
+      const [goldUsdInd, usdKrwInd] = await Promise.all([
+        this.prisma.indicator.findUnique({
+          where: { symbol: 'GOLD_USD' },
+          include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
+        }),
+        this.prisma.indicator.findUnique({
+          where: { symbol: 'USD_KRW' },
+          include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
+        }),
+      ]);
+      goldUsdPrice = goldUsdInd?.prices[0] ?? null;
+      usdKrwPrice = usdKrwInd?.prices[0] ?? null;
+    }
+
+    return bookmarks.map((b) =>
+      this.formatIndicator(
         b.indicator,
         b.indicator.prices[0] ?? null,
         true,
-        spread,
-      );
-    });
+        b.indicator.symbol === 'GOLD_KRW_SPOT'
+          ? this.calcGoldSpread(
+              b.indicator.prices[0] ?? null,
+              goldUsdPrice,
+              usdKrwPrice,
+            )
+          : null,
+      ),
+    );
   }
 
   /**
@@ -401,7 +422,7 @@ export class InvestmentService implements OnModuleInit {
       data: { userId, indicatorId: ind.id, sortOrder: nextOrder },
     });
 
-    return { message: '즐겨찾기에 등록되었습니다' };
+    return this.findOne(userId, symbol);
   }
 
   /**
@@ -426,7 +447,7 @@ export class InvestmentService implements OnModuleInit {
       where: { userId_indicatorId: { userId, indicatorId: ind.id } },
     });
 
-    return { message: '즐겨찾기에서 해제되었습니다' };
+    return this.findOne(userId, symbol);
   }
 
   /**
@@ -494,16 +515,16 @@ export class InvestmentService implements OnModuleInit {
 
   /**
    * 과거 데이터 일괄 초기화 (어드민 1회 호출용)
-   * - Yahoo: 지정 기간 일별 종가
-   * - CoinGecko: 최대 365일
+   * - Yahoo: 지정 기간 일별 종가 (최대 10년+)
+   * - CoinGecko: 최대 365일 (무료 티어 제한)
    * - BOK: 지정 기간 국고채 3년물
-   * - GOLD_KRW: Yahoo GOLD_USD × USD_KRW 기반 계산
+   * - GOLD_KRW_SPOT: 한국금거래소 전체 기간 (2008년~)
    */
-  async initializeHistoricalData(days: number = 365): Promise<{
+  async initializeHistoricalData(days: number = 3650): Promise<{
     yahoo: number;
     crypto: number;
     bond: number;
-    goldKrw: number;
+    goldSpot: number;
   }> {
     const to = new Date();
     const from = new Date();
@@ -516,32 +537,21 @@ export class InvestmentService implements OnModuleInit {
     const idMap = new Map(indicators.map((i) => [i.symbol, i.id]));
 
     let yahooCount = 0;
-    let goldKrwCount = 0;
 
     // ── Yahoo historical ─────────────────────────────────────────
     this.logger.log(`[HistInit] Yahoo historical ${days}d ...`);
     const yahooRows = await this.yahoo.collectHistorical(from, to);
 
-    // date별로 GOLD_USD, USD_KRW 값을 저장해 GOLD_KRW 계산
-    const goldUsdByDate = new Map<string, number>();
-    const usdKrwByDate = new Map<string, number>();
-
     const yahooInserts = yahooRows
       .filter((r) => idMap.has(r.symbol))
-      .map((r) => {
-        const dateKey = r.date.toISOString().slice(0, 10);
-        if (r.symbol === 'GOLD_USD') goldUsdByDate.set(dateKey, r.close);
-        if (r.symbol === 'USD_KRW') usdKrwByDate.set(dateKey, r.close);
-
-        return {
-          indicatorId: idMap.get(r.symbol),
-          price: r.close,
-          prevPrice: null,
-          change: null,
-          changeRate: null,
-          recordedAt: r.date,
-        };
-      });
+      .map((r) => ({
+        indicatorId: idMap.get(r.symbol),
+        price: r.close,
+        prevPrice: null,
+        change: null,
+        changeRate: null,
+        recordedAt: r.date,
+      }));
 
     if (yahooInserts.length > 0) {
       await this.prisma.indicatorPrice.createMany({
@@ -549,41 +559,6 @@ export class InvestmentService implements OnModuleInit {
         skipDuplicates: true,
       });
       yahooCount = yahooInserts.length;
-    }
-
-    // ── GOLD_KRW 계산 삽입 ───────────────────────────────────────
-    const goldKrwId = idMap.get('GOLD_KRW');
-    if (goldKrwId) {
-      const goldKrwInserts: {
-        indicatorId: string;
-        price: number;
-        prevPrice: null;
-        change: null;
-        changeRate: null;
-        recordedAt: Date;
-      }[] = [];
-
-      for (const [dateKey, goldUsd] of goldUsdByDate) {
-        const usdKrw = usdKrwByDate.get(dateKey);
-        if (usdKrw == null) continue;
-        const goldKrw = (goldUsd * usdKrw) / OZ_TO_GRAM;
-        goldKrwInserts.push({
-          indicatorId: goldKrwId,
-          price: goldKrw,
-          prevPrice: null,
-          change: null,
-          changeRate: null,
-          recordedAt: new Date(`${dateKey}T00:00:00Z`),
-        });
-      }
-
-      if (goldKrwInserts.length > 0) {
-        await this.prisma.indicatorPrice.createMany({
-          data: goldKrwInserts,
-          skipDuplicates: true,
-        });
-        goldKrwCount = goldKrwInserts.length;
-      }
     }
 
     // ── CoinGecko BTC/KRW ────────────────────────────────────────
@@ -628,15 +603,36 @@ export class InvestmentService implements OnModuleInit {
       bondCount = bokRows.length;
     }
 
+    // ── GOLD_KRW_SPOT 현물가 전체 기간 ───────────────────────────
+    this.logger.log(`[HistInit] KoreaGold historical (ALL) ...`);
+    const goldRows = await this.koreaGold.collectHistorical();
+    const goldSpotId = idMap.get('GOLD_KRW_SPOT');
+    let goldSpotCount = 0;
+
+    if (goldSpotId && goldRows.length > 0) {
+      await this.prisma.indicatorPrice.createMany({
+        data: goldRows.map((r) => ({
+          indicatorId: goldSpotId,
+          price: r.pricePerGram,
+          prevPrice: null,
+          change: null,
+          changeRate: null,
+          recordedAt: r.date,
+        })),
+        skipDuplicates: true,
+      });
+      goldSpotCount = goldRows.length;
+    }
+
     this.logger.log(
-      `[HistInit] Done — yahoo:${yahooCount} goldKrw:${goldKrwCount} crypto:${cryptoCount} bond:${bondCount}`,
+      `[HistInit] Done — yahoo:${yahooCount} crypto:${cryptoCount} bond:${bondCount} goldSpot:${goldSpotCount}`,
     );
 
     return {
       yahoo: yahooCount,
       crypto: cryptoCount,
       bond: bondCount,
-      goldKrw: goldKrwCount,
+      goldSpot: goldSpotCount,
     };
   }
 
@@ -675,18 +671,20 @@ export class InvestmentService implements OnModuleInit {
   }
 
   /**
-   * GOLD_KRW (환산가) vs GOLD_KRW_SPOT (현물가) 이격률 계산
-   * 양수: 환산가가 현물가보다 높음 (프리미엄)
-   * 음수: 환산가가 현물가보다 낮음 (디스카운트)
+   * GOLD_KRW_SPOT(현물가) vs 환산가(GOLD_USD × USD_KRW ÷ 31.1035) 이격률
+   * 양수: 현물가가 환산가보다 높음 (프리미엄)
+   * 음수: 현물가가 환산가보다 낮음 (디스카운트)
    */
   private calcGoldSpread(
-    goldKrwPrice: LatestPrice,
-    goldSpotPrice: LatestPrice,
+    spotPrice: LatestPrice,
+    goldUsdPrice: LatestPrice,
+    usdKrwPrice: LatestPrice,
   ): string | null {
-    if (!goldKrwPrice || !goldSpotPrice) return null;
-    const calc = Number(goldKrwPrice.price);
-    const spot = Number(goldSpotPrice.price);
-    if (spot <= 0) return null;
-    return (((calc - spot) / spot) * 100).toFixed(2);
+    if (!spotPrice || !goldUsdPrice || !usdKrwPrice) return null;
+    const spot = Number(spotPrice.price);
+    const calc =
+      (Number(goldUsdPrice.price) * Number(usdKrwPrice.price)) / 31.1035;
+    if (calc <= 0) return null;
+    return (((spot - calc) / calc) * 100).toFixed(2);
   }
 }

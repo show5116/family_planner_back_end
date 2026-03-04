@@ -20,6 +20,7 @@ const YAHOO_SYMBOLS: { symbol: string; ticker: string }[] = [
   { symbol: 'KOSDAQ', ticker: '^KQ11' },
   { symbol: 'SP500', ticker: '^GSPC' },
   { symbol: 'NASDAQ', ticker: '^IXIC' },
+  { symbol: 'NQ100', ticker: 'NQ=F' },
   { symbol: 'DJI', ticker: '^DJI' },
   { symbol: 'NIKKEI225', ticker: '^N225' },
   { symbol: 'TWSE', ticker: '^TWII' },

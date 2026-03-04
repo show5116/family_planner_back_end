@@ -41,7 +41,7 @@ export class IndicatorDto {
 
   @ApiProperty({
     description:
-      'GOLD_KRW 전용: 국내 현물가 대비 이격률 (%). 양수 = 환산가가 현물가보다 높음',
+      'GOLD_KRW_SPOT 전용: 국제 환산가 대비 이격률 (%). 양수 = 현물가가 환산가보다 높음 (프리미엄)',
     example: '1.23',
     nullable: true,
   })
@@ -77,6 +77,6 @@ export class HistoricalInitResultDto {
   @ApiProperty({ description: '저장된 한국채 건수', example: 250 })
   bond: number;
 
-  @ApiProperty({ description: '저장된 국내 금값 건수', example: 360 })
-  goldKrw: number;
+  @ApiProperty({ description: '저장된 국내 금 현물가 건수', example: 4000 })
+  goldSpot: number;
 }
