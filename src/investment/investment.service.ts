@@ -330,32 +330,30 @@ export class InvestmentService implements OnModuleInit {
     let rows: RawRow[];
 
     if (days <= 7) {
-      // 1시간 단위
+      // 1시간 단위: 'YYYY-MM-DD HH:00:00'
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
-          DATE_FORMAT(
-            DATE_ADD(DATE(recorded_at), INTERVAL HOUR(recorded_at) HOUR),
-            '%Y-%m-%d %H:00:00'
-          ) AS bucket,
+          CONCAT(DATE_FORMAT(recordedAt, '%Y-%m-%d %H'), ':00:00') AS bucket,
           CAST(AVG(price) AS CHAR) AS price
         FROM indicator_prices
-        WHERE indicator_id = ${ind.id}
-          AND recorded_at >= ${since}
+        WHERE indicatorId = ${ind.id}
+          AND recordedAt >= ${since}
         GROUP BY bucket
         ORDER BY bucket ASC
       `;
     } else if (days <= 30) {
-      // 6시간 단위
+      // 6시간 단위: FLOOR(hour/6)*6 → '00','06','12','18'
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
-          DATE_FORMAT(
-            DATE_ADD(DATE(recorded_at), INTERVAL (HOUR(recorded_at) DIV 6) * 6 HOUR),
-            '%Y-%m-%d %H:00:00'
+          CONCAT(
+            DATE_FORMAT(recordedAt, '%Y-%m-%d '),
+            LPAD(FLOOR(HOUR(recordedAt) / 6) * 6, 2, '0'),
+            ':00:00'
           ) AS bucket,
           CAST(AVG(price) AS CHAR) AS price
         FROM indicator_prices
-        WHERE indicator_id = ${ind.id}
-          AND recorded_at >= ${since}
+        WHERE indicatorId = ${ind.id}
+          AND recordedAt >= ${since}
         GROUP BY bucket
         ORDER BY bucket ASC
       `;
@@ -363,11 +361,11 @@ export class InvestmentService implements OnModuleInit {
       // 1일 단위
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
-          DATE_FORMAT(recorded_at, '%Y-%m-%d') AS bucket,
+          DATE_FORMAT(recordedAt, '%Y-%m-%d') AS bucket,
           CAST(AVG(price) AS CHAR) AS price
         FROM indicator_prices
-        WHERE indicator_id = ${ind.id}
-          AND recorded_at >= ${since}
+        WHERE indicatorId = ${ind.id}
+          AND recordedAt >= ${since}
         GROUP BY bucket
         ORDER BY bucket ASC
       `;
@@ -530,6 +528,7 @@ export class InvestmentService implements OnModuleInit {
 
   /**
    * 시세 저장 (Collector에서 호출) — indicatorId는 캐시에서 조회
+   * prevPrice가 null이면 DB에서 직전 레코드를 자동 조회해 change/changeRate 계산
    */
   async savePrice(
     symbol: string,
@@ -540,17 +539,27 @@ export class InvestmentService implements OnModuleInit {
     const indicatorId = this.indicatorIdCache.get(symbol);
     if (!indicatorId) return;
 
-    const change = prevPrice != null ? price - prevPrice : null;
+    let resolvedPrev = prevPrice;
+    if (resolvedPrev == null) {
+      const last = await this.prisma.indicatorPrice.findFirst({
+        where: { indicatorId },
+        orderBy: { recordedAt: 'desc' },
+        select: { price: true },
+      });
+      resolvedPrev = last ? Number(last.price) : null;
+    }
+
+    const change = resolvedPrev != null ? price - resolvedPrev : null;
     const changeRate =
-      prevPrice != null && prevPrice !== 0
-        ? ((price - prevPrice) / prevPrice) * 100
+      resolvedPrev != null && resolvedPrev !== 0
+        ? ((price - resolvedPrev) / resolvedPrev) * 100
         : null;
 
     await this.prisma.indicatorPrice.create({
       data: {
         indicatorId,
         price,
-        prevPrice,
+        prevPrice: resolvedPrev,
         change,
         changeRate,
         recordedAt: recordedAt ?? new Date(),

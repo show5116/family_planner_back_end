@@ -18,9 +18,9 @@ interface BokResponse {
   };
 }
 
-// 국고채 3년물 통계코드: 817Y002, 항목코드: 010190000
+// 국고채 3년물 통계코드: 817Y002, 항목코드: 010200000
 const STAT_CODE = '817Y002';
-const ITEM_CODE = '010190000';
+const ITEM_CODE = '010200000';
 
 @Injectable()
 export class BokCollector {
@@ -52,7 +52,7 @@ export class BokCollector {
 
       const url =
         `https://ecos.bok.or.kr/api/StatisticSearch/${this.apiKey}/json/kr` +
-        `/1/5/${STAT_CODE}/DD/${startDate}/${endDate}/${ITEM_CODE}`;
+        `/1/5/${STAT_CODE}/D/${startDate}/${endDate}/${ITEM_CODE}`;
 
       const res = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -107,7 +107,7 @@ export class BokCollector {
       // ECOS: 최대 10000건 조회 가능, 일별 데이터라 1년=약 250건으로 충분
       const url =
         `https://ecos.bok.or.kr/api/StatisticSearch/${this.apiKey}/json/kr` +
-        `/1/10000/${STAT_CODE}/DD/${startDate}/${endDate}/${ITEM_CODE}`;
+        `/1/10000/${STAT_CODE}/D/${startDate}/${endDate}/${ITEM_CODE}`;
 
       const res = await fetch(url, {
         headers: { Accept: 'application/json' },
