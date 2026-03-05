@@ -76,6 +76,9 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   const port = configService.get<number>('app.port');
-  await app.listen(port);
+  const server = await app.listen(port);
+
+  // 어드민 히스토리 초기화 등 장기 실행 요청을 위해 서버 타임아웃 비활성화
+  server.setTimeout(0);
 }
 void bootstrap();
