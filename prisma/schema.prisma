@@ -557,6 +557,7 @@ model Memo {
   type           MemoType       @default(NOTE)
   category       String?        @db.VarChar(50)
   visibility     MemoVisibility @default(PRIVATE)
+  isPinned       Boolean        @default(false)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
@@ -567,6 +568,7 @@ model Memo {
   attachments    MemoAttachment[]
   checklistItems ChecklistItem[]
 
+  @@index([userId, isPinned])
   @@index([userId, createdAt(sort: Desc)])
   @@index([groupId, createdAt(sort: Desc)])
   @@index([visibility])

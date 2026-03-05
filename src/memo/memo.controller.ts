@@ -59,6 +59,13 @@ export class MemoController {
     return this.memoService.findAll(req.user.userId, query);
   }
 
+  @Get('pinned')
+  @ApiOperation({ summary: '핀된 메모 목록 조회 (대시보드 위젯용)' })
+  @ApiSuccess(MemoDto, '핀된 메모 목록 조회 성공', { isArray: true })
+  findPinned(@Request() req) {
+    return this.memoService.findPinned(req.user.userId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: '메모 상세 조회' })
   @ApiSuccess(MemoDto, '메모 상세 조회 성공')
@@ -84,6 +91,15 @@ export class MemoController {
   @ApiForbidden('본인의 메모만 삭제할 수 있습니다')
   remove(@Request() req, @Param('id') id: string) {
     return this.memoService.remove(req.user.userId, id);
+  }
+
+  @Post(':id/pin')
+  @ApiOperation({ summary: '메모 핀 토글 (핀 ↔ 핀 해제)' })
+  @ApiSuccess(MemoDto, '핀 토글 성공')
+  @ApiNotFound('메모를 찾을 수 없습니다')
+  @ApiForbidden('본인의 메모만 핀 설정할 수 있습니다')
+  togglePin(@Request() req, @Param('id') id: string) {
+    return this.memoService.togglePin(req.user.userId, id);
   }
 
   @Post(':id/tags')

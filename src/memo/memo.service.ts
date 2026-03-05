@@ -125,7 +125,7 @@ export class MemoService {
           attachments: true,
           checklistItems: { orderBy: { order: 'asc' } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),
@@ -242,6 +242,56 @@ export class MemoService {
     });
 
     return { message: '메모가 삭제되었습니다' };
+  }
+
+  /**
+   * 핀 토글 (핀 ↔ 핀 해제)
+   */
+  async togglePin(userId: string, id: string) {
+    const memo = await this.findOwnMemo(userId, id);
+
+    return this.prisma.memo.update({
+      where: { id },
+      data: { isPinned: !memo.isPinned },
+      include: {
+        user: { select: { id: true, name: true } },
+        tags: true,
+        attachments: true,
+        checklistItems: { orderBy: { order: 'asc' } },
+      },
+    });
+  }
+
+  /**
+   * 핀된 메모 목록 조회 (대시보드 위젯용)
+   */
+  async findPinned(userId: string) {
+    const userGroupIds = await this.getUserGroupIds(userId);
+
+    return this.prisma.memo.findMany({
+      where: {
+        deletedAt: null,
+        isPinned: true,
+        OR: [
+          { userId, visibility: MemoVisibility.PRIVATE },
+          ...(userGroupIds.length > 0
+            ? [
+                {
+                  groupId: { in: userGroupIds },
+                  visibility: MemoVisibility.GROUP,
+                },
+              ]
+            : []),
+        ],
+      },
+      include: {
+        user: { select: { id: true, name: true } },
+        tags: true,
+        attachments: true,
+        checklistItems: { orderBy: { order: 'asc' } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
   }
 
   /**

@@ -84,6 +84,9 @@ export class MemoDto {
   @ApiProperty({ description: '공개 범위', enum: MemoVisibility })
   visibility: MemoVisibility;
 
+  @ApiProperty({ description: '핀 여부', example: false })
+  isPinned: boolean;
+
   @ApiProperty({ description: '그룹 ID', nullable: true })
   groupId: string | null;
 
