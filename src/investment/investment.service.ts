@@ -371,13 +371,96 @@ export class InvestmentService implements OnModuleInit {
       `;
     }
 
+    const history = rows.map((r) => ({
+      price: Number(r.price).toString(),
+      recordedAt: new Date(r.bucket),
+    }));
+
+    // GOLD_KRW_SPOT: 동일 버킷의 GOLD_USD·USD_KRW로 이격률 시계열 추가
+    let spreadHistory: { spread: string; recordedAt: Date }[] | undefined;
+    if (ind.symbol === 'GOLD_KRW_SPOT' && rows.length > 0) {
+      const [goldUsdInd, usdKrwInd] = await Promise.all([
+        this.prisma.indicator.findUnique({ where: { symbol: 'GOLD_USD' } }),
+        this.prisma.indicator.findUnique({ where: { symbol: 'USD_KRW' } }),
+      ]);
+
+      if (goldUsdInd && usdKrwInd) {
+        type SpreadRow = { bucket: string; goldUsd: string; usdKrw: string };
+        let spreadRows: SpreadRow[];
+
+        if (days <= 7) {
+          spreadRows = await this.prisma.$queryRaw<SpreadRow[]>`
+            SELECT
+              CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d %H'), ':00:00') AS bucket,
+              CAST(AVG(g.price) AS CHAR) AS goldUsd,
+              CAST(AVG(u.price) AS CHAR) AS usdKrw
+            FROM indicator_prices g
+            JOIN indicator_prices u
+              ON CONCAT(DATE_FORMAT(u.recordedAt, '%Y-%m-%d %H'), ':00:00')
+               = CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d %H'), ':00:00')
+            WHERE g.indicatorId = ${goldUsdInd.id}
+              AND u.indicatorId = ${usdKrwInd.id}
+              AND g.recordedAt >= ${since}
+            GROUP BY bucket
+            ORDER BY bucket ASC
+          `;
+        } else if (days <= 30) {
+          spreadRows = await this.prisma.$queryRaw<SpreadRow[]>`
+            SELECT
+              CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d '), LPAD(FLOOR(HOUR(g.recordedAt)/6)*6,2,'0'), ':00:00') AS bucket,
+              CAST(AVG(g.price) AS CHAR) AS goldUsd,
+              CAST(AVG(u.price) AS CHAR) AS usdKrw
+            FROM indicator_prices g
+            JOIN indicator_prices u
+              ON CONCAT(DATE_FORMAT(u.recordedAt, '%Y-%m-%d '), LPAD(FLOOR(HOUR(u.recordedAt)/6)*6,2,'0'), ':00:00')
+               = CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d '), LPAD(FLOOR(HOUR(g.recordedAt)/6)*6,2,'0'), ':00:00')
+            WHERE g.indicatorId = ${goldUsdInd.id}
+              AND u.indicatorId = ${usdKrwInd.id}
+              AND g.recordedAt >= ${since}
+            GROUP BY bucket
+            ORDER BY bucket ASC
+          `;
+        } else {
+          spreadRows = await this.prisma.$queryRaw<SpreadRow[]>`
+            SELECT
+              DATE_FORMAT(g.recordedAt, '%Y-%m-%d') AS bucket,
+              CAST(AVG(g.price) AS CHAR) AS goldUsd,
+              CAST(AVG(u.price) AS CHAR) AS usdKrw
+            FROM indicator_prices g
+            JOIN indicator_prices u
+              ON DATE_FORMAT(u.recordedAt, '%Y-%m-%d')
+               = DATE_FORMAT(g.recordedAt, '%Y-%m-%d')
+            WHERE g.indicatorId = ${goldUsdInd.id}
+              AND u.indicatorId = ${usdKrwInd.id}
+              AND g.recordedAt >= ${since}
+            GROUP BY bucket
+            ORDER BY bucket ASC
+          `;
+        }
+
+        // 버킷 맵: bucket → spot price
+        const spotMap = new Map(rows.map((r) => [r.bucket, Number(r.price)]));
+
+        spreadHistory = spreadRows
+          .map((r) => {
+            const spot = spotMap.get(r.bucket);
+            if (spot == null) return null;
+            const calc = (Number(r.goldUsd) * Number(r.usdKrw)) / 31.1035;
+            if (calc <= 0) return null;
+            return {
+              spread: (((spot - calc) / calc) * 100).toFixed(2),
+              recordedAt: new Date(r.bucket),
+            };
+          })
+          .filter((r): r is { spread: string; recordedAt: Date } => r !== null);
+      }
+    }
+
     return {
       symbol: ind.symbol,
       nameKo: ind.nameKo,
-      history: rows.map((r) => ({
-        price: Number(r.price).toString(),
-        recordedAt: new Date(r.bucket),
-      })),
+      history,
+      ...(spreadHistory !== undefined && { spreadHistory }),
     };
   }
 

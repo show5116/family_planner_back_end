@@ -141,7 +141,13 @@
       "price": "2580.34", // 시세 (string)
       "recordedAt": "2025-01-01T00:00:00Z" // 수집 시각 (Date)
     }
-  ] // 시계열 데이터 (IndicatorPricePointDto[])
+  ], // 시계열 데이터 (IndicatorPricePointDto[])
+  "spreadHistory": [
+    {
+      "spread": "3.21", // 이격률 (%) (string)
+      "recordedAt": "2025-01-01T00:00:00Z" // 수집 시각 (Date)
+    }
+  ] // GOLD_KRW_SPOT 전용: 현물가 vs 환산가(GOLD_USD×USD_KRW÷31.1035) 이격률 시계열 (SpreadPointDto[]?)
 }
 ```
 
@@ -228,7 +234,7 @@
 
 **Query Parameters:**
 
-- `days` (`number`) (Optional): 수집할 과거 일수 (1~3650, 기본 365)
+- `days` (`number`) (Optional): 수집할 과거 일수 (1~5000, 기본 3650). Yahoo/BOK만 적용되며 CoinGecko는 365일, GOLD_KRW_SPOT은 전체 기간 고정.
 
 **Responses:**
 
@@ -238,7 +244,8 @@
 {
   "yahoo": 5400, // 저장된 Yahoo 시세 건수 (number)
   "crypto": 365, // 저장된 BTC/KRW 건수 (number)
-  "bond": 250 // 저장된 한국채 건수 (number)
+  "bond": 250, // 저장된 한국채 건수 (number)
+  "goldSpot": 4000 // 저장된 국내 금 현물가 건수 (number)
 }
 ```
 

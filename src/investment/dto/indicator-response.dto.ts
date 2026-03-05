@@ -56,6 +56,14 @@ export class IndicatorPricePointDto {
   recordedAt: Date;
 }
 
+export class SpreadPointDto {
+  @ApiProperty({ description: '이격률 (%)', example: '3.21' })
+  spread: string;
+
+  @ApiProperty({ description: '수집 시각' })
+  recordedAt: Date;
+}
+
 export class IndicatorHistoryDto {
   @ApiProperty({ description: '심볼', example: 'KOSPI' })
   symbol: string;
@@ -65,6 +73,14 @@ export class IndicatorHistoryDto {
 
   @ApiProperty({ description: '시계열 데이터', type: [IndicatorPricePointDto] })
   history: IndicatorPricePointDto[];
+
+  @ApiProperty({
+    description:
+      'GOLD_KRW_SPOT 전용: 현물가 vs 환산가(GOLD_USD×USD_KRW÷31.1035) 이격률 시계열',
+    type: [SpreadPointDto],
+    required: false,
+  })
+  spreadHistory?: SpreadPointDto[];
 }
 
 export class HistoricalInitResultDto {
