@@ -903,3 +903,29 @@ model ChildcareRule {
   @@index([accountId])
   @@map("childcare_rules")
 }
+
+// ============================================================
+// 미니게임
+// ============================================================
+
+model MinigameResult {
+  id           String       @id @default(uuid())
+  groupId      String
+  gameType     MinigameType
+  title        String       @db.VarChar(200)
+  participants Json
+  options      Json
+  result       Json
+  createdBy    String
+  createdAt    DateTime     @default(now())
+
+  @@index([groupId, createdAt(sort: Desc)])
+  @@index([groupId, gameType])
+  @@index([createdBy])
+  @@map("minigame_results")
+}
+
+enum MinigameType {
+  LADDER
+  ROULETTE
+}

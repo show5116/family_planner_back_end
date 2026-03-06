@@ -40,6 +40,7 @@ import { HouseholdModule } from '@/household/household.module';
 import { AssetsModule } from '@/assets/assets.module';
 import { InvestmentModule } from '@/investment/investment.module';
 import { ChildcareModule } from '@/childcare/childcare.module';
+import { MinigameModule } from '@/minigame/minigame.module';
 
 @Module({
   imports: [
@@ -139,6 +140,7 @@ import { ChildcareModule } from '@/childcare/childcare.module';
     AssetsModule,
     InvestmentModule,
     ChildcareModule,
+    MinigameModule,
   ],
   controllers: [AppController],
   providers: [
