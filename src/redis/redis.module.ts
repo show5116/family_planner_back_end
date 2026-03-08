@@ -40,15 +40,23 @@ export class RedisModule {
 
         const client = new Redis(redisUrl, {
           retryStrategy: (times) => {
-            if (times > 3) {
-              RedisModule.logger.error('Redis 재연결 시도 초과');
-              return null; // 재연결 중단
+            if (times > 10) {
+              RedisModule.logger.error('Redis 재연결 시도 초과 - 재연결 중단');
+              return null;
             }
-            return Math.min(times * 100, 3000);
+            const delay = Math.min(times * 200, 5000);
+            RedisModule.logger.warn(
+              `Redis 재연결 시도 ${times}회 (${delay}ms 후)`,
+            );
+            return delay;
           },
           maxRetriesPerRequest: 3,
           enableReadyCheck: true,
           lazyConnect: false,
+          reconnectOnError: (err) => {
+            // READONLY 에러 등 특정 에러에서만 재연결
+            return err.message.includes('READONLY');
+          },
         });
 
         client.on('connect', () => {
@@ -56,6 +64,7 @@ export class RedisModule {
         });
 
         client.on('error', (error) => {
+          // error 이벤트 핸들러 등록으로 unhandled error 방지
           RedisModule.logger.error(`ioredis 클라이언트 에러: ${error.message}`);
         });
 
@@ -80,13 +89,17 @@ export class RedisModule {
         // Blocking 명령어(BLPOP)는 연결을 독점하므로 분리 필수
         const client = new Redis(redisUrl, {
           retryStrategy: (times) => {
-            if (times > 3) {
+            if (times > 10) {
               RedisModule.logger.error(
-                'Redis Blocking Client 재연결 시도 초과',
+                'Redis Blocking Client 재연결 시도 초과 - 재연결 중단',
               );
               return null;
             }
-            return Math.min(times * 100, 3000);
+            const delay = Math.min(times * 200, 5000);
+            RedisModule.logger.warn(
+              `Redis Blocking Client 재연결 시도 ${times}회 (${delay}ms 후)`,
+            );
+            return delay;
           },
           maxRetriesPerRequest: null, // Blocking 명령어는 무제한 재시도
           enableReadyCheck: true,
@@ -100,6 +113,7 @@ export class RedisModule {
         });
 
         client.on('error', (error) => {
+          // error 이벤트 핸들러 등록으로 unhandled error 방지
           RedisModule.logger.error(
             `Redis Blocking Client 에러: ${error.message}`,
           );
@@ -135,11 +149,13 @@ export class RedisModule {
                 port: parseInt(url.port || '6379'),
                 connectTimeout: 5000, // 5초 타임아웃
                 reconnectStrategy: (retries) => {
-                  if (retries > 3) {
-                    RedisModule.logger.error('Redis 재연결 시도 초과');
-                    return new Error('Redis 재연결 실패');
+                  if (retries > 10) {
+                    RedisModule.logger.error(
+                      'Redis CacheModule 재연결 시도 초과',
+                    );
+                    return false; // Error 객체 대신 false로 조용히 중단
                   }
-                  return Math.min(retries * 100, 3000);
+                  return Math.min(retries * 200, 5000);
                 },
               },
               password: url.password || undefined,

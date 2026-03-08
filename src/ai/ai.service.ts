@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, BadGatewayException } from '@nestjs/common';
+import { Injectable, BadGatewayException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { randomUUID } from 'crypto';
@@ -8,6 +8,7 @@ import { AiChatResponseDto } from '@/ai/dto/ai-chat-response.dto';
 
 @Injectable()
 export class AiService {
+  private readonly logger = new Logger(AiService.name);
   private readonly baseUrl: string;
   private readonly apiKey: string;
 
@@ -45,6 +46,11 @@ export class AiService {
       );
       return { ...data, room_id: roomId };
     } catch (error) {
+      const status = error?.response?.status;
+      const detail = error?.response?.data ?? error?.message;
+      this.logger.error(
+        `AI 서비스 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
+      );
       throw new BadGatewayException('AI 서비스 호출에 실패했습니다');
     }
   }
