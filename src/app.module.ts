@@ -25,6 +25,7 @@ import smtpConfig from '@/config/smtp.config';
 import oauthConfig from '@/config/oauth.config';
 import axiomConfig from '@/config/axiom.config';
 import r2Config from '@/config/r2.config';
+import aiConfig from '@/config/ai.config';
 import { validationSchema } from '@/config/env.validation';
 import { SentryModule } from '@/sentry/sentry.module';
 import { StorageModule } from '@/storage/storage.module';
@@ -41,6 +42,7 @@ import { AssetsModule } from '@/assets/assets.module';
 import { InvestmentModule } from '@/investment/investment.module';
 import { ChildcareModule } from '@/childcare/childcare.module';
 import { MinigameModule } from '@/minigame/minigame.module';
+import { AiModule } from '@/ai/ai.module';
 
 @Module({
   imports: [
@@ -53,6 +55,7 @@ import { MinigameModule } from '@/minigame/minigame.module';
         oauthConfig,
         axiomConfig,
         r2Config,
+        aiConfig,
       ],
       envFilePath: '.env',
       validationSchema: validationSchema,
@@ -141,6 +144,7 @@ import { MinigameModule } from '@/minigame/minigame.module';
     InvestmentModule,
     ChildcareModule,
     MinigameModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

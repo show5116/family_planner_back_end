@@ -76,6 +76,10 @@ export const validationSchema = Joi.object({
 
   // 한국은행 Open API (한국채 3년물용, 선택적)
   BOK_API_KEY: Joi.string().optional(),
+
+  // AI 마이크로서비스 (FastAPI + LangGraph)
+  AI_MICROSERVICE_URL: Joi.string().uri().required(),
+  AI_MICROSERVICE_API_KEY: Joi.string().required(),
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {
