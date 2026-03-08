@@ -309,16 +309,21 @@ export class InvestmentService implements OnModuleInit {
   /**
    * 시세 히스토리 (시계열)
    *
-   * 조회 기간에 따라 집계 단위를 자동 결정해 포인트 수를 제한:
-   *  - ~7일  : 1시간 단위
-   *  - ~30일 : 6시간 단위
-   *  - 그 외 : 1일 단위 (과거 초기화 데이터와 동일 밀도)
+   * 조회 기간에 따라 데이터 소스 및 집계 단위를 자동 결정:
+   *  - ~7일  : 실시간 DB, 1시간 단위, 주말 필터 (카테고리에 따라)
+   *  - ~30일 : 실시간 DB, 6시간 단위, 주말 필터 (카테고리에 따라)
+   *  - 30일 초과 : Yahoo Historical API 직접 조회 (휴장일 자동 제거)
    */
   async findHistory(_userId: string, symbol: string, days: number) {
     const ind = await this.prisma.indicator.findUnique({ where: { symbol } });
 
     if (!ind) {
       throw new NotFoundException('지표를 찾을 수 없습니다');
+    }
+
+    // 30일 초과: Yahoo Historical API 직접 조회 (공휴일/휴장일 자동 제거됨)
+    if (days > 30) {
+      return this.findHistoryFromYahoo(ind, days);
     }
 
     const since = new Date();
@@ -341,7 +346,7 @@ export class InvestmentService implements OnModuleInit {
         GROUP BY bucket
         ORDER BY bucket ASC
       `;
-    } else if (days <= 30) {
+    } else {
       // 6시간 단위: FLOOR(hour/6)*6 → '00','06','12','18'
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
@@ -357,21 +362,19 @@ export class InvestmentService implements OnModuleInit {
         GROUP BY bucket
         ORDER BY bucket ASC
       `;
-    } else {
-      // 1일 단위
-      rows = await this.prisma.$queryRaw<RawRow[]>`
-        SELECT
-          DATE_FORMAT(recordedAt, '%Y-%m-%d') AS bucket,
-          CAST(AVG(price) AS CHAR) AS price
-        FROM indicator_prices
-        WHERE indicatorId = ${ind.id}
-          AND recordedAt >= ${since}
-        GROUP BY bucket
-        ORDER BY bucket ASC
-      `;
     }
 
-    const history = rows.map((r) => ({
+    // CRYPTO(BTC)는 24/7 거래 → 주말 필터 없음
+    // 그 외(INDEX, CURRENCY, COMMODITY, BOND, MACRO 등)는 주말 bucket 제거
+    const filteredRows =
+      ind.category === 'CRYPTO'
+        ? rows
+        : rows.filter((r) => {
+            const dow = new Date(r.bucket).getDay(); // 0=일, 6=토
+            return dow !== 0 && dow !== 6;
+          });
+
+    const history = filteredRows.map((r) => ({
       price: Number(r.price).toString(),
       recordedAt: new Date(r.bucket),
     }));
@@ -404,7 +407,7 @@ export class InvestmentService implements OnModuleInit {
             GROUP BY bucket
             ORDER BY bucket ASC
           `;
-        } else if (days <= 30) {
+        } else {
           spreadRows = await this.prisma.$queryRaw<SpreadRow[]>`
             SELECT
               CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d '), LPAD(FLOOR(HOUR(g.recordedAt)/6)*6,2,'0'), ':00:00') AS bucket,
@@ -420,26 +423,12 @@ export class InvestmentService implements OnModuleInit {
             GROUP BY bucket
             ORDER BY bucket ASC
           `;
-        } else {
-          spreadRows = await this.prisma.$queryRaw<SpreadRow[]>`
-            SELECT
-              DATE_FORMAT(g.recordedAt, '%Y-%m-%d') AS bucket,
-              CAST(AVG(g.price) AS CHAR) AS goldUsd,
-              CAST(AVG(u.price) AS CHAR) AS usdKrw
-            FROM indicator_prices g
-            JOIN indicator_prices u
-              ON DATE_FORMAT(u.recordedAt, '%Y-%m-%d')
-               = DATE_FORMAT(g.recordedAt, '%Y-%m-%d')
-            WHERE g.indicatorId = ${goldUsdInd.id}
-              AND u.indicatorId = ${usdKrwInd.id}
-              AND g.recordedAt >= ${since}
-            GROUP BY bucket
-            ORDER BY bucket ASC
-          `;
         }
 
-        // 버킷 맵: bucket → spot price
-        const spotMap = new Map(rows.map((r) => [r.bucket, Number(r.price)]));
+        // 버킷 맵: bucket → spot price (주말 필터 적용된 rows 기준)
+        const spotMap = new Map(
+          filteredRows.map((r) => [r.bucket, Number(r.price)]),
+        );
 
         spreadHistory = spreadRows
           .map((r) => {
@@ -462,6 +451,71 @@ export class InvestmentService implements OnModuleInit {
       history,
       ...(spreadHistory !== undefined && { spreadHistory }),
     };
+  }
+
+  /**
+   * 30일 초과 히스토리 — Yahoo Historical API 직접 조회
+   * Yahoo Historical은 휴장일 row를 반환하지 않으므로 공휴일 처리가 자동으로 해결됨
+   * CRYPTO/BUFFETT_US 등 Yahoo 미지원 심볼은 DB fallback
+   */
+  private async findHistoryFromYahoo(
+    ind: { id: string; symbol: string; nameKo: string },
+    days: number,
+  ) {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - days);
+
+    // Yahoo Historical 지원 심볼만 API로 조회
+    // BTC_KRW, BUFFETT_US, GOLD_KRW_SPOT은 Yahoo에 없으므로 DB fallback
+    const YAHOO_UNSUPPORTED = new Set([
+      'BTC_KRW',
+      'BUFFETT_US',
+      'GOLD_KRW_SPOT',
+    ]);
+
+    if (!YAHOO_UNSUPPORTED.has(ind.symbol)) {
+      try {
+        const yahooRows = await this.yahoo.collectHistoricalForSymbol(
+          ind.symbol,
+          from,
+          to,
+        );
+
+        if (yahooRows.length > 0) {
+          const history = yahooRows.map((r) => ({
+            price: r.close.toString(),
+            recordedAt: r.date,
+          }));
+
+          return { symbol: ind.symbol, nameKo: ind.nameKo, history };
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Yahoo Historical fallback to DB for ${ind.symbol}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    // DB fallback: 1일 단위
+    type RawRow = { bucket: string; price: string };
+    const rows = await this.prisma.$queryRaw<RawRow[]>`
+      SELECT
+        DATE_FORMAT(recordedAt, '%Y-%m-%d') AS bucket,
+        CAST(AVG(price) AS CHAR) AS price
+      FROM indicator_prices
+      WHERE indicatorId = ${ind.id}
+        AND recordedAt >= ${from}
+      GROUP BY bucket
+      ORDER BY bucket ASC
+    `;
+
+    const history = rows.map((r) => ({
+      price: Number(r.price).toString(),
+      recordedAt: new Date(r.bucket),
+    }));
+
+    return { symbol: ind.symbol, nameKo: ind.nameKo, history };
   }
 
   /**

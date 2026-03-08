@@ -132,6 +132,34 @@ export class YahooCollector {
   }
 
   /**
+   * 단일 심볼 Yahoo Historical 조회 (30일 초과 히스토리 차트용)
+   */
+  async collectHistoricalForSymbol(
+    symbol: string,
+    from: Date,
+    to: Date,
+  ): Promise<YahooHistoricalPoint[]> {
+    const target = YAHOO_SYMBOLS.find((s) => s.symbol === symbol);
+    if (!target) return [];
+
+    const histPromise = yahooFinance.historical(target.ticker, {
+      period1: from,
+      period2: to,
+      interval: '1d',
+    }) as unknown as Promise<any[]>;
+
+    const rows = await histPromise;
+
+    return rows
+      .filter((row) => row.close != null)
+      .map((row) => ({
+        symbol,
+        date: row.date as Date,
+        close: row.close as number,
+      }));
+  }
+
+  /**
    * Wilshire 5000 현재 지수만 별도 수집 (버핏 지수 계산용)
    */
   async getWilshire5000(): Promise<number | null> {
