@@ -15,6 +15,7 @@
 
 개발 시 **해당 기능 문서만** 참고:
 - 기능별 문서: `docs/features/XX-기능명.md`
+- 유지보수 문서: `docs/maintenance/` — 현재 구현 상태, 권한 현황, 알림 맵 등
 - 전체 로드맵: [ROADMAP.md](ROADMAP.md)
 - 코드 스타일: [CODE_STYLE.md](CODE_STYLE.md)
 

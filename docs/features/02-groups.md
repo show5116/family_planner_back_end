@@ -55,7 +55,7 @@
   - 일반 요청: REQUEST 타입으로 PENDING 상태 생성, 관리자 승인 대기
 
 - **코드 재생성** (`POST /groups/:id/regenerate-code`):
-  - REGENERATE_INVITE_CODE 권한 필요
+  - `INVITE_MEMBER` 권한 필요
   - 중복 검사 후 고유 코드 생성
 
 ### 이메일 초대
@@ -83,12 +83,12 @@
 - 그룹 기본 색상 대신 개인 색상 사용
 
 ### 역할 변경 (`PATCH /groups/:id/members/:userId/role`)
-- ASSIGN_ROLE 권한 필요
+- `MANAGE_MEMBER` 권한 필요
 - 자신의 역할 변경 불가
 - OWNER 역할은 양도만 가능
 
 ### 멤버 삭제 (`DELETE /groups/:id/members/:userId`)
-- REMOVE_MEMBER 권한 필요
+- `MANAGE_MEMBER` 권한 필요
 - 자신 및 OWNER 삭제 불가
 
 ### 그룹 나가기 (`POST /groups/:id/leave`)
@@ -96,11 +96,51 @@
 
 ---
 
+## 권한(Permission) 체계
+
+### PermissionCode 목록
+
+| 코드 | 설명 | 카테고리 |
+|------|------|----------|
+| `INVITE_MEMBER` | 초대 코드 재생성, 이메일 초대, 가입 요청 승인/거부/취소/재전송 | 멤버 초대 |
+| `DELETE_GROUP` | 그룹 삭제 | 그룹 |
+| `UPDATE_GROUP` | 그룹 정보 수정 | 그룹 |
+| `MANAGE_ROLE` | 그룹 커스텀 역할 생성/수정/삭제/정렬 | 역할 |
+| `MANAGE_MEMBER` | 멤버 역할 변경, 멤버 강퇴 | 멤버 |
+| `READ_TASK` | 태스크 조회 | 태스크 (미사용) |
+| `CREATE_TASK` | 태스크 생성 | 태스크 (미사용) |
+| `UPDATE_TASK` | 태스크 수정 | 태스크 (미사용) |
+| `DELETE_TASK` | 태스크 삭제 | 태스크 (미사용) |
+| `MANAGE_CATEGORY` | 태스크 카테고리 관리 | 태스크 (미사용) |
+
+> **태스크 관련 권한**: Prisma schema에 정의되어 있으나 현재 태스크 컨트롤러에 `GroupPermissionGuard`가 적용되지 않아 실제로 동작하지 않습니다.
+
+### Guards
+
+| Guard | 파일 | 확인 방식 | groupId 추출 |
+|-------|------|-----------|--------------|
+| `GroupMembershipGuard` | `src/group/guards/group-membership.guard.ts` | `groupId_userId` 복합키로 `GroupMember` 존재 확인 | `params.groupId` 또는 `params.id` |
+| `GroupPermissionGuard` | `src/group/guards/group-permission.guard.ts` | 멤버의 `role.permissions` JSON 배열에 필요 권한 포함 여부 확인 | `params.groupId` → `params.id` → `body.groupId` → `query.groupId` 순 |
+| `GroupOwnerGuard` | `src/group/guards/group-owner.guard.ts` | `role.name === 'OWNER'` 확인 | `params.groupId` |
+
+> **`GroupOwnerGuard`**: 정의되어 있으나 현재 어떤 엔드포인트에도 적용되지 않습니다. `transfer-ownership`은 서비스 레이어에서 OWNER 여부를 직접 확인합니다.
+
+### `@RequirePermission` 데코레이터
+
+`GroupPermissionGuard`와 함께 사용하여 필요 권한을 지정합니다.
+
+```typescript
+@UseGuards(GroupPermissionGuard)
+@RequirePermission(PermissionCode.UPDATE_GROUP)
+```
+
+---
+
 ## 역할(Role) 체계
 
-### 공통 역할 (운영자 전용)
+### 공통 역할 (시스템 어드민 전용)
 - `groupId = null`인 기본 역할
-- 운영자만 CRUD 가능
+- `User.isAdmin === true`인 사용자만 CRUD 가능
 - 모든 그룹에서 사용 가능
 
 기본 역할:
@@ -114,15 +154,16 @@ API:
 - `PATCH /roles/:id`: 수정
 - `DELETE /roles/:id`: 삭제
 
-### 그룹별 커스텀 역할 (OWNER 전용)
+### 그룹별 커스텀 역할 (MANAGE_ROLE 권한 필요)
 - 각 그룹마다 고유한 역할 생성 가능
 - 예: "가족" 그룹의 "부모", "자녀" 역할
 
 API:
-- `GET /groups/:groupId/roles`: 공통 + 커스텀 역할 조회
-- `POST /groups/:groupId/roles`: 커스텀 역할 생성
-- `PATCH /groups/:groupId/roles/:id`: 수정
-- `DELETE /groups/:groupId/roles/:id`: 삭제
+- `GET /groups/:groupId/roles`: 공통 + 커스텀 역할 조회 (멤버 전용)
+- `POST /groups/:groupId/roles`: 커스텀 역할 생성 (`MANAGE_ROLE`)
+- `PATCH /groups/:groupId/roles/:id`: 수정 (`MANAGE_ROLE`)
+- `DELETE /groups/:groupId/roles/:id`: 삭제 (`MANAGE_ROLE`)
+- `PATCH /groups/:groupId/roles/bulk/sort-order`: 정렬 순서 일괄 변경 (`MANAGE_ROLE`)
 
 ---
 
@@ -205,8 +246,8 @@ model GroupJoinRequest {
 - [x] 초대 취소 및 재전송
 - [x] 가입 요청 관리 (승인/거부)
 - [x] 멤버 목록 조회
-- [x] 멤버 역할 변경 (ASSIGN_ROLE 권한)
-- [x] 멤버 삭제 (REMOVE_MEMBER 권한)
+- [x] 멤버 역할 변경 (MANAGE_MEMBER 권한)
+- [x] 멤버 삭제 (MANAGE_MEMBER 권한)
 - [x] 그룹 나가기
 - [x] 개인별 커스텀 색상 설정
 - [x] 공통 역할 관리 (OWNER, ADMIN, MEMBER)
@@ -250,16 +291,17 @@ model GroupJoinRequest {
 | POST   | `/groups/:id/transfer-ownership`              | OWNER 권한 양도     | JWT, OWNER         |
 
 ### 역할 관리
-| Method | Endpoint                                 | 설명                         | 권한         |
-| ------ | ---------------------------------------- | ---------------------------- | ------------ |
-| GET    | `/roles`                                 | 공통 역할 조회               | JWT, Admin   |
-| POST   | `/roles`                                 | 공통 역할 생성               | JWT, Admin   |
-| PATCH  | `/roles/:id`                             | 공통 역할 수정               | JWT, Admin   |
-| DELETE | `/roles/:id`                             | 공통 역할 삭제               | JWT, Admin   |
-| GET    | `/groups/:groupId/roles`                 | 그룹별 역할 조회 (공통+커스텀) | JWT, Member  |
-| POST   | `/groups/:groupId/roles`                 | 커스텀 역할 생성             | JWT, OWNER   |
-| PATCH  | `/groups/:groupId/roles/:id`             | 커스텀 역할 수정             | JWT, OWNER   |
-| DELETE | `/groups/:groupId/roles/:id`             | 커스텀 역할 삭제             | JWT, OWNER   |
+| Method | Endpoint                                        | 설명                           | 권한              |
+| ------ | ----------------------------------------------- | ------------------------------ | ----------------- |
+| GET    | `/roles`                                        | 공통 역할 조회                 | JWT, isAdmin      |
+| POST   | `/roles`                                        | 공통 역할 생성                 | JWT, isAdmin      |
+| PATCH  | `/roles/:id`                                    | 공통 역할 수정                 | JWT, isAdmin      |
+| DELETE | `/roles/:id`                                    | 공통 역할 삭제                 | JWT, isAdmin      |
+| GET    | `/groups/:groupId/roles`                        | 그룹별 역할 조회 (공통+커스텀)  | JWT, Member       |
+| POST   | `/groups/:groupId/roles`                        | 커스텀 역할 생성               | JWT, MANAGE_ROLE  |
+| PATCH  | `/groups/:groupId/roles/:id`                    | 커스텀 역할 수정               | JWT, MANAGE_ROLE  |
+| DELETE | `/groups/:groupId/roles/:id`                    | 커스텀 역할 삭제               | JWT, MANAGE_ROLE  |
+| PATCH  | `/groups/:groupId/roles/bulk/sort-order`        | 역할 정렬 순서 일괄 변경       | JWT, MANAGE_ROLE  |
 
 ---
 
@@ -278,4 +320,4 @@ model GroupJoinRequest {
 
 ---
 
-**Last Updated**: 2025-12-25
+**Last Updated**: 2026-03-10
