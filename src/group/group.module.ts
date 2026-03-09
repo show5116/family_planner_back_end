@@ -9,9 +9,10 @@ import { PrismaModule } from '@/prisma/prisma.module';
 import { RoleService } from '@/role/role.service';
 import { StorageModule } from '@/storage/storage.module';
 import { EmailModule } from '@/email/email.module';
+import { NotificationModule } from '@/notification/notification.module';
 
 @Module({
-  imports: [PrismaModule, StorageModule, EmailModule],
+  imports: [PrismaModule, StorageModule, EmailModule, NotificationModule],
   controllers: [GroupController, GroupMemberController, GroupRoleController],
   providers: [
     GroupService,

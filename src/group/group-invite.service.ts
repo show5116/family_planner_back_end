@@ -7,6 +7,8 @@ import {
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
 import { EmailService } from '@/email/email.service';
+import { NotificationService } from '@/notification/notification.service';
+import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 
 @Injectable()
 export class GroupInviteService {
@@ -14,6 +16,7 @@ export class GroupInviteService {
     private prisma: PrismaService,
     private storageService: StorageService,
     private emailService: EmailService,
+    private notificationService: NotificationService,
   ) {}
 
   /**
@@ -224,6 +227,21 @@ export class GroupInviteService {
         }),
       ]);
 
+      // 기존 그룹 멤버들에게 새 멤버 가입 알림 발송
+      await Promise.allSettled(
+        group.members
+          .filter((m) => m.userId !== userId)
+          .map((m) =>
+            this.notificationService.sendNotification({
+              userId: m.userId,
+              category: NotificationCategory.GROUP,
+              title: '새 멤버 가입',
+              body: `${user.name}님이 "${group.name}" 그룹에 가입했습니다`,
+              data: { groupId: group.id },
+            }),
+          ),
+      );
+
       // 프로필 이미지 URL 추가
       return {
         message: '그룹 가입이 완료되었습니다',
@@ -264,6 +282,21 @@ export class GroupInviteService {
         status: 'PENDING', // 승인 대기
       },
     });
+
+    // 그룹 OWNER에게 가입 요청 알림 발송
+    const ownerMember = await this.prisma.groupMember.findFirst({
+      where: { groupId: group.id, role: { name: 'OWNER' } },
+    });
+
+    if (ownerMember) {
+      await this.notificationService.sendNotification({
+        userId: ownerMember.userId,
+        category: NotificationCategory.GROUP,
+        title: '그룹 가입 요청',
+        body: `${user.name}님이 "${group.name}" 그룹 가입을 요청했습니다`,
+        data: { groupId: group.id, joinRequestId: joinRequest.id },
+      });
+    }
 
     return {
       message: '그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요.',
@@ -368,7 +401,7 @@ export class GroupInviteService {
     const defaultRole = await this.getDefaultRole(groupId);
 
     // 트랜잭션: 요청 승인 + 멤버 추가
-    const [updatedRequest, member] = await this.prisma.$transaction([
+    const [, member] = await this.prisma.$transaction([
       this.prisma.groupJoinRequest.update({
         where: { id: requestId },
         data: { status: 'ACCEPTED' },
@@ -392,6 +425,15 @@ export class GroupInviteService {
         },
       }),
     ]);
+
+    // 승인된 사용자에게 알림 발송
+    await this.notificationService.sendNotification({
+      userId: user.id,
+      category: NotificationCategory.GROUP,
+      title: '그룹 가입 승인',
+      body: `가입 요청이 승인되었습니다`,
+      data: { groupId },
+    });
 
     return {
       message: '가입 요청이 승인되었습니다',
@@ -426,6 +468,26 @@ export class GroupInviteService {
       where: { id: requestId },
       data: { status: 'REJECTED' },
     });
+
+    // 거부된 사용자에게 알림 발송
+    const rejectedUser = await this.prisma.user.findUnique({
+      where: { email: joinRequest.email },
+    });
+
+    if (rejectedUser) {
+      const group = await this.prisma.group.findUnique({
+        where: { id: groupId },
+        select: { name: true },
+      });
+
+      await this.notificationService.sendNotification({
+        userId: rejectedUser.id,
+        category: NotificationCategory.GROUP,
+        title: '그룹 가입 거부',
+        body: `"${group?.name ?? '그룹'}" 가입 요청이 거부되었습니다`,
+        data: { groupId },
+      });
+    }
 
     return {
       message: '가입 요청이 거부되었습니다',
@@ -499,6 +561,15 @@ export class GroupInviteService {
       inviter.name,
       inviteCode,
     );
+
+    // 앱 사용자에게 푸시 알림 발송
+    await this.notificationService.sendNotification({
+      userId: invitee.id,
+      category: NotificationCategory.GROUP,
+      title: '그룹 초대',
+      body: `${inviter.name}님이 "${group.name}" 그룹에 초대했습니다`,
+      data: { groupId: group.id },
+    });
 
     return {
       message: '초대 이메일이 발송되었습니다',

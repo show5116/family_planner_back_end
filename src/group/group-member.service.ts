@@ -5,12 +5,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
+import { NotificationService } from '@/notification/notification.service';
+import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 
 @Injectable()
 export class GroupMemberService {
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
+    private notificationService: NotificationService,
   ) {}
 
   /**
@@ -391,6 +394,15 @@ export class GroupMemberService {
       ...member,
       user: this.transformUserWithImageUrl(member.user),
     }));
+
+    // 새 OWNER에게 알림 발송
+    await this.notificationService.sendNotification({
+      userId: newOwnerId,
+      category: NotificationCategory.GROUP,
+      title: '그룹장 권한 양도',
+      body: '그룹장 권한이 양도되었습니다',
+      data: { groupId },
+    });
 
     return {
       message: 'OWNER 권한이 성공적으로 양도되었습니다',

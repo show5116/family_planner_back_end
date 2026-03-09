@@ -34,7 +34,7 @@ export class AiService {
     try {
       const { data } = await firstValueFrom(
         this.httpService.post<Omit<AiChatResponseDto, 'room_id'>>(
-          `${this.baseUrl}/api/v1/planner/chat`,
+          `${this.baseUrl}/api/v1/agent/chat`,
           {
             message: dto.message,
             user_id: userId,

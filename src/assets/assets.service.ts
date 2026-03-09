@@ -6,6 +6,8 @@ import {
 import { AccountType } from '@prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
+import { NotificationService } from '@/notification/notification.service';
+import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateAccountRecordDto } from './dto/create-account-record.dto';
@@ -13,7 +15,10 @@ import { AccountQueryDto } from './dto/account-query.dto';
 
 @Injectable()
 export class AssetsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   /**
    * 그룹 멤버 여부 검증
@@ -44,6 +49,26 @@ export class AssetsService {
         type: dto.type,
       },
     });
+
+    // 그룹 멤버들에게 새 계좌 등록 알림 발송
+    const members = await this.prisma.groupMember.findMany({
+      where: { groupId: dto.groupId },
+      select: { userId: true },
+    });
+
+    await Promise.allSettled(
+      members
+        .filter((m) => m.userId !== userId)
+        .map((m) =>
+          this.notificationService.sendNotification({
+            userId: m.userId,
+            category: NotificationCategory.ASSET,
+            title: '새 자산 계좌 등록',
+            body: `"${dto.name}" 계좌가 등록되었습니다`,
+            data: { accountId: account.id, groupId: dto.groupId },
+          }),
+        ),
+    );
 
     return this.formatAccount(account, null);
   }
@@ -182,6 +207,16 @@ export class AssetsService {
         profit: dto.profit,
         note: dto.note,
       },
+    });
+
+    // 계좌 소유자에게 잔액 기록 알림
+    const balance = Number(dto.balance).toLocaleString('ko-KR');
+    await this.notificationService.sendNotification({
+      userId,
+      category: NotificationCategory.ASSET,
+      title: '자산 잔액 업데이트',
+      body: `"${account.name}" 잔액이 ${balance}원으로 기록되었습니다`,
+      data: { accountId, recordId: record.id },
     });
 
     return this.formatRecord(record);
