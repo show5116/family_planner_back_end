@@ -159,7 +159,6 @@ export class WeatherService {
       const get = (category: string) =>
         items.find((i) => i.category === category)?.obsrValue ?? '0';
 
-      const sky = parseInt(get('SKY'));
       const pty = parseInt(get('PTY'));
 
       return {
@@ -167,9 +166,8 @@ export class WeatherService {
         humidity: parseInt(get('REH')),
         windSpeed: parseFloat(get('WSD')),
         precipitation: parseFloat(get('RN1')),
-        sky,
         precipitationType: pty,
-        weatherDescription: this.getWeatherDescription(sky, pty),
+        weatherDescription: this.getPtyDescription(pty),
         baseDate,
         baseTime,
       };
@@ -282,6 +280,16 @@ export class WeatherService {
     });
   }
 
+  // 초단기실황용 (PTY만 존재)
+  private getPtyDescription(pty: number): string {
+    if (pty === 1) return '비';
+    if (pty === 2) return '진눈깨비';
+    if (pty === 3) return '눈';
+    if (pty === 4) return '소나기';
+    return '맑음';
+  }
+
+  // 단기예보용 (SKY + PTY 조합)
   private getWeatherDescription(sky: number, pty: number): string {
     if (pty === 1) return '비';
     if (pty === 2) return '진눈깨비';

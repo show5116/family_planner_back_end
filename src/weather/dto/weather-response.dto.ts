@@ -14,12 +14,6 @@ export class WeatherResponseDto {
   precipitation: number;
 
   @ApiProperty({
-    description: '하늘상태 코드 (1=맑음, 3=구름많음, 4=흐림)',
-    example: 1,
-  })
-  sky: number;
-
-  @ApiProperty({
     description: '강수형태 코드 (0=없음, 1=비, 2=진눈깨비, 3=눈, 4=소나기)',
     example: 0,
   })
