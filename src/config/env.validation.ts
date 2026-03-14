@@ -80,6 +80,9 @@ export const validationSchema = Joi.object({
   // AI 마이크로서비스 (FastAPI + LangGraph)
   AI_MICROSERVICE_URL: Joi.string().uri().required(),
   AI_MICROSERVICE_API_KEY: Joi.string().required(),
+
+  // 기상청 Open API
+  KMA_SERVICE_KEY: Joi.string().optional(),
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {

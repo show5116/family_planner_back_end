@@ -26,6 +26,7 @@ import oauthConfig from '@/config/oauth.config';
 import axiomConfig from '@/config/axiom.config';
 import r2Config from '@/config/r2.config';
 import aiConfig from '@/config/ai.config';
+import weatherConfig from '@/config/weather.config';
 import { validationSchema } from '@/config/env.validation';
 import { SentryModule } from '@/sentry/sentry.module';
 import { StorageModule } from '@/storage/storage.module';
@@ -43,6 +44,7 @@ import { InvestmentModule } from '@/investment/investment.module';
 import { ChildcareModule } from '@/childcare/childcare.module';
 import { MinigameModule } from '@/minigame/minigame.module';
 import { AiModule } from '@/ai/ai.module';
+import { WeatherModule } from '@/weather/weather.module';
 
 @Module({
   imports: [
@@ -56,6 +58,7 @@ import { AiModule } from '@/ai/ai.module';
         axiomConfig,
         r2Config,
         aiConfig,
+        weatherConfig,
       ],
       envFilePath: '.env',
       validationSchema: validationSchema,
@@ -150,6 +153,7 @@ import { AiModule } from '@/ai/ai.module';
     ChildcareModule,
     MinigameModule,
     AiModule,
+    WeatherModule,
   ],
   controllers: [AppController],
   providers: [
