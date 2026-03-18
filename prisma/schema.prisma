@@ -43,6 +43,8 @@ model User {
   childcareAsChild     ChildcareAccount[]          @relation("ChildcareChild")
   childcareAsParent    ChildcareAccount[]          @relation("ChildcareParent")
   childcareTransactions ChildcareTransaction[]     @relation("ChildcareTransactionCreator")
+  votesCreated         Vote[]                      @relation("VoteCreator")
+  voteBallots          VoteBallot[]                @relation("VoteBallots")
 
   @@unique([provider, providerId])
   @@index([email])
@@ -69,6 +71,7 @@ model Group {
   budgets             Budget[]
   accounts            Account[]
   childcareAccounts   ChildcareAccount[]
+  votes               Vote[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -928,4 +931,61 @@ model MinigameResult {
 enum MinigameType {
   LADDER
   ROULETTE
+}
+
+// ============================================================
+// 투표
+// ============================================================
+
+model Vote {
+  id          String       @id @default(uuid())
+  groupId     String
+  createdBy   String
+  title       String       @db.VarChar(200)
+  description String?      @db.Text
+  isMultiple  Boolean      @default(false)
+  isAnonymous Boolean      @default(false)
+  endsAt      DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  group       Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator     User         @relation("VoteCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  options     VoteOption[]
+
+  @@index([groupId, createdAt(sort: Desc)])
+  @@index([createdBy])
+  @@map("votes")
+}
+
+model VoteOption {
+  id      String       @id @default(uuid())
+  voteId  String
+  label   String       @db.VarChar(100)
+
+  vote    Vote         @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  ballots VoteBallot[]
+
+  @@index([voteId])
+  @@map("vote_options")
+}
+
+model VoteBallot {
+  id       String     @id @default(uuid())
+  optionId String
+  userId   String
+  votedAt  DateTime   @default(now())
+
+  option   VoteOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user     User       @relation("VoteBallots", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, userId])
+  @@index([optionId])
+  @@index([userId])
+  @@map("vote_ballots")
+}
+
+enum VoteStatus {
+  ONGOING
+  CLOSED
 }

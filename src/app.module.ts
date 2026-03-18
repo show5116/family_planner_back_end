@@ -45,6 +45,7 @@ import { ChildcareModule } from '@/childcare/childcare.module';
 import { MinigameModule } from '@/minigame/minigame.module';
 import { AiModule } from '@/ai/ai.module';
 import { WeatherModule } from '@/weather/weather.module';
+import { VoteModule } from '@/vote/vote.module';
 
 @Module({
   imports: [
@@ -154,6 +155,7 @@ import { WeatherModule } from '@/weather/weather.module';
     MinigameModule,
     AiModule,
     WeatherModule,
+    VoteModule,
   ],
   controllers: [AppController],
   providers: [
