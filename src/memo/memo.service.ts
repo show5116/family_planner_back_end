@@ -38,14 +38,10 @@ export class MemoService {
         content: dto.content,
         format: dto.format,
         type: dto.type,
-        category: dto.category,
         visibility: dto.visibility,
         tags: dto.tags?.length
           ? {
-              create: dto.tags.map((tag) => ({
-                name: tag.name,
-                color: tag.color,
-              })),
+              create: dto.tags.map((tag) => ({ name: tag.name })),
             }
           : undefined,
       },
@@ -78,7 +74,6 @@ export class MemoService {
           : []),
       ],
       ...(query.visibility && { visibility: query.visibility }),
-      ...(query.category && { category: query.category }),
       ...(query.groupId && { groupId: query.groupId }),
       ...(query.tag && {
         tags: { some: { name: query.tag } },
@@ -196,7 +191,6 @@ export class MemoService {
         ...(dto.title && { title: dto.title }),
         ...(dto.content && { content: dto.content }),
         ...(dto.format && { format: dto.format }),
-        ...(dto.category !== undefined && { category: dto.category }),
         ...(dto.visibility && { visibility: dto.visibility }),
         ...(dto.visibility === MemoVisibility.GROUP &&
           dto.groupId && { groupId: dto.groupId }),
@@ -204,10 +198,7 @@ export class MemoService {
         ...(dto.tags && {
           tags: {
             deleteMany: {},
-            create: dto.tags.map((tag) => ({
-              name: tag.name,
-              color: tag.color,
-            })),
+            create: dto.tags.map((tag) => ({ name: tag.name })),
           },
         }),
       },
@@ -304,7 +295,6 @@ export class MemoService {
       data: {
         memoId: memo.id,
         name: dto.name,
-        color: dto.color,
       },
     });
   }

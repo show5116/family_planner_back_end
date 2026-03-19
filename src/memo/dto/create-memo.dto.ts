@@ -19,16 +19,6 @@ class CreateMemoTagDto {
   @MinLength(1)
   @MaxLength(50)
   name: string;
-
-  @ApiProperty({
-    description: '태그 색상',
-    example: '#FF5733',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(7)
-  color?: string;
 }
 
 export class CreateMemoDto {
@@ -70,12 +60,6 @@ export class CreateMemoDto {
   @IsOptional()
   @IsEnum(MemoType)
   type?: MemoType = MemoType.NOTE;
-
-  @ApiProperty({ description: '카테고리', example: '회의록', required: false })
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  category?: string;
 
   @ApiProperty({
     description: '공개 범위',

@@ -14,16 +14,15 @@
 ## 주요 기능
 
 ### 메모 등록
-- 제목, 본문 (Markdown/HTML), 카테고리, 태그
+- 제목, 본문 (Markdown/HTML), 태그
 - Markdown 에디터, HTML WYSIWYG 에디터, 코드 하이라이팅, 이미지 첨부
 
 ### 메모 공유
 - 공유 대상: 본인만, 그룹 전체, 특정 멤버 선택
 - 권한 설정: 조회만, 수정 가능, 댓글 작성 가능
 
-### 카테고리 및 태그
-- 카테고리: 개인 메모, 회의록, 레시피, 여행 계획, 기타
-- 태그: 자유 태그 입력, 태그 검색, 태그별 필터링
+### 태그
+- 자유 태그 입력, 태그 검색, 태그별 필터링
 
 ### 체크리스트 메모 (Checklist)
 - 메모 타입을 `CHECKLIST`로 지정하면 체크리스트 모드로 동작
@@ -45,7 +44,6 @@ model Memo {
   content        String         @db.Text
   format         MemoFormat     @default(MARKDOWN)
   type           MemoType       @default(NOTE)      // NOTE | CHECKLIST
-  category       String?        @db.VarChar(50)
   visibility     MemoVisibility @default(PRIVATE)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -76,7 +74,6 @@ model MemoTag {
   id     String  @id @default(uuid())
   memoId String
   name   String  @db.VarChar(50)
-  color  String? @db.VarChar(7)
   memo   Memo    @relation(fields: [memoId], references: [id], onDelete: Cascade)
 }
 
@@ -113,7 +110,6 @@ model ChecklistItem {
 ### ✅ 완료
 - [x] 메모 CRUD (생성, 조회, 수정, 삭제)
 - [x] Markdown/HTML/PLAIN 형식 지원
-- [x] 카테고리 관리 (개인 메모, 회의록, 레시피 등)
 - [x] 태그 시스템 (자유 태그 입력)
 - [x] 태그별 필터링
 - [x] 태그 검색
@@ -170,4 +166,4 @@ model ChecklistItem {
 
 ---
 
-**Last Updated**: 2026-02-23
+**Last Updated**: 2026-03-19

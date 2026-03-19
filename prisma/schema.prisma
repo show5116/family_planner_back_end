@@ -558,7 +558,6 @@ model Memo {
   content        String         @db.Text
   format         MemoFormat     @default(MARKDOWN)
   type           MemoType       @default(NOTE)
-  category       String?        @db.VarChar(50)
   visibility     MemoVisibility @default(PRIVATE)
   isPinned       Boolean        @default(false)
   createdAt      DateTime       @default(now())
@@ -583,7 +582,6 @@ model MemoTag {
   id     String  @id @default(uuid())
   memoId String
   name   String  @db.VarChar(50)
-  color  String? @db.VarChar(7)
   memo   Memo    @relation(fields: [memoId], references: [id], onDelete: Cascade)
 
   @@unique([memoId, name])

@@ -3289,13 +3289,11 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 - 항목 2", // 메모 본문 (string)
   "format": null, // 메모 형식 (MemoFormat?)
   "type": null, // 메모 타입 (NOTE: 일반, CHECKLIST: 체크리스트) (MemoType?)
-  "category": "회의록", // 카테고리 (string?)
   "visibility": null, // 공개 범위 (MemoVisibility?)
   "groupId": "", // 그룹 ID (GROUP 공개 시 필수) (string?)
   "tags": [
     {
-      "name": "중요", // 태그 이름 (string)
-      "color": "#FF5733" // 태그 색상 (string?)
+      "name": "중요" // 태그 이름 (string)
     }
   ] // 태그 목록 (CreateMemoTagDto[]?)
 }
@@ -3312,7 +3310,6 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "content": "", // 본문 (string)
   "format": null, // 메모 형식 (MemoFormat)
   "type": null, // 메모 타입 (MemoType)
-  "category": "회의록", // 카테고리 (string | null)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -3323,8 +3320,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "tags": [
     {
       "id": "uuid-1234", // 태그 ID (string)
-      "name": "중요", // 태그 이름 (string)
-      "color": "#FF5733" // 태그 색상 (string | null)
+      "name": "중요" // 태그 이름 (string)
     }
   ], // 태그 목록 (MemoTagDto[])
   "attachments": [
@@ -3363,7 +3359,6 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 - `page` (`number`) (Optional): 페이지 번호
 - `limit` (`number`) (Optional): 페이지 크기
 - `visibility` (`MemoVisibility`) (Optional): 공개 범위 필터
-- `category` (`string`) (Optional): 카테고리 필터
 - `tag` (`string`) (Optional): 태그 이름 필터
 - `groupId` (`string`) (Optional): 그룹 ID 필터
 - `search` (`string`) (Optional): 검색어 (제목/내용)
@@ -3381,7 +3376,6 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
       "content": "", // 본문 (string)
       "format": null, // 메모 형식 (MemoFormat)
       "type": null, // 메모 타입 (MemoType)
-      "category": "회의록", // 카테고리 (string | null)
       "visibility": null, // 공개 범위 (MemoVisibility)
       "isPinned": false, // 핀 여부 (boolean)
       "groupId": null, // 그룹 ID (string | null)
@@ -3391,8 +3385,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
       }, // 작성자 정보 (MemoAuthorDto)
       "tags": {
         "id": "uuid-1234",
-        "name": "중요",
-        "color": "#FF5733"
+        "name": "중요"
       }, // 태그 목록 (MemoTagDto[])
       "attachments": {
         "id": "uuid-1234",
@@ -3435,7 +3428,6 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "content": "", // 본문 (string)
   "format": null, // 메모 형식 (MemoFormat)
   "type": null, // 메모 타입 (MemoType)
-  "category": "회의록", // 카테고리 (string | null)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -3446,8 +3438,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "tags": [
     {
       "id": "uuid-1234", // 태그 ID (string)
-      "name": "중요", // 태그 이름 (string)
-      "color": "#FF5733" // 태그 색상 (string | null)
+      "name": "중요" // 태그 이름 (string)
     }
   ], // 태그 목록 (MemoTagDto[])
   "attachments": [
@@ -3496,7 +3487,6 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "content": "", // 본문 (string)
   "format": null, // 메모 형식 (MemoFormat)
   "type": null, // 메모 타입 (MemoType)
-  "category": "회의록", // 카테고리 (string | null)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -3507,8 +3497,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "tags": [
     {
       "id": "uuid-1234", // 태그 ID (string)
-      "name": "중요", // 태그 이름 (string)
-      "color": "#FF5733" // 태그 색상 (string | null)
+      "name": "중요" // 태그 이름 (string)
     }
   ], // 태그 목록 (MemoTagDto[])
   "attachments": [
@@ -3567,7 +3556,6 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "content": "", // 본문 (string)
   "format": null, // 메모 형식 (MemoFormat)
   "type": null, // 메모 타입 (MemoType)
-  "category": "회의록", // 카테고리 (string | null)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -3578,8 +3566,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "tags": [
     {
       "id": "uuid-1234", // 태그 ID (string)
-      "name": "중요", // 태그 이름 (string)
-      "color": "#FF5733" // 태그 색상 (string | null)
+      "name": "중요" // 태그 이름 (string)
     }
   ], // 태그 목록 (MemoTagDto[])
   "attachments": [
@@ -3656,7 +3643,6 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "content": "", // 본문 (string)
   "format": null, // 메모 형식 (MemoFormat)
   "type": null, // 메모 타입 (MemoType)
-  "category": "회의록", // 카테고리 (string | null)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -3667,8 +3653,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "tags": [
     {
       "id": "uuid-1234", // 태그 ID (string)
-      "name": "중요", // 태그 이름 (string)
-      "color": "#FF5733" // 태그 색상 (string | null)
+      "name": "중요" // 태그 이름 (string)
     }
   ], // 태그 목록 (MemoTagDto[])
   "attachments": [
@@ -3714,8 +3699,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ```json
 {
-  "name": "중요", // 태그 이름 (string)
-  "color": "#FF5733" // 태그 색상 (string?)
+  "name": "중요" // 태그 이름 (string)
 }
 ```
 
@@ -3726,8 +3710,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```json
 {
   "id": "uuid-1234", // 태그 ID (string)
-  "name": "중요", // 태그 이름 (string)
-  "color": "#FF5733" // 태그 색상 (string | null)
+  "name": "중요" // 태그 이름 (string)
 }
 ```
 

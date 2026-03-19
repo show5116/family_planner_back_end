@@ -29,9 +29,6 @@ export class MemoTagDto {
 
   @ApiProperty({ description: '태그 이름', example: '중요' })
   name: string;
-
-  @ApiProperty({ description: '태그 색상', example: '#FF5733', nullable: true })
-  color: string | null;
 }
 
 export class MemoAttachmentDto {
@@ -77,9 +74,6 @@ export class MemoDto {
 
   @ApiProperty({ description: '메모 타입', enum: MemoType })
   type: MemoType;
-
-  @ApiProperty({ description: '카테고리', example: '회의록', nullable: true })
-  category: string | null;
 
   @ApiProperty({ description: '공개 범위', enum: MemoVisibility })
   visibility: MemoVisibility;

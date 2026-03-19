@@ -39,11 +39,6 @@ export class MemoQueryDto {
   @IsOptional()
   visibility?: MemoVisibility;
 
-  @ApiProperty({ description: '카테고리 필터', required: false })
-  @IsOptional()
-  @IsString()
-  category?: string;
-
   @ApiProperty({ description: '태그 이름 필터', required: false })
   @IsOptional()
   @IsString()
