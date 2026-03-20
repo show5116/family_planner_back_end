@@ -395,6 +395,7 @@ export class AuthController {
     status: 400,
     description: '업데이트할 정보가 없거나 비밀번호가 설정되지 않음',
   })
+  @ApiResponse({ status: 403, description: '현재 비밀번호가 올바르지 않음' })
   async updateProfile(
     @Request() req,
     @Body() updateProfileDto: UpdateProfileDto,

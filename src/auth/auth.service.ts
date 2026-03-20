@@ -644,7 +644,7 @@ export class AuthService {
       user.password,
     );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('현재 비밀번호가 올바르지 않습니다');
+      throw new ForbiddenException('현재 비밀번호가 올바르지 않습니다');
     }
 
     // 업데이트할 데이터 준비
