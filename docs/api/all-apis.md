@@ -3286,7 +3286,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "title": "회의 메모", // 메모 제목 (string)
   "content": "# 회의 내용
 - 항목 1
-- 항목 2", // 메모 본문 (string)
+- 항목 2", // 메모 본문 (NOTE 타입 필수, CHECKLIST 타입 불필요) (string?)
   "format": null, // 메모 형식 (MemoFormat?)
   "type": null, // 메모 타입 (NOTE: 일반, CHECKLIST: 체크리스트) (MemoType?)
   "visibility": null, // 공개 범위 (MemoVisibility?)
@@ -3295,7 +3295,13 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
     {
       "name": "중요" // 태그 이름 (string)
     }
-  ] // 태그 목록 (CreateMemoTagDto[]?)
+  ], // 태그 목록 (CreateMemoTagDto[]?)
+  "checklistItems": [
+    {
+      "content": "여권 챙기기", // 항목 내용 (string)
+      "order": 0 // 정렬 순서 (number?)
+    }
+  ] // 체크리스트 항목 목록 (CHECKLIST 타입 필수) (CreateChecklistItemDto[]?)
 }
 ```
 
@@ -3408,6 +3414,27 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
     }
   ], // 메모 목록 (MemoDto[])
   "meta": { "total": 100, "page": 1, "limit": 20, "totalPages": 5 } // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
+}
+```
+
+---
+
+### GET `memos/tags`
+
+**요약:** 태그 이름 목록 조회 (중복 제거)
+
+**Query Parameters:**
+
+- `groupId` (`string`) (Optional): 그룹 ID (그룹 메모 태그 조회)
+- `personal` (`boolean`) (Optional): 개인 메모 태그 조회 여부
+
+**Responses:**
+
+#### 200 - 태그 이름 목록 조회 성공
+
+```json
+{
+  "tags": ["중요", "업무", "가족"] // 태그 이름 목록 (string[])
 }
 ```
 
@@ -3938,17 +3965,21 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ---
 
-### POST `memos/:id/checklist/reset`
+### POST `memos/:id/checklist/toggle-all`
 
-**요약:** 체크리스트 전체 체크 해제
+**요약:** 체크리스트 전체 선택/해제 (checkAll=true: 전체 선택, 기본값: 전체 해제)
 
 **Path Parameters:**
 
 - `id` (`string`)
 
+**Query Parameters:**
+
+- `checkAll` (`boolean`)
+
 **Responses:**
 
-#### 200 - 전체 체크 해제 성공
+#### 200 - 전체 선택/해제 성공
 
 ```json
 {

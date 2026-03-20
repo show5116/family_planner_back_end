@@ -8,19 +8,22 @@ import {
   Param,
   Query,
   Request,
+  ParseBoolPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 import { MemoService } from './memo.service';
 import { CreateMemoDto } from './dto/create-memo.dto';
 import { UpdateMemoDto } from './dto/update-memo.dto';
-import { MemoQueryDto } from './dto/memo-query.dto';
+import { MemoQueryDto, MemoTagListQueryDto } from './dto/memo-query.dto';
 import { CreateMemoTagDto } from './dto/create-memo-tag.dto';
 import { CreateMemoAttachmentDto } from './dto/create-memo-attachment.dto';
 import { CreateChecklistItemDto } from './dto/create-checklist-item.dto';
 import { UpdateChecklistItemDto } from './dto/update-checklist-item.dto';
 import {
   MemoDto,
+  MemoTagNamesDto,
   PaginatedMemoDto,
   MemoTagDto,
   MemoAttachmentDto,
@@ -57,6 +60,13 @@ export class MemoController {
   @ApiSuccess(PaginatedMemoDto, '메모 목록 조회 성공')
   findAll(@Request() req, @Query() query: MemoQueryDto) {
     return this.memoService.findAll(req.user.userId, query);
+  }
+
+  @Get('tags')
+  @ApiOperation({ summary: '태그 이름 목록 조회 (중복 제거)' })
+  @ApiSuccess(MemoTagNamesDto, '태그 이름 목록 조회 성공')
+  findTagNames(@Request() req, @Query() query: MemoTagListQueryDto) {
+    return this.memoService.findTagNames(req.user.userId, query);
   }
 
   @Get('pinned')
@@ -210,12 +220,20 @@ export class MemoController {
     return this.memoService.toggleChecklistItem(req.user.userId, id, itemId);
   }
 
-  @Post(':id/checklist/reset')
-  @ApiOperation({ summary: '체크리스트 전체 체크 해제' })
-  @ApiSuccess(MessageResponseDto, '전체 체크 해제 성공')
+  @Post(':id/checklist/toggle-all')
+  @ApiOperation({
+    summary:
+      '체크리스트 전체 선택/해제 (checkAll=true: 전체 선택, 기본값: 전체 해제)',
+  })
+  @ApiSuccess(MessageResponseDto, '전체 선택/해제 성공')
   @ApiNotFound('메모를 찾을 수 없습니다')
   @ApiForbidden('본인의 메모만 수정할 수 있습니다')
-  resetChecklist(@Request() req, @Param('id') id: string) {
-    return this.memoService.resetChecklist(req.user.userId, id);
+  toggleAllChecklist(
+    @Request() req,
+    @Param('id') id: string,
+    @Query('checkAll', new DefaultValuePipe(false), ParseBoolPipe)
+    checkAll: boolean,
+  ) {
+    return this.memoService.toggleAllChecklist(req.user.userId, id, checkAll);
   }
 }

@@ -12,6 +12,7 @@ import { Type } from 'class-transformer';
 import { MemoFormat } from '@/memo/enums/memo-format.enum';
 import { MemoType } from '@/memo/enums/memo-type.enum';
 import { MemoVisibility } from '@/memo/enums/memo-visibility.enum';
+import { CreateChecklistItemDto } from '@/memo/dto/create-checklist-item.dto';
 
 class CreateMemoTagDto {
   @ApiProperty({ description: '태그 이름', example: '중요' })
@@ -34,12 +35,13 @@ export class CreateMemoDto {
   title: string;
 
   @ApiProperty({
-    description: '메모 본문',
+    description: '메모 본문 (NOTE 타입 필수, CHECKLIST 타입 불필요)',
     example: '# 회의 내용\n- 항목 1\n- 항목 2',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  content: string;
+  content?: string;
 
   @ApiProperty({
     description: '메모 형식',
@@ -86,4 +88,15 @@ export class CreateMemoDto {
   @ValidateNested({ each: true })
   @Type(() => CreateMemoTagDto)
   tags?: CreateMemoTagDto[];
+
+  @ApiProperty({
+    description: '체크리스트 항목 목록 (CHECKLIST 타입 필수)',
+    type: [CreateChecklistItemDto],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateChecklistItemDto)
+  checklistItems?: CreateChecklistItemDto[];
 }

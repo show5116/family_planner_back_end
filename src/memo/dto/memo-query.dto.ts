@@ -1,6 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, IsEnum, Min, Max } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsEnum,
+  Min,
+  Max,
+} from 'class-validator';
 import { MemoVisibility } from '@/memo/enums/memo-visibility.enum';
 
 export class MemoQueryDto {
@@ -53,4 +61,20 @@ export class MemoQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+}
+
+export class MemoTagListQueryDto {
+  @ApiProperty({
+    description: '그룹 ID (그룹 메모 태그 조회)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  groupId?: string;
+
+  @ApiProperty({ description: '개인 메모 태그 조회 여부', required: false })
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  personal?: boolean;
 }

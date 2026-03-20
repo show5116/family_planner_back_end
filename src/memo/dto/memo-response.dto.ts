@@ -106,6 +106,14 @@ export class MemoDto {
   updatedAt: Date;
 }
 
+export class MemoTagNamesDto {
+  @ApiProperty({
+    description: '태그 이름 목록',
+    example: ['중요', '업무', '가족'],
+  })
+  tags: string[];
+}
+
 export class PaginatedMemoDto {
   @ApiProperty({ type: [MemoDto], description: '메모 목록' })
   data: MemoDto[];
