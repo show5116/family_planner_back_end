@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UserDto {
+export class GroupMemberUserDto {
   @ApiProperty({ description: '사용자 ID', example: 'uuid' })
   id: string;
 
@@ -55,8 +55,8 @@ export class GroupMemberDto {
   @ApiProperty({ type: RoleDto })
   role: RoleDto;
 
-  @ApiProperty({ type: UserDto })
-  user: UserDto;
+  @ApiProperty({ type: GroupMemberUserDto })
+  user: GroupMemberUserDto;
 
   @ApiProperty({
     description: '개인 설정 색상 (HEX 형식)',

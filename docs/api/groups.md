@@ -42,18 +42,11 @@
       "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
     }, // RoleDto
     "user": {
-      "id": "user_clxxx123",
+      "id": "uuid",
       "email": "user@example.com",
       "name": "홍길동",
-      "isEmailVerified": true,
-      "isAdmin": false,
-      "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-      "phoneNumber": "010-1234-5678",
-      "personalColor": "#FF5733",
-      "socialProvider": "google",
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
-    }, // UserDto
+      "profileImageUrl": "https://example.com/profile.jpg"
+    }, // GroupMemberUserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   }, // 생성된 멤버 정보 (이메일 초대받은 경우만) (GroupMemberDto?)
@@ -72,7 +65,7 @@
       "userId": "uuid",
       "roleId": "uuid",
       "role": "<RoleDto>",
-      "user": "<UserDto>",
+      "user": "<GroupMemberUserDto>",
       "customColor": "#FF5733",
       "joinedAt": "2025-12-04T00:00:00Z"
     } // GroupMemberDto[]
@@ -135,18 +128,11 @@
     "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // RoleDto
   "user": {
-    "id": "user_clxxx123", // 사용자 ID (string)
+    "id": "uuid", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)
-    "name": "홍길동", // 사용자 이름 (string)
-    "isEmailVerified": true, // 이메일 인증 여부 (boolean)
-    "isAdmin": false, // 운영자 여부 (boolean)
-    "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
-    "phoneNumber": "010-1234-5678", // 전화번호 (string?)
-    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
-    "socialProvider": "google", // 소셜 로그인 제공자 (string?)
-    "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
-    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
-  }, // UserDto
+    "name": "홍길동", // 이름 (string)
+    "profileImageUrl": "https://example.com/profile.jpg" // 프로필 이미지 URL (string | null)
+  }, // GroupMemberUserDto
   "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
   "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
 }
@@ -194,18 +180,11 @@
     "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // RoleDto
   "user": {
-    "id": "user_clxxx123", // 사용자 ID (string)
+    "id": "uuid", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)
-    "name": "홍길동", // 사용자 이름 (string)
-    "isEmailVerified": true, // 이메일 인증 여부 (boolean)
-    "isAdmin": false, // 운영자 여부 (boolean)
-    "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
-    "phoneNumber": "010-1234-5678", // 전화번호 (string?)
-    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
-    "socialProvider": "google", // 소셜 로그인 제공자 (string?)
-    "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
-    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
-  }, // UserDto
+    "name": "홍길동", // 이름 (string)
+    "profileImageUrl": "https://example.com/profile.jpg" // 프로필 이미지 URL (string | null)
+  }, // GroupMemberUserDto
   "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
   "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
 }
@@ -390,18 +369,11 @@
       "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
     }, // RoleDto
     "user": {
-      "id": "user_clxxx123",
+      "id": "uuid",
       "email": "user@example.com",
       "name": "홍길동",
-      "isEmailVerified": true,
-      "isAdmin": false,
-      "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-      "phoneNumber": "010-1234-5678",
-      "personalColor": "#FF5733",
-      "socialProvider": "google",
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
-    }, // UserDto
+      "profileImageUrl": "https://example.com/profile.jpg"
+    }, // GroupMemberUserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   }, // GroupMemberDto
@@ -417,18 +389,11 @@
       "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
     }, // RoleDto
     "user": {
-      "id": "user_clxxx123",
+      "id": "uuid",
       "email": "user@example.com",
       "name": "홍길동",
-      "isEmailVerified": true,
-      "isAdmin": false,
-      "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-      "phoneNumber": "010-1234-5678",
-      "personalColor": "#FF5733",
-      "socialProvider": "google",
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
-    }, // UserDto
+      "profileImageUrl": "https://example.com/profile.jpg"
+    }, // GroupMemberUserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   } // GroupMemberDto
@@ -515,18 +480,11 @@ PENDING 상태의 가입 요청을 승인하고 그룹 멤버로 추가
       "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
     }, // RoleDto
     "user": {
-      "id": "user_clxxx123",
+      "id": "uuid",
       "email": "user@example.com",
       "name": "홍길동",
-      "isEmailVerified": true,
-      "isAdmin": false,
-      "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-      "phoneNumber": "010-1234-5678",
-      "personalColor": "#FF5733",
-      "socialProvider": "google",
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
-    }, // UserDto
+      "profileImageUrl": "https://example.com/profile.jpg"
+    }, // GroupMemberUserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   } // GroupMemberDto
@@ -838,18 +796,11 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
-        "id": "user_clxxx123",
+        "id": "uuid",
         "email": "user@example.com",
         "name": "홍길동",
-        "isEmailVerified": true,
-        "isAdmin": false,
-        "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-        "phoneNumber": "010-1234-5678",
-        "personalColor": "#FF5733",
-        "socialProvider": "google",
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z"
-      }, // UserDto
+        "profileImageUrl": "https://example.com/profile.jpg"
+      }, // GroupMemberUserDto
       "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
       "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
     }
@@ -929,18 +880,11 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
-        "id": "user_clxxx123",
+        "id": "uuid",
         "email": "user@example.com",
         "name": "홍길동",
-        "isEmailVerified": true,
-        "isAdmin": false,
-        "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-        "phoneNumber": "010-1234-5678",
-        "personalColor": "#FF5733",
-        "socialProvider": "google",
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z"
-      }, // UserDto
+        "profileImageUrl": "https://example.com/profile.jpg"
+      }, // GroupMemberUserDto
       "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
       "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
     }
@@ -1003,18 +947,11 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
-        "id": "user_clxxx123",
+        "id": "uuid",
         "email": "user@example.com",
         "name": "홍길동",
-        "isEmailVerified": true,
-        "isAdmin": false,
-        "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
-        "phoneNumber": "010-1234-5678",
-        "personalColor": "#FF5733",
-        "socialProvider": "google",
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z"
-      }, // UserDto
+        "profileImageUrl": "https://example.com/profile.jpg"
+      }, // GroupMemberUserDto
       "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
       "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
     }
