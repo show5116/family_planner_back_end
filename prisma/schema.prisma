@@ -21,6 +21,7 @@ model User {
   lastLoginAt          DateTime?
   phoneNumber          String?               @db.VarChar(20)
   profileImageKey      String?               @db.VarChar(255)
+  personalColor        String?               @db.VarChar(7)
   announcementReads    AnnouncementRead[]    @relation("AnnouncementReads")
   announcements        Announcement[]        @relation("AnnouncementAuthor")
   answers              Answer[]              @relation("AdminAnswers")

@@ -67,6 +67,13 @@ export class UserDto {
   phoneNumber?: string;
 
   @ApiProperty({
+    description: '개인 색상 (HEX 코드)',
+    example: '#FF5733',
+    required: false,
+  })
+  personalColor?: string;
+
+  @ApiProperty({
     description: '소셜 로그인 제공자',
     example: 'google',
     required: false,

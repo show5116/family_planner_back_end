@@ -406,6 +406,7 @@ export class AuthController {
         name: updateProfileDto.name,
         phoneNumber: updateProfileDto.phoneNumber,
         newPassword: updateProfileDto.newPassword,
+        personalColor: updateProfileDto.personalColor,
       },
     );
   }

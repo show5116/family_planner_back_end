@@ -570,6 +570,7 @@ export class AuthService {
         name: true,
         profileImageKey: true,
         isAdmin: true,
+        personalColor: true,
         createdAt: true,
         password: true,
       },
@@ -615,6 +616,7 @@ export class AuthService {
       name?: string;
       phoneNumber?: string;
       newPassword?: string;
+      personalColor?: string;
     },
   ) {
     const user = await this.prisma.user.findUnique({
@@ -660,6 +662,10 @@ export class AuthService {
       updateData.password = await this.hashPassword(updates.newPassword);
     }
 
+    if (updates.personalColor !== undefined) {
+      updateData.personalColor = updates.personalColor;
+    }
+
     // 업데이트할 내용이 없는 경우
     if (Object.keys(updateData).length === 0) {
       throw new BadRequestException('업데이트할 정보가 없습니다');
@@ -676,6 +682,7 @@ export class AuthService {
         profileImageKey: true,
         phoneNumber: true,
         isAdmin: true,
+        personalColor: true,
         createdAt: true,
       },
     });

@@ -608,6 +608,7 @@
     "isAdmin": false, // 운영자 여부 (boolean)
     "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
     "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
     "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
@@ -641,6 +642,7 @@
     "isAdmin": false, // 운영자 여부 (boolean)
     "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
     "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
     "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
@@ -841,7 +843,8 @@
   "currentPassword": "currentPassword123!", // 현재 비밀번호 (필수) (string)
   "name": "홍길동", // 이름 (string?)
   "phoneNumber": "010-1234-5678", // 전화번호 (string?)
-  "newPassword": "newPassword123!" // 새 비밀번호 (선택, 변경 시에만) (string?)
+  "newPassword": "newPassword123!", // 새 비밀번호 (선택, 변경 시에만) (string?)
+  "personalColor": "#FF5733" // 개인 색상 (HEX 코드) (string?)
 }
 ```
 
@@ -860,6 +863,7 @@
     "isAdmin": false, // 운영자 여부 (boolean)
     "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
     "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
     "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
@@ -1576,6 +1580,7 @@
       "isAdmin": false,
       "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
       "phoneNumber": "010-1234-5678",
+      "personalColor": "#FF5733",
       "socialProvider": "google",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z"
@@ -1668,6 +1673,7 @@
     "isAdmin": false, // 운영자 여부 (boolean)
     "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
     "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
     "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
@@ -1726,6 +1732,7 @@
     "isAdmin": false, // 운영자 여부 (boolean)
     "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
     "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
     "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
@@ -1921,6 +1928,7 @@
       "isAdmin": false,
       "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
       "phoneNumber": "010-1234-5678",
+      "personalColor": "#FF5733",
       "socialProvider": "google",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z"
@@ -1947,6 +1955,7 @@
       "isAdmin": false,
       "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
       "phoneNumber": "010-1234-5678",
+      "personalColor": "#FF5733",
       "socialProvider": "google",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z"
@@ -2044,6 +2053,7 @@ PENDING 상태의 가입 요청을 승인하고 그룹 멤버로 추가
       "isAdmin": false,
       "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
       "phoneNumber": "010-1234-5678",
+      "personalColor": "#FF5733",
       "socialProvider": "google",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z"
@@ -2366,6 +2376,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "isAdmin": false,
         "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
         "phoneNumber": "010-1234-5678",
+        "personalColor": "#FF5733",
         "socialProvider": "google",
         "createdAt": "2024-01-01T00:00:00.000Z",
         "updatedAt": "2024-01-01T00:00:00.000Z"
@@ -2456,6 +2467,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "isAdmin": false,
         "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
         "phoneNumber": "010-1234-5678",
+        "personalColor": "#FF5733",
         "socialProvider": "google",
         "createdAt": "2024-01-01T00:00:00.000Z",
         "updatedAt": "2024-01-01T00:00:00.000Z"
@@ -2529,6 +2541,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "isAdmin": false,
         "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg",
         "phoneNumber": "010-1234-5678",
+        "personalColor": "#FF5733",
         "socialProvider": "google",
         "createdAt": "2024-01-01T00:00:00.000Z",
         "updatedAt": "2024-01-01T00:00:00.000Z"

@@ -39,4 +39,17 @@ export class UpdateProfileDto {
     message: '비밀번호는 영문과 숫자를 포함해야 합니다',
   })
   newPassword?: string;
+
+  @ApiProperty({
+    description: '개인 색상 (HEX 코드)',
+    example: '#FF5733',
+    pattern: '^#[0-9A-Fa-f]{6}$',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^#[0-9A-Fa-f]{6}$/, {
+    message: '유효한 HEX 색상 코드를 입력해주세요 (예: #FF5733)',
+  })
+  personalColor?: string;
 }
