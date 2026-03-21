@@ -167,6 +167,7 @@ export class AuthService {
       profileImageKey: user.profileImageKey,
       isAdmin: user.isAdmin,
       hasPassword: user.password !== null,
+      personalColor: user.personalColor,
     };
   }
 
@@ -260,6 +261,7 @@ export class AuthService {
     profileImageKey: string | null;
     isAdmin: boolean;
     hasPassword: boolean;
+    personalColor?: string | null;
   }) {
     // 토큰 생성
     const tokens = await this.generateTokens(user.id);
@@ -289,6 +291,7 @@ export class AuthService {
           : null,
         isAdmin: user.isAdmin,
         hasPassword: user.hasPassword,
+        personalColor: user.personalColor ?? null,
       },
     };
   }
@@ -555,6 +558,7 @@ export class AuthService {
       profileImageKey: user.profileImageKey,
       isAdmin: user.isAdmin,
       hasPassword: user.password !== null,
+      personalColor: user.personalColor,
     });
   }
 
@@ -601,6 +605,7 @@ export class AuthService {
         ? this.storageService.getPublicUrl(user.profileImageKey)
         : null,
       isAdmin: user.isAdmin,
+      personalColor: user.personalColor,
       createdAt: user.createdAt,
       hasPassword: user.password !== null,
     };
