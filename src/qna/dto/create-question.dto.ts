@@ -8,7 +8,8 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+import { sanitizeHtmlContent } from '@/common/utils/sanitize-html.util';
 import { QuestionCategory } from '../enums/question-category.enum';
 import { QuestionVisibility } from '../enums/question-visibility.enum';
 import { AttachmentDto } from './attachment.dto';
@@ -31,6 +32,7 @@ export class CreateQuestionDto {
     maxLength: 5000,
     example: '홈 화면에서 특정 버튼을 누르면 앱이 종료됩니다.',
   })
+  @Transform(({ value }) => sanitizeHtmlContent(value))
   @IsString()
   @MinLength(1)
   @MaxLength(5000)

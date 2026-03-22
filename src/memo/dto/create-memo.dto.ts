@@ -8,7 +8,8 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+import { sanitizeHtmlContent } from '@/common/utils/sanitize-html.util';
 import { MemoFormat } from '@/memo/enums/memo-format.enum';
 import { MemoType } from '@/memo/enums/memo-type.enum';
 import { MemoVisibility } from '@/memo/enums/memo-visibility.enum';
@@ -40,6 +41,7 @@ export class CreateMemoDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => sanitizeHtmlContent(value))
   @IsString()
   content?: string;
 

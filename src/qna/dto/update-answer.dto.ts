@@ -7,7 +7,8 @@ import {
   ValidateNested,
   IsOptional,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+import { sanitizeHtmlContent } from '@/common/utils/sanitize-html.util';
 import { AttachmentDto } from './attachment.dto';
 
 export class UpdateAnswerDto {
@@ -17,6 +18,7 @@ export class UpdateAnswerDto {
     maxLength: 5000,
     required: false,
   })
+  @Transform(({ value }) => sanitizeHtmlContent(value))
   @IsString()
   @MinLength(1)
   @MaxLength(5000)

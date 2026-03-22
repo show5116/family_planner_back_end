@@ -7,7 +7,8 @@ import {
   ValidateNested,
   IsOptional,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+import { sanitizeHtmlContent } from '@/common/utils/sanitize-html.util';
 import { AttachmentDto } from './attachment.dto';
 
 export class CreateAnswerDto {
@@ -18,6 +19,7 @@ export class CreateAnswerDto {
     example:
       '해당 문제는 최신 버전에서 수정되었습니다. 앱을 업데이트 해주세요.',
   })
+  @Transform(({ value }) => sanitizeHtmlContent(value))
   @IsString()
   @MinLength(1)
   @MaxLength(5000)

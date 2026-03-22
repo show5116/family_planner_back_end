@@ -9,7 +9,8 @@ import {
   ValidateNested,
   IsEnum,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+import { sanitizeHtmlContent } from '@/common/utils/sanitize-html.util';
 import { AnnouncementCategory } from '@/announcement/enums/announcement-category.enum';
 
 class AttachmentDto {
@@ -44,6 +45,7 @@ export class CreateAnnouncementDto {
     maxLength: 10000,
     example: '새로운 기능이 추가되었습니다...',
   })
+  @Transform(({ value }) => sanitizeHtmlContent(value))
   @IsString()
   @MinLength(1)
   @MaxLength(10000)
