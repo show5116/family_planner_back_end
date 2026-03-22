@@ -1,6 +1,6 @@
 # 07. 투자 지표 (Investment Indicators)
 
-> **상태**: ⬜ 시작 안함
+> **상태**: ✅ 완료
 > **Phase**: Phase 4
 
 ---
@@ -43,18 +43,18 @@ KOSPI, NASDAQ, 환율, 원자재, 채권, 변동성 지수, 암호화폐 등 주
 | CURRENCY | 원/달러 환율 | USD_KRW | 원 | Yahoo Finance `KRW=X` |
 | CURRENCY | 달러 인덱스 | DXY | pt | Yahoo Finance `DX-Y.NYB` |
 | COMMODITY | 금 (국제) | GOLD_USD | USD/oz | Yahoo Finance `GC=F` |
-| COMMODITY | 금 (국내) | GOLD_KRW | 원/g | KRX 금 시장 또는 국제 금값 × 환율 환산 |
+| COMMODITY | 금 (국내 현물) | GOLD_KRW_SPOT | 원/g | 한국금거래소 스크래핑 (koreagoldx.co.kr) |
 | COMMODITY | 은 | SILVER | USD/oz | Yahoo Finance `SI=F` |
 | COMMODITY | 국제 유가 (WTI) | WTI | USD/bbl | Yahoo Finance `CL=F` |
 | COMMODITY | 구리 | COPPER | USD/lb | Yahoo Finance `HG=F` |
 | BOND     | 미국채 10년물 | US10Y | % | Yahoo Finance `^TNX` |
-| BOND     | 한국채 3년물 | KR3Y | % | KIS Developers Open API |
+| BOND     | 한국채 3년물 | KR3Y | % | 한국은행 경제통계시스템 (BOK Open API) |
 | VOLATILITY | VIX 지수 | VIX | pt | Yahoo Finance `^VIX` |
 | CRYPTO   | 비트코인 | BTC_KRW | 원 | CoinGecko `bitcoin` (vs KRW) |
 | MACRO    | 버핏 지수 (미국) | BUFFETT_US | % | 계산값 — Wilshire 5000 / 미국 GDP × 100 |
 
-> **국내 금값 산출 방식**: `GOLD_KRW = GOLD_USD(USD/oz) × USD_KRW(환율) ÷ 31.1035(oz→g)`
-> 별도 API 없이 이미 수집하는 `GOLD_USD` + `USD_KRW` 값으로 자동 계산 가능.
+> **국내 금값 수집 방식**: `GOLD_KRW_SPOT` — 한국금거래소(koreagoldx.co.kr) 순금 매수가(원/g) 스크래핑.
+> KST 09:00~16:00 평일에만 15분 주기로 수집.
 
 > **버핏 지수 산출 방식**: `BUFFETT_US = Wilshire 5000 지수(^W5000) / 미국 명목 GDP(FRED: GDP) × 100`
 > Wilshire 5000은 Yahoo Finance에서 매일 수집, GDP는 FRED API(무료)에서 분기별 수집.
@@ -130,28 +130,42 @@ model IndicatorBookmark {
 
 ## 구현 상태
 
-### ⬜ TODO
-- [ ] DB 스키마 설계 및 마이그레이션
-- [ ] 외부 API 선정 및 연동 (수집 모듈)
-- [ ] 스케줄러 구현 (주기적 시세 수집)
-- [ ] 지표 목록 조회 API
-- [ ] 지표 최신 시세 조회 API
-- [ ] 지표 히스토리 조회 API (시계열)
-- [ ] 즐겨찾기 등록/해제 API
-- [ ] 즐겨찾기 목록 조회 API
+### ✅ 완료
+- [x] DB 스키마 설계 및 마이그레이션
+- [x] 외부 API 연동
+  - [x] Yahoo Finance (지수, 환율, 원자재, 채권, VIX, Wilshire 5000)
+  - [x] CoinGecko (비트코인 BTC/KRW)
+  - [x] FRED API (미국 GDP — 버핏 지수 계산용)
+  - [x] BOK Open API (한국채 3년물)
+  - [x] 한국금거래소 스크래핑 (국내 금 현물가 GOLD_KRW_SPOT)
+- [x] 스케줄러 구현 (Redis 분산 락 적용)
+  - [x] Yahoo Finance 전체 수집 (5분마다)
+  - [x] 비트코인 수집 (1시간마다)
+  - [x] 버핏 지수 수집 (매일 06:00 KST)
+  - [x] 국내 금 현물가 수집 (15분마다, 평일 장중)
+  - [x] 한국채 3년물 수집 (매일 18:00 KST 장 마감 후)
+- [x] 지표 목록 조회 API
+- [x] 지표 상세 + 최신 시세 조회 API
+- [x] 지표 시세 히스토리 조회 API (시계열)
+- [x] 즐겨찾기 등록/해제 API
+- [x] 즐겨찾기 목록 조회 API
+- [x] 즐겨찾기 순서 변경 API
+- [x] 어드민 과거 데이터 일괄 초기화 API
 
 ---
 
 ## API 엔드포인트
 
-| Method | Endpoint                               | 설명                  | 권한  |
-| ------ | -------------------------------------- | --------------------- | ----- |
-| GET    | `/indicators`                          | 전체 지표 목록 + 최신 시세 | JWT |
-| GET    | `/indicators/:symbol`                  | 지표 상세 + 최신 시세  | JWT   |
-| GET    | `/indicators/:symbol/history`          | 시세 히스토리 (시계열) | JWT   |
-| POST   | `/indicators/:symbol/bookmark`         | 즐겨찾기 등록          | JWT   |
-| DELETE | `/indicators/:symbol/bookmark`         | 즐겨찾기 해제          | JWT   |
-| GET    | `/indicators/bookmarks`                | 즐겨찾기 목록 + 시세   | JWT   |
+| Method | Endpoint                               | 설명                         | 권한        |
+| ------ | -------------------------------------- | ---------------------------- | ----------- |
+| GET    | `/indicators`                          | 전체 지표 목록 + 최신 시세   | JWT         |
+| GET    | `/indicators/bookmarks`                | 즐겨찾기 목록 + 최신 시세    | JWT         |
+| PATCH  | `/indicators/bookmarks/reorder`        | 즐겨찾기 순서 변경           | JWT         |
+| GET    | `/indicators/:symbol`                  | 지표 상세 + 최신 시세        | JWT         |
+| GET    | `/indicators/:symbol/history`          | 시세 히스토리 (시계열)       | JWT         |
+| POST   | `/indicators/:symbol/bookmark`         | 즐겨찾기 등록                | JWT         |
+| DELETE | `/indicators/:symbol/bookmark`         | 즐겨찾기 해제                | JWT         |
+| POST   | `/indicators/admin/init-history`       | 과거 데이터 일괄 초기화      | JWT, Admin  |
 
 ---
 
@@ -180,45 +194,40 @@ model IndicatorBookmark {
 | 원/달러 환율 | Yahoo Finance (`KRW=X`) | — |
 | 달러 인덱스 | Yahoo Finance (`DX-Y.NYB`) | — |
 | 금(국제) / 은 / WTI / 구리 | Yahoo Finance (`GC=F`, `SI=F`, `CL=F`, `HG=F`) | — |
-| 금(국내) | 별도 API 없음 — `GOLD_USD × USD_KRW ÷ 31.1035` 계산 | 수집 시 자동 산출 |
+| 금(국내 현물, GOLD_KRW_SPOT) | 한국금거래소 스크래핑 (koreagoldx.co.kr) | 평일 장중 수집 |
 | 미국채 10년물 | Yahoo Finance (`^TNX`) | — |
-| 한국채 3년물 | KIS Developers Open API | 국내 전용 |
+| 한국채 3년물 | BOK Open API | 한국은행 경제통계시스템 |
 | 비트코인 | CoinGecko (`bitcoin`, vs KRW) | 무료 티어 충분 |
 | 버핏 지수 | Yahoo Finance (`^W5000`) + FRED API (`GDP`) | 계산값, 분기 1회 갱신 |
 
-> **핵심 전략**: Yahoo Finance 비공식 API로 대부분 커버, 한국채는 KIS API, 버핏 지수는 Yahoo Finance + FRED 조합
+> **핵심 전략**: Yahoo Finance로 대부분 커버, 한국채는 BOK API, 국내 금은 한국금거래소 스크래핑, 버핏 지수는 Yahoo Finance + FRED 조합
 
 ---
 
 ## 데이터 수집 전략
 
-### 수집 주기
-| 카테고리 | 지표 | 수집 주기 | 비고 |
-| -------- | ---- | --------- | ---- |
-| INDEX | KOSPI, KOSDAQ, S&P500, NASDAQ, DJI, N225, TWSE | 장중 5분 / 장외 1회/일 | 각 거래소 거래시간 기준 |
-| CURRENCY | 원/달러, 달러 인덱스 | 15분마다 | 외환시장 24시간 |
-| COMMODITY | 금(국제), 은, WTI, 구리 | 30분마다 | 선물시장 거래 시간 기준 |
-| COMMODITY | 금(국내) | 30분마다 | GOLD_USD × USD_KRW 자동 계산, 별도 수집 불필요 |
-| BOND | 미국채 10년물, 한국채 3년물 | 1회/일 | 장 마감 후 종가 수집 |
-| VOLATILITY | VIX | 장중 15분 / 장외 1회/일 | 미국 장 기준 |
-| CRYPTO | 비트코인 | 5분마다 | 24시간 365일 |
-| MACRO | 버핏 지수 | 분기 1회 (GDP 발표 후) + 일별 Wilshire 근사 | GDP 분기 발표 주기에 종속 |
+### 수집 주기 (실제 구현)
+| 크론잡 | 대상 지표 | 수집 주기 | 비고 |
+| ------ | --------- | --------- | ---- |
+| `collectYahoo` | INDEX, CURRENCY, COMMODITY(국제), BOND(미국채), VOLATILITY | 5분마다 (`*/5 * * * *`) | Yahoo Finance, Redis 분산 락 |
+| `collectCrypto` | BTC_KRW | 1시간마다 (`0 * * * *`) | CoinGecko, Redis 분산 락 |
+| `collectMacro` | BUFFETT_US | 매일 06:00 KST (`0 21 * * *` UTC) | Yahoo Wilshire + FRED GDP, Redis 분산 락 |
+| `collectGoldSpot` | GOLD_KRW_SPOT | 15분마다, 평일 장중 (`*/15 0-7 * * 1-5` UTC) | 한국금거래소 스크래핑, Redis 분산 락 |
+| `collectBond` | KR3Y | 매일 18:00 KST 장 마감 후 (`0 9 * * 1-5` UTC) | BOK Open API, Redis 분산 락 |
 
 ### 캐싱 전략
 - 최신 시세: Redis 캐시 (TTL 5분)
 - 히스토리 데이터: DB 직접 조회 (인덱스 활용)
 - 지표 목록: Redis 캐시 (TTL 1시간, 거의 변하지 않음)
 
-### 스케줄러 구조
+### 스케줄러 구조 (실제 구현)
 ```
-InvestmentScheduler
-  ├ collectIndices()        — 주식 지수 수집 (KOSPI, KOSDAQ, S&P500, NASDAQ, DJI, N225, TWSE)
-  ├ collectCurrencies()     — 환율 수집 (원/달러, 달러 인덱스)
-  ├ collectCommodities()    — 원자재 수집 (금, 은, WTI, 구리)
-  ├ collectBonds()          — 채권 수집 (미국채 10년물, 한국채 3년물)
-  ├ collectVolatility()     — 변동성 수집 (VIX)
-  ├ collectCryptos()        — 암호화폐 수집 (비트코인)
-  └ collectMacro()          — 거시 지표 수집 (버핏 지수: Wilshire + GDP → 계산)
+InvestmentScheduler (Redis 분산 락으로 중복 실행 방지)
+  ├ collectYahoo()     — Yahoo Finance 전체 (5분마다) — 지수, 환율, 원자재, 미국채, VIX
+  ├ collectCrypto()    — CoinGecko BTC/KRW (1시간마다)
+  ├ collectMacro()     — 버핏 지수 (매일 06:00 KST) — Yahoo Wilshire + FRED GDP 계산
+  ├ collectGoldSpot()  — 국내 금 현물가 (15분마다, 평일 장중) — 한국금거래소 스크래핑
+  └ collectBond()      — 한국채 3년물 (매일 18:00 KST) — BOK Open API
 ```
 
 ---
@@ -271,23 +280,23 @@ InvestmentScheduler
 
 ---
 
-## 구현 파일 (예상)
+## 구현 파일
 
 ```
 src/investment/
   dto/
     indicator-response.dto.ts
     indicator-history-query.dto.ts
+    historical-init-query.dto.ts
+    reorder-bookmarks.dto.ts
   scheduler/
     investment.scheduler.ts
     collectors/
-      index.collector.ts      — KOSPI, KOSDAQ, S&P500, NASDAQ, DJI, N225, TWSE (Yahoo Finance)
-      currency.collector.ts   — 원/달러, 달러 인덱스 (Yahoo Finance)
-      commodity.collector.ts  — 금, 은, WTI, 구리 (Yahoo Finance)
-      bond.collector.ts       — 미국채 10년물 (Yahoo Finance), 한국채 3년물 (KIS API)
-      volatility.collector.ts — VIX (Yahoo Finance)
-      crypto.collector.ts     — 비트코인 (CoinGecko)
-      macro.collector.ts      — 버핏 지수 (Yahoo Finance ^W5000 + FRED GDP → 계산)
+      yahoo.collector.ts      — 지수, 환율, 원자재, 미국채, VIX, Wilshire 5000 (Yahoo Finance)
+      coingecko.collector.ts  — 비트코인 BTC/KRW (CoinGecko)
+      fred.collector.ts       — 미국 GDP (FRED API — 버핏 지수 계산용)
+      bok.collector.ts        — 한국채 3년물 KR3Y (BOK Open API)
+      korea-gold.collector.ts — 국내 금 현물가 GOLD_KRW_SPOT (한국금거래소 스크래핑)
   investment.controller.ts
   investment.service.ts
   investment.module.ts
@@ -295,4 +304,4 @@ src/investment/
 
 ---
 
-**Last Updated**: 2026-03-01
+**Last Updated**: 2026-03-22
