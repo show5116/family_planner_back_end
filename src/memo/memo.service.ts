@@ -224,6 +224,15 @@ export class MemoService {
             create: dto.tags.map((tag) => ({ name: tag.name })),
           },
         }),
+        ...(dto.checklistItems && {
+          checklistItems: {
+            deleteMany: {},
+            create: dto.checklistItems.map((item, index) => ({
+              content: item.content,
+              order: item.order ?? index,
+            })),
+          },
+        }),
       },
       include: {
         user: { select: { id: true, name: true } },
