@@ -41,9 +41,9 @@ model User {
   expenses             Expense[]
   accounts             Account[]
   indicatorBookmarks   IndicatorBookmark[]
-  childcareAsChild     ChildcareAccount[]          @relation("ChildcareChild")
   childcareAsParent    ChildcareAccount[]          @relation("ChildcareParent")
   childcareTransactions ChildcareTransaction[]     @relation("ChildcareTransactionCreator")
+  childProfiles        Child[]                     @relation("ChildParent")
   votesCreated         Vote[]                      @relation("VoteCreator")
   voteBallots          VoteBallot[]                @relation("VoteBallots")
 
@@ -72,6 +72,7 @@ model Group {
   budgets             Budget[]
   accounts            Account[]
   childcareAccounts   ChildcareAccount[]
+  children            Child[]
   votes               Vote[]
 
   @@index([inviteCode])
@@ -822,29 +823,77 @@ model IndicatorBookmark {
 // 육아 포인트
 // ============================================================
 
+model Child {
+  id           String    @id @default(uuid())
+  groupId      String
+  parentUserId String
+  name         String    @db.VarChar(50)
+  birthDate    DateTime  @db.Date
+  userId       String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  group         Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  parentUser    User              @relation("ChildParent", fields: [parentUserId], references: [id], onDelete: Cascade)
+  account       ChildcareAccount?
+  allowancePlan ChildAllowancePlan?
+
+  @@index([groupId])
+  @@index([parentUserId])
+  @@map("children")
+}
+
 model ChildcareAccount {
-  id                  String   @id @default(uuid())
-  groupId             String
-  childUserId         String
-  parentUserId        String
-  balance             Int      @default(0)
-  monthlyAllowance    Int
-  savingsBalance      Int      @default(0)
-  savingsInterestRate Decimal  @db.Decimal(5, 2)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id             String   @id @default(uuid())
+  groupId        String
+  childId        String   @unique
+  parentUserId   String
+  balance        Int      @default(0)
+  savingsBalance Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   group        Group                  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  childUser    User                   @relation("ChildcareChild", fields: [childUserId], references: [id], onDelete: Cascade)
+  child        Child                  @relation(fields: [childId], references: [id], onDelete: Cascade)
   parentUser   User                   @relation("ChildcareParent", fields: [parentUserId], references: [id], onDelete: Cascade)
   transactions ChildcareTransaction[]
   rewards      ChildcareReward[]
   rules        ChildcareRule[]
 
   @@index([groupId])
-  @@index([childUserId])
   @@index([parentUserId])
   @@map("childcare_accounts")
+}
+
+model ChildAllowancePlan {
+  id                   String    @id @default(uuid())
+  childId              String    @unique
+  monthlyPoints        Int
+  payDay               Int
+  pointToMoneyRatio    Int
+  nextNegotiationDate  DateTime? @db.Date
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  child    Child                      @relation(fields: [childId], references: [id], onDelete: Cascade)
+  histories ChildAllowancePlanHistory[]
+
+  @@map("child_allowance_plans")
+}
+
+model ChildAllowancePlanHistory {
+  id                   String    @id @default(uuid())
+  planId               String
+  monthlyPoints        Int
+  payDay               Int
+  pointToMoneyRatio    Int
+  nextNegotiationDate  DateTime? @db.Date
+  changedAt            DateTime  @default(now())
+
+  plan ChildAllowancePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, changedAt(sort: Desc)])
+  @@map("child_allowance_plan_histories")
 }
 
 model ChildcareTransaction {

@@ -12,8 +12,8 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 import { ChildcareService } from './childcare.service';
-import { CreateChildcareAccountDto } from './dto/create-account.dto';
-import { UpdateChildcareAccountDto } from './dto/update-account.dto';
+import { CreateChildDto } from './dto/create-child.dto';
+import { CreateAllowancePlanDto } from './dto/create-allowance-plan.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { CreateRewardDto } from './dto/create-reward.dto';
@@ -22,7 +22,10 @@ import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
 import { SavingsDepositDto, SavingsWithdrawDto } from './dto/savings.dto';
 import {
+  ChildDto,
   ChildcareAccountDto,
+  AllowancePlanDto,
+  AllowancePlanHistoryDto,
   ChildcareTransactionDto,
   ChildcareRewardDto,
   ChildcareRuleDto,
@@ -46,19 +49,42 @@ import {
 export class ChildcareController {
   constructor(private readonly childcareService: ChildcareService) {}
 
-  // ─── 계정 CRUD ────────────────────────────────────────────
+  // ─── 자녀 프로필 ──────────────────────────────────────────
 
-  @Post('accounts')
-  @ApiOperation({ summary: '육아 계정 생성 (부모만 가능)' })
-  @ApiCreated(ChildcareAccountDto, '육아 계정 생성 성공')
+  @Post('children')
+  @ApiOperation({ summary: '자녀 프로필 등록 (앱 계정 불필요)' })
+  @ApiCreated(ChildDto, '자녀 프로필 등록 성공')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  createAccount(@Request() req, @Body() dto: CreateChildcareAccountDto) {
-    return this.childcareService.createAccount(req.user.userId, dto);
+  createChild(@Request() req, @Body() dto: CreateChildDto) {
+    return this.childcareService.createChild(req.user.userId, dto);
   }
 
+  @Get('children')
+  @ApiOperation({ summary: '그룹 내 자녀 프로필 목록 조회' })
+  @ApiSuccess(ChildDto, '자녀 프로필 목록 조회 성공', { isArray: true })
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findChildren(@Request() req, @Query('groupId') groupId: string) {
+    return this.childcareService.findChildren(req.user.userId, groupId);
+  }
+
+  @Post('children/:id/link-user')
+  @ApiOperation({ summary: '자녀 프로필과 앱 계정 연동 (부모만 가능)' })
+  @ApiSuccess(ChildDto, '앱 계정 연동 성공')
+  @ApiNotFound('자녀 프로필을 찾을 수 없습니다')
+  @ApiForbidden('부모만 수행할 수 있는 작업입니다')
+  linkUser(
+    @Request() req,
+    @Param('id') id: string,
+    @Body('targetUserId') targetUserId: string,
+  ) {
+    return this.childcareService.linkUser(req.user.userId, id, targetUserId);
+  }
+
+  // ─── 포인트 계정 ──────────────────────────────────────────
+
   @Get('accounts')
-  @ApiOperation({ summary: '육아 계정 목록 조회' })
-  @ApiSuccess(ChildcareAccountDto, '육아 계정 목록 조회 성공', {
+  @ApiOperation({ summary: '그룹 내 포인트 계정 목록 조회' })
+  @ApiSuccess(ChildcareAccountDto, '포인트 계정 목록 조회 성공', {
     isArray: true,
   })
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
@@ -67,25 +93,47 @@ export class ChildcareController {
   }
 
   @Get('accounts/:id')
-  @ApiOperation({ summary: '육아 계정 상세 조회' })
-  @ApiSuccess(ChildcareAccountDto, '육아 계정 상세 조회 성공')
-  @ApiNotFound('육아 계정을 찾을 수 없습니다')
+  @ApiOperation({ summary: '포인트 계정 상세 조회' })
+  @ApiSuccess(ChildcareAccountDto, '포인트 계정 상세 조회 성공')
+  @ApiNotFound('포인트 계정을 찾을 수 없습니다')
   @ApiForbidden('해당 계정에 접근할 권한이 없습니다')
   findOneAccount(@Request() req, @Param('id') id: string) {
     return this.childcareService.findOneAccount(req.user.userId, id);
   }
 
-  @Patch('accounts/:id')
-  @ApiOperation({ summary: '육아 계정 설정 수정 (부모만 가능)' })
-  @ApiSuccess(ChildcareAccountDto, '육아 계정 수정 성공')
-  @ApiNotFound('육아 계정을 찾을 수 없습니다')
+  // ─── 월 포인트 할당 ────────────────────────────────────────
+
+  @Post('children/:id/allowance-plan')
+  @ApiOperation({
+    summary: '월 포인트 할당 설정 (생성 또는 수정, 부모만 가능)',
+  })
+  @ApiCreated(AllowancePlanDto, '월 포인트 할당 설정 성공')
+  @ApiNotFound('자녀 프로필을 찾을 수 없습니다')
   @ApiForbidden('부모만 수행할 수 있는 작업입니다')
-  updateAccount(
+  upsertAllowancePlan(
     @Request() req,
     @Param('id') id: string,
-    @Body() dto: UpdateChildcareAccountDto,
+    @Body() dto: CreateAllowancePlanDto,
   ) {
-    return this.childcareService.updateAccount(req.user.userId, id, dto);
+    return this.childcareService.upsertAllowancePlan(req.user.userId, id, dto);
+  }
+
+  @Get('children/:id/allowance-plan')
+  @ApiOperation({ summary: '월 포인트 할당 설정 조회' })
+  @ApiSuccess(AllowancePlanDto, '월 포인트 할당 설정 조회 성공')
+  @ApiNotFound('자녀 프로필을 찾을 수 없습니다')
+  @ApiForbidden('해당 자녀 프로필에 접근할 권한이 없습니다')
+  findAllowancePlan(@Request() req, @Param('id') id: string) {
+    return this.childcareService.findAllowancePlan(req.user.userId, id);
+  }
+
+  @Get('children/:id/allowance-plan/history')
+  @ApiOperation({ summary: '월 포인트 할당 변경 히스토리 조회' })
+  @ApiSuccess(AllowancePlanHistoryDto, '히스토리 조회 성공', { isArray: true })
+  @ApiNotFound('자녀 프로필을 찾을 수 없습니다')
+  @ApiForbidden('해당 자녀 프로필에 접근할 권한이 없습니다')
+  findAllowancePlanHistory(@Request() req, @Param('id') id: string) {
+    return this.childcareService.findAllowancePlanHistory(req.user.userId, id);
   }
 
   // ─── 거래 내역 ────────────────────────────────────────────

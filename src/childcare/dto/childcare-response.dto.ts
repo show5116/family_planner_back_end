@@ -1,30 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChildcareTransactionType } from '@prisma/client';
 
-export class ChildcareAccountDto {
-  @ApiProperty({ description: '계정 ID', example: 'uuid-1234' })
+export class ChildDto {
+  @ApiProperty({ description: '자녀 프로필 ID', example: 'uuid-1234' })
   id: string;
 
   @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
   groupId: string;
 
-  @ApiProperty({ description: '자녀 사용자 ID', example: 'uuid-1234' })
-  childUserId: string;
-
   @ApiProperty({ description: '부모 사용자 ID', example: 'uuid-1234' })
   parentUserId: string;
 
-  @ApiProperty({ description: '현재 포인트 잔액', example: 500 })
-  balance: number;
+  @ApiProperty({ description: '자녀 이름', example: '김민준' })
+  name: string;
 
-  @ApiProperty({ description: '월별 용돈 포인트', example: 100 })
-  monthlyAllowance: number;
+  @ApiProperty({ description: '생년월일', example: '2024-01-15T00:00:00.000Z' })
+  birthDate: Date;
 
-  @ApiProperty({ description: '적금 잔액', example: 200 })
-  savingsBalance: number;
-
-  @ApiProperty({ description: '적금 이자율 (%)', example: '2.50' })
-  savingsInterestRate: string;
+  @ApiProperty({
+    description: '연결된 앱 계정 ID (앱 가입 시 연결)',
+    example: null,
+    nullable: true,
+  })
+  userId: string | null;
 
   @ApiProperty({
     description: '생성 일시',
@@ -37,6 +35,104 @@ export class ChildcareAccountDto {
     example: '2026-03-01T00:00:00.000Z',
   })
   updatedAt: Date;
+}
+
+export class ChildcareAccountDto {
+  @ApiProperty({ description: '계정 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  groupId: string;
+
+  @ApiProperty({ description: '자녀 프로필 ID', example: 'uuid-1234' })
+  childId: string;
+
+  @ApiProperty({ description: '부모 사용자 ID', example: 'uuid-1234' })
+  parentUserId: string;
+
+  @ApiProperty({ description: '현재 포인트 잔액', example: 500 })
+  balance: number;
+
+  @ApiProperty({ description: '적금 잔액', example: 200 })
+  savingsBalance: number;
+
+  @ApiProperty({
+    description: '생성 일시',
+    example: '2026-03-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: '수정 일시',
+    example: '2026-03-01T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
+export class AllowancePlanDto {
+  @ApiProperty({ description: '할당 플랜 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '자녀 프로필 ID', example: 'uuid-1234' })
+  childId: string;
+
+  @ApiProperty({ description: '월 지급 포인트', example: 100 })
+  monthlyPoints: number;
+
+  @ApiProperty({ description: '월 지급일 (1~31)', example: 1 })
+  payDay: number;
+
+  @ApiProperty({ description: '포인트 : 원 비율 (1포인트 = N원)', example: 10 })
+  pointToMoneyRatio: number;
+
+  @ApiProperty({
+    description: '다음 연봉 협상일',
+    example: '2027-01-01T00:00:00.000Z',
+    nullable: true,
+  })
+  nextNegotiationDate: Date | null;
+
+  @ApiProperty({
+    description: '생성 일시',
+    example: '2026-03-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: '수정 일시',
+    example: '2026-03-01T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
+export class AllowancePlanHistoryDto {
+  @ApiProperty({ description: '히스토리 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '플랜 ID', example: 'uuid-1234' })
+  planId: string;
+
+  @ApiProperty({ description: '월 지급 포인트', example: 100 })
+  monthlyPoints: number;
+
+  @ApiProperty({ description: '월 지급일 (1~31)', example: 1 })
+  payDay: number;
+
+  @ApiProperty({ description: '포인트 : 원 비율', example: 10 })
+  pointToMoneyRatio: number;
+
+  @ApiProperty({
+    description: '다음 연봉 협상일',
+    example: '2027-01-01T00:00:00.000Z',
+    nullable: true,
+  })
+  nextNegotiationDate: Date | null;
+
+  @ApiProperty({
+    description: '변경 일시',
+    example: '2026-03-01T00:00:00.000Z',
+  })
+  changedAt: Date;
 }
 
 export class ChildcareTransactionDto {

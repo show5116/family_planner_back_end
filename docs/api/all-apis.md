@@ -966,35 +966,32 @@
 
 **Base Path:** `/childcare`
 
-### POST `childcare/accounts`
+### POST `childcare/children`
 
-**요약:** 육아 계정 생성 (부모만 가능)
+**요약:** 자녀 프로필 등록 (앱 계정 불필요)
 
 **Request Body:**
 
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "childUserId": "uuid-1234", // 자녀 사용자 ID (string)
-  "monthlyAllowance": 100, // 월별 용돈 포인트 (number)
-  "savingsInterestRate": 2 // 적금 이자율 (%) (number)
+  "name": "김민준", // 자녀 이름 (string)
+  "birthDate": "2024-01-15" // 생년월일 (YYYY-MM-DD) (string)
 }
 ```
 
 **Responses:**
 
-#### 201 - 육아 계정 생성 성공
+#### 201 - 자녀 프로필 등록 성공
 
 ```json
 {
-  "id": "uuid-1234", // 계정 ID (string)
+  "id": "uuid-1234", // 자녀 프로필 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "childUserId": "uuid-1234", // 자녀 사용자 ID (string)
   "parentUserId": "uuid-1234", // 부모 사용자 ID (string)
-  "balance": 500, // 현재 포인트 잔액 (number)
-  "monthlyAllowance": 100, // 월별 용돈 포인트 (number)
-  "savingsBalance": 200, // 적금 잔액 (number)
-  "savingsInterestRate": "2.50", // 적금 이자율 (%) (string)
+  "name": "김민준", // 자녀 이름 (string)
+  "birthDate": "2024-01-15T00:00:00.000Z", // 생년월일 (Date)
+  "userId": null, // 연결된 앱 계정 ID (앱 가입 시 연결) (string | null)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -1004,9 +1001,9 @@
 
 ---
 
-### GET `childcare/accounts`
+### GET `childcare/children`
 
-**요약:** 육아 계정 목록 조회
+**요약:** 그룹 내 자녀 프로필 목록 조회
 
 **Query Parameters:**
 
@@ -1014,18 +1011,76 @@
 
 **Responses:**
 
-#### 200 - 육아 계정 목록 조회 성공
+#### 200 - 자녀 프로필 목록 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 자녀 프로필 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string)
+  "parentUserId": "uuid-1234", // 부모 사용자 ID (string)
+  "name": "김민준", // 자녀 이름 (string)
+  "birthDate": "2024-01-15T00:00:00.000Z", // 생년월일 (Date)
+  "userId": null, // 연결된 앱 계정 ID (앱 가입 시 연결) (string | null)
+  "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### POST `childcare/children/:id/link-user`
+
+**요약:** 자녀 프로필과 앱 계정 연동 (부모만 가능)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 앱 계정 연동 성공
+
+```json
+{
+  "id": "uuid-1234", // 자녀 프로필 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string)
+  "parentUserId": "uuid-1234", // 부모 사용자 ID (string)
+  "name": "김민준", // 자녀 이름 (string)
+  "birthDate": "2024-01-15T00:00:00.000Z", // 생년월일 (Date)
+  "userId": null, // 연결된 앱 계정 ID (앱 가입 시 연결) (string | null)
+  "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 404 - 자녀 프로필을 찾을 수 없습니다
+
+#### 403 - 부모만 수행할 수 있는 작업입니다
+
+---
+
+### GET `childcare/accounts`
+
+**요약:** 그룹 내 포인트 계정 목록 조회
+
+**Query Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 포인트 계정 목록 조회 성공
 
 ```json
 {
   "id": "uuid-1234", // 계정 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "childUserId": "uuid-1234", // 자녀 사용자 ID (string)
+  "childId": "uuid-1234", // 자녀 프로필 ID (string)
   "parentUserId": "uuid-1234", // 부모 사용자 ID (string)
   "balance": 500, // 현재 포인트 잔액 (number)
-  "monthlyAllowance": 100, // 월별 용돈 포인트 (number)
   "savingsBalance": 200, // 적금 잔액 (number)
-  "savingsInterestRate": "2.50", // 적금 이자율 (%) (string)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -1037,7 +1092,7 @@
 
 ### GET `childcare/accounts/:id`
 
-**요약:** 육아 계정 상세 조회
+**요약:** 포인트 계정 상세 조회
 
 **Path Parameters:**
 
@@ -1045,32 +1100,30 @@
 
 **Responses:**
 
-#### 200 - 육아 계정 상세 조회 성공
+#### 200 - 포인트 계정 상세 조회 성공
 
 ```json
 {
   "id": "uuid-1234", // 계정 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "childUserId": "uuid-1234", // 자녀 사용자 ID (string)
+  "childId": "uuid-1234", // 자녀 프로필 ID (string)
   "parentUserId": "uuid-1234", // 부모 사용자 ID (string)
   "balance": 500, // 현재 포인트 잔액 (number)
-  "monthlyAllowance": 100, // 월별 용돈 포인트 (number)
   "savingsBalance": 200, // 적금 잔액 (number)
-  "savingsInterestRate": "2.50", // 적금 이자율 (%) (string)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
 }
 ```
 
-#### 404 - 육아 계정을 찾을 수 없습니다
+#### 404 - 포인트 계정을 찾을 수 없습니다
 
 #### 403 - 해당 계정에 접근할 권한이 없습니다
 
 ---
 
-### PATCH `childcare/accounts/:id`
+### POST `childcare/children/:id/allowance-plan`
 
-**요약:** 육아 계정 설정 수정 (부모만 가능)
+**요약:** 월 포인트 할당 설정 (생성 또는 수정, 부모만 가능)
 
 **Path Parameters:**
 
@@ -1080,33 +1133,94 @@
 
 ```json
 {
-  "monthlyAllowance": 150, // 월별 용돈 포인트 (number?)
-  "savingsInterestRate": 3 // 적금 이자율 (%) (number?)
+  "monthlyPoints": 100, // 월 지급 포인트 (number)
+  "payDay": 1, // 월 지급일 (1~31) (number)
+  "pointToMoneyRatio": 10, // 포인트 : 원 비율 (1포인트 = N원) (number)
+  "nextNegotiationDate": "2027-01-01" // 다음 연봉 협상일 (YYYY-MM-DD) (string?)
 }
 ```
 
 **Responses:**
 
-#### 200 - 육아 계정 수정 성공
+#### 201 - 월 포인트 할당 설정 성공
 
 ```json
 {
-  "id": "uuid-1234", // 계정 ID (string)
-  "groupId": "uuid-1234", // 그룹 ID (string)
-  "childUserId": "uuid-1234", // 자녀 사용자 ID (string)
-  "parentUserId": "uuid-1234", // 부모 사용자 ID (string)
-  "balance": 500, // 현재 포인트 잔액 (number)
-  "monthlyAllowance": 100, // 월별 용돈 포인트 (number)
-  "savingsBalance": 200, // 적금 잔액 (number)
-  "savingsInterestRate": "2.50", // 적금 이자율 (%) (string)
+  "id": "uuid-1234", // 할당 플랜 ID (string)
+  "childId": "uuid-1234", // 자녀 프로필 ID (string)
+  "monthlyPoints": 100, // 월 지급 포인트 (number)
+  "payDay": 1, // 월 지급일 (1~31) (number)
+  "pointToMoneyRatio": 10, // 포인트 : 원 비율 (1포인트 = N원) (number)
+  "nextNegotiationDate": "2027-01-01T00:00:00.000Z", // 다음 연봉 협상일 (Date | null)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
 }
 ```
 
-#### 404 - 육아 계정을 찾을 수 없습니다
+#### 404 - 자녀 프로필을 찾을 수 없습니다
 
 #### 403 - 부모만 수행할 수 있는 작업입니다
+
+---
+
+### GET `childcare/children/:id/allowance-plan`
+
+**요약:** 월 포인트 할당 설정 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 월 포인트 할당 설정 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 할당 플랜 ID (string)
+  "childId": "uuid-1234", // 자녀 프로필 ID (string)
+  "monthlyPoints": 100, // 월 지급 포인트 (number)
+  "payDay": 1, // 월 지급일 (1~31) (number)
+  "pointToMoneyRatio": 10, // 포인트 : 원 비율 (1포인트 = N원) (number)
+  "nextNegotiationDate": "2027-01-01T00:00:00.000Z", // 다음 연봉 협상일 (Date | null)
+  "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 404 - 자녀 프로필을 찾을 수 없습니다
+
+#### 403 - 해당 자녀 프로필에 접근할 권한이 없습니다
+
+---
+
+### GET `childcare/children/:id/allowance-plan/history`
+
+**요약:** 월 포인트 할당 변경 히스토리 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 히스토리 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 히스토리 ID (string)
+  "planId": "uuid-1234", // 플랜 ID (string)
+  "monthlyPoints": 100, // 월 지급 포인트 (number)
+  "payDay": 1, // 월 지급일 (1~31) (number)
+  "pointToMoneyRatio": 10, // 포인트 : 원 비율 (number)
+  "nextNegotiationDate": "2027-01-01T00:00:00.000Z", // 다음 연봉 협상일 (Date | null)
+  "changedAt": "2026-03-01T00:00:00.000Z" // 변경 일시 (Date)
+}
+```
+
+#### 404 - 자녀 프로필을 찾을 수 없습니다
+
+#### 403 - 해당 자녀 프로필에 접근할 권한이 없습니다
 
 ---
 
