@@ -1,6 +1,6 @@
 # 알림 현황 맵 (Notification Map)
 
-> 마지막 업데이트: 2026-03-09
+> 마지막 업데이트: 2026-03-24
 > 전체 알림 카테고리와 실제 발송 현황을 한눈에 확인합니다.
 
 ---
@@ -54,15 +54,20 @@
 
 | # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
 |---|--------|------|--------|-----------|------|
-| 1 | 용돈 지급 | 용돈 지급 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
-| 2 | 보상 포인트 지급 | 보상 포인트 지급 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
-| 3 | 규칙 위반 차감 | 규칙 위반 차감 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
-| 4 | 보상 사용 | 보상 사용 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
-| 5 | 적금 입금 | 적금 입금 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
-| 6 | 적금 출금 | 적금 출금 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
-| 7 | 이자 지급 | 이자 지급 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
+| 1 | 포인트 거래 추가 (ALLOWANCE) | 용돈 지급 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
+| 2 | 포인트 거래 추가 (REWARD) | 보상 포인트 지급 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
+| 3 | 포인트 거래 추가 (PENALTY) | 규칙 위반 차감 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
+| 4 | 포인트 거래 추가 (PURCHASE) | 보상 사용 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
+| 5 | 포인트 거래 추가 (SAVINGS_DEPOSIT) | 적금 입금 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
+| 6 | 포인트 거래 추가 (SAVINGS_WITHDRAW) | 적금 출금 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
+| 7 | 포인트 거래 추가 (INTEREST) | 이자 지급 | 자녀 계정 | 큐 (즉시) | [childcare.service.ts](../../src/childcare/childcare.service.ts) |
+| 8 | 매일 09:00 KST — payDay가 오늘인 자녀 | 이번 달 용돈이 지급됐어요! | 자녀 계정 | 큐 (즉시, 스케줄러) | [childcare.scheduler.ts](../../src/childcare/childcare.scheduler.ts) |
+| 9 | 매일 09:00 KST — payDay가 오늘인 자녀 | {자녀 이름} 용돈 지급 완료 | 부모 | 큐 (즉시, 스케줄러) | [childcare.scheduler.ts](../../src/childcare/childcare.scheduler.ts) |
+| 10 | 매일 09:00 KST — 연봉 협상일 전날 | {자녀 이름} 연봉 협상일이 내일이에요 | 부모, 자녀 계정 | 큐 (즉시, 스케줄러) | [childcare.scheduler.ts](../../src/childcare/childcare.scheduler.ts) |
+| 11 | 매일 09:00 KST — 연봉 협상일 당일 | {자녀 이름} 연봉 협상일이에요! | 부모, 자녀 계정 | 큐 (즉시, 스케줄러) | [childcare.scheduler.ts](../../src/childcare/childcare.scheduler.ts) |
 
 > **본문**: 적립 유형 → `"N 포인트가 적립되었습니다"`, 차감 유형 → `"N 포인트가 차감되었습니다"`
+> **스케줄러 알림**: 자녀 앱 계정이 없을 경우 자녀 알림 생략, 부모에게는 항상 발송
 
 ---
 
