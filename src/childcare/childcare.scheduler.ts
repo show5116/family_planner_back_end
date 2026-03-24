@@ -38,9 +38,21 @@ export class ChildcareScheduler {
     try {
       const today = new Date();
       const todayDay = today.getDate();
+      const lastDayOfMonth = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0,
+      ).getDate();
+      const isLastDay = todayDay === lastDayOfMonth;
 
       const plans = await this.prisma.childAllowancePlan.findMany({
-        where: { payDay: todayDay },
+        where: {
+          OR: [
+            { payDay: todayDay },
+            // 말일인 경우: 이번 달에 존재하지 않는 날짜(payDay > 말일)도 함께 지급
+            ...(isLastDay ? [{ payDay: { gt: lastDayOfMonth } }] : []),
+          ],
+        },
         include: {
           child: {
             include: { account: true },
