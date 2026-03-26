@@ -1299,9 +1299,9 @@
 
 ---
 
-### GET `childcare/accounts/:id/rewards`
+### GET `childcare/accounts/:id/shop-items`
 
-**요약:** 보상 항목 목록 조회
+**요약:** 상점 아이템 목록 조회
 
 **Path Parameters:**
 
@@ -1309,14 +1309,14 @@
 
 **Responses:**
 
-#### 200 - 보상 항목 목록 조회 성공
+#### 200 - 상점 아이템 목록 조회 성공
 
 ```json
 {
-  "id": "uuid-1234", // 보상 항목 ID (string)
+  "id": "uuid-1234", // 상점 아이템 ID (string)
   "accountId": "uuid-1234", // 계정 ID (string)
-  "name": "TV 30분 더보기", // 보상 이름 (string)
-  "description": "TV를 30분 추가로 볼 수 있어요", // 보상 설명 (string | null)
+  "name": "TV 30분 더보기", // 아이템 이름 (string)
+  "description": "TV를 30분 추가로 볼 수 있어요", // 아이템 설명 (string | null)
   "points": 10, // 포인트 비용 (number)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
@@ -1328,9 +1328,9 @@
 
 ---
 
-### POST `childcare/accounts/:id/rewards`
+### POST `childcare/accounts/:id/shop-items`
 
-**요약:** 보상 항목 추가 (부모만 가능)
+**요약:** 상점 아이템 추가 (부모만 가능)
 
 **Path Parameters:**
 
@@ -1340,22 +1340,22 @@
 
 ```json
 {
-  "name": "TV 30분 더보기", // 보상 이름 (string)
-  "description": "TV를 30분 추가로 볼 수 있어요", // 보상 설명 (string?)
+  "name": "TV 30분 더보기", // 상점 아이템 이름 (string)
+  "description": "TV를 30분 추가로 볼 수 있어요", // 상점 아이템 설명 (string?)
   "points": 10 // 포인트 비용 (number)
 }
 ```
 
 **Responses:**
 
-#### 201 - 보상 항목 추가 성공
+#### 201 - 상점 아이템 추가 성공
 
 ```json
 {
-  "id": "uuid-1234", // 보상 항목 ID (string)
+  "id": "uuid-1234", // 상점 아이템 ID (string)
   "accountId": "uuid-1234", // 계정 ID (string)
-  "name": "TV 30분 더보기", // 보상 이름 (string)
-  "description": "TV를 30분 추가로 볼 수 있어요", // 보상 설명 (string | null)
+  "name": "TV 30분 더보기", // 아이템 이름 (string)
+  "description": "TV를 30분 추가로 볼 수 있어요", // 아이템 설명 (string | null)
   "points": 10, // 포인트 비용 (number)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
@@ -1369,21 +1369,21 @@
 
 ---
 
-### PATCH `childcare/accounts/:id/rewards/:rewardId`
+### PATCH `childcare/accounts/:id/shop-items/:itemId`
 
-**요약:** 보상 항목 수정 (부모만 가능)
+**요약:** 상점 아이템 수정 (부모만 가능)
 
 **Path Parameters:**
 
 - `id` (`string`)
-- `rewardId` (`string`)
+- `itemId` (`string`)
 
 **Request Body:**
 
 ```json
 {
-  "name": "TV 1시간 더보기", // 보상 이름 (string?)
-  "description": "", // 보상 설명 (string?)
+  "name": "TV 1시간 더보기", // 상점 아이템 이름 (string?)
+  "description": "", // 상점 아이템 설명 (string?)
   "points": 20, // 포인트 비용 (number?)
   "isActive": true // 활성화 여부 (boolean?)
 }
@@ -1391,14 +1391,14 @@
 
 **Responses:**
 
-#### 200 - 보상 항목 수정 성공
+#### 200 - 상점 아이템 수정 성공
 
 ```json
 {
-  "id": "uuid-1234", // 보상 항목 ID (string)
+  "id": "uuid-1234", // 상점 아이템 ID (string)
   "accountId": "uuid-1234", // 계정 ID (string)
-  "name": "TV 30분 더보기", // 보상 이름 (string)
-  "description": "TV를 30분 추가로 볼 수 있어요", // 보상 설명 (string | null)
+  "name": "TV 30분 더보기", // 아이템 이름 (string)
+  "description": "TV를 30분 추가로 볼 수 있어요", // 아이템 설명 (string | null)
   "points": 10, // 포인트 비용 (number)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
@@ -1406,24 +1406,24 @@
 }
 ```
 
-#### 404 - 보상 항목을 찾을 수 없습니다
+#### 404 - 상점 아이템을 찾을 수 없습니다
 
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
 
-### DELETE `childcare/accounts/:id/rewards/:rewardId`
+### DELETE `childcare/accounts/:id/shop-items/:itemId`
 
-**요약:** 보상 항목 삭제 (부모만 가능)
+**요약:** 상점 아이템 삭제 (부모만 가능)
 
 **Path Parameters:**
 
 - `id` (`string`)
-- `rewardId` (`string`)
+- `itemId` (`string`)
 
 **Responses:**
 
-#### 200 - 보상 항목 삭제 성공
+#### 200 - 상점 아이템 삭제 성공
 
 ```json
 {
@@ -1431,7 +1431,7 @@
 }
 ```
 
-#### 404 - 보상 항목을 찾을 수 없습니다
+#### 404 - 상점 아이템을 찾을 수 없습니다
 
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
@@ -1453,9 +1453,10 @@
 {
   "id": "uuid-1234", // 규칙 ID (string)
   "accountId": "uuid-1234", // 계정 ID (string)
-  "name": "방 정리 안함", // 규칙 이름 (string)
-  "description": "방을 정리하지 않으면 포인트가 차감됩니다", // 규칙 설명 (string | null)
-  "penalty": 10, // 차감 포인트 (number)
+  "name": "방 정리하기", // 규칙 이름 (string)
+  "description": "방을 깨끗하게 정리하면 포인트가 지급됩니다", // 규칙 설명 (string | null)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType)
+  "points": 10, // 포인트 (없을 경우 null) (number | null)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
@@ -1478,9 +1479,10 @@
 
 ```json
 {
-  "name": "방 정리 안함", // 규칙 이름 (string)
-  "description": "방을 정리하지 않으면 포인트가 차감됩니다", // 규칙 설명 (string?)
-  "penalty": 10 // 차감 포인트 (number)
+  "name": "방 정리하기", // 규칙 이름 (string)
+  "description": "방을 깨끗하게 정리하면 포인트가 지급됩니다", // 규칙 설명 (string?)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType)
+  "points": 10 // 포인트 (미지정 시 null) (number | null?)
 }
 ```
 
@@ -1492,9 +1494,10 @@
 {
   "id": "uuid-1234", // 규칙 ID (string)
   "accountId": "uuid-1234", // 계정 ID (string)
-  "name": "방 정리 안함", // 규칙 이름 (string)
-  "description": "방을 정리하지 않으면 포인트가 차감됩니다", // 규칙 설명 (string | null)
-  "penalty": 10, // 차감 포인트 (number)
+  "name": "방 정리하기", // 규칙 이름 (string)
+  "description": "방을 깨끗하게 정리하면 포인트가 지급됩니다", // 규칙 설명 (string | null)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType)
+  "points": 10, // 포인트 (없을 경우 null) (number | null)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
@@ -1520,9 +1523,10 @@
 
 ```json
 {
-  "name": "숙제 안함", // 규칙 이름 (string?)
+  "name": "숙제하기", // 규칙 이름 (string?)
   "description": "", // 규칙 설명 (string?)
-  "penalty": 20, // 차감 포인트 (number?)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType?)
+  "points": 20, // 포인트 (null로 설정 시 포인트 없는 규칙) (number | null?)
   "isActive": true // 활성화 여부 (boolean?)
 }
 ```
@@ -1535,9 +1539,10 @@
 {
   "id": "uuid-1234", // 규칙 ID (string)
   "accountId": "uuid-1234", // 계정 ID (string)
-  "name": "방 정리 안함", // 규칙 이름 (string)
-  "description": "방을 정리하지 않으면 포인트가 차감됩니다", // 규칙 설명 (string | null)
-  "penalty": 10, // 차감 포인트 (number)
+  "name": "방 정리하기", // 규칙 이름 (string)
+  "description": "방을 깨끗하게 정리하면 포인트가 지급됩니다", // 규칙 설명 (string | null)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType)
+  "points": 10, // 포인트 (없을 경우 null) (number | null)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)

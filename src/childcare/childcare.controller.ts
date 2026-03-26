@@ -16,8 +16,8 @@ import { CreateChildDto } from './dto/create-child.dto';
 import { CreateAllowancePlanDto } from './dto/create-allowance-plan.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
-import { CreateRewardDto } from './dto/create-reward.dto';
-import { UpdateRewardDto } from './dto/update-reward.dto';
+import { CreateShopItemDto } from './dto/create-shop-item.dto';
+import { UpdateShopItemDto } from './dto/update-shop-item.dto';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
 import { SavingsDepositDto, SavingsWithdrawDto } from './dto/savings.dto';
@@ -27,7 +27,7 @@ import {
   AllowancePlanDto,
   AllowancePlanHistoryDto,
   ChildcareTransactionDto,
-  ChildcareRewardDto,
+  ChildcareShopItemDto,
   ChildcareRuleDto,
 } from './dto/childcare-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
@@ -166,61 +166,61 @@ export class ChildcareController {
     return this.childcareService.findTransactions(req.user.userId, id, query);
   }
 
-  // ─── 보상 항목 ────────────────────────────────────────────
+  // ─── 포인트 상점 ──────────────────────────────────────────
 
-  @Get('accounts/:id/rewards')
-  @ApiOperation({ summary: '보상 항목 목록 조회' })
-  @ApiSuccess(ChildcareRewardDto, '보상 항목 목록 조회 성공', {
+  @Get('accounts/:id/shop-items')
+  @ApiOperation({ summary: '상점 아이템 목록 조회' })
+  @ApiSuccess(ChildcareShopItemDto, '상점 아이템 목록 조회 성공', {
     isArray: true,
   })
   @ApiNotFound('육아 계정을 찾을 수 없습니다')
-  findRewards(@Request() req, @Param('id') id: string) {
-    return this.childcareService.findRewards(req.user.userId, id);
+  findShopItems(@Request() req, @Param('id') id: string) {
+    return this.childcareService.findShopItems(req.user.userId, id);
   }
 
-  @Post('accounts/:id/rewards')
-  @ApiOperation({ summary: '보상 항목 추가 (부모만 가능)' })
-  @ApiCreated(ChildcareRewardDto, '보상 항목 추가 성공')
+  @Post('accounts/:id/shop-items')
+  @ApiOperation({ summary: '상점 아이템 추가 (부모만 가능)' })
+  @ApiCreated(ChildcareShopItemDto, '상점 아이템 추가 성공')
   @ApiNotFound('육아 계정을 찾을 수 없습니다')
   @ApiForbidden('부모만 수행할 수 있는 작업입니다')
-  createReward(
+  createShopItem(
     @Request() req,
     @Param('id') id: string,
-    @Body() dto: CreateRewardDto,
+    @Body() dto: CreateShopItemDto,
   ) {
-    return this.childcareService.createReward(req.user.userId, id, dto);
+    return this.childcareService.createShopItem(req.user.userId, id, dto);
   }
 
-  @Patch('accounts/:id/rewards/:rewardId')
-  @ApiOperation({ summary: '보상 항목 수정 (부모만 가능)' })
-  @ApiSuccess(ChildcareRewardDto, '보상 항목 수정 성공')
-  @ApiNotFound('보상 항목을 찾을 수 없습니다')
+  @Patch('accounts/:id/shop-items/:itemId')
+  @ApiOperation({ summary: '상점 아이템 수정 (부모만 가능)' })
+  @ApiSuccess(ChildcareShopItemDto, '상점 아이템 수정 성공')
+  @ApiNotFound('상점 아이템을 찾을 수 없습니다')
   @ApiForbidden('부모만 수행할 수 있는 작업입니다')
-  updateReward(
+  updateShopItem(
     @Request() req,
     @Param('id') id: string,
-    @Param('rewardId') rewardId: string,
-    @Body() dto: UpdateRewardDto,
+    @Param('itemId') itemId: string,
+    @Body() dto: UpdateShopItemDto,
   ) {
-    return this.childcareService.updateReward(
+    return this.childcareService.updateShopItem(
       req.user.userId,
       id,
-      rewardId,
+      itemId,
       dto,
     );
   }
 
-  @Delete('accounts/:id/rewards/:rewardId')
-  @ApiOperation({ summary: '보상 항목 삭제 (부모만 가능)' })
-  @ApiSuccess(MessageResponseDto, '보상 항목 삭제 성공')
-  @ApiNotFound('보상 항목을 찾을 수 없습니다')
+  @Delete('accounts/:id/shop-items/:itemId')
+  @ApiOperation({ summary: '상점 아이템 삭제 (부모만 가능)' })
+  @ApiSuccess(MessageResponseDto, '상점 아이템 삭제 성공')
+  @ApiNotFound('상점 아이템을 찾을 수 없습니다')
   @ApiForbidden('부모만 수행할 수 있는 작업입니다')
-  removeReward(
+  removeShopItem(
     @Request() req,
     @Param('id') id: string,
-    @Param('rewardId') rewardId: string,
+    @Param('itemId') itemId: string,
   ) {
-    return this.childcareService.removeReward(req.user.userId, id, rewardId);
+    return this.childcareService.removeShopItem(req.user.userId, id, itemId);
   }
 
   // ─── 규칙 ─────────────────────────────────────────────────

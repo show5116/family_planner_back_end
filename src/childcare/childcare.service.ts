@@ -13,8 +13,8 @@ import { CreateChildDto } from './dto/create-child.dto';
 import { CreateAllowancePlanDto } from './dto/create-allowance-plan.dto';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
-import { CreateRewardDto } from './dto/create-reward.dto';
-import { UpdateRewardDto } from './dto/update-reward.dto';
+import { CreateShopItemDto } from './dto/create-shop-item.dto';
+import { UpdateShopItemDto } from './dto/update-shop-item.dto';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
 import { SavingsDepositDto, SavingsWithdrawDto } from './dto/savings.dto';
@@ -324,12 +324,16 @@ export class ChildcareService {
     });
   }
 
-  // ─── 보상 항목 ────────────────────────────────────────────
+  // ─── 포인트 상점 ──────────────────────────────────────────
 
   /**
-   * 보상 항목 추가 (부모만 가능)
+   * 상점 아이템 추가 (부모만 가능)
    */
-  async createReward(userId: string, accountId: string, dto: CreateRewardDto) {
+  async createShopItem(
+    userId: string,
+    accountId: string,
+    dto: CreateShopItemDto,
+  ) {
     const account = await this.prisma.childcareAccount.findUnique({
       where: { id: accountId },
     });
@@ -340,7 +344,7 @@ export class ChildcareService {
 
     this.validateParent(userId, account);
 
-    return await this.prisma.childcareReward.create({
+    return await this.prisma.childcareShopItem.create({
       data: {
         accountId,
         name: dto.name,
@@ -351,27 +355,27 @@ export class ChildcareService {
   }
 
   /**
-   * 보상 항목 수정 (부모만 가능)
+   * 상점 아이템 수정 (부모만 가능)
    */
-  async updateReward(
+  async updateShopItem(
     userId: string,
     accountId: string,
-    rewardId: string,
-    dto: UpdateRewardDto,
+    itemId: string,
+    dto: UpdateShopItemDto,
   ) {
-    const reward = await this.prisma.childcareReward.findUnique({
-      where: { id: rewardId },
+    const item = await this.prisma.childcareShopItem.findUnique({
+      where: { id: itemId },
       include: { account: true },
     });
 
-    if (!reward || reward.accountId !== accountId) {
-      throw new NotFoundException('보상 항목을 찾을 수 없습니다');
+    if (!item || item.accountId !== accountId) {
+      throw new NotFoundException('상점 아이템을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, reward.account);
+    this.validateParent(userId, item.account);
 
-    return await this.prisma.childcareReward.update({
-      where: { id: rewardId },
+    return await this.prisma.childcareShopItem.update({
+      where: { id: itemId },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
@@ -382,29 +386,29 @@ export class ChildcareService {
   }
 
   /**
-   * 보상 항목 삭제 (부모만 가능)
+   * 상점 아이템 삭제 (부모만 가능)
    */
-  async removeReward(userId: string, accountId: string, rewardId: string) {
-    const reward = await this.prisma.childcareReward.findUnique({
-      where: { id: rewardId },
+  async removeShopItem(userId: string, accountId: string, itemId: string) {
+    const item = await this.prisma.childcareShopItem.findUnique({
+      where: { id: itemId },
       include: { account: true },
     });
 
-    if (!reward || reward.accountId !== accountId) {
-      throw new NotFoundException('보상 항목을 찾을 수 없습니다');
+    if (!item || item.accountId !== accountId) {
+      throw new NotFoundException('상점 아이템을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, reward.account);
+    this.validateParent(userId, item.account);
 
-    await this.prisma.childcareReward.delete({ where: { id: rewardId } });
+    await this.prisma.childcareShopItem.delete({ where: { id: itemId } });
 
-    return { message: '보상 항목이 삭제되었습니다' };
+    return { message: '상점 아이템이 삭제되었습니다' };
   }
 
   /**
-   * 보상 항목 목록 조회
+   * 상점 아이템 목록 조회
    */
-  async findRewards(userId: string, accountId: string) {
+  async findShopItems(userId: string, accountId: string) {
     const account = await this.prisma.childcareAccount.findUnique({
       where: { id: accountId },
       include: { child: true },
@@ -416,7 +420,7 @@ export class ChildcareService {
 
     this.validateParentOrChild(userId, account);
 
-    return await this.prisma.childcareReward.findMany({
+    return await this.prisma.childcareShopItem.findMany({
       where: { accountId },
       orderBy: { createdAt: 'asc' },
     });
@@ -443,7 +447,8 @@ export class ChildcareService {
         accountId,
         name: dto.name,
         description: dto.description,
-        penalty: dto.penalty,
+        type: dto.type,
+        points: dto.points ?? null,
       },
     });
   }
@@ -473,7 +478,8 @@ export class ChildcareService {
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
-        ...(dto.penalty !== undefined && { penalty: dto.penalty }),
+        ...(dto.type !== undefined && { type: dto.type }),
+        ...(dto.points !== undefined && { points: dto.points }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       },
     });

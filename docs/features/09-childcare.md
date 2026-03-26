@@ -36,15 +36,16 @@
 - 다음 연봉 협상일 설정
 - 변경 시 이전 설정 히스토리 자동 보존
 
-### 육아 포인트 표 (보상 항목)
+### 포인트 상점 (Shop)
 - 부모가 편집 가능
-- 항목별 포인트 금액 설정
+- 아이가 포인트를 소비해서 구매하는 항목
 - 예: TV 30분 더보기 → 10 포인트, 장난감 10,000원 → 100 포인트
 
 ### 육아 포인트 Rule (규칙)
 - 부모가 편집 가능
-- 규칙 위반 시 포인트 차감
-- 예: 방 정리 안함 → -10 포인트, 숙제 안함 → -20 포인트
+- 행동 기준에 따라 포인트 지급 또는 차감
+- `PLUS`: 잘한 행동 → 포인트 지급 (예: 방 정리하기 → +10 포인트)
+- `MINUS`: 못한 행동 → 포인트 차감 (예: 숙제 안함 → -20 포인트)
 
 ### 포인트 거래 내역
 - 포인트 적립/사용/차감 내역
@@ -131,26 +132,32 @@ enum ChildcareTransactionType {
   INTEREST
 }
 
-model ChildcareReward {
+model ChildcareShopItem {
   id          String   @id @default(uuid())
   accountId   String
   name        String   @db.VarChar(100)
   description String?  @db.VarChar(200)
-  points      Int
+  points      Int      // 구매에 필요한 포인트
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model ChildcareRule {
-  id          String   @id @default(uuid())
+  id          String            @id @default(uuid())
   accountId   String
-  name        String   @db.VarChar(100)
-  description String?  @db.VarChar(200)
-  penalty     Int
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  name        String            @db.VarChar(100)
+  description String?           @db.VarChar(200)
+  type        ChildcareRuleType // PLUS: 지급, MINUS: 차감
+  points      Int
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+enum ChildcareRuleType {
+  PLUS   // 잘한 행동 → 포인트 지급
+  MINUS  // 못한 행동 → 포인트 차감
 }
 ```
 
@@ -168,8 +175,8 @@ model ChildcareRule {
 - [x] 월 포인트 할당 변경 히스토리 조회
 - [x] 포인트 거래 추가 (적립/사용/차감)
 - [x] 포인트 거래 내역 조회 (날짜별, 타입별 필터)
-- [x] 보상 항목 CRUD
-- [x] 규칙 CRUD
+- [x] 포인트 상점 아이템 CRUD
+- [x] 규칙 CRUD (PLUS/MINUS 타입)
 - [x] 적금 입금/출금
 - [x] 거래 시 자녀 앱 알림
 
@@ -212,14 +219,14 @@ model ChildcareRule {
 | POST   | `/childcare/accounts/:id/transactions` | 거래 추가   | JWT, Parent          |
 | GET    | `/childcare/accounts/:id/transactions` | 거래 내역   | JWT, Parent or Child |
 
-### 보상 항목
+### 포인트 상점
 
-| Method | Endpoint                                    | 설명           | 권한                 |
-| ------ | ------------------------------------------- | -------------- | -------------------- |
-| GET    | `/childcare/accounts/:id/rewards`           | 보상 목록      | JWT, Parent or Child |
-| POST   | `/childcare/accounts/:id/rewards`           | 보상 항목 추가 | JWT, Parent          |
-| PATCH  | `/childcare/accounts/:id/rewards/:rewardId` | 보상 항목 수정 | JWT, Parent          |
-| DELETE | `/childcare/accounts/:id/rewards/:rewardId` | 보상 항목 삭제 | JWT, Parent          |
+| Method | Endpoint                                      | 설명           | 권한                 |
+| ------ | --------------------------------------------- | -------------- | -------------------- |
+| GET    | `/childcare/accounts/:id/shop-items`           | 상점 목록      | JWT, Parent or Child |
+| POST   | `/childcare/accounts/:id/shop-items`           | 아이템 추가    | JWT, Parent          |
+| PATCH  | `/childcare/accounts/:id/shop-items/:itemId`   | 아이템 수정    | JWT, Parent          |
+| DELETE | `/childcare/accounts/:id/shop-items/:itemId`   | 아이템 삭제    | JWT, Parent          |
 
 ### 규칙
 
@@ -239,4 +246,4 @@ model ChildcareRule {
 
 ---
 
-**Last Updated**: 2026-03-23
+**Last Updated**: 2026-03-25

@@ -857,7 +857,7 @@ model ChildcareAccount {
   child        Child                  @relation(fields: [childId], references: [id], onDelete: Cascade)
   parentUser   User                   @relation("ChildcareParent", fields: [parentUserId], references: [id], onDelete: Cascade)
   transactions ChildcareTransaction[]
-  rewards      ChildcareReward[]
+  shopItems    ChildcareShopItem[]
   rules        ChildcareRule[]
 
   @@index([groupId])
@@ -923,7 +923,7 @@ enum ChildcareTransactionType {
   INTEREST
 }
 
-model ChildcareReward {
+model ChildcareShopItem {
   id          String   @id @default(uuid())
   accountId   String
   name        String   @db.VarChar(100)
@@ -936,23 +936,29 @@ model ChildcareReward {
   account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId])
-  @@map("childcare_rewards")
+  @@map("childcare_shop_items")
 }
 
 model ChildcareRule {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   accountId   String
-  name        String   @db.VarChar(100)
-  description String?  @db.VarChar(200)
-  penalty     Int
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  name        String          @db.VarChar(100)
+  description String?         @db.VarChar(200)
+  type        ChildcareRuleType
+  points      Int?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId])
   @@map("childcare_rules")
+}
+
+enum ChildcareRuleType {
+  PLUS
+  MINUS
 }
 
 // ============================================================

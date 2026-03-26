@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChildcareTransactionType } from '@prisma/client';
+import { ChildcareRuleType, ChildcareTransactionType } from '@prisma/client';
 
 export class ChildDto {
   @ApiProperty({ description: '자녀 프로필 ID', example: 'uuid-1234' })
@@ -165,18 +165,18 @@ export class ChildcareTransactionDto {
   createdAt: Date;
 }
 
-export class ChildcareRewardDto {
-  @ApiProperty({ description: '보상 항목 ID', example: 'uuid-1234' })
+export class ChildcareShopItemDto {
+  @ApiProperty({ description: '상점 아이템 ID', example: 'uuid-1234' })
   id: string;
 
   @ApiProperty({ description: '계정 ID', example: 'uuid-1234' })
   accountId: string;
 
-  @ApiProperty({ description: '보상 이름', example: 'TV 30분 더보기' })
+  @ApiProperty({ description: '아이템 이름', example: 'TV 30분 더보기' })
   name: string;
 
   @ApiProperty({
-    description: '보상 설명',
+    description: '아이템 설명',
     example: 'TV를 30분 추가로 볼 수 있어요',
     nullable: true,
   })
@@ -208,18 +208,29 @@ export class ChildcareRuleDto {
   @ApiProperty({ description: '계정 ID', example: 'uuid-1234' })
   accountId: string;
 
-  @ApiProperty({ description: '규칙 이름', example: '방 정리 안함' })
+  @ApiProperty({ description: '규칙 이름', example: '방 정리하기' })
   name: string;
 
   @ApiProperty({
     description: '규칙 설명',
-    example: '방을 정리하지 않으면 포인트가 차감됩니다',
+    example: '방을 깨끗하게 정리하면 포인트가 지급됩니다',
     nullable: true,
   })
   description: string | null;
 
-  @ApiProperty({ description: '차감 포인트', example: 10 })
-  penalty: number;
+  @ApiProperty({
+    description: '규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감)',
+    enum: ChildcareRuleType,
+    example: ChildcareRuleType.PLUS,
+  })
+  type: ChildcareRuleType;
+
+  @ApiProperty({
+    description: '포인트 (없을 경우 null)',
+    example: 10,
+    nullable: true,
+  })
+  points: number | null;
 
   @ApiProperty({ description: '활성화 여부', example: true })
   isActive: boolean;

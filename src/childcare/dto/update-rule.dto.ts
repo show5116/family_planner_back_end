@@ -1,10 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateIf,
+} from 'class-validator';
+import { ChildcareRuleType } from '@prisma/client';
 
 export class UpdateRuleDto {
   @ApiProperty({
     description: '규칙 이름',
-    example: '숙제 안함',
+    example: '숙제하기',
     required: false,
   })
   @IsOptional()
@@ -20,14 +29,24 @@ export class UpdateRuleDto {
   description?: string;
 
   @ApiProperty({
-    description: '차감 포인트',
+    description: '규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감)',
+    enum: ChildcareRuleType,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(ChildcareRuleType)
+  type?: ChildcareRuleType;
+
+  @ApiProperty({
+    description: '포인트 (null로 설정 시 포인트 없는 규칙)',
     example: 20,
     required: false,
   })
   @IsOptional()
+  @ValidateIf((o) => o.points !== null)
   @IsInt()
   @Min(1)
-  penalty?: number;
+  points?: number | null;
 
   @ApiProperty({
     description: '활성화 여부',
