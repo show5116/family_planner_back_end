@@ -24,20 +24,21 @@ export class CreateRuleDto {
   description?: string;
 
   @ApiProperty({
-    description: '규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감)',
+    description:
+      '규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감, INFO: 메모성 규칙)',
     enum: ChildcareRuleType,
-    example: ChildcareRuleType.PLUS,
+    example: ChildcareRuleType.INFO,
   })
   @IsEnum(ChildcareRuleType)
   type: ChildcareRuleType;
 
   @ApiProperty({
-    description: '포인트 (미지정 시 null)',
+    description: '포인트 (INFO 타입은 무시됨, PLUS/MINUS는 선택)',
     example: 10,
     required: false,
   })
   @IsOptional()
-  @ValidateIf((o) => o.points !== null)
+  @ValidateIf((o) => o.points !== null && o.type !== ChildcareRuleType.INFO)
   @IsInt()
   @Min(1)
   points?: number | null;

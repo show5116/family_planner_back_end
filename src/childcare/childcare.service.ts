@@ -5,7 +5,11 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { ChildcareTransactionType } from '@prisma/client';
+import { ChildcareRuleType, ChildcareTransactionType } from '@prisma/client';
+import {
+  ChildcareEarningTypes,
+  ChildcareTransactionTypeLabel,
+} from './constants/transaction-type.constant';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
@@ -254,7 +258,48 @@ export class ChildcareService {
 
     this.validateParent(userId, account);
 
-    const delta = this.calculateBalanceDelta(dto.type, dto.amount);
+    // shopItemId 또는 ruleId로 type/amount/description 자동 설정
+    let type = dto.type;
+    let amount = dto.amount;
+    let description = dto.description;
+
+    if (dto.shopItemId) {
+      const item = await this.prisma.childcareShopItem.findUnique({
+        where: { id: dto.shopItemId },
+      });
+      if (!item || item.accountId !== accountId) {
+        throw new NotFoundException('상점 아이템을 찾을 수 없습니다');
+      }
+      type = ChildcareTransactionType.PURCHASE;
+      amount = item.points;
+      description = item.name;
+    } else if (dto.ruleId) {
+      const rule = await this.prisma.childcareRule.findUnique({
+        where: { id: dto.ruleId },
+      });
+      if (!rule || rule.accountId !== accountId) {
+        throw new NotFoundException('규칙을 찾을 수 없습니다');
+      }
+      if (rule.type === ChildcareRuleType.INFO || !rule.points) {
+        throw new BadRequestException(
+          '포인트가 없는 규칙은 적용할 수 없습니다',
+        );
+      }
+      type =
+        rule.type === ChildcareRuleType.PLUS
+          ? ChildcareTransactionType.REWARD
+          : ChildcareTransactionType.PENALTY;
+      amount = rule.points;
+      description = rule.name;
+    }
+
+    if (!type || !amount || !description) {
+      throw new BadRequestException(
+        'type, amount, description을 입력하거나 shopItemId/ruleId를 지정해주세요',
+      );
+    }
+
+    const delta = this.calculateBalanceDelta(type, amount);
 
     if (account.balance + delta < 0) {
       throw new BadRequestException('포인트 잔액이 부족합니다');
@@ -264,9 +309,9 @@ export class ChildcareService {
       this.prisma.childcareTransaction.create({
         data: {
           accountId,
-          type: dto.type,
-          amount: dto.amount,
-          description: dto.description,
+          type,
+          amount,
+          description,
           createdBy: userId,
         },
       }),
@@ -277,9 +322,7 @@ export class ChildcareService {
     ]);
 
     if (account.child.userId) {
-      this.notifyChild(account.child.userId, dto.type, dto.amount).catch(
-        () => null,
-      );
+      this.notifyChild(account.child.userId, type, amount).catch(() => null);
     }
 
     return transaction;
@@ -448,7 +491,8 @@ export class ChildcareService {
         name: dto.name,
         description: dto.description,
         type: dto.type,
-        points: dto.points ?? null,
+        points:
+          dto.type === ChildcareRuleType.INFO ? null : (dto.points ?? null),
       },
     });
   }
@@ -623,17 +667,7 @@ export class ChildcareService {
     type: ChildcareTransactionType,
     amount: number,
   ): number {
-    switch (type) {
-      case ChildcareTransactionType.ALLOWANCE:
-      case ChildcareTransactionType.REWARD:
-      case ChildcareTransactionType.INTEREST:
-        return amount;
-      case ChildcareTransactionType.PENALTY:
-      case ChildcareTransactionType.PURCHASE:
-        return -amount;
-      default:
-        return 0;
-    }
+    return ChildcareEarningTypes.includes(type) ? amount : -amount;
   }
 
   private async notifyChild(
@@ -641,27 +675,12 @@ export class ChildcareService {
     type: ChildcareTransactionType,
     amount: number,
   ) {
-    const typeLabel: Record<ChildcareTransactionType, string> = {
-      ALLOWANCE: '용돈 지급',
-      REWARD: '보상 포인트 지급',
-      PENALTY: '규칙 위반 차감',
-      PURCHASE: '보상 사용',
-      SAVINGS_DEPOSIT: '적금 입금',
-      SAVINGS_WITHDRAW: '적금 출금',
-      INTEREST: '이자 지급',
-    };
-
-    const earningTypes: ChildcareTransactionType[] = [
-      ChildcareTransactionType.ALLOWANCE,
-      ChildcareTransactionType.REWARD,
-      ChildcareTransactionType.INTEREST,
-    ];
-    const isEarning = earningTypes.includes(type);
+    const isEarning = ChildcareEarningTypes.includes(type);
 
     await this.notificationQueue.enqueueImmediate({
       userId,
       category: NotificationCategory.CHILDCARE,
-      title: typeLabel[type],
+      title: ChildcareTransactionTypeLabel[type],
       body: isEarning
         ? `${amount} 포인트가 적립되었습니다`
         : `${amount} 포인트가 차감되었습니다`,

@@ -43,9 +43,10 @@
 
 ### 육아 포인트 Rule (규칙)
 - 부모가 편집 가능
-- 행동 기준에 따라 포인트 지급 또는 차감
+- 행동 기준에 따라 포인트 지급 또는 차감, 또는 메모로만 등록
 - `PLUS`: 잘한 행동 → 포인트 지급 (예: 방 정리하기 → +10 포인트)
 - `MINUS`: 못한 행동 → 포인트 차감 (예: 숙제 안함 → -20 포인트)
+- `INFO`: 메모성 규칙 → 포인트 없음 (예: 취침 시간은 9시)
 
 ### 포인트 거래 내역
 - 포인트 적립/사용/차감 내역
@@ -148,8 +149,8 @@ model ChildcareRule {
   accountId   String
   name        String            @db.VarChar(100)
   description String?           @db.VarChar(200)
-  type        ChildcareRuleType // PLUS: 지급, MINUS: 차감
-  points      Int
+  type        ChildcareRuleType // PLUS: 지급, MINUS: 차감, INFO: 메모
+  points      Int?              // INFO 타입일 경우 null
   isActive    Boolean           @default(true)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -158,6 +159,7 @@ model ChildcareRule {
 enum ChildcareRuleType {
   PLUS   // 잘한 행동 → 포인트 지급
   MINUS  // 못한 행동 → 포인트 차감
+  INFO   // 메모성 규칙 → 포인트 없음
 }
 ```
 
@@ -176,7 +178,7 @@ enum ChildcareRuleType {
 - [x] 포인트 거래 추가 (적립/사용/차감)
 - [x] 포인트 거래 내역 조회 (날짜별, 타입별 필터)
 - [x] 포인트 상점 아이템 CRUD
-- [x] 규칙 CRUD (PLUS/MINUS 타입)
+- [x] 규칙 CRUD (PLUS/MINUS/INFO 타입)
 - [x] 적금 입금/출금
 - [x] 거래 시 자녀 앱 알림
 
@@ -246,4 +248,4 @@ enum ChildcareRuleType {
 
 ---
 
-**Last Updated**: 2026-03-25
+**Last Updated**: 2026-03-27

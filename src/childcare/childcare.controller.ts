@@ -139,7 +139,20 @@ export class ChildcareController {
   // ─── 거래 내역 ────────────────────────────────────────────
 
   @Post('accounts/:id/transactions')
-  @ApiOperation({ summary: '포인트 거래 추가 (부모만 가능)' })
+  @ApiOperation({
+    summary: '포인트 거래 추가 (부모만 가능)',
+    description: `포인트 적립/차감 거래를 추가합니다.
+
+**방법 1 — 상점 아이템 적용**: \`shopItemId\` 지정
+- type: PURCHASE 자동 설정, 아이템 포인트만큼 잔액 차감
+
+**방법 2 — 규칙 적용**: \`ruleId\` 지정
+- PLUS 규칙 → type: REWARD, 잔액 증가
+- MINUS 규칙 → type: PENALTY, 잔액 차감
+- INFO 규칙은 포인트가 없어 적용 불가
+
+**방법 3 — 직접 입력**: \`type\`, \`amount\`, \`description\` 직접 지정`,
+  })
   @ApiCreated(ChildcareTransactionDto, '거래 추가 성공')
   @ApiNotFound('육아 계정을 찾을 수 없습니다')
   @ApiForbidden('부모만 수행할 수 있는 작업입니다')

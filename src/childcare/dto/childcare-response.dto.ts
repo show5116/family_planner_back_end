@@ -219,7 +219,8 @@ export class ChildcareRuleDto {
   description: string | null;
 
   @ApiProperty({
-    description: '규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감)',
+    description:
+      '규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감, INFO: 메모성 규칙)',
     enum: ChildcareRuleType,
     example: ChildcareRuleType.PLUS,
   })

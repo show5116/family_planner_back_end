@@ -1236,9 +1236,11 @@
 
 ```json
 {
-  "type": null, // 거래 유형 (ChildcareTransactionType)
-  "amount": 50, // 포인트 금액 (number)
-  "description": "심부름 완료" // 설명 (string)
+  "type": null, // 거래 유형. shopItemId 또는 ruleId 지정 시 자동 설정됨 (ChildcareTransactionType?)
+  "amount": 50, // 포인트 금액. shopItemId 또는 ruleId 지정 시 자동 설정됨 (number?)
+  "description": "심부름 완료", // 설명. shopItemId 또는 ruleId 지정 시 자동 설정됨 (string?)
+  "shopItemId": "uuid-1234", // 상점 아이템 ID. 지정 시 type=PURCHASE, amount/description 자동 설정 (string?)
+  "ruleId": "uuid-1234" // 규칙 ID. 지정 시 type/amount/description 자동 설정 (INFO 타입 규칙은 적용 불가) (string?)
 }
 ```
 
@@ -1455,7 +1457,7 @@
   "accountId": "uuid-1234", // 계정 ID (string)
   "name": "방 정리하기", // 규칙 이름 (string)
   "description": "방을 깨끗하게 정리하면 포인트가 지급됩니다", // 규칙 설명 (string | null)
-  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감, INFO: 메모성 규칙) (ChildcareRuleType)
   "points": 10, // 포인트 (없을 경우 null) (number | null)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
@@ -1481,8 +1483,8 @@
 {
   "name": "방 정리하기", // 규칙 이름 (string)
   "description": "방을 깨끗하게 정리하면 포인트가 지급됩니다", // 규칙 설명 (string?)
-  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType)
-  "points": 10 // 포인트 (미지정 시 null) (number | null?)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감, INFO: 메모성 규칙) (ChildcareRuleType)
+  "points": 10 // 포인트 (INFO 타입은 무시됨, PLUS/MINUS는 선택) (number | null?)
 }
 ```
 
@@ -1496,7 +1498,7 @@
   "accountId": "uuid-1234", // 계정 ID (string)
   "name": "방 정리하기", // 규칙 이름 (string)
   "description": "방을 깨끗하게 정리하면 포인트가 지급됩니다", // 규칙 설명 (string | null)
-  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감, INFO: 메모성 규칙) (ChildcareRuleType)
   "points": 10, // 포인트 (없을 경우 null) (number | null)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
@@ -1541,7 +1543,7 @@
   "accountId": "uuid-1234", // 계정 ID (string)
   "name": "방 정리하기", // 규칙 이름 (string)
   "description": "방을 깨끗하게 정리하면 포인트가 지급됩니다", // 규칙 설명 (string | null)
-  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감) (ChildcareRuleType)
+  "type": null, // 규칙 유형 (PLUS: 포인트 지급, MINUS: 포인트 차감, INFO: 메모성 규칙) (ChildcareRuleType)
   "points": 10, // 포인트 (없을 경우 null) (number | null)
   "isActive": true, // 활성화 여부 (boolean)
   "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)

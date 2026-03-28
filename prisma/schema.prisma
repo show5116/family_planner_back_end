@@ -914,13 +914,14 @@ model ChildcareTransaction {
 }
 
 enum ChildcareTransactionType {
-  ALLOWANCE
-  REWARD
-  PENALTY
-  PURCHASE
-  SAVINGS_DEPOSIT
-  SAVINGS_WITHDRAW
-  INTEREST
+  ALLOWANCE        // 월 용돈 자동 지급 (스케줄러)
+  REWARD           // 규칙 PLUS 적용 — 잘한 행동 포인트 지급
+  BONUS            // 부모가 자유롭게 주는 특별 보너스
+  PENALTY          // 규칙 MINUS 적용 — 못한 행동 포인트 차감
+  PURCHASE         // 상점 아이템 구매 — 포인트 소비
+  SAVINGS_DEPOSIT  // 적금 입금 — 잔액 → 적금
+  SAVINGS_WITHDRAW // 적금 출금 — 적금 → 잔액
+  INTEREST         // 이자 지급 (스케줄러)
 }
 
 model ChildcareShopItem {
@@ -945,7 +946,7 @@ model ChildcareRule {
   name        String          @db.VarChar(100)
   description String?         @db.VarChar(200)
   type        ChildcareRuleType
-  points      Int?
+  points      Int?              // INFO 타입일 경우 null
   isActive    Boolean         @default(true)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -957,8 +958,9 @@ model ChildcareRule {
 }
 
 enum ChildcareRuleType {
-  PLUS
-  MINUS
+  PLUS   // 잘한 행동 → 포인트 지급
+  MINUS  // 못한 행동 → 포인트 차감
+  INFO   // 메모성 규칙 → 포인트 없음
 }
 
 // ============================================================
