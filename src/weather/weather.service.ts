@@ -9,6 +9,12 @@ import {
   ForecastItemDto,
   ForecastResponseDto,
 } from '@/weather/dto/forecast-response.dto';
+import { RedisService } from '@/redis/redis.service';
+
+// 날씨 캐시 TTL: 1시간 (기상청 초단기실황 발표 주기)
+const WEATHER_CACHE_TTL = 60 * 60;
+// 단기예보 캐시 TTL: 3시간 (발표 주기 3시간)
+const FORECAST_CACHE_TTL = 60 * 60 * 3;
 
 interface KmaItem {
   category: string;
@@ -121,6 +127,7 @@ export class WeatherService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
   ) {
     this.serviceKey = this.configService.get<string>('weather.kmaServiceKey');
   }
@@ -132,6 +139,10 @@ export class WeatherService {
     const now = dayjs().subtract(1, 'hour');
     const baseDate = now.format('YYYYMMDD');
     const baseTime = now.format('HH00');
+
+    const cacheKey = `weather:${nx}:${ny}:${baseDate}:${baseTime}`;
+    const cached = await this.redisService.get<WeatherResponseDto>(cacheKey);
+    if (cached) return cached;
 
     try {
       const { data } = await firstValueFrom(
@@ -161,7 +172,7 @@ export class WeatherService {
 
       const pty = parseInt(get('PTY'));
 
-      return {
+      const result: WeatherResponseDto = {
         temperature: parseFloat(get('T1H')),
         humidity: parseInt(get('REH')),
         windSpeed: parseFloat(get('WSD')),
@@ -171,6 +182,9 @@ export class WeatherService {
         baseDate,
         baseTime,
       };
+
+      await this.redisService.set(cacheKey, result, WEATHER_CACHE_TTL);
+      return result;
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
       const status = error?.response?.status;
@@ -185,6 +199,10 @@ export class WeatherService {
   async getForecast(query: WeatherQueryDto): Promise<ForecastResponseDto> {
     const { nx, ny } = toGrid(query.lat, query.lon);
     const { baseDate, baseTime } = getForecastBaseTime(dayjs());
+
+    const cacheKey = `forecast:${nx}:${ny}:${baseDate}:${baseTime}`;
+    const cached = await this.redisService.get<ForecastResponseDto>(cacheKey);
+    if (cached) return cached;
 
     try {
       const { data } = await firstValueFrom(
@@ -211,7 +229,9 @@ export class WeatherService {
       const items = data.response.body.items.item;
       const forecasts = this.parseForecastItems(items);
 
-      return { baseDate, baseTime, forecasts };
+      const result: ForecastResponseDto = { baseDate, baseTime, forecasts };
+      await this.redisService.set(cacheKey, result, FORECAST_CACHE_TTL);
+      return result;
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
       const status = error?.response?.status;
