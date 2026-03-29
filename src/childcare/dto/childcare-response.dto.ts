@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChildcareRuleType, ChildcareTransactionType } from '@prisma/client';
+import {
+  ChildcareRuleType,
+  ChildcareTransactionType,
+  SavingsInterestType,
+  SavingsPlanStatus,
+} from '@prisma/client';
 
 export class ChildDto {
   @ApiProperty({ description: '자녀 프로필 ID', example: 'uuid-1234' })
@@ -247,4 +252,75 @@ export class ChildcareRuleDto {
     example: '2026-03-01T00:00:00.000Z',
   })
   updatedAt: Date;
+}
+
+export class SavingsPlanDto {
+  @ApiProperty({ description: '적금 플랜 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '계정 ID', example: 'uuid-1234' })
+  accountId: string;
+
+  @ApiProperty({ description: '월 적금액 (포인트)', example: 20 })
+  monthlyAmount: number;
+
+  @ApiProperty({ description: '연 이자율 (%)', example: 3.5 })
+  interestRate: number;
+
+  @ApiProperty({
+    description: '이자 유형 (SIMPLE: 단리, COMPOUND: 복리)',
+    enum: SavingsInterestType,
+  })
+  interestType: SavingsInterestType;
+
+  @ApiProperty({ description: '시작일', example: '2026-04-01T00:00:00.000Z' })
+  startDate: Date;
+
+  @ApiProperty({ description: '만기일', example: '2027-04-01T00:00:00.000Z' })
+  endDate: Date;
+
+  @ApiProperty({
+    description: '상태 (ACTIVE: 진행 중, MATURED: 만기, CANCELLED: 해지)',
+    enum: SavingsPlanStatus,
+  })
+  status: SavingsPlanStatus;
+
+  @ApiProperty({ description: '만기 처리 일시', nullable: true, example: null })
+  maturedAt: Date | null;
+
+  @ApiProperty({ description: '해지 일시', nullable: true, example: null })
+  cancelledAt: Date | null;
+
+  @ApiProperty({
+    description: '생성 일시',
+    example: '2026-03-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: '수정 일시',
+    example: '2026-03-01T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
+export class SavingsPlanPreviewDto {
+  @ApiProperty({ description: '총 납입 포인트', example: 240 })
+  totalDeposit: number;
+
+  @ApiProperty({ description: '예상 이자 포인트', example: 8 })
+  expectedInterest: number;
+
+  @ApiProperty({ description: '예상 만기 수령 포인트', example: 248 })
+  expectedTotal: number;
+
+  @ApiProperty({ description: '적금 기간 (개월)', example: 12 })
+  months: number;
+
+  @ApiProperty({
+    description: '참고용 현재 국고채 3년물 금리 (%)',
+    example: 3.2,
+    nullable: true,
+  })
+  kr3yRate: number | null;
 }

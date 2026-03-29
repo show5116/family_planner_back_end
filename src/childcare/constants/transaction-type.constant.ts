@@ -9,6 +9,7 @@ export const ChildcareTransactionTypeLabel: Record<
   [ChildcareTransactionType.BONUS]: '보너스 지급',
   [ChildcareTransactionType.PENALTY]: '규칙 위반 차감',
   [ChildcareTransactionType.PURCHASE]: '상점 아이템 구매',
+  [ChildcareTransactionType.CASHOUT]: '포인트 현금화',
   [ChildcareTransactionType.SAVINGS_DEPOSIT]: '적금 입금',
   [ChildcareTransactionType.SAVINGS_WITHDRAW]: '적금 출금',
   [ChildcareTransactionType.INTEREST]: '이자 지급',

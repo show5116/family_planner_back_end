@@ -859,10 +859,41 @@ model ChildcareAccount {
   transactions ChildcareTransaction[]
   shopItems    ChildcareShopItem[]
   rules        ChildcareRule[]
+  savingsPlan  ChildcareSavingsPlan?
 
   @@index([groupId])
   @@index([parentUserId])
   @@map("childcare_accounts")
+}
+
+model ChildcareSavingsPlan {
+  id             String                  @id @default(uuid())
+  accountId      String                  @unique
+  monthlyAmount  Int                     // 월 적금액 (포인트)
+  interestRate   Decimal                 @db.Decimal(5, 2) // 연 이자율 (%)
+  interestType   SavingsInterestType     // SIMPLE: 단리, COMPOUND: 복리
+  startDate      DateTime
+  endDate        DateTime                // 만기일
+  status         SavingsPlanStatus       @default(ACTIVE)
+  maturedAt      DateTime?               // 만기 처리 일시
+  cancelledAt    DateTime?               // 해지 일시
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("childcare_savings_plans")
+}
+
+enum SavingsInterestType {
+  SIMPLE    // 단리
+  COMPOUND  // 복리
+}
+
+enum SavingsPlanStatus {
+  ACTIVE     // 진행 중
+  MATURED    // 만기 완료
+  CANCELLED  // 중도 해지
 }
 
 model ChildAllowancePlan {
@@ -919,6 +950,7 @@ enum ChildcareTransactionType {
   BONUS            // 부모가 자유롭게 주는 특별 보너스
   PENALTY          // 규칙 MINUS 적용 — 못한 행동 포인트 차감
   PURCHASE         // 상점 아이템 구매 — 포인트 소비
+  CASHOUT          // 포인트 현금화 — 부모가 실제 돈으로 지급
   SAVINGS_DEPOSIT  // 적금 입금 — 잔액 → 적금
   SAVINGS_WITHDRAW // 적금 출금 — 적금 → 잔액
   INTEREST         // 이자 지급 (스케줄러)
@@ -930,6 +962,7 @@ model ChildcareShopItem {
   name        String   @db.VarChar(100)
   description String?  @db.VarChar(200)
   points      Int
+  order       Int      @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -941,15 +974,16 @@ model ChildcareShopItem {
 }
 
 model ChildcareRule {
-  id          String          @id @default(uuid())
+  id          String            @id @default(uuid())
   accountId   String
-  name        String          @db.VarChar(100)
-  description String?         @db.VarChar(200)
+  name        String            @db.VarChar(100)
+  description String?           @db.VarChar(200)
   type        ChildcareRuleType
   points      Int?              // INFO 타입일 경우 null
-  isActive    Boolean         @default(true)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  order       Int               @default(0)
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 

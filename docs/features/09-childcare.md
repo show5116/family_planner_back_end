@@ -40,6 +40,7 @@
 - 부모가 편집 가능
 - 아이가 포인트를 소비해서 구매하는 항목
 - 예: TV 30분 더보기 → 10 포인트, 장난감 10,000원 → 100 포인트
+- 수동 순서 정렬 지원 (reorder)
 
 ### 육아 포인트 Rule (규칙)
 - 부모가 편집 가능
@@ -47,14 +48,44 @@
 - `PLUS`: 잘한 행동 → 포인트 지급 (예: 방 정리하기 → +10 포인트)
 - `MINUS`: 못한 행동 → 포인트 차감 (예: 숙제 안함 → -20 포인트)
 - `INFO`: 메모성 규칙 → 포인트 없음 (예: 취침 시간은 9시)
+- 수동 순서 정렬 지원 (reorder)
+
+### 적금 플랜
+- 자녀 1명당 1개의 ACTIVE 플랜
+- 부모가 월 적금액, 이자율, 단리/복리, 시작일/만기일 설정
+- 용돈 지급일마다 설정된 월 적금액만큼 자동 차감 (SAVINGS_DEPOSIT)
+- 만기일에 스케줄러가 원금 + 이자를 자동으로 잔액에 합산
+- 중도 해지 가능 (이자 없이 원금만 반환)
+- 생성 전 예상 이자 미리보기 제공 (참고용 국고채 3년물 금리 포함)
 
 ### 포인트 거래 내역
 - 포인트 적립/사용/차감 내역
 - 날짜별, 카테고리별 필터링
+- 3가지 방식으로 거래 생성 가능:
+  1. `shopItemId` 지정 → PURCHASE 자동 적용
+  2. `ruleId` 지정 → REWARD(PLUS) / PENALTY(MINUS) 자동 적용
+  3. `type`, `amount`, `description` 직접 입력
 
-### 적금
-- 포인트 잔액에서 적금 입금/출금
-- 포인트 개념과 별개로 운영
+### 거래 타입
+| 타입 | 설명 | 잔액 변화 |
+| --- | --- | --- |
+| `ALLOWANCE` | 월 포인트 자동 지급 (스케줄러) | + |
+| `REWARD` | PLUS 규칙 보상 | + |
+| `BONUS` | 규칙과 별개로 부모가 직접 지급하는 보너스 | + |
+| `PENALTY` | MINUS 규칙 위반 차감 | - |
+| `PURCHASE` | 상점 아이템 구매 | - |
+| `CASHOUT` | 포인트 현금화 | - |
+| `SAVINGS_DEPOSIT` | 적금 입금 (용돈 지급 시 자동 차감) | - (balance) / + (savingsBalance) |
+| `SAVINGS_WITHDRAW` | 적금 만기/해지 수령 | + (balance) / - (savingsBalance) |
+| `INTEREST` | 적금 만기 이자 지급 | + (savingsBalance) |
+
+### 적금 플랜
+- 자녀 1명당 1개의 ACTIVE 플랜
+- 용돈 지급일마다 `monthlyAmount`만큼 자동 차감 (SAVINGS_DEPOSIT)
+- 만기일에 스케줄러가 자동으로 원금 + 이자를 잔액에 합산 (MATURED)
+- 중도 해지 가능 (이자 없이 원금만 반환, CANCELLED)
+- 단리(SIMPLE) / 복리(COMPOUND) 선택 가능
+- 생성 전 예상 이자 미리보기 제공 (참고용 국고채 3년물 금리 포함)
 
 ---
 
@@ -85,9 +116,11 @@ model ChildcareAccount {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  child        Child
   transactions ChildcareTransaction[]
-  rewards      ChildcareReward[]
+  shopItems    ChildcareShopItem[]
   rules        ChildcareRule[]
+  savingsPlan  ChildcareSavingsPlan?
 }
 
 model ChildAllowancePlan {
@@ -124,13 +157,15 @@ model ChildcareTransaction {
 }
 
 enum ChildcareTransactionType {
-  ALLOWANCE
-  REWARD
-  PENALTY
-  PURCHASE
-  SAVINGS_DEPOSIT
-  SAVINGS_WITHDRAW
-  INTEREST
+  ALLOWANCE        // 월 용돈 지급 (스케줄러 자동)
+  REWARD           // PLUS 규칙 보상
+  BONUS            // 규칙 외 부모 직접 보너스 지급
+  PENALTY          // MINUS 규칙 위반 차감
+  PURCHASE         // 상점 아이템 구매
+  CASHOUT          // 포인트 현금화
+  SAVINGS_DEPOSIT  // 적금 입금
+  SAVINGS_WITHDRAW // 적금 만기/해지 수령
+  INTEREST         // 적금 이자 지급
 }
 
 model ChildcareShopItem {
@@ -140,6 +175,7 @@ model ChildcareShopItem {
   description String?  @db.VarChar(200)
   points      Int      // 구매에 필요한 포인트
   isActive    Boolean  @default(true)
+  order       Int      @default(0)  // 수동 정렬 순서
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -152,6 +188,7 @@ model ChildcareRule {
   type        ChildcareRuleType // PLUS: 지급, MINUS: 차감, INFO: 메모
   points      Int?              // INFO 타입일 경우 null
   isActive    Boolean           @default(true)
+  order       Int               @default(0)  // 수동 정렬 순서
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 }
@@ -160,6 +197,32 @@ enum ChildcareRuleType {
   PLUS   // 잘한 행동 → 포인트 지급
   MINUS  // 못한 행동 → 포인트 차감
   INFO   // 메모성 규칙 → 포인트 없음
+}
+
+model ChildcareSavingsPlan {
+  id            String               @id @default(uuid())
+  accountId     String               @unique  // 자녀당 1개
+  monthlyAmount Int                  // 월 자동 적금액 (포인트)
+  interestRate  Decimal              @db.Decimal(5, 2)  // 연 이자율 (%)
+  interestType  SavingsInterestType  // SIMPLE: 단리, COMPOUND: 복리
+  startDate     DateTime             @db.Date
+  endDate       DateTime             @db.Date
+  status        SavingsPlanStatus    @default(ACTIVE)
+  maturedAt     DateTime?
+  cancelledAt   DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+}
+
+enum SavingsInterestType {
+  SIMPLE    // 단리
+  COMPOUND  // 복리
+}
+
+enum SavingsPlanStatus {
+  ACTIVE    // 진행 중
+  MATURED   // 만기 처리 완료
+  CANCELLED // 중도 해지
 }
 ```
 
@@ -175,16 +238,20 @@ enum ChildcareRuleType {
 - [x] 월 포인트 할당 설정 (생성/수정)
 - [x] 월 포인트 할당 조회
 - [x] 월 포인트 할당 변경 히스토리 조회
-- [x] 포인트 거래 추가 (적립/사용/차감)
+- [x] 포인트 거래 추가 (shopItemId / ruleId / 직접 입력)
 - [x] 포인트 거래 내역 조회 (날짜별, 타입별 필터)
-- [x] 포인트 상점 아이템 CRUD
-- [x] 규칙 CRUD (PLUS/MINUS/INFO 타입)
-- [x] 적금 입금/출금
-- [x] 거래 시 자녀 앱 알림
+- [x] 포인트 상점 아이템 CRUD + 수동 순서 정렬
+- [x] 규칙 CRUD (PLUS/MINUS/INFO 타입) + 수동 순서 정렬
+- [x] 거래 타입: ALLOWANCE / REWARD / BONUS / PENALTY / PURCHASE / CASHOUT / SAVINGS_DEPOSIT / SAVINGS_WITHDRAW / INTEREST
+- [x] 적금 플랜 생성 / 조회 / 중도 해지
+- [x] 적금 플랜 예상 이자 미리보기 (국고채 3년물 금리 참조)
+- [x] 용돈 자동 지급 스케줄러 (매일 00:00 UTC)
+- [x] 적금 자동 차감 (용돈 지급 시 SAVINGS_DEPOSIT)
+- [x] 적금 만기 자동 정산 스케줄러 (매일 00:00 UTC)
+- [x] 연봉 협상일 알림 스케줄러 (당일/전날)
+- [x] 거래 시 자녀/부모 앱 알림
 
 ### ⬜ TODO / 향후 고려
-- [ ] 월별 포인트 자동 지급 스케줄러
-- [ ] 이자 자동 계산 스케줄러
 - [ ] 포인트 통계 (월별, 카테고리별)
 
 ---
@@ -193,59 +260,63 @@ enum ChildcareRuleType {
 
 ### 자녀 프로필
 
-| Method | Endpoint                           | 설명                      | 권한              |
-| ------ | ---------------------------------- | ------------------------- | ----------------- |
-| POST   | `/childcare/children`              | 자녀 프로필 등록          | JWT, Group Member |
-| GET    | `/childcare/children`              | 자녀 프로필 목록          | JWT, Group Member |
-| POST   | `/childcare/children/:id/link-user`| 앱 계정 연동              | JWT, Parent       |
+| Method | Endpoint                            | 설명             | 권한              |
+| ------ | ----------------------------------- | ---------------- | ----------------- |
+| POST   | `/childcare/children`               | 자녀 프로필 등록 | JWT, Group Member |
+| GET    | `/childcare/children`               | 자녀 프로필 목록 | JWT, Group Member |
+| POST   | `/childcare/children/:id/link-user` | 앱 계정 연동     | JWT, Parent       |
 
 ### 월 포인트 할당
 
-| Method | Endpoint                                    | 설명                | 권한                 |
-| ------ | ------------------------------------------- | ------------------- | -------------------- |
-| POST   | `/childcare/children/:id/allowance-plan`    | 할당 설정 (생성/수정) | JWT, Parent         |
-| GET    | `/childcare/children/:id/allowance-plan`    | 할당 설정 조회      | JWT, Parent or Child |
-| GET    | `/childcare/children/:id/allowance-plan/history` | 변경 히스토리  | JWT, Parent or Child |
+| Method | Endpoint                                         | 설명                  | 권한                 |
+| ------ | ------------------------------------------------ | --------------------- | -------------------- |
+| POST   | `/childcare/children/:id/allowance-plan`         | 할당 설정 (생성/수정) | JWT, Parent          |
+| GET    | `/childcare/children/:id/allowance-plan`         | 할당 설정 조회        | JWT, Parent or Child |
+| GET    | `/childcare/children/:id/allowance-plan/history` | 변경 히스토리         | JWT, Parent or Child |
 
 ### 포인트 계정
 
-| Method | Endpoint              | 설명             | 권한                 |
-| ------ | --------------------- | ---------------- | -------------------- |
-| GET    | `/childcare/accounts` | 계정 목록        | JWT, Group Member    |
-| GET    | `/childcare/accounts/:id` | 계정 상세    | JWT, Parent or Child |
+| Method | Endpoint                  | 설명       | 권한                 |
+| ------ | ------------------------- | ---------- | -------------------- |
+| GET    | `/childcare/accounts`     | 계정 목록  | JWT, Group Member    |
+| GET    | `/childcare/accounts/:id` | 계정 상세  | JWT, Parent or Child |
 
 ### 거래 내역
 
-| Method | Endpoint                               | 설명        | 권한                 |
-| ------ | -------------------------------------- | ----------- | -------------------- |
-| POST   | `/childcare/accounts/:id/transactions` | 거래 추가   | JWT, Parent          |
-| GET    | `/childcare/accounts/:id/transactions` | 거래 내역   | JWT, Parent or Child |
+| Method | Endpoint                               | 설명      | 권한                 |
+| ------ | -------------------------------------- | --------- | -------------------- |
+| POST   | `/childcare/accounts/:id/transactions` | 거래 추가 | JWT, Parent          |
+| GET    | `/childcare/accounts/:id/transactions` | 거래 내역 | JWT, Parent or Child |
 
 ### 포인트 상점
 
-| Method | Endpoint                                      | 설명           | 권한                 |
-| ------ | --------------------------------------------- | -------------- | -------------------- |
-| GET    | `/childcare/accounts/:id/shop-items`           | 상점 목록      | JWT, Parent or Child |
-| POST   | `/childcare/accounts/:id/shop-items`           | 아이템 추가    | JWT, Parent          |
-| PATCH  | `/childcare/accounts/:id/shop-items/:itemId`   | 아이템 수정    | JWT, Parent          |
-| DELETE | `/childcare/accounts/:id/shop-items/:itemId`   | 아이템 삭제    | JWT, Parent          |
+| Method | Endpoint                                       | 설명              | 권한                 |
+| ------ | ---------------------------------------------- | ----------------- | -------------------- |
+| GET    | `/childcare/accounts/:id/shop-items`           | 상점 목록         | JWT, Parent or Child |
+| POST   | `/childcare/accounts/:id/shop-items`           | 아이템 추가       | JWT, Parent          |
+| PATCH  | `/childcare/accounts/:id/shop-items/reorder`   | 순서 변경         | JWT, Parent          |
+| PATCH  | `/childcare/accounts/:id/shop-items/:itemId`   | 아이템 수정       | JWT, Parent          |
+| DELETE | `/childcare/accounts/:id/shop-items/:itemId`   | 아이템 삭제       | JWT, Parent          |
 
 ### 규칙
 
-| Method | Endpoint                                  | 설명       | 권한                 |
-| ------ | ----------------------------------------- | ---------- | -------------------- |
-| GET    | `/childcare/accounts/:id/rules`           | 규칙 목록  | JWT, Parent or Child |
-| POST   | `/childcare/accounts/:id/rules`           | 규칙 추가  | JWT, Parent          |
-| PATCH  | `/childcare/accounts/:id/rules/:ruleId`   | 규칙 수정  | JWT, Parent          |
-| DELETE | `/childcare/accounts/:id/rules/:ruleId`   | 규칙 삭제  | JWT, Parent          |
+| Method | Endpoint                                | 설명      | 권한                 |
+| ------ | --------------------------------------- | --------- | -------------------- |
+| GET    | `/childcare/accounts/:id/rules`         | 규칙 목록 | JWT, Parent or Child |
+| POST   | `/childcare/accounts/:id/rules`         | 규칙 추가 | JWT, Parent          |
+| PATCH  | `/childcare/accounts/:id/rules/reorder` | 순서 변경 | JWT, Parent          |
+| PATCH  | `/childcare/accounts/:id/rules/:ruleId` | 규칙 수정 | JWT, Parent          |
+| DELETE | `/childcare/accounts/:id/rules/:ruleId` | 규칙 삭제 | JWT, Parent          |
 
-### 적금
+### 적금 플랜
 
-| Method | Endpoint                                    | 설명      | 권한                 |
-| ------ | ------------------------------------------- | --------- | -------------------- |
-| POST   | `/childcare/accounts/:id/savings/deposit`   | 적금 입금 | JWT, Parent or Child |
-| POST   | `/childcare/accounts/:id/savings/withdraw`  | 적금 출금 | JWT, Parent          |
+| Method | Endpoint                                          | 설명                              | 권한                 |
+| ------ | ------------------------------------------------- | --------------------------------- | -------------------- |
+| POST   | `/childcare/accounts/:id/savings/plan/preview`    | 예상 이자 미리보기                | JWT, Parent          |
+| POST   | `/childcare/accounts/:id/savings/plan`            | 적금 플랜 생성                    | JWT, Parent          |
+| GET    | `/childcare/accounts/:id/savings/plan`            | 적금 플랜 조회                    | JWT, Parent or Child |
+| DELETE | `/childcare/accounts/:id/savings/plan`            | 중도 해지 (원금만 반환)           | JWT, Parent          |
 
 ---
 
-**Last Updated**: 2026-03-27
+**Last Updated**: 2026-03-29

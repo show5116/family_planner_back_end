@@ -413,6 +413,38 @@
 
 ---
 
+### PATCH `childcare/accounts/:id/shop-items/reorder`
+
+**요약:** 상점 아이템 순서 변경 (부모만 가능)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "ids": ["uuid-3", "uuid-1", "uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 순서 변경 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 육아 계정을 찾을 수 없습니다
+
+#### 403 - 부모만 수행할 수 있는 작업입니다
+
+---
+
 ### PATCH `childcare/accounts/:id/shop-items/:itemId`
 
 **요약:** 상점 아이템 수정 (부모만 가능)
@@ -554,6 +586,38 @@
 
 ---
 
+### PATCH `childcare/accounts/:id/rules/reorder`
+
+**요약:** 규칙 순서 변경 (부모만 가능)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "ids": ["uuid-3", "uuid-1", "uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 순서 변경 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 육아 계정을 찾을 수 없습니다
+
+#### 403 - 부모만 수행할 수 있는 작업입니다
+
+---
+
 ### PATCH `childcare/accounts/:id/rules/:ruleId`
 
 **요약:** 규칙 수정 (부모만 가능)
@@ -624,9 +688,45 @@
 
 ---
 
-### POST `childcare/accounts/:id/savings/deposit`
+### POST `childcare/accounts/:id/savings/plan/preview`
 
-**요약:** 적금 입금 (자녀 또는 부모)
+**요약:** 적금 플랜 미리보기 (예상 이자 계산)
+
+**Request Body:**
+
+```json
+{
+  "monthlyAmount": 20, // 월 적금액 (포인트) (number)
+  "interestRate": 3, // 연 이자율 (%) (number)
+  "interestType": null, // 이자 유형 (SIMPLE: 단리, COMPOUND: 복리) (SavingsInterestType)
+  "startDate": "2026-04-01", // 적금 시작일 (YYYY-MM-DD) (string)
+  "endDate": "2027-04-01" // 적금 만기일 (YYYY-MM-DD) (string)
+}
+```
+
+**Responses:**
+
+#### 201 - 미리보기 계산 성공
+
+```json
+{
+  "totalDeposit": 240, // 총 납입 포인트 (number)
+  "expectedInterest": 8, // 예상 이자 포인트 (number)
+  "expectedTotal": 248, // 예상 만기 수령 포인트 (number)
+  "months": 12, // 적금 기간 (개월) (number)
+  "kr3yRate": 3 // 참고용 현재 국고채 3년물 금리 (%) (number | null)
+}
+```
+
+#### 404 - 육아 계정을 찾을 수 없습니다
+
+#### 403 - 부모만 수행할 수 있는 작업입니다
+
+---
+
+### POST `childcare/accounts/:id/savings/plan`
+
+**요약:** 적금 플랜 생성 (부모만 가능)
 
 **Path Parameters:**
 
@@ -636,23 +736,67 @@
 
 ```json
 {
-  "amount": 50 // 입금 포인트 (number)
+  "monthlyAmount": 20, // 월 적금액 (포인트) (number)
+  "interestRate": 3, // 연 이자율 (%) (number)
+  "interestType": null, // 이자 유형 (SIMPLE: 단리, COMPOUND: 복리) (SavingsInterestType)
+  "startDate": "2026-04-01", // 적금 시작일 (YYYY-MM-DD) (string)
+  "endDate": "2027-04-01" // 적금 만기일 (YYYY-MM-DD) (string)
 }
 ```
 
 **Responses:**
 
-#### 201 - 적금 입금 성공
+#### 201 - 적금 플랜 생성 성공
 
 ```json
 {
-  "id": "uuid-1234", // 거래 ID (string)
+  "id": "uuid-1234", // 적금 플랜 ID (string)
   "accountId": "uuid-1234", // 계정 ID (string)
-  "type": null, // 거래 유형 (ChildcareTransactionType)
-  "amount": 100, // 포인트 금액 (number)
-  "description": "월 용돈 지급", // 설명 (string)
-  "createdBy": "uuid-1234", // 생성자 ID (string)
-  "createdAt": "2026-03-01T00:00:00.000Z" // 생성 일시 (Date)
+  "monthlyAmount": 20, // 월 적금액 (포인트) (number)
+  "interestRate": 3, // 연 이자율 (%) (number)
+  "interestType": null, // 이자 유형 (SIMPLE: 단리, COMPOUND: 복리) (SavingsInterestType)
+  "startDate": "2026-04-01T00:00:00.000Z", // 시작일 (Date)
+  "endDate": "2027-04-01T00:00:00.000Z", // 만기일 (Date)
+  "status": null, // 상태 (ACTIVE: 진행 중, MATURED: 만기, CANCELLED: 해지) (SavingsPlanStatus)
+  "maturedAt": "2025-01-01T00:00:00Z", // 만기 처리 일시 (Date | null)
+  "cancelledAt": "2025-01-01T00:00:00Z", // 해지 일시 (Date | null)
+  "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 404 - 육아 계정을 찾을 수 없습니다
+
+#### 403 - 부모만 수행할 수 있는 작업입니다
+
+---
+
+### GET `childcare/accounts/:id/savings/plan`
+
+**요약:** 적금 플랜 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 적금 플랜 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 적금 플랜 ID (string)
+  "accountId": "uuid-1234", // 계정 ID (string)
+  "monthlyAmount": 20, // 월 적금액 (포인트) (number)
+  "interestRate": 3, // 연 이자율 (%) (number)
+  "interestType": null, // 이자 유형 (SIMPLE: 단리, COMPOUND: 복리) (SavingsInterestType)
+  "startDate": "2026-04-01T00:00:00.000Z", // 시작일 (Date)
+  "endDate": "2027-04-01T00:00:00.000Z", // 만기일 (Date)
+  "status": null, // 상태 (ACTIVE: 진행 중, MATURED: 만기, CANCELLED: 해지) (SavingsPlanStatus)
+  "maturedAt": "2025-01-01T00:00:00Z", // 만기 처리 일시 (Date | null)
+  "cancelledAt": "2025-01-01T00:00:00Z", // 해지 일시 (Date | null)
+  "createdAt": "2026-03-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-03-01T00:00:00.000Z" // 수정 일시 (Date)
 }
 ```
 
@@ -662,35 +806,24 @@
 
 ---
 
-### POST `childcare/accounts/:id/savings/withdraw`
+### DELETE `childcare/accounts/:id/savings/plan`
 
-**요약:** 적금 출금 (부모만 가능)
+**요약:** 적금 플랜 중도 해지 (부모만 가능)
+
+**설명:**
+중도 해지 시 이자 없이 원금만 잔액에 반환됩니다.
 
 **Path Parameters:**
 
 - `id` (`string`)
 
-**Request Body:**
-
-```json
-{
-  "amount": 50 // 출금 포인트 (number)
-}
-```
-
 **Responses:**
 
-#### 201 - 적금 출금 성공
+#### 200 - 적금 플랜 해지 성공
 
 ```json
 {
-  "id": "uuid-1234", // 거래 ID (string)
-  "accountId": "uuid-1234", // 계정 ID (string)
-  "type": null, // 거래 유형 (ChildcareTransactionType)
-  "amount": 100, // 포인트 금액 (number)
-  "description": "월 용돈 지급", // 설명 (string)
-  "createdBy": "uuid-1234", // 생성자 ID (string)
-  "createdAt": "2026-03-01T00:00:00.000Z" // 생성 일시 (Date)
+  "message": "작업이 완료되었습니다" // string
 }
 ```
 

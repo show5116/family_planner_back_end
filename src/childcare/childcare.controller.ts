@@ -20,7 +20,8 @@ import { CreateShopItemDto } from './dto/create-shop-item.dto';
 import { UpdateShopItemDto } from './dto/update-shop-item.dto';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
-import { SavingsDepositDto, SavingsWithdrawDto } from './dto/savings.dto';
+import { CreateSavingsPlanDto } from './dto/create-savings-plan.dto';
+import { ReorderDto } from './dto/reorder.dto';
 import {
   ChildDto,
   ChildcareAccountDto,
@@ -29,6 +30,8 @@ import {
   ChildcareTransactionDto,
   ChildcareShopItemDto,
   ChildcareRuleDto,
+  SavingsPlanDto,
+  SavingsPlanPreviewDto,
 } from './dto/childcare-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -204,6 +207,19 @@ export class ChildcareController {
     return this.childcareService.createShopItem(req.user.userId, id, dto);
   }
 
+  @Patch('accounts/:id/shop-items/reorder')
+  @ApiOperation({ summary: '상점 아이템 순서 변경 (부모만 가능)' })
+  @ApiSuccess(MessageResponseDto, '순서 변경 성공')
+  @ApiNotFound('육아 계정을 찾을 수 없습니다')
+  @ApiForbidden('부모만 수행할 수 있는 작업입니다')
+  reorderShopItems(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: ReorderDto,
+  ) {
+    return this.childcareService.reorderShopItems(req.user.userId, id, dto);
+  }
+
   @Patch('accounts/:id/shop-items/:itemId')
   @ApiOperation({ summary: '상점 아이템 수정 (부모만 가능)' })
   @ApiSuccess(ChildcareShopItemDto, '상점 아이템 수정 성공')
@@ -259,6 +275,19 @@ export class ChildcareController {
     return this.childcareService.createRule(req.user.userId, id, dto);
   }
 
+  @Patch('accounts/:id/rules/reorder')
+  @ApiOperation({ summary: '규칙 순서 변경 (부모만 가능)' })
+  @ApiSuccess(MessageResponseDto, '순서 변경 성공')
+  @ApiNotFound('육아 계정을 찾을 수 없습니다')
+  @ApiForbidden('부모만 수행할 수 있는 작업입니다')
+  reorderRules(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: ReorderDto,
+  ) {
+    return this.childcareService.reorderRules(req.user.userId, id, dto);
+  }
+
   @Patch('accounts/:id/rules/:ruleId')
   @ApiOperation({ summary: '규칙 수정 (부모만 가능)' })
   @ApiSuccess(ChildcareRuleDto, '규칙 수정 성공')
@@ -286,31 +315,58 @@ export class ChildcareController {
     return this.childcareService.removeRule(req.user.userId, id, ruleId);
   }
 
-  // ─── 적금 ─────────────────────────────────────────────────
+  // ─── 적금 플랜 ────────────────────────────────────────────
 
-  @Post('accounts/:id/savings/deposit')
-  @ApiOperation({ summary: '적금 입금 (자녀 또는 부모)' })
-  @ApiCreated(ChildcareTransactionDto, '적금 입금 성공')
-  @ApiNotFound('육아 계정을 찾을 수 없습니다')
-  @ApiForbidden('해당 계정에 접근할 권한이 없습니다')
-  savingsDeposit(
-    @Request() req,
-    @Param('id') id: string,
-    @Body() dto: SavingsDepositDto,
-  ) {
-    return this.childcareService.savingsDeposit(req.user.userId, id, dto);
-  }
-
-  @Post('accounts/:id/savings/withdraw')
-  @ApiOperation({ summary: '적금 출금 (부모만 가능)' })
-  @ApiCreated(ChildcareTransactionDto, '적금 출금 성공')
+  @Post('accounts/:id/savings/plan/preview')
+  @ApiOperation({
+    summary: '적금 플랜 미리보기 (예상 이자 계산)',
+    description:
+      '적금 플랜 생성 전 예상 이자와 만기 수령액을 확인합니다.' +
+      ' 참고용 국고채 3년물 금리도 함께 제공됩니다.',
+  })
+  @ApiCreated(SavingsPlanPreviewDto, '미리보기 계산 성공')
   @ApiNotFound('육아 계정을 찾을 수 없습니다')
   @ApiForbidden('부모만 수행할 수 있는 작업입니다')
-  savingsWithdraw(
+  previewSavingsPlan(@Request() req, @Body() dto: CreateSavingsPlanDto) {
+    return this.childcareService.previewSavingsPlan(req.user.userId, dto);
+  }
+
+  @Post('accounts/:id/savings/plan')
+  @ApiOperation({
+    summary: '적금 플랜 생성 (부모만 가능)',
+    description:
+      '자녀 1명당 1개의 적금 플랜만 존재할 수 있습니다.' +
+      ' 용돈 지급일에 자동으로 차감되며, 만기일에 원금+이자가 자동 지급됩니다.',
+  })
+  @ApiCreated(SavingsPlanDto, '적금 플랜 생성 성공')
+  @ApiNotFound('육아 계정을 찾을 수 없습니다')
+  @ApiForbidden('부모만 수행할 수 있는 작업입니다')
+  createSavingsPlan(
     @Request() req,
     @Param('id') id: string,
-    @Body() dto: SavingsWithdrawDto,
+    @Body() dto: CreateSavingsPlanDto,
   ) {
-    return this.childcareService.savingsWithdraw(req.user.userId, id, dto);
+    return this.childcareService.createSavingsPlan(req.user.userId, id, dto);
+  }
+
+  @Get('accounts/:id/savings/plan')
+  @ApiOperation({ summary: '적금 플랜 조회' })
+  @ApiSuccess(SavingsPlanDto, '적금 플랜 조회 성공')
+  @ApiNotFound('육아 계정을 찾을 수 없습니다')
+  @ApiForbidden('해당 계정에 접근할 권한이 없습니다')
+  findSavingsPlan(@Request() req, @Param('id') id: string) {
+    return this.childcareService.findSavingsPlan(req.user.userId, id);
+  }
+
+  @Delete('accounts/:id/savings/plan')
+  @ApiOperation({
+    summary: '적금 플랜 중도 해지 (부모만 가능)',
+    description: '중도 해지 시 이자 없이 원금만 잔액에 반환됩니다.',
+  })
+  @ApiSuccess(MessageResponseDto, '적금 플랜 해지 성공')
+  @ApiNotFound('육아 계정을 찾을 수 없습니다')
+  @ApiForbidden('부모만 수행할 수 있는 작업입니다')
+  cancelSavingsPlan(@Request() req, @Param('id') id: string) {
+    return this.childcareService.cancelSavingsPlan(req.user.userId, id);
   }
 }

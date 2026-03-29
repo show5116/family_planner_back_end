@@ -4,10 +4,13 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
+import { SavingsPlanStatus } from '@prisma/client';
+import { calculateSavingsInterest } from './constants/savings.constant';
 
 const LOCK_TTL = {
   allowance: 5 * 60, // 5분
   negotiation: 5 * 60, // 5분
+  savings: 5 * 60, // 5분
 } as const;
 
 @Injectable()
@@ -68,10 +71,21 @@ export class ChildcareScheduler {
         const { child } = plan;
         if (!child.account) continue;
 
-        await this.prisma.$transaction([
+        const account = child.account;
+        const savingsPlan = await this.prisma.childcareSavingsPlan.findUnique({
+          where: { accountId: account.id },
+        });
+        const autoSavings =
+          savingsPlan?.status === SavingsPlanStatus.ACTIVE
+            ? savingsPlan.monthlyAmount
+            : 0;
+
+        // 용돈 지급 + 자동 적금 차감 트랜잭션
+
+        const ops: any[] = [
           this.prisma.childcareTransaction.create({
             data: {
-              accountId: child.account.id,
+              accountId: account.id,
               type: 'ALLOWANCE',
               amount: plan.monthlyPoints,
               description: '월 포인트 자동 지급',
@@ -79,10 +93,33 @@ export class ChildcareScheduler {
             },
           }),
           this.prisma.childcareAccount.update({
-            where: { id: child.account.id },
+            where: { id: account.id },
             data: { balance: { increment: plan.monthlyPoints } },
           }),
-        ]);
+        ];
+
+        if (autoSavings > 0) {
+          ops.push(
+            this.prisma.childcareTransaction.create({
+              data: {
+                accountId: account.id,
+                type: 'SAVINGS_DEPOSIT',
+                amount: autoSavings,
+                description: '자동 적금',
+                createdBy: child.parentUserId,
+              },
+            }),
+            this.prisma.childcareAccount.update({
+              where: { id: account.id },
+              data: {
+                balance: { decrement: autoSavings },
+                savingsBalance: { increment: autoSavings },
+              },
+            }),
+          );
+        }
+
+        await this.prisma.$transaction(ops);
 
         // 자녀 앱 계정이 있으면 알림
         if (child.userId) {
@@ -91,7 +128,10 @@ export class ChildcareScheduler {
               userId: child.userId,
               category: NotificationCategory.CHILDCARE,
               title: '이번 달 용돈이 지급됐어요!',
-              body: `${plan.monthlyPoints} 포인트가 적립되었습니다`,
+              body:
+                autoSavings > 0
+                  ? `${plan.monthlyPoints} 포인트 지급, ${autoSavings} 포인트 자동 적금`
+                  : `${plan.monthlyPoints} 포인트가 적립되었습니다`,
               data: { type: 'ALLOWANCE', amount: plan.monthlyPoints },
             })
             .catch(() => null);
@@ -103,12 +143,17 @@ export class ChildcareScheduler {
             userId: child.parentUserId,
             category: NotificationCategory.CHILDCARE,
             title: `${child.name} 용돈 지급 완료`,
-            body: `${plan.monthlyPoints} 포인트가 지급되었습니다`,
+            body:
+              autoSavings > 0
+                ? `${plan.monthlyPoints}p 지급, ${autoSavings}p 자동 적금`
+                : `${plan.monthlyPoints} 포인트가 지급되었습니다`,
             data: { type: 'ALLOWANCE', amount: plan.monthlyPoints },
           })
           .catch(() => null);
 
-        this.logger.debug(`용돈 지급: ${child.name} +${plan.monthlyPoints}p`);
+        this.logger.debug(
+          `용돈 지급: ${child.name} +${plan.monthlyPoints}p${autoSavings > 0 ? ` 자동적금 -${autoSavings}p` : ''}`,
+        );
       }
     } finally {
       await this.redis.releaseLock(lockKey, lockValue);
@@ -200,6 +245,139 @@ export class ChildcareScheduler {
 
         this.logger.debug(
           `협상 알림: ${child.name} (${isToday ? '당일' : '전날'})`,
+        );
+      }
+    } finally {
+      await this.redis.releaseLock(lockKey, lockValue);
+    }
+  }
+
+  /**
+   * 적금 만기 자동 정산 — 매일 오전 9시 KST (00:00 UTC)
+   * 만기일이 오늘인 ACTIVE 플랜 → 원금 + 이자 잔액 합산
+   */
+  @Cron('0 0 * * *')
+  async matureSavingsPlans() {
+    const lockKey = 'lock:childcare:savings';
+    const lockValue = Date.now().toString();
+    const acquired = await this.redis.acquireLock(
+      lockKey,
+      LOCK_TTL.savings,
+      lockValue,
+    );
+    if (!acquired) return;
+
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const plans = await this.prisma.childcareSavingsPlan.findMany({
+        where: {
+          status: SavingsPlanStatus.ACTIVE,
+          endDate: { gte: today, lt: tomorrow },
+        },
+        include: {
+          account: {
+            include: { child: true },
+          },
+        },
+      });
+
+      this.logger.debug(`적금 만기 정산 대상: ${plans.length}건`);
+
+      for (const plan of plans) {
+        const { account } = plan;
+        const principal = account.savingsBalance;
+
+        // 이자 계산
+        const { expectedInterest } = calculateSavingsInterest({
+          monthlyAmount: plan.monthlyAmount,
+          interestRate: Number(plan.interestRate),
+          interestType: plan.interestType,
+          startDate: plan.startDate,
+          endDate: plan.endDate,
+        });
+
+        await this.prisma.$transaction([
+          // 이자 지급
+          ...(expectedInterest > 0
+            ? [
+                this.prisma.childcareTransaction.create({
+                  data: {
+                    accountId: account.id,
+                    type: 'INTEREST',
+                    amount: expectedInterest,
+                    description: '적금 만기 이자',
+                    createdBy: account.parentUserId,
+                  },
+                }),
+                this.prisma.childcareAccount.update({
+                  where: { id: account.id },
+                  data: { savingsBalance: { increment: expectedInterest } },
+                }),
+              ]
+            : []),
+          // 원금 + 이자 잔액으로 출금
+          this.prisma.childcareTransaction.create({
+            data: {
+              accountId: account.id,
+              type: 'SAVINGS_WITHDRAW',
+              amount: principal + expectedInterest,
+              description: '적금 만기 수령',
+              createdBy: account.parentUserId,
+            },
+          }),
+          this.prisma.childcareAccount.update({
+            where: { id: account.id },
+            data: {
+              balance: { increment: principal + expectedInterest },
+              savingsBalance: 0,
+            },
+          }),
+          // 플랜 상태 업데이트
+          this.prisma.childcareSavingsPlan.update({
+            where: { id: plan.id },
+            data: {
+              status: SavingsPlanStatus.MATURED,
+              maturedAt: new Date(),
+            },
+          }),
+        ]);
+
+        // 자녀 알림
+        if (account.child.userId) {
+          this.notificationQueue
+            .enqueueImmediate({
+              userId: account.child.userId,
+              category: NotificationCategory.CHILDCARE,
+              title: '적금 만기 축하해요! 🎉',
+              body: `원금 ${principal}p + 이자 ${expectedInterest}p = ${principal + expectedInterest}p가 지급됐어요`,
+              data: {
+                type: 'SAVINGS_MATURED',
+                amount: principal + expectedInterest,
+              },
+            })
+            .catch(() => null);
+        }
+
+        // 부모 알림
+        this.notificationQueue
+          .enqueueImmediate({
+            userId: account.parentUserId,
+            category: NotificationCategory.CHILDCARE,
+            title: `${account.child.name} 적금 만기 완료`,
+            body: `원금 ${principal}p + 이자 ${expectedInterest}p = ${principal + expectedInterest}p 지급`,
+            data: {
+              type: 'SAVINGS_MATURED',
+              amount: principal + expectedInterest,
+            },
+          })
+          .catch(() => null);
+
+        this.logger.debug(
+          `적금 만기: ${account.child.name} 원금 ${principal}p + 이자 ${expectedInterest}p`,
         );
       }
     } finally {

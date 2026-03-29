@@ -5,7 +5,11 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { ChildcareRuleType, ChildcareTransactionType } from '@prisma/client';
+import {
+  ChildcareRuleType,
+  ChildcareTransactionType,
+  SavingsPlanStatus,
+} from '@prisma/client';
 import {
   ChildcareEarningTypes,
   ChildcareTransactionTypeLabel,
@@ -22,6 +26,9 @@ import { UpdateShopItemDto } from './dto/update-shop-item.dto';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
 import { SavingsDepositDto, SavingsWithdrawDto } from './dto/savings.dto';
+import { ReorderDto } from './dto/reorder.dto';
+import { CreateSavingsPlanDto } from './dto/create-savings-plan.dto';
+import { calculateSavingsInterest } from './constants/savings.constant';
 
 @Injectable()
 export class ChildcareService {
@@ -465,8 +472,34 @@ export class ChildcareService {
 
     return await this.prisma.childcareShopItem.findMany({
       where: { accountId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { order: 'asc' },
     });
+  }
+
+  /**
+   * 상점 아이템 순서 변경 (부모만 가능)
+   */
+  async reorderShopItems(userId: string, accountId: string, dto: ReorderDto) {
+    const account = await this.prisma.childcareAccount.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+    }
+
+    this.validateParent(userId, account);
+
+    await this.prisma.$transaction(
+      dto.ids.map((id, index) =>
+        this.prisma.childcareShopItem.update({
+          where: { id },
+          data: { order: index },
+        }),
+      ),
+    );
+
+    return { message: '순서가 변경되었습니다' };
   }
 
   // ─── 규칙 ─────────────────────────────────────────────────
@@ -566,8 +599,34 @@ export class ChildcareService {
 
     return await this.prisma.childcareRule.findMany({
       where: { accountId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { order: 'asc' },
     });
+  }
+
+  /**
+   * 규칙 순서 변경 (부모만 가능)
+   */
+  async reorderRules(userId: string, accountId: string, dto: ReorderDto) {
+    const account = await this.prisma.childcareAccount.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+    }
+
+    this.validateParent(userId, account);
+
+    await this.prisma.$transaction(
+      dto.ids.map((id, index) =>
+        this.prisma.childcareRule.update({
+          where: { id },
+          data: { order: index },
+        }),
+      ),
+    );
+
+    return { message: '순서가 변경되었습니다' };
   }
 
   // ─── 적금 ─────────────────────────────────────────────────
@@ -661,7 +720,155 @@ export class ChildcareService {
     return transaction;
   }
 
+  // ─── 적금 플랜 ────────────────────────────────────────────
+
+  /**
+   * 적금 플랜 생성 예상 미리보기 (부모만 가능)
+   */
+  async previewSavingsPlan(accountId: string, dto: CreateSavingsPlanDto) {
+    const { months, totalDeposit, expectedInterest } =
+      calculateSavingsInterest(dto);
+
+    const kr3yRate = await this.getKr3yRate();
+
+    return {
+      months,
+      totalDeposit,
+      expectedInterest,
+      expectedTotal: totalDeposit + expectedInterest,
+      kr3yRate,
+    };
+  }
+
+  /**
+   * 적금 플랜 생성 (부모만 가능)
+   */
+  async createSavingsPlan(
+    userId: string,
+    accountId: string,
+    dto: CreateSavingsPlanDto,
+  ) {
+    const account = await this.prisma.childcareAccount.findUnique({
+      where: { id: accountId },
+      include: { savingsPlan: true },
+    });
+
+    if (!account) {
+      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+    }
+
+    this.validateParent(userId, account);
+
+    if (account.savingsPlan) {
+      throw new ConflictException('이미 진행 중인 적금 플랜이 있습니다');
+    }
+
+    const startDate = new Date(dto.startDate);
+    const endDate = new Date(dto.endDate);
+
+    if (endDate <= startDate) {
+      throw new BadRequestException('만기일은 시작일보다 이후여야 합니다');
+    }
+
+    return await this.prisma.childcareSavingsPlan.create({
+      data: {
+        accountId,
+        monthlyAmount: dto.monthlyAmount,
+        interestRate: dto.interestRate,
+        interestType: dto.interestType,
+        startDate,
+        endDate,
+      },
+    });
+  }
+
+  /**
+   * 적금 플랜 조회 (부모 또는 자녀)
+   */
+  async findSavingsPlan(userId: string, accountId: string) {
+    const account = await this.prisma.childcareAccount.findUnique({
+      where: { id: accountId },
+      include: { child: true, savingsPlan: true },
+    });
+
+    if (!account) {
+      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+    }
+
+    this.validateParentOrChild(userId, account);
+
+    return account.savingsPlan;
+  }
+
+  /**
+   * 적금 중도 해지 (부모만 가능) — 원금만 잔액으로 반환
+   */
+  async cancelSavingsPlan(userId: string, accountId: string) {
+    const account = await this.prisma.childcareAccount.findUnique({
+      where: { id: accountId },
+      include: { savingsPlan: true },
+    });
+
+    if (!account) {
+      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+    }
+
+    this.validateParent(userId, account);
+
+    const plan = account.savingsPlan;
+
+    if (!plan || plan.status !== SavingsPlanStatus.ACTIVE) {
+      throw new BadRequestException('진행 중인 적금 플랜이 없습니다');
+    }
+
+    const principal = account.savingsBalance;
+
+    await this.prisma.$transaction([
+      this.prisma.childcareTransaction.create({
+        data: {
+          accountId,
+          type: ChildcareTransactionType.SAVINGS_WITHDRAW,
+          amount: principal,
+          description: '적금 중도 해지 (원금 반환)',
+          createdBy: userId,
+        },
+      }),
+      this.prisma.childcareAccount.update({
+        where: { id: accountId },
+        data: {
+          balance: { increment: principal },
+          savingsBalance: 0,
+        },
+      }),
+      this.prisma.childcareSavingsPlan.update({
+        where: { id: plan.id },
+        data: {
+          status: SavingsPlanStatus.CANCELLED,
+          cancelledAt: new Date(),
+        },
+      }),
+    ]);
+
+    return {
+      message: '적금이 중도 해지되었습니다. 원금이 잔액으로 반환되었습니다.',
+    };
+  }
+
   // ─── Private Helpers ──────────────────────────────────────
+
+  private async getKr3yRate(): Promise<number | null> {
+    const indicator = await this.prisma.indicator.findUnique({
+      where: { symbol: 'KR3Y' },
+    });
+    if (!indicator) return null;
+
+    const latest = await this.prisma.indicatorPrice.findFirst({
+      where: { indicatorId: indicator.id },
+      orderBy: { recordedAt: 'desc' },
+    });
+
+    return latest ? Number(latest.price) : null;
+  }
 
   private calculateBalanceDelta(
     type: ChildcareTransactionType,
