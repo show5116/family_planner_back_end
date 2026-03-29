@@ -304,6 +304,15 @@ export class SavingsPlanDto {
   updatedAt: Date;
 }
 
+export class Kr3yRateDto {
+  @ApiProperty({
+    description: '참고용 현재 국고채 3년물 금리 (%)',
+    example: 3.2,
+    nullable: true,
+  })
+  kr3yRate: number | null;
+}
+
 export class SavingsPlanPreviewDto {
   @ApiProperty({ description: '총 납입 포인트', example: 240 })
   totalDeposit: number;

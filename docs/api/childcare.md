@@ -688,39 +688,21 @@
 
 ---
 
-### POST `childcare/accounts/:id/savings/plan/preview`
+### GET `childcare/accounts/:id/savings/kr3y-rate`
 
-**요약:** 적금 플랜 미리보기 (예상 이자 계산)
-
-**Request Body:**
-
-```json
-{
-  "monthlyAmount": 20, // 월 적금액 (포인트) (number)
-  "interestRate": 3, // 연 이자율 (%) (number)
-  "interestType": null, // 이자 유형 (SIMPLE: 단리, COMPOUND: 복리) (SavingsInterestType)
-  "startDate": "2026-04-01", // 적금 시작일 (YYYY-MM-DD) (string)
-  "endDate": "2027-04-01" // 적금 만기일 (YYYY-MM-DD) (string)
-}
-```
+**요약:** 국고채 3년물 금리 조회 (적금 플랜 화면 참고용)
 
 **Responses:**
 
-#### 201 - 미리보기 계산 성공
+#### 200 - 금리 조회 성공
 
 ```json
 {
-  "totalDeposit": 240, // 총 납입 포인트 (number)
-  "expectedInterest": 8, // 예상 이자 포인트 (number)
-  "expectedTotal": 248, // 예상 만기 수령 포인트 (number)
-  "months": 12, // 적금 기간 (개월) (number)
   "kr3yRate": 3 // 참고용 현재 국고채 3년물 금리 (%) (number | null)
 }
 ```
 
 #### 404 - 육아 계정을 찾을 수 없습니다
-
-#### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
 

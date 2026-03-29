@@ -5,12 +5,16 @@ import {
   IsEnum,
   IsInt,
   IsNumber,
+  IsOptional,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateSavingsPlanDto {
   @ApiProperty({ description: '월 적금액 (포인트)', example: 20 })
+  @IsOptional()
+  @ValidateIf((o) => o.monthlyAmount !== undefined)
   @IsInt()
   @Min(1)
   monthlyAmount: number;
@@ -19,6 +23,8 @@ export class CreateSavingsPlanDto {
     description: '연 이자율 (%)',
     example: 3.5,
   })
+  @IsOptional()
+  @ValidateIf((o) => o.interestRate !== undefined)
   @IsNumber()
   @Min(0)
   @Max(100)
@@ -29,6 +35,8 @@ export class CreateSavingsPlanDto {
     enum: SavingsInterestType,
     example: SavingsInterestType.SIMPLE,
   })
+  @IsOptional()
+  @ValidateIf((o) => o.interestType !== undefined)
   @IsEnum(SavingsInterestType)
   interestType: SavingsInterestType;
 
@@ -36,6 +44,8 @@ export class CreateSavingsPlanDto {
     description: '적금 시작일 (YYYY-MM-DD)',
     example: '2026-04-01',
   })
+  @IsOptional()
+  @ValidateIf((o) => o.startDate !== undefined)
   @IsDateString()
   startDate: string;
 
@@ -43,6 +53,8 @@ export class CreateSavingsPlanDto {
     description: '적금 만기일 (YYYY-MM-DD)',
     example: '2027-04-01',
   })
+  @IsOptional()
+  @ValidateIf((o) => o.endDate !== undefined)
   @IsDateString()
   endDate: string;
 }

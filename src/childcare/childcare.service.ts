@@ -28,7 +28,6 @@ import { UpdateRuleDto } from './dto/update-rule.dto';
 import { SavingsDepositDto, SavingsWithdrawDto } from './dto/savings.dto';
 import { ReorderDto } from './dto/reorder.dto';
 import { CreateSavingsPlanDto } from './dto/create-savings-plan.dto';
-import { calculateSavingsInterest } from './constants/savings.constant';
 
 @Injectable()
 export class ChildcareService {
@@ -725,19 +724,9 @@ export class ChildcareService {
   /**
    * 적금 플랜 생성 예상 미리보기 (부모만 가능)
    */
-  async previewSavingsPlan(accountId: string, dto: CreateSavingsPlanDto) {
-    const { months, totalDeposit, expectedInterest } =
-      calculateSavingsInterest(dto);
-
+  async previewSavingsPlan() {
     const kr3yRate = await this.getKr3yRate();
-
-    return {
-      months,
-      totalDeposit,
-      expectedInterest,
-      expectedTotal: totalDeposit + expectedInterest,
-      kr3yRate,
-    };
+    return { kr3yRate };
   }
 
   /**
@@ -748,6 +737,18 @@ export class ChildcareService {
     accountId: string,
     dto: CreateSavingsPlanDto,
   ) {
+    if (
+      !dto.monthlyAmount ||
+      dto.interestRate === undefined ||
+      !dto.interestType ||
+      !dto.startDate ||
+      !dto.endDate
+    ) {
+      throw new BadRequestException(
+        'monthlyAmount, interestRate, interestType, startDate, endDate는 필수입니다',
+      );
+    }
+
     const account = await this.prisma.childcareAccount.findUnique({
       where: { id: accountId },
       include: { savingsPlan: true },

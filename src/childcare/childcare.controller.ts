@@ -31,7 +31,7 @@ import {
   ChildcareShopItemDto,
   ChildcareRuleDto,
   SavingsPlanDto,
-  SavingsPlanPreviewDto,
+  Kr3yRateDto,
 } from './dto/childcare-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -317,18 +317,12 @@ export class ChildcareController {
 
   // ─── 적금 플랜 ────────────────────────────────────────────
 
-  @Post('accounts/:id/savings/plan/preview')
-  @ApiOperation({
-    summary: '적금 플랜 미리보기 (예상 이자 계산)',
-    description:
-      '적금 플랜 생성 전 예상 이자와 만기 수령액을 확인합니다.' +
-      ' 참고용 국고채 3년물 금리도 함께 제공됩니다.',
-  })
-  @ApiCreated(SavingsPlanPreviewDto, '미리보기 계산 성공')
+  @Get('accounts/:id/savings/kr3y-rate')
+  @ApiOperation({ summary: '국고채 3년물 금리 조회 (적금 플랜 화면 참고용)' })
+  @ApiSuccess(Kr3yRateDto, '금리 조회 성공')
   @ApiNotFound('육아 계정을 찾을 수 없습니다')
-  @ApiForbidden('부모만 수행할 수 있는 작업입니다')
-  previewSavingsPlan(@Request() req, @Body() dto: CreateSavingsPlanDto) {
-    return this.childcareService.previewSavingsPlan(req.user.userId, dto);
+  getKr3yRate() {
+    return this.childcareService.previewSavingsPlan();
   }
 
   @Post('accounts/:id/savings/plan')
