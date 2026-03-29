@@ -359,18 +359,41 @@ export class ChildcareService {
       where.type = query.type;
     }
 
+    let periodEnd: Date | null = null;
+
     if (query.month) {
       const [year, month] = query.month.split('-').map(Number);
+      periodEnd = new Date(year, month, 1);
       where.createdAt = {
         gte: new Date(year, month - 1, 1),
-        lt: new Date(year, month, 1),
+        lt: periodEnd,
+      };
+    } else if (query.year) {
+      const year = Number(query.year);
+      periodEnd = new Date(year + 1, 0, 1);
+      where.createdAt = {
+        gte: new Date(year, 0, 1),
+        lt: periodEnd,
       };
     }
 
-    return await this.prisma.childcareTransaction.findMany({
+    const transactions = await this.prisma.childcareTransaction.findMany({
       where,
       orderBy: { createdAt: 'desc' },
     });
+
+    // closingBalance: 해당 기간 이후 거래들의 delta를 현재 잔액에서 역산
+    let closingBalance = account.balance;
+    if (periodEnd) {
+      const laterTransactions = await this.prisma.childcareTransaction.findMany(
+        { where: { accountId, createdAt: { gte: periodEnd } } },
+      );
+      for (const tx of laterTransactions) {
+        closingBalance -= this.calculateBalanceDelta(tx.type, tx.amount);
+      }
+    }
+
+    return { transactions, closingBalance };
   }
 
   // ─── 포인트 상점 ──────────────────────────────────────────

@@ -20,4 +20,13 @@ export class TransactionQueryDto {
   @IsOptional()
   @IsString()
   month?: string;
+
+  @ApiProperty({
+    description: '조회 연도 (YYYY)',
+    example: '2026',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  year?: string;
 }

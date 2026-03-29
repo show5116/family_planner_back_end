@@ -1278,6 +1278,7 @@
 
 - `type` (`ChildcareTransactionType`) (Optional): 거래 유형 필터
 - `month` (`string`) (Optional): 조회 월 (YYYY-MM)
+- `year` (`string`) (Optional): 조회 연도 (YYYY)
 
 **Responses:**
 
@@ -1285,13 +1286,8 @@
 
 ```json
 {
-  "id": "uuid-1234", // 거래 ID (string)
-  "accountId": "uuid-1234", // 계정 ID (string)
-  "type": null, // 거래 유형 (ChildcareTransactionType)
-  "amount": 100, // 포인트 금액 (number)
-  "description": "월 용돈 지급", // 설명 (string)
-  "createdBy": "uuid-1234", // 생성자 ID (string)
-  "createdAt": "2026-03-01T00:00:00.000Z" // 생성 일시 (Date)
+  "transactions": [], // ChildcareTransactionDto[]
+  "closingBalance": 320 // 해당 월 마지막 거래 직후의 잔액 (월말 스냅샷) (number)
 }
 ```
 

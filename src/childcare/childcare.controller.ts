@@ -28,6 +28,7 @@ import {
   AllowancePlanDto,
   AllowancePlanHistoryDto,
   ChildcareTransactionDto,
+  ChildcareTransactionListDto,
   ChildcareShopItemDto,
   ChildcareRuleDto,
   SavingsPlanDto,
@@ -169,9 +170,7 @@ export class ChildcareController {
 
   @Get('accounts/:id/transactions')
   @ApiOperation({ summary: '거래 내역 조회' })
-  @ApiSuccess(ChildcareTransactionDto, '거래 내역 조회 성공', {
-    isArray: true,
-  })
+  @ApiSuccess(ChildcareTransactionListDto, '거래 내역 조회 성공')
   @ApiNotFound('육아 계정을 찾을 수 없습니다')
   @ApiForbidden('해당 계정에 접근할 권한이 없습니다')
   findTransactions(

@@ -170,6 +170,17 @@ export class ChildcareTransactionDto {
   createdAt: Date;
 }
 
+export class ChildcareTransactionListDto {
+  @ApiProperty({ type: () => ChildcareTransactionDto, isArray: true })
+  transactions: ChildcareTransactionDto[];
+
+  @ApiProperty({
+    description: '해당 월 마지막 거래 직후의 잔액 (월말 스냅샷)',
+    example: 320,
+  })
+  closingBalance: number;
+}
+
 export class ChildcareShopItemDto {
   @ApiProperty({ description: '상점 아이템 ID', example: 'uuid-1234' })
   id: string;
