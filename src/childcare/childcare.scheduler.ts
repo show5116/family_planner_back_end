@@ -72,6 +72,31 @@ export class ChildcareScheduler {
         if (!child.account) continue;
 
         const account = child.account;
+
+        // 이번 달 중복 지급 방지
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const monthEnd = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        );
+        const alreadyPaid = await this.prisma.childcareTransaction.findFirst({
+          where: {
+            accountId: account.id,
+            type: 'ALLOWANCE',
+            createdAt: { gte: monthStart, lte: monthEnd },
+          },
+        });
+        if (alreadyPaid) {
+          this.logger.debug(
+            `이미 이번 달 용돈 지급됨: accountId=${account.id}, 스킵`,
+          );
+          continue;
+        }
         const savingsPlan = await this.prisma.childcareSavingsPlan.findUnique({
           where: { accountId: account.id },
         });
