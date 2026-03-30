@@ -55,4 +55,11 @@ export class WeatherResponseDto {
     nullable: true,
   })
   pm25Grade: number | null;
+
+  @ApiProperty({
+    description: '미세먼지 기준 시도명',
+    example: '서울',
+    nullable: true,
+  })
+  sidoName: string | null;
 }

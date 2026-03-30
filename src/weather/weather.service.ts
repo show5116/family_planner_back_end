@@ -39,12 +39,6 @@ interface KmaResponse<T> {
   };
 }
 
-interface AirStationItem {
-  stationName: string;
-  addr: string;
-  tm: number;
-}
-
 interface AirMeasureItem {
   pm10Value: string;
   pm25Value: string;
@@ -60,6 +54,28 @@ interface AirKoreaResponse<T> {
       totalCount: number;
     };
   };
+}
+
+// 위경도 범위 기반 시도명 매핑
+function getSidoName(lat: number, lon: number): string {
+  if (lat >= 37.4 && lat <= 37.7 && lon >= 126.7 && lon <= 127.2) return '서울';
+  if (lat >= 37.3 && lat <= 37.8 && lon >= 126.4 && lon <= 127.0) return '인천';
+  if (lat >= 37.1 && lat <= 37.8 && lon >= 126.7 && lon <= 127.8) return '경기';
+  if (lat >= 36.1 && lat <= 36.7 && lon >= 127.2 && lon <= 127.7) return '대전';
+  if (lat >= 35.8 && lat <= 36.1 && lon >= 128.4 && lon <= 128.8) return '대구';
+  if (lat >= 35.0 && lat <= 35.3 && lon >= 128.9 && lon <= 129.3) return '부산';
+  if (lat >= 35.4 && lat <= 35.7 && lon >= 128.6 && lon <= 129.0) return '울산';
+  if (lat >= 35.1 && lat <= 35.4 && lon >= 126.7 && lon <= 127.1) return '광주';
+  if (lat >= 36.3 && lat <= 36.6 && lon >= 127.3 && lon <= 127.6) return '세종';
+  if (lat >= 37.0 && lat <= 38.6 && lon >= 127.5 && lon <= 129.4) return '강원';
+  if (lat >= 36.1 && lat <= 37.1 && lon >= 127.0 && lon <= 128.0) return '충북';
+  if (lat >= 35.9 && lat <= 36.8 && lon >= 126.3 && lon <= 127.4) return '충남';
+  if (lat >= 35.6 && lat <= 36.5 && lon >= 127.1 && lon <= 128.0) return '전북';
+  if (lat >= 34.2 && lat <= 35.6 && lon >= 126.2 && lon <= 127.3) return '전남';
+  if (lat >= 35.5 && lat <= 37.0 && lon >= 128.0 && lon <= 129.4) return '경북';
+  if (lat >= 34.6 && lat <= 35.7 && lon >= 127.6 && lon <= 129.3) return '경남';
+  if (lat >= 33.1 && lat <= 33.6 && lon >= 126.1 && lon <= 126.9) return '제주';
+  return '서울'; // fallback
 }
 
 // 위경도 → 기상청 격자좌표 변환 파라미터 (Lambert Conformal Conic)
@@ -147,10 +163,8 @@ export class WeatherService {
     'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst';
   private readonly fcstUrl =
     'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
-  private readonly airStationUrl =
-    'http://apis.data.go.kr/B552584/MsrstnInfoInqireSvc/getNearbyMsrstnList';
   private readonly airMeasureUrl =
-    'http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty';
+    'http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty';
   private readonly serviceKey: string;
 
   constructor(
@@ -340,9 +354,16 @@ export class WeatherService {
     pm25: number | null;
     pm10Grade: number | null;
     pm25Grade: number | null;
+    sidoName: string | null;
   }> {
     if (!this.serviceKey) {
-      return { pm10: null, pm25: null, pm10Grade: null, pm25Grade: null };
+      return {
+        pm10: null,
+        pm25: null,
+        pm10Grade: null,
+        pm25Grade: null,
+        sidoName: null,
+      };
     }
 
     const cacheKey = `air:${Math.round(lat * 10) / 10}:${Math.round(lon * 10) / 10}`;
@@ -351,33 +372,13 @@ export class WeatherService {
       pm25: number | null;
       pm10Grade: number | null;
       pm25Grade: number | null;
+      sidoName: string | null;
     }>(cacheKey);
     if (cached) return cached;
 
     try {
-      // 1단계: 가장 가까운 측정소 조회
-      const { data: stationData } = await firstValueFrom(
-        this.httpService.get<AirKoreaResponse<AirStationItem>>(
-          this.airStationUrl,
-          {
-            params: {
-              serviceKey: this.serviceKey,
-              returnType: 'json',
-              tmX: lon,
-              tmY: lat,
-              ver: '1.1',
-            },
-          },
-        ),
-      );
+      const sidoName = getSidoName(lat, lon);
 
-      const stations = stationData.response.body.items;
-      if (!stations?.length) {
-        return { pm10: null, pm25: null, pm10Grade: null, pm25Grade: null };
-      }
-      const stationName = stations[0].stationName;
-
-      // 2단계: 해당 측정소 실시간 미세먼지 조회
       const { data: measureData } = await firstValueFrom(
         this.httpService.get<AirKoreaResponse<AirMeasureItem>>(
           this.airMeasureUrl,
@@ -385,8 +386,7 @@ export class WeatherService {
             params: {
               serviceKey: this.serviceKey,
               returnType: 'json',
-              stationName,
-              dataTerm: 'DAILY',
+              sidoName,
               pageNo: 1,
               numOfRows: 1,
               ver: '1.0',
@@ -397,7 +397,13 @@ export class WeatherService {
 
       const measure = measureData.response.body.items?.[0];
       if (!measure) {
-        return { pm10: null, pm25: null, pm10Grade: null, pm25Grade: null };
+        return {
+          pm10: null,
+          pm25: null,
+          pm10Grade: null,
+          pm25Grade: null,
+          sidoName: null,
+        };
       }
 
       const result = {
@@ -407,13 +413,20 @@ export class WeatherService {
           measure.pm10Grade !== '-' ? parseInt(measure.pm10Grade) : null,
         pm25Grade:
           measure.pm25Grade !== '-' ? parseInt(measure.pm25Grade) : null,
+        sidoName,
       };
 
       await this.redisService.set(cacheKey, result, AIR_CACHE_TTL);
       return result;
     } catch (error) {
       this.logger.warn(`미세먼지 API 호출 실패: ${error?.message}`);
-      return { pm10: null, pm25: null, pm10Grade: null, pm25Grade: null };
+      return {
+        pm10: null,
+        pm25: null,
+        pm10Grade: null,
+        pm25Grade: null,
+        sidoName: null,
+      };
     }
   }
 
