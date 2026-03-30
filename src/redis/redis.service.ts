@@ -944,4 +944,43 @@ export class RedisService implements OnModuleInit {
   async isLocked(lockKey: string): Promise<boolean> {
     return await this.has(lockKey);
   }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * 8. Indicator History (지표 시계열 — Python AI 에이전트용)
+   * ───────────────────────────────────────────────────────────────────────── */
+
+  /**
+   * 지표 시계열에 새 포인트 추가 (LPUSH + LTRIM)
+   * 최신 데이터가 앞에 위치하며 maxLen 초과분은 자동 제거
+   *
+   * @param symbol - 지표 심볼
+   * @param point - 저장할 데이터 포인트
+   * @param maxLen - 최대 보관 건수 (기본 1000개 = 5분 주기 기준 약 3.5일)
+   */
+  async pushIndicatorHistory(
+    symbol: string,
+    point: object,
+    maxLen: number = 1000,
+  ): Promise<void> {
+    const key = `indicator:history:${symbol}`;
+    await this.redisClient.lpush(key, JSON.stringify(point));
+    await this.redisClient.ltrim(key, 0, maxLen - 1);
+  }
+
+  /**
+   * 지표 시계열 조회 (최신순)
+   *
+   * @param symbol - 지표 심볼
+   * @param count - 조회 건수 (기본 전체)
+   * @returns 데이터 포인트 배열 (최신순)
+   */
+  async getIndicatorHistory<T>(
+    symbol: string,
+    count: number = -1,
+  ): Promise<T[]> {
+    const key = `indicator:history:${symbol}`;
+    const end = count === -1 ? -1 : count - 1;
+    const items = await this.redisClient.lrange(key, 0, end);
+    return items.map((item) => JSON.parse(item) as T);
+  }
 }

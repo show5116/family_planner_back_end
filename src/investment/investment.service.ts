@@ -8,6 +8,7 @@ import {
 import { Decimal } from '@prisma/client/runtime/library';
 import { IndicatorCategory } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RedisService } from '@/redis/redis.service';
 import { YahooCollector } from './scheduler/collectors/yahoo.collector';
 import { CoinGeckoCollector } from './scheduler/collectors/coingecko.collector';
 import { BokCollector } from './scheduler/collectors/bok.collector';
@@ -178,6 +179,7 @@ export class InvestmentService implements OnModuleInit {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
     private readonly yahoo: YahooCollector,
     private readonly coinGecko: CoinGeckoCollector,
     private readonly bok: BokCollector,
@@ -692,6 +694,8 @@ export class InvestmentService implements OnModuleInit {
         ? ((price - resolvedPrev) / resolvedPrev) * 100
         : null;
 
+    const ts = recordedAt ?? new Date();
+
     await this.prisma.indicatorPrice.create({
       data: {
         indicatorId,
@@ -699,8 +703,19 @@ export class InvestmentService implements OnModuleInit {
         prevPrice: resolvedPrev,
         change,
         changeRate,
-        recordedAt: recordedAt ?? new Date(),
+        recordedAt: ts,
       },
+    });
+
+    // Python AI 에이전트가 시황 분석에 사용할 수 있도록 Redis에 시계열 누적
+    // LPUSH + LTRIM으로 최신 1000개 유지 (5분 주기 기준 약 3.5일치)
+    await this.redis.pushIndicatorHistory(symbol, {
+      symbol,
+      price,
+      prevPrice: resolvedPrev,
+      change,
+      changeRate,
+      recordedAt: ts.toISOString(),
     });
   }
 
