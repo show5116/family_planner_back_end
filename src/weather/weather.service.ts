@@ -15,6 +15,8 @@ import { RedisService } from '@/redis/redis.service';
 const WEATHER_CACHE_TTL = 60 * 60;
 // 단기예보 캐시 TTL: 3시간 (발표 주기 3시간)
 const FORECAST_CACHE_TTL = 60 * 60 * 3;
+// 미세먼지 캐시 TTL: 1시간 (에어코리아 갱신 주기)
+const AIR_CACHE_TTL = 60 * 60;
 
 interface KmaItem {
   category: string;
@@ -33,6 +35,29 @@ interface KmaResponse<T> {
     header: { resultCode: string; resultMsg: string };
     body: {
       items: { item: T[] };
+    };
+  };
+}
+
+interface AirStationItem {
+  stationName: string;
+  addr: string;
+  tm: number;
+}
+
+interface AirMeasureItem {
+  pm10Value: string;
+  pm25Value: string;
+  pm10Grade: string;
+  pm25Grade: string;
+}
+
+interface AirKoreaResponse<T> {
+  response: {
+    header: { resultCode: string; resultMsg: string };
+    body: {
+      items: T[];
+      totalCount: number;
     };
   };
 }
@@ -122,6 +147,10 @@ export class WeatherService {
     'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst';
   private readonly fcstUrl =
     'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
+  private readonly airStationUrl =
+    'http://apis.data.go.kr/B552584/MsrstnInfoInqireSvc/getNearbyMsrstnList';
+  private readonly airMeasureUrl =
+    'http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty';
   private readonly serviceKey: string;
 
   constructor(
@@ -172,6 +201,8 @@ export class WeatherService {
 
       const pty = parseInt(get('PTY'));
 
+      const airData = await this.getAirQuality(query.lat, query.lon);
+
       const result: WeatherResponseDto = {
         temperature: parseFloat(get('T1H')),
         humidity: parseInt(get('REH')),
@@ -181,6 +212,7 @@ export class WeatherService {
         weatherDescription: this.getPtyDescription(pty),
         baseDate,
         baseTime,
+        ...airData,
       };
 
       await this.redisService.set(cacheKey, result, WEATHER_CACHE_TTL);
@@ -298,6 +330,91 @@ export class WeatherService {
       const bKey = b.fcstDate + b.fcstTime;
       return aKey.localeCompare(bKey);
     });
+  }
+
+  private async getAirQuality(
+    lat: number,
+    lon: number,
+  ): Promise<{
+    pm10: number | null;
+    pm25: number | null;
+    pm10Grade: number | null;
+    pm25Grade: number | null;
+  }> {
+    if (!this.serviceKey) {
+      return { pm10: null, pm25: null, pm10Grade: null, pm25Grade: null };
+    }
+
+    const cacheKey = `air:${Math.round(lat * 10) / 10}:${Math.round(lon * 10) / 10}`;
+    const cached = await this.redisService.get<{
+      pm10: number | null;
+      pm25: number | null;
+      pm10Grade: number | null;
+      pm25Grade: number | null;
+    }>(cacheKey);
+    if (cached) return cached;
+
+    try {
+      // 1단계: 가장 가까운 측정소 조회
+      const { data: stationData } = await firstValueFrom(
+        this.httpService.get<AirKoreaResponse<AirStationItem>>(
+          this.airStationUrl,
+          {
+            params: {
+              serviceKey: this.serviceKey,
+              returnType: 'json',
+              tmX: lon,
+              tmY: lat,
+              ver: '1.1',
+            },
+          },
+        ),
+      );
+
+      const stations = stationData.response.body.items;
+      if (!stations?.length) {
+        return { pm10: null, pm25: null, pm10Grade: null, pm25Grade: null };
+      }
+      const stationName = stations[0].stationName;
+
+      // 2단계: 해당 측정소 실시간 미세먼지 조회
+      const { data: measureData } = await firstValueFrom(
+        this.httpService.get<AirKoreaResponse<AirMeasureItem>>(
+          this.airMeasureUrl,
+          {
+            params: {
+              serviceKey: this.serviceKey,
+              returnType: 'json',
+              stationName,
+              dataTerm: 'DAILY',
+              pageNo: 1,
+              numOfRows: 1,
+              ver: '1.0',
+            },
+          },
+        ),
+      );
+
+      const measure = measureData.response.body.items?.[0];
+      if (!measure) {
+        return { pm10: null, pm25: null, pm10Grade: null, pm25Grade: null };
+      }
+
+      const result = {
+        pm10: measure.pm10Value !== '-' ? parseInt(measure.pm10Value) : null,
+        pm25: measure.pm25Value !== '-' ? parseInt(measure.pm25Value) : null,
+        pm10Grade:
+          measure.pm10Grade !== '-' ? parseInt(measure.pm10Grade) : null,
+        pm25Grade:
+          measure.pm25Grade !== '-' ? parseInt(measure.pm25Grade) : null,
+      };
+
+      await this.redisService.set(cacheKey, result, AIR_CACHE_TTL);
+      return result;
+    } catch (error) {
+      this.logger.warn(`미세먼지 API 호출 실패: ${error?.message}`);
+      return { pm10: null, pm25: null, pm10Grade: null, pm25Grade: null };
+    }
   }
 
   // 초단기실황용 (PTY만 존재)

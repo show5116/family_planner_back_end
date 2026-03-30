@@ -13,6 +13,7 @@ import { YahooCollector } from './scheduler/collectors/yahoo.collector';
 import { CoinGeckoCollector } from './scheduler/collectors/coingecko.collector';
 import { BokCollector } from './scheduler/collectors/bok.collector';
 import { KoreaGoldCollector } from './scheduler/collectors/korea-gold.collector';
+import { FearGreedCollector } from './scheduler/collectors/fear-greed.collector';
 
 const INDICATORS: {
   symbol: string;
@@ -161,6 +162,13 @@ const INDICATORS: {
     category: 'MACRO',
     unit: '%',
   },
+  {
+    symbol: 'FEAR_GREED',
+    name: 'Fear & Greed Index',
+    nameKo: '공포탐욕지수',
+    category: 'MACRO',
+    unit: 'pt',
+  },
 ];
 
 type LatestPrice = {
@@ -184,6 +192,7 @@ export class InvestmentService implements OnModuleInit {
     private readonly coinGecko: CoinGeckoCollector,
     private readonly bok: BokCollector,
     private readonly koreaGold: KoreaGoldCollector,
+    private readonly fearGreed: FearGreedCollector,
   ) {}
 
   /**
@@ -474,6 +483,7 @@ export class InvestmentService implements OnModuleInit {
       'BTC_KRW',
       'BUFFETT_US',
       'GOLD_KRW_SPOT',
+      'FEAR_GREED',
     ]);
 
     if (!YAHOO_UNSUPPORTED.has(ind.symbol)) {
@@ -731,6 +741,7 @@ export class InvestmentService implements OnModuleInit {
     crypto: number;
     bond: number;
     goldSpot: number;
+    fearGreed: number;
   }> {
     const to = new Date();
     const from = new Date();
@@ -830,8 +841,31 @@ export class InvestmentService implements OnModuleInit {
       goldSpotCount = goldRows.length;
     }
 
+    // ── Fear & Greed Index ───────────────────────────────────────
     this.logger.log(
-      `[HistInit] Done — yahoo:${yahooCount} crypto:${cryptoCount} bond:${bondCount} goldSpot:${goldSpotCount}`,
+      `[HistInit] Fear & Greed historical ${Math.min(days, 365)}d ...`,
+    );
+    const fgRows = await this.fearGreed.collectHistorical(Math.min(days, 365));
+    const fgId = idMap.get('FEAR_GREED');
+    let fearGreedCount = 0;
+
+    if (fgId && fgRows.length > 0) {
+      await this.prisma.indicatorPrice.createMany({
+        data: fgRows.map((r) => ({
+          indicatorId: fgId,
+          price: r.value,
+          prevPrice: null,
+          change: null,
+          changeRate: null,
+          recordedAt: r.date,
+        })),
+        skipDuplicates: true,
+      });
+      fearGreedCount = fgRows.length;
+    }
+
+    this.logger.log(
+      `[HistInit] Done — yahoo:${yahooCount} crypto:${cryptoCount} bond:${bondCount} goldSpot:${goldSpotCount} fearGreed:${fearGreedCount}`,
     );
 
     return {
@@ -839,6 +873,7 @@ export class InvestmentService implements OnModuleInit {
       crypto: cryptoCount,
       bond: bondCount,
       goldSpot: goldSpotCount,
+      fearGreed: fearGreedCount,
     };
   }
 

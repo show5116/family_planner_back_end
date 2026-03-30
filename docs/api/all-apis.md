@@ -3483,7 +3483,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "yahoo": 5400, // 저장된 Yahoo 시세 건수 (number)
   "crypto": 365, // 저장된 BTC/KRW 건수 (number)
   "bond": 250, // 저장된 한국채 건수 (number)
-  "goldSpot": 4000 // 저장된 국내 금 현물가 건수 (number)
+  "goldSpot": 4000, // 저장된 국내 금 현물가 건수 (number)
+  "fearGreed": 365 // 저장된 공포탐욕지수 건수 (number)
 }
 ```
 
@@ -6535,7 +6536,11 @@ GPS 좌표(위도/경도)로 현재 날씨를 조회합니다 (초단기실황)
   "precipitationType": 0, // 강수형태 코드 (0=없음, 1=비, 2=진눈깨비, 3=눈, 4=소나기) (number)
   "weatherDescription": "맑음", // 날씨 설명 (string)
   "baseDate": "20260314", // 기준 날짜 (YYYYMMDD) (string)
-  "baseTime": "1200" // 기준 시각 (HHmm) (string)
+  "baseTime": "1200", // 기준 시각 (HHmm) (string)
+  "pm10": 35, // 미세먼지 농도 (㎍/㎥) (number | null)
+  "pm25": 18, // 초미세먼지 농도 (㎍/㎥) (number | null)
+  "pm10Grade": 2, // 미세먼지 등급 (1=좋음, 2=보통, 3=나쁨, 4=매우나쁨) (number | null)
+  "pm25Grade": 2 // 초미세먼지 등급 (1=좋음, 2=보통, 3=나쁨, 4=매우나쁨) (number | null)
 }
 ```
 

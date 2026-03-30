@@ -27,4 +27,32 @@ export class WeatherResponseDto {
 
   @ApiProperty({ description: '기준 시각 (HHmm)', example: '1200' })
   baseTime: string;
+
+  @ApiProperty({
+    description: '미세먼지 농도 (㎍/㎥)',
+    example: 35,
+    nullable: true,
+  })
+  pm10: number | null;
+
+  @ApiProperty({
+    description: '초미세먼지 농도 (㎍/㎥)',
+    example: 18,
+    nullable: true,
+  })
+  pm25: number | null;
+
+  @ApiProperty({
+    description: '미세먼지 등급 (1=좋음, 2=보통, 3=나쁨, 4=매우나쁨)',
+    example: 2,
+    nullable: true,
+  })
+  pm10Grade: number | null;
+
+  @ApiProperty({
+    description: '초미세먼지 등급 (1=좋음, 2=보통, 3=나쁨, 4=매우나쁨)',
+    example: 2,
+    nullable: true,
+  })
+  pm25Grade: number | null;
 }

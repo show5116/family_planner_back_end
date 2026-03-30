@@ -83,11 +83,14 @@ GET /weather?lat=37.5665&lon=126.9780
   "humidity": 60,
   "windSpeed": 3.2,
   "precipitation": 0,
-  "sky": 1,
   "precipitationType": 0,
   "weatherDescription": "맑음",
   "baseDate": "20260314",
-  "baseTime": "1200"
+  "baseTime": "1200",
+  "pm10": 35,
+  "pm25": 18,
+  "pm10Grade": 2,
+  "pm25Grade": 1
 }
 ```
 
@@ -99,11 +102,14 @@ GET /weather?lat=37.5665&lon=126.9780
 | humidity | number | 상대 습도 (%) |
 | windSpeed | number | 풍속 (m/s) |
 | precipitation | number | 1시간 강수량 (mm) |
-| sky | number | 하늘상태 코드 (1=맑음, 3=구름많음, 4=흐림) |
 | precipitationType | number | 강수형태 코드 (0=없음, 1=비, 2=진눈깨비, 3=눈, 4=소나기) |
 | weatherDescription | string | 날씨 설명 (한글) |
 | baseDate | string | 기준 날짜 (YYYYMMDD) |
 | baseTime | string | 기준 시각 (HHmm) |
+| pm10 | number\|null | 미세먼지 농도 (㎍/㎥), API 키 미설정 시 null |
+| pm25 | number\|null | 초미세먼지 농도 (㎍/㎥), API 키 미설정 시 null |
+| pm10Grade | number\|null | 미세먼지 등급 (1=좋음, 2=보통, 3=나쁨, 4=매우나쁨) |
+| pm25Grade | number\|null | 초미세먼지 등급 (1=좋음, 2=보통, 3=나쁨, 4=매우나쁨) |
 
 **Errors:**
 - 400: 잘못된 좌표 값
@@ -114,8 +120,13 @@ GET /weather?lat=37.5665&lon=126.9780
 
 ## 외부 API
 
+### 기상청
 - **서비스명**: 기상청_단기예보((구)_동네예보) 조회서비스
 - **환경변수**: `KMA_SERVICE_KEY`
+
+### 에어코리아 (미세먼지)
+- **서비스명**: 한국환경공단_에어코리아_대기오염정보
+- **환경변수**: `KMA_SERVICE_KEY` (기상청 키와 동일)
 
 ### 초단기실황조회 (getUltraSrtNcst)
 

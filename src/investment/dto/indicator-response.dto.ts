@@ -95,4 +95,7 @@ export class HistoricalInitResultDto {
 
   @ApiProperty({ description: '저장된 국내 금 현물가 건수', example: 4000 })
   goldSpot: number;
+
+  @ApiProperty({ description: '저장된 공포탐욕지수 건수', example: 365 })
+  fearGreed: number;
 }

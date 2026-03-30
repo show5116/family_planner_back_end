@@ -7,6 +7,7 @@ import { CoinGeckoCollector } from './collectors/coingecko.collector';
 import { FredCollector } from './collectors/fred.collector';
 import { BokCollector } from './collectors/bok.collector';
 import { KoreaGoldCollector } from './collectors/korea-gold.collector';
+import { FearGreedCollector } from './collectors/fear-greed.collector';
 
 // 각 크론잡의 락 TTL (초) — 실행 최대 소요 시간보다 넉넉하게 설정
 const LOCK_TTL = {
@@ -15,6 +16,7 @@ const LOCK_TTL = {
   macro: 10 * 60, // 10분
   bond: 10 * 60, // 10분
   goldSpot: 10 * 60, // 10분 (15분 주기 크론)
+  fearGreed: 10 * 60, // 10분 (1시간 주기 크론)
 } as const;
 
 @Injectable()
@@ -29,6 +31,7 @@ export class InvestmentScheduler {
     private readonly fred: FredCollector,
     private readonly bok: BokCollector,
     private readonly koreaGold: KoreaGoldCollector,
+    private readonly fearGreed: FearGreedCollector,
   ) {}
 
   /**
@@ -182,6 +185,39 @@ export class InvestmentScheduler {
       this.logger.debug(
         `GOLD_KRW_SPOT: ${result.pricePerGram.toFixed(0)} 원/g`,
       );
+    } finally {
+      await this.redis.releaseLock(lockKey, lockValue);
+    }
+  }
+
+  /**
+   * Fear & Greed Index 수집 (1시간마다)
+   */
+  @Cron('0 * * * *')
+  async collectFearGreed() {
+    const lockKey = 'lock:indicator:fear-greed';
+    const lockValue = Date.now().toString();
+    const acquired = await this.redis.acquireLock(
+      lockKey,
+      LOCK_TTL.fearGreed,
+      lockValue,
+    );
+    if (!acquired) return;
+
+    try {
+      this.logger.debug('Collecting Fear & Greed Index...');
+      const result = await this.fearGreed.collect();
+
+      if (!result) return;
+
+      await this.investmentService.savePrice(
+        'FEAR_GREED',
+        result.value,
+        null,
+        new Date(),
+      );
+
+      this.logger.debug(`FEAR_GREED: ${result.value}`);
     } finally {
       await this.redis.releaseLock(lockKey, lockValue);
     }

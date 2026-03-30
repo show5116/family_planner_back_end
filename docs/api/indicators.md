@@ -245,7 +245,8 @@
   "yahoo": 5400, // 저장된 Yahoo 시세 건수 (number)
   "crypto": 365, // 저장된 BTC/KRW 건수 (number)
   "bond": 250, // 저장된 한국채 건수 (number)
-  "goldSpot": 4000 // 저장된 국내 금 현물가 건수 (number)
+  "goldSpot": 4000, // 저장된 국내 금 현물가 건수 (number)
+  "fearGreed": 365 // 저장된 공포탐욕지수 건수 (number)
 }
 ```
 
