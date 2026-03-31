@@ -23,7 +23,6 @@ import {
   BudgetDto,
   StatisticsDto,
   YearlyStatisticsDto,
-  RecurringCopyResultDto,
   ExpenseReceiptDto,
   ReceiptUploadUrlDto,
 } from './dto/household-response.dto';
@@ -65,20 +64,6 @@ class BudgetQueryDto {
   @ApiProperty({ description: '조회 월 (YYYY-MM)', example: '2026-02' })
   @IsString()
   month: string;
-}
-
-class RecurringCopyQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
-  @IsString()
-  groupId: string;
-
-  @ApiProperty({
-    description: '복사 대상 월 (YYYY-MM) - 이전 달의 고정비용을 이 달로 복사',
-    example: '2026-03',
-  })
-  @IsString()
-  @Matches(/^\d{4}-\d{2}$/, { message: '월 형식은 YYYY-MM이어야 합니다' })
-  targetMonth: string;
 }
 
 class ReceiptUploadQueryDto {
@@ -193,23 +178,6 @@ export class HouseholdController {
     @Param('receiptId') receiptId: string,
   ) {
     return this.householdService.removeReceipt(req.user.userId, id, receiptId);
-  }
-
-  // ─── 고정비용 ────────────────────────────────────────────
-
-  @Post('expenses/recurring/copy')
-  @ApiOperation({
-    summary: '고정비용 다음 달 복사',
-    description: '이전 달의 isRecurring=true 지출을 targetMonth로 복사합니다.',
-  })
-  @ApiCreated(RecurringCopyResultDto, '고정비용 복사 성공')
-  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  copyRecurringExpenses(@Request() req, @Query() query: RecurringCopyQueryDto) {
-    return this.householdService.copyRecurringExpenses(
-      req.user.userId,
-      query.groupId,
-      query.targetMonth,
-    );
   }
 
   // ─── 통계 ────────────────────────────────────────────────
