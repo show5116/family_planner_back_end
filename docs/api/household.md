@@ -288,46 +288,6 @@
 
 ---
 
-### POST `household/expenses/recurring/copy`
-
-**요약:** 고정비용 다음 달 복사
-
-**설명:**
-이전 달의 isRecurring=true 지출을 targetMonth로 복사합니다.
-
-**Query Parameters:**
-
-- `query` (`RecurringCopyQueryDto`)
-
-**Responses:**
-
-#### 201 - 고정비용 복사 성공
-
-```json
-{
-  "count": 3, // 복사된 지출 건수 (number)
-  "expenses": [
-    {
-      "id": "uuid-1234", // 지출 ID (string)
-      "groupId": "uuid-1234", // 그룹 ID (string)
-      "userId": "uuid-1234", // 작성자 ID (string)
-      "amount": 15000, // 금액 (string)
-      "category": null, // 카테고리 (ExpenseCategory)
-      "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
-      "description": "점심 식사", // 내용 (string | null)
-      "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
-      "isRecurring": false, // 고정 지출 여부 (boolean)
-      "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
-      "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
-    }
-  ] // 복사된 지출 목록 (ExpenseDto[])
-}
-```
-
-#### 403 - 해당 그룹의 멤버가 아닙니다
-
----
-
 ### GET `household/statistics`
 
 **요약:** 월별 지출 통계 조회

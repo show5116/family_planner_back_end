@@ -83,7 +83,7 @@ enum PaymentMethod {
 - [x] 카테고리별 지출 분류 (교통비, 식비, 여가비 등)
 - [x] 결제 수단 관리 (카드, 현금, 계좌이체)
 - [x] 고정비용 플래그 (`isRecurring`)
-- [x] 고정비용 다음 달 복사 (`POST /household/expenses/recurring/copy`)
+- [x] 고정비용 자동 복사 스케줄러 (매일 00:05, 날짜 clamp + 중복 방지)
 - [x] 월별 지출 통계 (카테고리별 합계, 건수)
 - [x] 연별 지출 통계 (월별 합계, `GET /household/statistics/yearly`)
 - [x] 예산 설정 및 관리 (upsert)
@@ -106,9 +106,10 @@ enum PaymentMethod {
 | DELETE | `/household/expenses/:id`                      | 지출 삭제                         | JWT, Owner        |
 
 ### 고정비용
-| Method | Endpoint                                       | 설명                              | 권한              |
-| ------ | ---------------------------------------------- | --------------------------------- | ----------------- |
-| POST   | `/household/expenses/recurring/copy`           | 이전 달 고정비용 → 대상 월 복사  | JWT, Group Member |
+> 매일 00:05 스케줄러가 자동 실행 — 별도 API 없음
+> - 이전 달 `isRecurring=true` 지출을 이번 달로 복사
+> - 날짜 clamp: 이번 달에 없는 날짜(31일 등)는 말일로 자동 조정
+> - 중복 방지: 동일 `(groupId, userId, amount, category, date)` 존재 시 skip
 
 ### 영수증
 | Method | Endpoint                                             | 설명                              | 권한  |
@@ -139,4 +140,4 @@ enum PaymentMethod {
 
 ---
 
-**Last Updated**: 2026-02-27
+**Last Updated**: 2026-04-01

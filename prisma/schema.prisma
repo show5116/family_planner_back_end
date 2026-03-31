@@ -1079,3 +1079,46 @@ enum VoteStatus {
   ONGOING
   CLOSED
 }
+
+model SavingsGoal {
+  id            String             @id @default(uuid())
+  groupId       String
+  name          String             @db.VarChar(100)
+  description   String?            @db.VarChar(300)
+  targetAmount  Decimal?           @db.Decimal(12, 2)
+  currentAmount Decimal            @default(0) @db.Decimal(12, 2)
+  autoDeposit   Boolean            @default(false)
+  monthlyAmount Decimal?           @db.Decimal(12, 2)
+  status        SavingsGoalStatus  @default(ACTIVE)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  transactions  SavingsTransaction[]
+
+  @@index([groupId])
+}
+
+model SavingsTransaction {
+  id          String       @id @default(uuid())
+  goalId      String
+  type        SavingsType
+  amount      Decimal      @db.Decimal(12, 2)
+  description String?      @db.VarChar(200)
+  createdAt   DateTime     @default(now())
+
+  goal        SavingsGoal  @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId, createdAt])
+}
+
+enum SavingsGoalStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum SavingsType {
+  DEPOSIT
+  WITHDRAW
+  AUTO_DEPOSIT
+}
