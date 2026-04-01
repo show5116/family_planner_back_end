@@ -51,4 +51,14 @@ export class UpdateSavingsGoalDto {
   @IsNumber()
   @Min(1)
   monthlyAmount?: number;
+
+  @ApiProperty({
+    description:
+      '자산 통계 연동 여부 (true 시 GET /assets/statistics에 잔액 포함)',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeInAssets?: boolean;
 }

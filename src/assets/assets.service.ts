@@ -293,6 +293,22 @@ export class AssetsService {
       count: stat.count,
     }));
 
+    // 자산 연동된 적립금 집계
+    const savingsGoalsRaw = await this.prisma.savingsGoal.findMany({
+      where: { groupId, includeInAssets: true },
+      select: { id: true, name: true, currentAmount: true },
+    });
+
+    const savingsTotal = savingsGoalsRaw.reduce(
+      (sum, g) => sum + Number(g.currentAmount),
+      0,
+    );
+    const savingsGoals = savingsGoalsRaw.map((g) => ({
+      id: g.id,
+      name: g.name,
+      currentAmount: Number(g.currentAmount).toFixed(2),
+    }));
+
     return {
       totalBalance: totalBalance.toFixed(2),
       totalPrincipal: totalPrincipal.toFixed(2),
@@ -300,6 +316,8 @@ export class AssetsService {
       profitRate: profitRate.toFixed(2),
       accountCount: accounts.length,
       byType,
+      savingsTotal: savingsTotal.toFixed(2),
+      savingsGoals,
     };
   }
 

@@ -10,5 +10,6 @@ import { NotificationModule } from '@/notification/notification.module';
   imports: [PrismaModule, NotificationModule, ScheduleModule.forRoot()],
   controllers: [SavingsController],
   providers: [SavingsService, SavingsScheduler],
+  exports: [SavingsService],
 })
 export class SavingsModule {}

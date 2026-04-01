@@ -40,6 +40,7 @@ export class SavingsService {
         targetAmount: dto.targetAmount,
         autoDeposit: dto.autoDeposit ?? false,
         monthlyAmount: dto.autoDeposit ? dto.monthlyAmount : null,
+        includeInAssets: dto.includeInAssets ?? false,
       },
     });
   }
@@ -101,6 +102,9 @@ export class SavingsService {
           monthlyAmount: dto.monthlyAmount,
         }),
         ...(dto.autoDeposit === false && { monthlyAmount: null }),
+        ...(dto.includeInAssets !== undefined && {
+          includeInAssets: dto.includeInAssets,
+        }),
       },
     });
   }
@@ -357,6 +361,7 @@ export class SavingsService {
     currentAmount: unknown;
     autoDeposit: boolean;
     monthlyAmount: unknown;
+    includeInAssets: boolean;
     status: SavingsGoalStatus;
     createdAt: Date;
     updatedAt: Date;

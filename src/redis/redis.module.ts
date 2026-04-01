@@ -153,7 +153,7 @@ export class RedisModule {
                     RedisModule.logger.error(
                       'Redis CacheModule 재연결 시도 초과',
                     );
-                    return false; // Error 객체 대신 false로 조용히 중단
+                    return new Error('Redis CacheModule 재연결 시도 초과');
                   }
                   return Math.min(retries * 200, 5000);
                 },

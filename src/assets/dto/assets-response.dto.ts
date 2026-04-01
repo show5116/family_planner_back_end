@@ -85,8 +85,19 @@ export class AccountTypeStatDto {
   count: number;
 }
 
+export class SavingsGoalSummaryDto {
+  @ApiProperty({ description: '적립 목표 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '적립 목표 이름', example: '비상금' })
+  name: string;
+
+  @ApiProperty({ description: '현재 잔액', example: '2000000.00' })
+  currentAmount: string;
+}
+
 export class AccountStatisticsDto {
-  @ApiProperty({ description: '총 잔액', example: '50000000.00' })
+  @ApiProperty({ description: '총 잔액 (계좌)', example: '50000000.00' })
   totalBalance: string;
 
   @ApiProperty({ description: '총 원금', example: '48000000.00' })
@@ -103,4 +114,16 @@ export class AccountStatisticsDto {
 
   @ApiProperty({ description: '유형별 통계', type: [AccountTypeStatDto] })
   byType: AccountTypeStatDto[];
+
+  @ApiProperty({
+    description: '자산 연동 적립금 합계 (includeInAssets=true인 목표)',
+    example: '3500000.00',
+  })
+  savingsTotal: string;
+
+  @ApiProperty({
+    description: '자산 연동 적립금 목록',
+    type: [SavingsGoalSummaryDto],
+  })
+  savingsGoals: SavingsGoalSummaryDto[];
 }

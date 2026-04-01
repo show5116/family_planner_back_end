@@ -92,6 +92,9 @@ model AccountRecord {
 - [ ] 자산 목표 설정 및 달성률
 - [ ] 자산 알림 (목표 달성, 손실 발생 등)
 
+### 🟨 진행 예정
+- [ ] 적립금 연동: 통계 API에 `savingsTotal`, `savingsGoals` 항목 추가
+
 ---
 
 ## API 엔드포인트
@@ -105,7 +108,7 @@ model AccountRecord {
 | DELETE | `/assets/accounts/:id`            | 계좌 삭제      | JWT, Owner        |
 | POST   | `/assets/accounts/:id/records`    | 자산 기록 추가 | JWT, Owner        |
 | GET    | `/assets/accounts/:id/records`    | 자산 기록 목록 | JWT, Group Member |
-| GET    | `/assets/statistics`              | 통계 조회      | JWT, Group Member |
+| GET    | `/assets/statistics`              | 통계 조회 (적립금 연동 포함) | JWT, Group Member |
 
 ---
 
@@ -137,6 +140,27 @@ profitRate = principal > 0 ? (profit / principal) * 100 : 0
 - 계좌별 최신 기록(balance, principal, profit) 기준 집계
 - `AccountType` 기준 유형별 그룹핑
 - 전체 총합 계산
+- **적립금 연동**: `includeInAssets = true`인 `SavingsGoal`의 `currentAmount`를 별도 항목으로 포함
+  - `savingsTotal`: 연동된 적립금 합계
+  - `savingsGoals`: 목표별 이름 + 잔액 상세 목록
+  - 기존 `totalBalance`와 별도 표시 (이중 계산 방지)
+
+**응답 예시 (`GET /assets/statistics`)**
+```json
+{
+  "totalBalance": "50000000.00",
+  "totalPrincipal": "48000000.00",
+  "totalProfit": "2000000.00",
+  "profitRate": "4.17",
+  "accountCount": 5,
+  "byType": [...],
+  "savingsTotal": "3500000.00",
+  "savingsGoals": [
+    { "id": "uuid-1", "name": "여름 휴가", "currentAmount": "1500000.00" },
+    { "id": "uuid-2", "name": "비상금", "currentAmount": "2000000.00" }
+  ]
+}
+```
 
 ### 권한 구조
 - 계좌 목록/상세/기록 조회: 그룹 멤버 전체
@@ -145,4 +169,4 @@ profitRate = principal > 0 ? (profit / principal) * 100 : 0
 
 ---
 
-**Last Updated**: 2026-03-01
+**Last Updated**: 2026-04-02

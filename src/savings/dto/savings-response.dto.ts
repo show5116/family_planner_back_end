@@ -55,6 +55,12 @@ export class SavingsGoalDto {
   monthlyAmount: number | null;
 
   @ApiProperty({
+    description: '자산 통계 연동 여부',
+    example: false,
+  })
+  includeInAssets: boolean;
+
+  @ApiProperty({
     description: '상태',
     enum: SavingsGoalStatus,
     example: SavingsGoalStatus.ACTIVE,

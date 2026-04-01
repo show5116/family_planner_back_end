@@ -1,6 +1,6 @@
 # 16. 적립금 관리 (Savings Management)
 
-> **상태**: ✅ 완료
+> **상태**: 🟨 진행 중
 > **Phase**: Phase 6
 
 ---
@@ -16,29 +16,26 @@
 ## 주요 기능
 
 ### 적립 목표 관리
-
 - 적립 목표 생성 (이름, 목표 금액, 설명)
 - 목표 금액 미설정 시 무기한 적립 (비상금 용도)
 - 목표 달성 여부 자동 판단 (`currentAmount >= targetAmount`)
 - 목표 완료 처리 (수동 종료)
 - 그룹당 여러 개의 적립 목표 동시 운영 가능
+- **자산 연동 옵션** (`includeInAssets`): 활성화 시 자산 통계(`GET /assets/statistics`)에 잔액 포함
 
 ### 자동 적립 (선택)
-
 - 목표 생성 시 `autoDeposit: true` + `monthlyAmount` 설정 시 활성화
 - 스케줄러로 매월 1일 자동 적립 트랜잭션 생성
 - `autoDeposit: false`이면 스케줄러 대상에서 제외 (수동으로만 적립)
 - 자동 적립 일시 중지(`PAUSED`) / 재개(`ACTIVE`) 가능
 
 ### 적립/출금 내역 관리
-
 - 수동 입금: 자유롭게 금액 추가 적립
 - 출금: 적립금 사용 (잔액 초과 출금 불가)
 - 내역 타입: `DEPOSIT`(수동 입금) | `WITHDRAW`(출금) | `AUTO_DEPOSIT`(자동 적립)
 - 출금 시 설명 필수 (사용 목적 기록)
 
 ### 잔액 관리
-
 - `currentAmount`: 누적 입금 - 누적 출금 (실시간 반영)
 - 출금 시 잔액 부족이면 `400 Bad Request`
 
@@ -48,17 +45,18 @@
 
 ```prisma
 model SavingsGoal {
-  id            String               @id @default(uuid())
-  groupId       String
-  name          String               @db.VarChar(100)
-  description   String?              @db.VarChar(300)
-  targetAmount  Decimal?             @db.Decimal(12, 2)   // null = 무기한 적립
-  currentAmount Decimal              @default(0) @db.Decimal(12, 2)
-  autoDeposit   Boolean              @default(false)       // 자동 적립 여부
-  monthlyAmount Decimal?             @db.Decimal(12, 2)   // autoDeposit=true일 때 필수
-  status        SavingsGoalStatus    @default(ACTIVE)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  id               String               @id @default(uuid())
+  groupId          String
+  name             String               @db.VarChar(100)
+  description      String?              @db.VarChar(300)
+  targetAmount     Decimal?             @db.Decimal(12, 2)   // null = 무기한 적립
+  currentAmount    Decimal              @default(0) @db.Decimal(12, 2)
+  autoDeposit      Boolean              @default(false)       // 자동 적립 여부
+  monthlyAmount    Decimal?             @db.Decimal(12, 2)   // autoDeposit=true일 때 필수
+  includeInAssets  Boolean              @default(false)       // 자산 통계 포함 여부
+  status           SavingsGoalStatus    @default(ACTIVE)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
   transactions  SavingsTransaction[]
 
@@ -98,7 +96,6 @@ enum SavingsType {
 ## 구현 상태
 
 ### ✅ 완료
-
 - [x] 적립 목표 CRUD
 - [x] 자동 적립 스케줄러 (`autoDeposit = true && status = ACTIVE` 대상만, 매월 1일 00:10)
 - [x] 수동 입금 / 출금 API
@@ -108,6 +105,11 @@ enum SavingsType {
 - [x] 목표 달성률 계산 (`currentAmount / targetAmount * 100`, 최대 100%)
 - [x] 목표 완료 처리 (수동 종료)
 - [x] 자동 적립 일시 중지 / 재개 (`autoDeposit = true`인 목표만)
+
+### ⬜ TODO
+- [ ] `includeInAssets` 필드 추가 (Prisma 스키마 + 마이그레이션)
+- [ ] 생성/수정 DTO에 `includeInAssets` 옵션 추가
+- [ ] 자산 통계 연동 (`GET /assets/statistics`에 적립금 잔액 포함)
 
 ---
 
@@ -139,12 +141,11 @@ enum SavingsType {
 ## 주요 플로우
 
 ### 적립 목표 생성
-
 - `autoDeposit: false` (기본): `monthlyAmount` 불필요, 수동 입금만 사용
 - `autoDeposit: true`: `monthlyAmount` 필수, 매월 1일 자동 적립 활성화
+- `includeInAssets: true`: 자산 통계 조회 시 `currentAmount`가 `savingsTotal`에 합산됨
 
 ### 자동 적립 플로우 (스케줄러)
-
 1. 매월 1일 00:10 스케줄러 실행
 2. `autoDeposit = true && status = ACTIVE`인 모든 `SavingsGoal` 조회
 3. 각 목표에 `monthlyAmount`만큼 `AUTO_DEPOSIT` 트랜잭션 생성
@@ -152,18 +153,21 @@ enum SavingsType {
 5. `targetAmount`가 있고 `currentAmount >= targetAmount`이면 `status = COMPLETED` + 달성 알림 발송
 
 ### 출금 플로우
-
 1. `POST /savings/:id/withdraw` 호출 (`amount`, `description` 필수)
 2. `status = COMPLETED`이면 `400 Bad Request` ("완료된 적립 목표입니다")
 3. `currentAmount < amount`이면 `400 Bad Request` ("잔액이 부족합니다")
 4. `WITHDRAW` 트랜잭션 생성 + `currentAmount -= amount` 업데이트
 
 ### pause / resume
-
 - `pause`: `status = PAUSED` 전환 → 스케줄러 대상 제외 (수동 입금은 여전히 가능)
 - `resume`: `status = ACTIVE` 전환 → 다음 달부터 자동 적립 재개
 - `autoDeposit = false`인 목표에 pause/resume 호출 시 `400 Bad Request`
 
+### 자산 연동 (`includeInAssets`)
+- `includeInAssets = true`인 목표의 `currentAmount`를 `GET /assets/statistics` 응답에 포함
+- 기존 계좌 잔액(`totalBalance`)과 **별도 항목**(`savingsTotal`)으로 표시 (이중 계산 방지)
+- `savingsGoals` 배열에 목표별 이름 + 잔액 상세 포함
+
 ---
 
-**Last Updated**: 2026-04-01 (구현 완료)
+**Last Updated**: 2026-04-02
