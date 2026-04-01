@@ -272,7 +272,7 @@
 
 ```json
 {
-  "totalBalance": "50000000.00", // 총 잔액 (string)
+  "totalBalance": "50000000.00", // 총 잔액 (계좌) (string)
   "totalPrincipal": "48000000.00", // 총 원금 (string)
   "totalProfit": "2000000.00", // 총 수익금 (string)
   "profitRate": "4.17", // 전체 수익률 (%) (string)
@@ -283,7 +283,15 @@
       "balance": "10000000.00", // 총 잔액 (string)
       "count": 2 // 계좌 수 (number)
     }
-  ] // 유형별 통계 (AccountTypeStatDto[])
+  ], // 유형별 통계 (AccountTypeStatDto[])
+  "savingsTotal": "3500000.00", // 자산 연동 적립금 합계 (includeInAssets=true인 목표) (string)
+  "savingsGoals": [
+    {
+      "id": "uuid-1234", // 적립 목표 ID (string)
+      "name": "비상금", // 적립 목표 이름 (string)
+      "currentAmount": "2000000.00" // 현재 잔액 (string)
+    }
+  ] // 자산 연동 적립금 목록 (SavingsGoalSummaryDto[])
 }
 ```
 

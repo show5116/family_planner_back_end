@@ -1,6 +1,6 @@
 # 16. 적립금 관리 (Savings Management)
 
-> **상태**: 🟨 진행 중
+> **상태**: ✅ 완료
 > **Phase**: Phase 6
 
 ---
@@ -25,7 +25,11 @@
 
 ### 자동 적립 (선택)
 - 목표 생성 시 `autoDeposit: true` + `monthlyAmount` 설정 시 활성화
-- 스케줄러로 매월 1일 자동 적립 트랜잭션 생성
+- `depositDay` (1~31): 매달 적립 실행 날짜 (기본값 1일)
+  - 해당 월에 날짜가 없으면 말일에 실행 (예: 31일 설정 → 2월은 28/29일)
+- 스케줄러 매일 실행, `depositDay == 오늘`인 목표만 적립
+- 이번 달 이미 적립된 목표는 skip (중복 방지)
+- Redis 분산 락으로 중복 실행 방지
 - `autoDeposit: false`이면 스케줄러 대상에서 제외 (수동으로만 적립)
 - 자동 적립 일시 중지(`PAUSED`) / 재개(`ACTIVE`) 가능
 
@@ -53,6 +57,7 @@ model SavingsGoal {
   currentAmount    Decimal              @default(0) @db.Decimal(12, 2)
   autoDeposit      Boolean              @default(false)       // 자동 적립 여부
   monthlyAmount    Decimal?             @db.Decimal(12, 2)   // autoDeposit=true일 때 필수
+  depositDay       Int                  @default(1)           // 매달 적립일 (1~31), 해당 월 말일 초과 시 말일 처리
   includeInAssets  Boolean              @default(false)       // 자산 통계 포함 여부
   status           SavingsGoalStatus    @default(ACTIVE)
   createdAt        DateTime             @default(now())
@@ -97,7 +102,9 @@ enum SavingsType {
 
 ### ✅ 완료
 - [x] 적립 목표 CRUD
-- [x] 자동 적립 스케줄러 (`autoDeposit = true && status = ACTIVE` 대상만, 매월 1일 00:10)
+- [x] 자동 적립 스케줄러 (매일 00:10, `depositDay == 오늘`인 목표만 적립)
+- [x] `depositDay` 필드 (1~31, 말일 초과 시 말일 처리)
+- [x] 스케줄러 중복 방지 (Redis 분산 락 + 이번 달 AUTO_DEPOSIT 트랜잭션 체크)
 - [x] 수동 입금 / 출금 API
 - [x] 잔액 초과 출금 방지
 - [x] 목표 달성 시 자동 `COMPLETED` 전환 + 그룹 멤버 FCM 알림
@@ -105,11 +112,7 @@ enum SavingsType {
 - [x] 목표 달성률 계산 (`currentAmount / targetAmount * 100`, 최대 100%)
 - [x] 목표 완료 처리 (수동 종료)
 - [x] 자동 적립 일시 중지 / 재개 (`autoDeposit = true`인 목표만)
-
-### ⬜ TODO
-- [ ] `includeInAssets` 필드 추가 (Prisma 스키마 + 마이그레이션)
-- [ ] 생성/수정 DTO에 `includeInAssets` 옵션 추가
-- [ ] 자산 통계 연동 (`GET /assets/statistics`에 적립금 잔액 포함)
+- [x] 자산 연동 (`includeInAssets`): 자산 통계에 적립금 잔액 포함
 
 ---
 
@@ -142,15 +145,19 @@ enum SavingsType {
 
 ### 적립 목표 생성
 - `autoDeposit: false` (기본): `monthlyAmount` 불필요, 수동 입금만 사용
-- `autoDeposit: true`: `monthlyAmount` 필수, 매월 1일 자동 적립 활성화
+- `autoDeposit: true`: `monthlyAmount` + `depositDay` 설정, 매달 지정일 자동 적립 활성화
 - `includeInAssets: true`: 자산 통계 조회 시 `currentAmount`가 `savingsTotal`에 합산됨
 
 ### 자동 적립 플로우 (스케줄러)
-1. 매월 1일 00:10 스케줄러 실행
-2. `autoDeposit = true && status = ACTIVE`인 모든 `SavingsGoal` 조회
-3. 각 목표에 `monthlyAmount`만큼 `AUTO_DEPOSIT` 트랜잭션 생성
-4. `currentAmount += monthlyAmount` 업데이트
-5. `targetAmount`가 있고 `currentAmount >= targetAmount`이면 `status = COMPLETED` + 달성 알림 발송
+1. 매일 00:10 스케줄러 실행 (Redis 분산 락으로 중복 방지)
+2. 오늘 날짜(`todayDay`)와 이번 달 말일(`lastDay`) 계산
+3. `autoDeposit = true && status = ACTIVE`인 목표 중 아래 조건에 해당하는 것 조회:
+   - `depositDay == todayDay` (정확히 오늘이 적립일)
+   - 오늘이 말일(`todayDay == lastDay`)이면 `depositDay > lastDay`인 목표도 포함 (예: 31일 설정 → 2월 말일에 실행)
+4. 이번 달 이미 `AUTO_DEPOSIT` 트랜잭션이 있는 목표는 skip (중복 방지)
+5. 각 목표에 `monthlyAmount`만큼 `AUTO_DEPOSIT` 트랜잭션 생성
+6. `currentAmount += monthlyAmount` 업데이트
+7. `targetAmount`가 있고 `currentAmount >= targetAmount`이면 `status = COMPLETED` + 달성 알림 발송
 
 ### 출금 플로우
 1. `POST /savings/:id/withdraw` 호출 (`amount`, `description` 필수)
@@ -170,4 +177,4 @@ enum SavingsType {
 
 ---
 
-**Last Updated**: 2026-04-02
+**Last Updated**: 2026-04-01 (depositDay 구현 완료, 자산 연동 완료)

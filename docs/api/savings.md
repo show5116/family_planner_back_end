@@ -21,7 +21,9 @@
   "description": "7월 제주도 여행 경비", // 설명 (string?)
   "targetAmount": 1000000, // 목표 금액 (미설정 시 무기한 적립) (number?)
   "autoDeposit": false, // 자동 적립 여부 (boolean?)
-  "monthlyAmount": 100000 // 매달 자동 적립 금액 (autoDeposit=true 시 필수) (number?)
+  "monthlyAmount": 100000, // 매달 자동 적립 금액 (autoDeposit=true 시 필수) (number?)
+  "depositDay": 1, // 매달 자동 적립 실행일 (1~31, 해당 월 말일 초과 시 말일 처리) (number?)
+  "includeInAssets": false // 자산 통계 연동 여부 (true 시 GET /assets/statistics에 잔액 포함) (boolean?)
 }
 ```
 
@@ -38,7 +40,9 @@
   "targetAmount": 1000000, // 목표 금액 (number | null)
   "currentAmount": 350000, // 현재 적립 금액 (number)
   "autoDeposit": false, // 자동 적립 여부 (boolean)
+  "depositDay": 1, // 매달 자동 적립 실행일 (1~31) (number)
   "monthlyAmount": 100000, // 매달 자동 적립 금액 (number | null)
+  "includeInAssets": false, // 자산 통계 연동 여부 (boolean)
   "status": null, // 상태 (SavingsGoalStatus)
   "achievementRate": 35, // 달성률 (targetAmount 없으면 null) (number | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
@@ -71,7 +75,9 @@
   "targetAmount": 1000000, // 목표 금액 (number | null)
   "currentAmount": 350000, // 현재 적립 금액 (number)
   "autoDeposit": false, // 자동 적립 여부 (boolean)
+  "depositDay": 1, // 매달 자동 적립 실행일 (1~31) (number)
   "monthlyAmount": 100000, // 매달 자동 적립 금액 (number | null)
+  "includeInAssets": false, // 자산 통계 연동 여부 (boolean)
   "status": null, // 상태 (SavingsGoalStatus)
   "achievementRate": 35, // 달성률 (targetAmount 없으면 null) (number | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
@@ -132,7 +138,9 @@
   "description": "7월 제주도 여행 경비", // 설명 (string?)
   "targetAmount": 1500000, // 목표 금액 (number?)
   "autoDeposit": true, // 자동 적립 여부 (boolean?)
-  "monthlyAmount": 150000 // 매달 자동 적립 금액 (autoDeposit=true 시 필수) (number?)
+  "monthlyAmount": 150000, // 매달 자동 적립 금액 (autoDeposit=true 시 필수) (number?)
+  "depositDay": 15, // 매달 자동 적립 실행일 (1~31, 해당 월 말일 초과 시 말일 처리) (number?)
+  "includeInAssets": false // 자산 통계 연동 여부 (true 시 GET /assets/statistics에 잔액 포함) (boolean?)
 }
 ```
 
@@ -149,7 +157,9 @@
   "targetAmount": 1000000, // 목표 금액 (number | null)
   "currentAmount": 350000, // 현재 적립 금액 (number)
   "autoDeposit": false, // 자동 적립 여부 (boolean)
+  "depositDay": 1, // 매달 자동 적립 실행일 (1~31) (number)
   "monthlyAmount": 100000, // 매달 자동 적립 금액 (number | null)
+  "includeInAssets": false, // 자산 통계 연동 여부 (boolean)
   "status": null, // 상태 (SavingsGoalStatus)
   "achievementRate": 35, // 달성률 (targetAmount 없으면 null) (number | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)

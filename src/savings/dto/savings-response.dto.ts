@@ -48,6 +48,12 @@ export class SavingsGoalDto {
   autoDeposit: boolean;
 
   @ApiProperty({
+    description: '매달 자동 적립 실행일 (1~31)',
+    example: 1,
+  })
+  depositDay: number;
+
+  @ApiProperty({
     description: '매달 자동 적립 금액',
     example: 100000,
     nullable: true,

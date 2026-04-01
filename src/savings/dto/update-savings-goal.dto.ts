@@ -1,9 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
   ValidateIf,
 } from 'class-validator';
@@ -51,6 +53,17 @@ export class UpdateSavingsGoalDto {
   @IsNumber()
   @Min(1)
   monthlyAmount?: number;
+
+  @ApiProperty({
+    description: '매달 자동 적립 실행일 (1~31, 해당 월 말일 초과 시 말일 처리)',
+    example: 15,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(31)
+  depositDay?: number;
 
   @ApiProperty({
     description:

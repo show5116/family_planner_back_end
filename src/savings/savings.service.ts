@@ -40,6 +40,7 @@ export class SavingsService {
         targetAmount: dto.targetAmount,
         autoDeposit: dto.autoDeposit ?? false,
         monthlyAmount: dto.autoDeposit ? dto.monthlyAmount : null,
+        depositDay: dto.depositDay ?? 1,
         includeInAssets: dto.includeInAssets ?? false,
       },
     });
@@ -102,6 +103,7 @@ export class SavingsService {
           monthlyAmount: dto.monthlyAmount,
         }),
         ...(dto.autoDeposit === false && { monthlyAmount: null }),
+        ...(dto.depositDay !== undefined && { depositDay: dto.depositDay }),
         ...(dto.includeInAssets !== undefined && {
           includeInAssets: dto.includeInAssets,
         }),
@@ -289,54 +291,6 @@ export class SavingsService {
     return { items, total, page, limit };
   }
 
-  /**
-   * 자동 적립 실행 (스케줄러에서 호출)
-   */
-  async runAutoDeposit() {
-    const goals = await this.prisma.savingsGoal.findMany({
-      where: { autoDeposit: true, status: SavingsGoalStatus.ACTIVE },
-    });
-
-    if (goals.length === 0) return { count: 0 };
-
-    let count = 0;
-    for (const goal of goals) {
-      const monthlyAmount = Number(goal.monthlyAmount);
-      if (!monthlyAmount) continue;
-
-      const updatedGoal = await this.prisma.$transaction(async (tx) => {
-        await tx.savingsTransaction.create({
-          data: {
-            goalId: goal.id,
-            type: SavingsType.AUTO_DEPOSIT,
-            amount: monthlyAmount,
-            description: '자동 적립',
-          },
-        });
-        return tx.savingsGoal.update({
-          where: { id: goal.id },
-          data: { currentAmount: { increment: monthlyAmount } },
-        });
-      });
-
-      count++;
-
-      // 목표 달성 여부 확인
-      if (
-        updatedGoal.targetAmount &&
-        Number(updatedGoal.currentAmount) >= Number(updatedGoal.targetAmount)
-      ) {
-        await this.prisma.savingsGoal.update({
-          where: { id: goal.id },
-          data: { status: SavingsGoalStatus.COMPLETED },
-        });
-        this.notifyGoalCompleted(goal.groupId, goal.name).catch(() => null);
-      }
-    }
-
-    return { count };
-  }
-
   // ─── Private ─────────────────────────────────────────────
 
   private async getGoalOrThrow(id: string) {
@@ -361,6 +315,7 @@ export class SavingsService {
     currentAmount: unknown;
     autoDeposit: boolean;
     monthlyAmount: unknown;
+    depositDay: number;
     includeInAssets: boolean;
     status: SavingsGoalStatus;
     createdAt: Date;
