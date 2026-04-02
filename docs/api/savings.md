@@ -43,8 +43,9 @@
   "depositDay": 1, // 매달 자동 적립 실행일 (1~31) (number)
   "monthlyAmount": 100000, // 매달 자동 적립 금액 (number | null)
   "includeInAssets": false, // 자산 통계 연동 여부 (boolean)
-  "status": null, // 상태 (SavingsGoalStatus)
+  "status": null, // 상태 (ACTIVE: 적립 중, PAUSED: 일시 중지) (SavingsGoalStatus)
   "achievementRate": 35, // 달성률 (targetAmount 없으면 null) (number | null)
+  "isGoalReached": false, // 목표 금액 달성 여부 (targetAmount 없으면 null) (boolean | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
 }
@@ -78,8 +79,9 @@
   "depositDay": 1, // 매달 자동 적립 실행일 (1~31) (number)
   "monthlyAmount": 100000, // 매달 자동 적립 금액 (number | null)
   "includeInAssets": false, // 자산 통계 연동 여부 (boolean)
-  "status": null, // 상태 (SavingsGoalStatus)
+  "status": null, // 상태 (ACTIVE: 적립 중, PAUSED: 일시 중지) (SavingsGoalStatus)
   "achievementRate": 35, // 달성률 (targetAmount 없으면 null) (number | null)
+  "isGoalReached": false, // 목표 금액 달성 여부 (targetAmount 없으면 null) (boolean | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
 }
@@ -160,8 +162,9 @@
   "depositDay": 1, // 매달 자동 적립 실행일 (1~31) (number)
   "monthlyAmount": 100000, // 매달 자동 적립 금액 (number | null)
   "includeInAssets": false, // 자산 통계 연동 여부 (boolean)
-  "status": null, // 상태 (SavingsGoalStatus)
+  "status": null, // 상태 (ACTIVE: 적립 중, PAUSED: 일시 중지) (SavingsGoalStatus)
   "achievementRate": 35, // 달성률 (targetAmount 없으면 null) (number | null)
+  "isGoalReached": false, // 목표 금액 달성 여부 (targetAmount 없으면 null) (boolean | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
 }
@@ -184,30 +187,6 @@
 **Responses:**
 
 #### 200 - 적립 목표 삭제 성공
-
-```json
-{
-  "message": "작업이 완료되었습니다" // string
-}
-```
-
-#### 404 - 적립 목표를 찾을 수 없습니다
-
-#### 403 - 해당 그룹의 멤버가 아닙니다
-
----
-
-### POST `savings/:id/complete`
-
-**요약:** 적립 목표 완료 처리 (수동 종료)
-
-**Path Parameters:**
-
-- `id` (`string`)
-
-**Responses:**
-
-#### 200 - 완료 처리 성공
 
 ```json
 {

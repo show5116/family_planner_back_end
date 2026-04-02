@@ -1116,7 +1116,6 @@ model SavingsTransaction {
 enum SavingsGoalStatus {
   ACTIVE
   PAUSED
-  COMPLETED
 }
 
 enum SavingsType {

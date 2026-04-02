@@ -95,16 +95,6 @@ export class SavingsController {
     return this.savingsService.deleteGoal(req.user.userId, id);
   }
 
-  @Post(':id/complete')
-  @ApiOperation({ summary: '적립 목표 완료 처리 (수동 종료)' })
-  @ApiSuccess(MessageResponseDto, '완료 처리 성공')
-  @ApiNotFound('적립 목표를 찾을 수 없습니다')
-  @ApiBadRequest('이미 완료된 목표')
-  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  completeGoal(@Request() req, @Param('id') id: string) {
-    return this.savingsService.completeGoal(req.user.userId, id);
-  }
-
   @Post(':id/pause')
   @ApiOperation({ summary: '자동 적립 일시 중지' })
   @ApiSuccess(MessageResponseDto, '일시 중지 성공')

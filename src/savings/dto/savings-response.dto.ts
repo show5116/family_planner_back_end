@@ -67,7 +67,7 @@ export class SavingsGoalDto {
   includeInAssets: boolean;
 
   @ApiProperty({
-    description: '상태',
+    description: '상태 (ACTIVE: 적립 중, PAUSED: 일시 중지)',
     enum: SavingsGoalStatus,
     example: SavingsGoalStatus.ACTIVE,
   })
@@ -79,6 +79,13 @@ export class SavingsGoalDto {
     nullable: true,
   })
   achievementRate: number | null;
+
+  @ApiProperty({
+    description: '목표 금액 달성 여부 (targetAmount 없으면 null)',
+    example: false,
+    nullable: true,
+  })
+  isGoalReached: boolean | null;
 
   @ApiProperty({ description: '생성일시' })
   createdAt: Date;

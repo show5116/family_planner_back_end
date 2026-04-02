@@ -110,16 +110,12 @@ export class SavingsScheduler {
         count++;
         this.logger.debug(`자동 적립: goalId=${goal.id} +${monthlyAmount}`);
 
-        // 목표 달성 여부 확인
+        // 목표 금액 달성 시 알림 발송 (상태 변경 없음)
         if (
           updatedGoal.targetAmount &&
           Number(updatedGoal.currentAmount) >= Number(updatedGoal.targetAmount)
         ) {
-          await this.prisma.savingsGoal.update({
-            where: { id: goal.id },
-            data: { status: SavingsGoalStatus.COMPLETED },
-          });
-          this.notifyGoalCompleted(goal.groupId, goal.name).catch(() => null);
+          this.notifyGoalReached(goal.groupId, goal.name).catch(() => null);
         }
       }
 
@@ -129,7 +125,7 @@ export class SavingsScheduler {
     }
   }
 
-  private async notifyGoalCompleted(groupId: string, goalName: string) {
+  private async notifyGoalReached(groupId: string, goalName: string) {
     const members = await this.prisma.groupMember.findMany({
       where: { groupId },
       select: { userId: true },

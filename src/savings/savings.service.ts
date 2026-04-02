@@ -123,24 +123,6 @@ export class SavingsService {
   }
 
   /**
-   * 목표 완료 처리 (수동 종료)
-   */
-  async completeGoal(userId: string, id: string) {
-    const goal = await this.getGoalOrThrow(id);
-    await this.validateGroupMember(userId, goal.groupId);
-
-    if (goal.status === SavingsGoalStatus.COMPLETED) {
-      throw new BadRequestException('이미 완료된 적립 목표입니다');
-    }
-
-    await this.prisma.savingsGoal.update({
-      where: { id },
-      data: { status: SavingsGoalStatus.COMPLETED },
-    });
-    return { message: '적립 목표가 완료 처리되었습니다' };
-  }
-
-  /**
    * 자동 적립 일시 중지
    */
   async pauseGoal(userId: string, id: string) {
@@ -149,9 +131,6 @@ export class SavingsService {
 
     if (!goal.autoDeposit) {
       throw new BadRequestException('자동 적립이 설정되지 않은 목표입니다');
-    }
-    if (goal.status === SavingsGoalStatus.COMPLETED) {
-      throw new BadRequestException('완료된 적립 목표입니다');
     }
     if (goal.status === SavingsGoalStatus.PAUSED) {
       throw new BadRequestException('이미 일시 중지 상태입니다');
@@ -174,9 +153,6 @@ export class SavingsService {
     if (!goal.autoDeposit) {
       throw new BadRequestException('자동 적립이 설정되지 않은 목표입니다');
     }
-    if (goal.status === SavingsGoalStatus.COMPLETED) {
-      throw new BadRequestException('완료된 적립 목표입니다');
-    }
     if (goal.status === SavingsGoalStatus.ACTIVE) {
       throw new BadRequestException('이미 활성 상태입니다');
     }
@@ -195,10 +171,6 @@ export class SavingsService {
     const goal = await this.getGoalOrThrow(id);
     await this.validateGroupMember(userId, goal.groupId);
 
-    if (goal.status === SavingsGoalStatus.COMPLETED) {
-      throw new BadRequestException('완료된 적립 목표입니다');
-    }
-
     const [transaction, updatedGoal] = await this.prisma.$transaction([
       this.prisma.savingsTransaction.create({
         data: {
@@ -214,16 +186,12 @@ export class SavingsService {
       }),
     ]);
 
-    // 목표 달성 여부 확인
+    // 목표 금액 달성 시 알림 발송 (상태 변경 없음)
     if (
       updatedGoal.targetAmount &&
       Number(updatedGoal.currentAmount) >= Number(updatedGoal.targetAmount)
     ) {
-      await this.prisma.savingsGoal.update({
-        where: { id },
-        data: { status: SavingsGoalStatus.COMPLETED },
-      });
-      this.notifyGoalCompleted(updatedGoal.groupId, updatedGoal.name).catch(
+      this.notifyGoalReached(updatedGoal.groupId, updatedGoal.name).catch(
         () => null,
       );
     }
@@ -238,9 +206,6 @@ export class SavingsService {
     const goal = await this.getGoalOrThrow(id);
     await this.validateGroupMember(userId, goal.groupId);
 
-    if (goal.status === SavingsGoalStatus.COMPLETED) {
-      throw new BadRequestException('완료된 적립 목표입니다');
-    }
     if (Number(goal.currentAmount) < dto.amount) {
       throw new BadRequestException('잔액이 부족합니다');
     }
@@ -278,14 +243,16 @@ export class SavingsService {
     const limit = Number(query.limit ?? 20);
     const skip = (page - 1) * limit;
 
+    const where = { goalId, ...(query.type ? { type: query.type } : {}) };
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.savingsTransaction.findMany({
-        where: { goalId },
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
-      this.prisma.savingsTransaction.count({ where: { goalId } }),
+      this.prisma.savingsTransaction.count({ where }),
     ]);
 
     return { items, total, page, limit };
@@ -327,6 +294,7 @@ export class SavingsService {
       target !== null
         ? Math.min(Math.round((current / target) * 100), 100)
         : null;
+    const isGoalReached = target !== null ? current >= target : null;
 
     return {
       ...goal,
@@ -334,10 +302,11 @@ export class SavingsService {
       currentAmount: current,
       monthlyAmount: goal.monthlyAmount ? Number(goal.monthlyAmount) : null,
       achievementRate,
+      isGoalReached,
     };
   }
 
-  private async notifyGoalCompleted(groupId: string, goalName: string) {
+  private async notifyGoalReached(groupId: string, goalName: string) {
     const members = await this.prisma.groupMember.findMany({
       where: { groupId },
       select: { userId: true },
