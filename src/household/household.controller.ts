@@ -16,11 +16,13 @@ import { HouseholdService } from './household.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { CreateBudgetDto } from './dto/create-budget.dto';
+import { UpsertBudgetTemplateDto } from './dto/budget-template.dto';
 import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { ConfirmReceiptDto } from './dto/confirm-receipt.dto';
 import {
   ExpenseDto,
   BudgetDto,
+  BudgetTemplateDto,
   StatisticsDto,
   YearlyStatisticsDto,
   ExpenseReceiptDto,
@@ -228,6 +230,47 @@ export class HouseholdController {
       req.user.userId,
       query.groupId,
       query.month,
+    );
+  }
+
+  // ─── 예산 템플릿 ─────────────────────────────────────────
+
+  @Post('budget-templates')
+  @ApiOperation({
+    summary: '예산 템플릿 설정 (없으면 생성, 있으면 수정)',
+    description:
+      '매월 1일 00:10에 스케줄러가 템플릿을 기반으로 예산을 자동 생성합니다. 해당 월에 이미 예산이 있으면 건너뜁니다.',
+  })
+  @ApiCreated(BudgetTemplateDto, '예산 템플릿 설정 성공')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  upsertBudgetTemplate(@Request() req, @Body() dto: UpsertBudgetTemplateDto) {
+    return this.householdService.upsertBudgetTemplate(req.user.userId, dto);
+  }
+
+  @Get('budget-templates')
+  @ApiOperation({ summary: '예산 템플릿 목록 조회' })
+  @ApiSuccess(BudgetTemplateDto, '예산 템플릿 목록 조회 성공', {
+    isArray: true,
+  })
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findBudgetTemplates(@Request() req, @Query('groupId') groupId: string) {
+    return this.householdService.findBudgetTemplates(req.user.userId, groupId);
+  }
+
+  @Delete('budget-templates/:category')
+  @ApiOperation({ summary: '예산 템플릿 삭제' })
+  @ApiSuccess(MessageResponseDto, '예산 템플릿 삭제 성공')
+  @ApiNotFound('예산 템플릿을 찾을 수 없습니다')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  removeBudgetTemplate(
+    @Request() req,
+    @Param('category') category: string,
+    @Query('groupId') groupId: string,
+  ) {
+    return this.householdService.removeBudgetTemplate(
+      req.user.userId,
+      groupId,
+      category,
     );
   }
 }

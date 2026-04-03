@@ -11,6 +11,7 @@ import { NotificationCategory } from '@/notification/enums/notification-category
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { CreateBudgetDto } from './dto/create-budget.dto';
+import { UpsertBudgetTemplateDto } from './dto/budget-template.dto';
 import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { ConfirmReceiptDto } from './dto/confirm-receipt.dto';
 
@@ -472,6 +473,77 @@ export class HouseholdService {
       where: { groupId, month: monthDate },
       orderBy: { category: 'asc' },
     });
+  }
+
+  /**
+   * 예산 템플릿 설정 (없으면 생성, 있으면 수정)
+   */
+  async upsertBudgetTemplate(userId: string, dto: UpsertBudgetTemplateDto) {
+    await this.validateGroupMember(userId, dto.groupId);
+
+    return await this.prisma.budgetTemplate.upsert({
+      where: {
+        groupId_category: {
+          groupId: dto.groupId,
+          category: dto.category,
+        },
+      },
+      create: {
+        groupId: dto.groupId,
+        category: dto.category,
+        amount: dto.amount,
+      },
+      update: {
+        amount: dto.amount,
+      },
+    });
+  }
+
+  /**
+   * 예산 템플릿 목록 조회
+   */
+  async findBudgetTemplates(userId: string, groupId: string) {
+    await this.validateGroupMember(userId, groupId);
+
+    return await this.prisma.budgetTemplate.findMany({
+      where: { groupId },
+      orderBy: { category: 'asc' },
+    });
+  }
+
+  /**
+   * 예산 템플릿 삭제
+   */
+  async removeBudgetTemplate(
+    userId: string,
+    groupId: string,
+    category: string,
+  ) {
+    await this.validateGroupMember(userId, groupId);
+
+    const template = await this.prisma.budgetTemplate.findUnique({
+      where: {
+        groupId_category: {
+          groupId,
+          category: category as never,
+        },
+      },
+    });
+
+    if (!template) {
+      throw new NotFoundException('예산 템플릿을 찾을 수 없습니다');
+    }
+
+    await this.prisma.budgetTemplate.delete({
+      where: {
+        groupId_category: {
+          groupId,
+          category: category as never,
+        },
+      },
+    });
+
+    return { message: '예산 템플릿이 삭제되었습니다' };
   }
 
   /**

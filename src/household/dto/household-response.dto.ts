@@ -195,6 +195,39 @@ export class YearlyStatisticsDto {
   months: MonthlyTotalDto[];
 }
 
+export class BudgetTemplateDto {
+  @ApiProperty({ description: '템플릿 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  groupId: string;
+
+  @ApiProperty({
+    description: '카테고리',
+    enum: ExpenseCategory,
+    example: ExpenseCategory.FOOD,
+  })
+  category: ExpenseCategory;
+
+  @ApiProperty({
+    description: '매월 자동 적용할 예산 금액',
+    example: '300000.00',
+  })
+  amount: string;
+
+  @ApiProperty({
+    description: '생성 일시',
+    example: '2026-02-27T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: '수정 일시',
+    example: '2026-02-27T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
 export class RecurringCopyResultDto {
   @ApiProperty({ description: '복사된 지출 건수', example: 3 })
   count: number;
