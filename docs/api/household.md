@@ -405,6 +405,7 @@
 
 - `groupId` (`string`): 그룹 ID
 - `month` (`string`): 조회 월 (YYYY-MM)
+- `category` (`ExpenseCategory`) (Optional): 카테고리 필터
 
 **Responses:**
 

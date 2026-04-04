@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
+import { ExpenseCategory } from '@prisma/client';
 
 export class StatisticsQueryDto {
   @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
@@ -30,6 +31,15 @@ export class BudgetQueryDto {
   @ApiProperty({ description: '조회 월 (YYYY-MM)', example: '2026-02' })
   @IsString()
   month: string;
+
+  @ApiProperty({
+    description: '카테고리 필터',
+    enum: ExpenseCategory,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(ExpenseCategory)
+  category?: ExpenseCategory;
 }
 
 export class ReceiptUploadQueryDto {

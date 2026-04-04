@@ -202,6 +202,7 @@ export class HouseholdController {
       req.user.userId,
       query.groupId,
       query.month,
+      query.category,
     );
   }
 

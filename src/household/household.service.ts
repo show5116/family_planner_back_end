@@ -479,14 +479,23 @@ export class HouseholdService {
   /**
    * 예산 목록 조회
    */
-  async findBudgets(userId: string, groupId: string, month: string) {
+  async findBudgets(
+    userId: string,
+    groupId: string,
+    month: string,
+    category?: string,
+  ) {
     await this.validateGroupMember(userId, groupId);
 
     const [year, monthNum] = month.split('-').map(Number);
     const monthDate = new Date(Date.UTC(year, monthNum - 1, 1));
 
     return await this.prisma.budget.findMany({
-      where: { groupId, month: monthDate },
+      where: {
+        groupId,
+        month: monthDate,
+        ...(category && { category: category as never }),
+      },
       orderBy: { category: 'asc' },
     });
   }

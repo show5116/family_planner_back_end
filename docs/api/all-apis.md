@@ -3201,6 +3201,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 - `groupId` (`string`): 그룹 ID
 - `month` (`string`): 조회 월 (YYYY-MM)
+- `category` (`ExpenseCategory`) (Optional): 카테고리 필터
 
 **Responses:**
 
