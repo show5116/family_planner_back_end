@@ -582,7 +582,7 @@
 
 **Query Parameters:**
 
-- `query` (`StatisticsQueryDto`)
+- `groupId` (`string`): 그룹 ID
 
 **Responses:**
 
@@ -2999,7 +2999,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `query` (`ReceiptUploadQueryDto`)
+- `mimeType` (`string`): MIME 타입
 
 **Responses:**
 
@@ -3090,7 +3090,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `query` (`StatisticsQueryDto`)
+- `groupId` (`string`): 그룹 ID
 
 **Responses:**
 
@@ -3123,7 +3123,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `query` (`YearlyStatisticsQueryDto`)
+- `groupId` (`string`): 그룹 ID
+- `year` (`string`): 조회 연도 (YYYY)
 
 **Responses:**
 
@@ -3198,7 +3199,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `query` (`BudgetQueryDto`)
+- `groupId` (`string`): 그룹 ID
+- `month` (`string`): 조회 월 (YYYY-MM)
 
 **Responses:**
 

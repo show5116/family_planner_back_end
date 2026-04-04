@@ -264,7 +264,7 @@
 
 **Query Parameters:**
 
-- `query` (`StatisticsQueryDto`)
+- `groupId` (`string`): 그룹 ID
 
 **Responses:**
 

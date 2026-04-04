@@ -182,8 +182,9 @@ export class HouseholdService {
     const [year, monthNum] = month.split('-').map(Number);
     const startDate = new Date(year, monthNum - 1, 1);
     const endDate = new Date(year, monthNum, 1);
+    const monthDate = new Date(Date.UTC(year, monthNum - 1, 1));
 
-    const [expenses, budgets] = await Promise.all([
+    const [expenses, budgets, groupBudget] = await Promise.all([
       this.prisma.expense.findMany({
         where: {
           groupId,
@@ -193,8 +194,11 @@ export class HouseholdService {
       this.prisma.budget.findMany({
         where: {
           groupId,
-          month: startDate,
+          month: monthDate,
         },
+      }),
+      this.prisma.groupBudget.findUnique({
+        where: { groupId_month: { groupId, month: monthDate } },
       }),
     ]);
 
@@ -213,7 +217,12 @@ export class HouseholdService {
     }
 
     const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-    const totalBudget = budgets.reduce((sum, b) => sum + Number(b.amount), 0);
+    const categoryBudgetSum = budgets.reduce(
+      (sum, b) => sum + Number(b.amount),
+      0,
+    );
+    const groupBudgetAmount = groupBudget ? Number(groupBudget.amount) : 0;
+    const totalBudget = Math.max(categoryBudgetSum, groupBudgetAmount);
 
     const categories = Array.from(categoryMap.entries()).map(
       ([category, stat]) => {
@@ -445,7 +454,7 @@ export class HouseholdService {
     await this.validateGroupMember(userId, dto.groupId);
 
     const [year, month] = dto.month.split('-').map(Number);
-    const monthDate = new Date(year, month - 1, 1);
+    const monthDate = new Date(Date.UTC(year, month - 1, 1));
 
     return await this.prisma.budget.upsert({
       where: {
@@ -474,7 +483,7 @@ export class HouseholdService {
     await this.validateGroupMember(userId, groupId);
 
     const [year, monthNum] = month.split('-').map(Number);
-    const monthDate = new Date(year, monthNum - 1, 1);
+    const monthDate = new Date(Date.UTC(year, monthNum - 1, 1));
 
     return await this.prisma.budget.findMany({
       where: { groupId, month: monthDate },
@@ -596,7 +605,7 @@ export class HouseholdService {
     await this.validateGroupMember(userId, dto.groupId);
 
     const [year, month] = dto.month.split('-').map(Number);
-    const monthDate = new Date(year, month - 1, 1);
+    const monthDate = new Date(Date.UTC(year, month - 1, 1));
 
     const results: { total?: unknown; categories?: unknown[] } = {};
 
@@ -721,7 +730,7 @@ export class HouseholdService {
     await this.validateGroupMember(userId, dto.groupId);
 
     const [year, month] = dto.month.split('-').map(Number);
-    const monthDate = new Date(year, month - 1, 1);
+    const monthDate = new Date(Date.UTC(year, month - 1, 1));
 
     return await this.prisma.groupBudget.upsert({
       where: {
@@ -748,7 +757,7 @@ export class HouseholdService {
     await this.validateGroupMember(userId, groupId);
 
     const [year, monthNum] = month.split('-').map(Number);
-    const monthDate = new Date(year, monthNum - 1, 1);
+    const monthDate = new Date(Date.UTC(year, monthNum - 1, 1));
 
     return await this.prisma.groupBudget.findUnique({
       where: { groupId_month: { groupId, month: monthDate } },

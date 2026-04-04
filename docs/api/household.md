@@ -203,7 +203,7 @@
 
 **Query Parameters:**
 
-- `query` (`ReceiptUploadQueryDto`)
+- `mimeType` (`string`): MIME 타입
 
 **Responses:**
 
@@ -294,7 +294,7 @@
 
 **Query Parameters:**
 
-- `query` (`StatisticsQueryDto`)
+- `groupId` (`string`): 그룹 ID
 
 **Responses:**
 
@@ -327,7 +327,8 @@
 
 **Query Parameters:**
 
-- `query` (`YearlyStatisticsQueryDto`)
+- `groupId` (`string`): 그룹 ID
+- `year` (`string`): 조회 연도 (YYYY)
 
 **Responses:**
 
@@ -402,7 +403,8 @@
 
 **Query Parameters:**
 
-- `query` (`BudgetQueryDto`)
+- `groupId` (`string`): 그룹 ID
+- `month` (`string`): 조회 월 (YYYY-MM)
 
 **Responses:**
 
