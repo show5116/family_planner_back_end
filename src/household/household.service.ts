@@ -10,8 +10,15 @@ import { NotificationQueueService } from '@/notification/notification-queue.serv
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
-import { CreateBudgetDto } from './dto/create-budget.dto';
-import { UpsertBudgetTemplateDto } from './dto/budget-template.dto';
+import { CreateBudgetDto, BulkUpsertBudgetDto } from './dto/create-budget.dto';
+import {
+  UpsertBudgetTemplateDto,
+  BulkUpsertBudgetTemplateDto,
+} from './dto/budget-template.dto';
+import {
+  UpsertGroupBudgetDto,
+  UpsertGroupBudgetTemplateDto,
+} from './dto/group-budget.dto';
 import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { ConfirmReceiptDto } from './dto/confirm-receipt.dto';
 
@@ -477,11 +484,18 @@ export class HouseholdService {
 
   /**
    * 예산 템플릿 설정 (없으면 생성, 있으면 수정)
+   * 신규 등록 시 이번 달 예산이 없으면 즉시 적용
    */
   async upsertBudgetTemplate(userId: string, dto: UpsertBudgetTemplateDto) {
     await this.validateGroupMember(userId, dto.groupId);
 
-    return await this.prisma.budgetTemplate.upsert({
+    const isNew = !(await this.prisma.budgetTemplate.findUnique({
+      where: {
+        groupId_category: { groupId: dto.groupId, category: dto.category },
+      },
+    }));
+
+    const template = await this.prisma.budgetTemplate.upsert({
       where: {
         groupId_category: {
           groupId: dto.groupId,
@@ -497,6 +511,35 @@ export class HouseholdService {
         amount: dto.amount,
       },
     });
+
+    // 신규 템플릿이고 이번 달 예산이 없으면 즉시 생성
+    if (isNew) {
+      const now = new Date();
+      const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const exists = await this.prisma.budget.findUnique({
+        where: {
+          groupId_category_month: {
+            groupId: dto.groupId,
+            category: dto.category,
+            month: monthDate,
+          },
+        },
+      });
+
+      if (!exists) {
+        await this.prisma.budget.create({
+          data: {
+            groupId: dto.groupId,
+            category: dto.category,
+            amount: dto.amount,
+            month: monthDate,
+          },
+        });
+      }
+    }
+
+    return template;
   }
 
   /**
@@ -544,6 +587,265 @@ export class HouseholdService {
     });
 
     return { message: '예산 템플릿이 삭제되었습니다' };
+  }
+
+  /**
+   * 예산 일괄 설정 (전체 + 카테고리별 한번에)
+   */
+  async bulkUpsertBudget(userId: string, dto: BulkUpsertBudgetDto) {
+    await this.validateGroupMember(userId, dto.groupId);
+
+    const [year, month] = dto.month.split('-').map(Number);
+    const monthDate = new Date(year, month - 1, 1);
+
+    const results: { total?: unknown; categories?: unknown[] } = {};
+
+    if (dto.total !== undefined) {
+      results.total = await this.prisma.groupBudget.upsert({
+        where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
+        create: { groupId: dto.groupId, amount: dto.total, month: monthDate },
+        update: { amount: dto.total },
+      });
+    }
+
+    if (dto.categories && dto.categories.length > 0) {
+      results.categories = await Promise.all(
+        dto.categories.map((item) =>
+          this.prisma.budget.upsert({
+            where: {
+              groupId_category_month: {
+                groupId: dto.groupId,
+                category: item.category,
+                month: monthDate,
+              },
+            },
+            create: {
+              groupId: dto.groupId,
+              category: item.category,
+              amount: item.amount,
+              month: monthDate,
+            },
+            update: { amount: item.amount },
+          }),
+        ),
+      );
+    }
+
+    return results;
+  }
+
+  /**
+   * 예산 템플릿 일괄 설정 (전체 + 카테고리별 한번에)
+   * 신규 항목이고 이번 달 예산이 없으면 즉시 적용
+   */
+  async bulkUpsertBudgetTemplate(
+    userId: string,
+    dto: BulkUpsertBudgetTemplateDto,
+  ) {
+    await this.validateGroupMember(userId, dto.groupId);
+
+    const now = new Date();
+    const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const results: { total?: unknown; categories?: unknown[] } = {};
+
+    if (dto.total !== undefined) {
+      const isNew = !(await this.prisma.groupBudgetTemplate.findUnique({
+        where: { groupId: dto.groupId },
+      }));
+
+      results.total = await this.prisma.groupBudgetTemplate.upsert({
+        where: { groupId: dto.groupId },
+        create: { groupId: dto.groupId, amount: dto.total },
+        update: { amount: dto.total },
+      });
+
+      if (isNew) {
+        const exists = await this.prisma.groupBudget.findUnique({
+          where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
+        });
+        if (!exists) {
+          await this.prisma.groupBudget.create({
+            data: { groupId: dto.groupId, amount: dto.total, month: monthDate },
+          });
+        }
+      }
+    }
+
+    if (dto.categories && dto.categories.length > 0) {
+      results.categories = await Promise.all(
+        dto.categories.map(async (item) => {
+          const isNew = !(await this.prisma.budgetTemplate.findUnique({
+            where: {
+              groupId_category: {
+                groupId: dto.groupId,
+                category: item.category,
+              },
+            },
+          }));
+
+          const template = await this.prisma.budgetTemplate.upsert({
+            where: {
+              groupId_category: {
+                groupId: dto.groupId,
+                category: item.category,
+              },
+            },
+            create: {
+              groupId: dto.groupId,
+              category: item.category,
+              amount: item.amount,
+            },
+            update: { amount: item.amount },
+          });
+
+          if (isNew) {
+            const exists = await this.prisma.budget.findUnique({
+              where: {
+                groupId_category_month: {
+                  groupId: dto.groupId,
+                  category: item.category,
+                  month: monthDate,
+                },
+              },
+            });
+            if (!exists) {
+              await this.prisma.budget.create({
+                data: {
+                  groupId: dto.groupId,
+                  category: item.category,
+                  amount: item.amount,
+                  month: monthDate,
+                },
+              });
+            }
+          }
+
+          return template;
+        }),
+      );
+    }
+
+    return results;
+  }
+
+  /**
+   * 그룹 전체 예산 설정 (월별 수동)
+   */
+  async upsertGroupBudget(userId: string, dto: UpsertGroupBudgetDto) {
+    await this.validateGroupMember(userId, dto.groupId);
+
+    const [year, month] = dto.month.split('-').map(Number);
+    const monthDate = new Date(year, month - 1, 1);
+
+    return await this.prisma.groupBudget.upsert({
+      where: {
+        groupId_month: {
+          groupId: dto.groupId,
+          month: monthDate,
+        },
+      },
+      create: {
+        groupId: dto.groupId,
+        amount: dto.amount,
+        month: monthDate,
+      },
+      update: {
+        amount: dto.amount,
+      },
+    });
+  }
+
+  /**
+   * 그룹 전체 예산 조회 (월별)
+   */
+  async findGroupBudget(userId: string, groupId: string, month: string) {
+    await this.validateGroupMember(userId, groupId);
+
+    const [year, monthNum] = month.split('-').map(Number);
+    const monthDate = new Date(year, monthNum - 1, 1);
+
+    return await this.prisma.groupBudget.findUnique({
+      where: { groupId_month: { groupId, month: monthDate } },
+    });
+  }
+
+  /**
+   * 그룹 전체 예산 템플릿 설정 (자동 적용)
+   * 신규 등록 시 이번 달 전체 예산이 없으면 즉시 적용
+   */
+  async upsertGroupBudgetTemplate(
+    userId: string,
+    dto: UpsertGroupBudgetTemplateDto,
+  ) {
+    await this.validateGroupMember(userId, dto.groupId);
+
+    const isNew = !(await this.prisma.groupBudgetTemplate.findUnique({
+      where: { groupId: dto.groupId },
+    }));
+
+    const template = await this.prisma.groupBudgetTemplate.upsert({
+      where: { groupId: dto.groupId },
+      create: {
+        groupId: dto.groupId,
+        amount: dto.amount,
+      },
+      update: {
+        amount: dto.amount,
+      },
+    });
+
+    // 신규 템플릿이고 이번 달 전체 예산이 없으면 즉시 생성
+    if (isNew) {
+      const now = new Date();
+      const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const exists = await this.prisma.groupBudget.findUnique({
+        where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
+      });
+
+      if (!exists) {
+        await this.prisma.groupBudget.create({
+          data: {
+            groupId: dto.groupId,
+            amount: dto.amount,
+            month: monthDate,
+          },
+        });
+      }
+    }
+
+    return template;
+  }
+
+  /**
+   * 그룹 전체 예산 템플릿 조회
+   */
+  async findGroupBudgetTemplate(userId: string, groupId: string) {
+    await this.validateGroupMember(userId, groupId);
+
+    return await this.prisma.groupBudgetTemplate.findUnique({
+      where: { groupId },
+    });
+  }
+
+  /**
+   * 그룹 전체 예산 템플릿 삭제
+   */
+  async removeGroupBudgetTemplate(userId: string, groupId: string) {
+    await this.validateGroupMember(userId, groupId);
+
+    const template = await this.prisma.groupBudgetTemplate.findUnique({
+      where: { groupId },
+    });
+
+    if (!template) {
+      throw new NotFoundException('전체 예산 템플릿을 찾을 수 없습니다');
+    }
+
+    await this.prisma.groupBudgetTemplate.delete({ where: { groupId } });
+
+    return { message: '전체 예산 템플릿이 삭제되었습니다' };
   }
 
   /**

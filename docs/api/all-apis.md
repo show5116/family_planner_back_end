@@ -3147,34 +3147,44 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ---
 
-### POST `household/budgets`
+### POST `household/budgets/bulk`
 
-**요약:** 예산 설정 (없으면 생성, 있으면 수정)
+**요약:** 예산 일괄 설정 (전체 + 카테고리별)
 
 **Request Body:**
 
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "category": null, // 카테고리 (ExpenseCategory)
-  "amount": 300000, // 예산 금액 (number)
-  "month": "2026-02" // 예산 월 (YYYY-MM) (string)
+  "month": "2026-04", // 예산 월 (YYYY-MM) (string)
+  "total": 1500000, // 전체 예산 금액 (number?)
+  "categories": [
+    {
+      "category": null, // 카테고리 (ExpenseCategory)
+      "amount": 300000 // 예산 금액 (number)
+    }
+  ] // 카테고리별 예산 목록 (CategoryBudgetItemDto[]?)
 }
 ```
 
 **Responses:**
 
-#### 201 - 예산 설정 성공
+#### 201 - 예산 일괄 설정 성공
 
 ```json
 {
-  "id": "uuid-1234", // 예산 ID (string)
-  "groupId": "uuid-1234", // 그룹 ID (string)
-  "category": null, // 카테고리 (ExpenseCategory)
-  "amount": "300000.00", // 예산 금액 (string)
-  "month": "2026-02-01T00:00:00.000Z", // 예산 월 (Date)
-  "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
-  "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+  "total": null, // 전체 예산 설정 결과 (GroupBudgetDto?)
+  "categories": [
+    {
+      "id": "uuid-1234", // 예산 ID (string)
+      "groupId": "uuid-1234", // 그룹 ID (string)
+      "category": null, // 카테고리 (ExpenseCategory)
+      "amount": "300000.00", // 예산 금액 (string)
+      "month": "2026-02-01T00:00:00.000Z", // 예산 월 (Date)
+      "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
+      "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+    }
+  ] // 카테고리별 예산 설정 결과 (BudgetDto[]?)
 }
 ```
 
@@ -3210,35 +3220,42 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ---
 
-### POST `household/budget-templates`
+### POST `household/budget-templates/bulk`
 
-**요약:** 예산 템플릿 설정 (없으면 생성, 있으면 수정)
-
-**설명:**
-매월 1일 00:10에 스케줄러가 템플릿을 기반으로 예산을 자동 생성합니다. 해당 월에 이미 예산이 있으면 건너뜁니다.
+**요약:** 예산 템플릿 일괄 설정 (전체 + 카테고리별)
 
 **Request Body:**
 
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "category": null, // 카테고리 (ExpenseCategory)
-  "amount": 300000 // 매월 자동 적용할 예산 금액 (number)
+  "total": 1500000, // 전체 예산 템플릿 금액 (number?)
+  "categories": [
+    {
+      "category": null, // 카테고리 (ExpenseCategory)
+      "amount": 300000 // 매월 자동 적용할 예산 금액 (number)
+    }
+  ] // 카테고리별 예산 템플릿 목록 (CategoryTemplateItemDto[]?)
 }
 ```
 
 **Responses:**
 
-#### 201 - 예산 템플릿 설정 성공
+#### 201 - 예산 템플릿 일괄 설정 성공
 
 ```json
 {
-  "id": "uuid-1234", // 템플릿 ID (string)
-  "groupId": "uuid-1234", // 그룹 ID (string)
-  "category": null, // 카테고리 (ExpenseCategory)
-  "amount": "300000.00", // 매월 자동 적용할 예산 금액 (string)
-  "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
-  "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+  "total": null, // 전체 예산 템플릿 설정 결과 (GroupBudgetTemplateDto?)
+  "categories": [
+    {
+      "id": "uuid-1234", // 템플릿 ID (string)
+      "groupId": "uuid-1234", // 그룹 ID (string)
+      "category": null, // 카테고리 (ExpenseCategory)
+      "amount": "300000.00", // 매월 자동 적용할 예산 금액 (string)
+      "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
+      "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+    }
+  ] // 카테고리별 예산 템플릿 설정 결과 (BudgetTemplateDto[]?)
 }
 ```
 
@@ -3296,6 +3313,84 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```
 
 #### 404 - 예산 템플릿을 찾을 수 없습니다
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### GET `household/group-budgets`
+
+**요약:** 그룹 전체 예산 조회 (월별)
+
+**Query Parameters:**
+
+- `groupId` (`string`)
+- `month` (`string`)
+
+**Responses:**
+
+#### 200 - 전체 예산 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 전체 예산 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string)
+  "amount": "1500000.00", // 전체 예산 금액 (string)
+  "month": "2026-04-01T00:00:00.000Z", // 예산 월 (Date)
+  "createdAt": "2026-04-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-04-01T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### GET `household/group-budget-templates`
+
+**요약:** 그룹 전체 예산 템플릿 조회
+
+**Query Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 전체 예산 템플릿 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 템플릿 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string)
+  "amount": "1500000.00", // 매월 자동 적용할 전체 예산 금액 (string)
+  "createdAt": "2026-04-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-04-01T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### DELETE `household/group-budget-templates`
+
+**요약:** 그룹 전체 예산 템플릿 삭제
+
+**Query Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 전체 예산 템플릿 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 전체 예산 템플릿을 찾을 수 없습니다
 
 #### 403 - 해당 그룹의 멤버가 아닙니다
 

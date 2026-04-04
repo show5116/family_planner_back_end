@@ -156,5 +156,56 @@ export class HouseholdScheduler {
     this.logger.log(
       `예산 자동 생성 완료 — 생성: ${created}건, 건너뜀: ${skipped}건`,
     );
+
+    await this.autoGenerateGroupBudgetsFromTemplates(
+      monthDate,
+      `${year}-${String(month + 1).padStart(2, '0')}`,
+    );
+  }
+
+  /**
+   * 매월 1일 00:10에 함께 실행.
+   * GroupBudgetTemplate에 등록된 그룹별 전체 예산을 이번 달 GroupBudget으로 자동 생성한다.
+   * - 이미 해당 월에 GroupBudget이 존재하면 skip (수동 설정 우선)
+   */
+  private async autoGenerateGroupBudgetsFromTemplates(
+    monthDate: Date,
+    label: string,
+  ) {
+    const templates = await this.prisma.groupBudgetTemplate.findMany();
+
+    if (templates.length === 0) return;
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const template of templates) {
+      const exists = await this.prisma.groupBudget.findUnique({
+        where: {
+          groupId_month: {
+            groupId: template.groupId,
+            month: monthDate,
+          },
+        },
+      });
+
+      if (exists) {
+        skipped++;
+        continue;
+      }
+
+      await this.prisma.groupBudget.create({
+        data: {
+          groupId: template.groupId,
+          amount: template.amount,
+          month: monthDate,
+        },
+      });
+      created++;
+    }
+
+    this.logger.log(
+      `전체 예산 자동 생성 완료 (${label}) — 생성: ${created}건, 건너뜀: ${skipped}건`,
+    );
   }
 }

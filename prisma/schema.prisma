@@ -71,6 +71,8 @@ model Group {
   expenses            Expense[]
   budgets             Budget[]
   budgetTemplates     BudgetTemplate[]
+  groupBudgets        GroupBudget[]
+  groupBudgetTemplate GroupBudgetTemplate?
   accounts            Account[]
   childcareAccounts   ChildcareAccount[]
   children            Child[]
@@ -707,6 +709,35 @@ model BudgetTemplate {
   @@unique([groupId, category])
   @@index([groupId])
   @@map("budget_templates")
+}
+
+// 그룹 전체 예산 (카테고리 구분 없음)
+model GroupBudget {
+  id        String   @id @default(uuid())
+  groupId   String
+  amount    Decimal  @db.Decimal(10, 2)
+  month     DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, month])
+  @@index([groupId, month])
+  @@map("group_budgets")
+}
+
+// 그룹 전체 예산 자동 적용 템플릿
+model GroupBudgetTemplate {
+  id        String   @id @default(uuid())
+  groupId   String   @unique
+  amount    Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("group_budget_templates")
 }
 
 enum ExpenseCategory {

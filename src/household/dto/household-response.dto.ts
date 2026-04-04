@@ -228,6 +228,92 @@ export class BudgetTemplateDto {
   updatedAt: Date;
 }
 
+export class GroupBudgetDto {
+  @ApiProperty({ description: '전체 예산 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  groupId: string;
+
+  @ApiProperty({ description: '전체 예산 금액', example: '1500000.00' })
+  amount: string;
+
+  @ApiProperty({ description: '예산 월', example: '2026-04-01T00:00:00.000Z' })
+  month: Date;
+
+  @ApiProperty({
+    description: '생성 일시',
+    example: '2026-04-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: '수정 일시',
+    example: '2026-04-01T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
+export class GroupBudgetTemplateDto {
+  @ApiProperty({ description: '템플릿 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  groupId: string;
+
+  @ApiProperty({
+    description: '매월 자동 적용할 전체 예산 금액',
+    example: '1500000.00',
+  })
+  amount: string;
+
+  @ApiProperty({
+    description: '생성 일시',
+    example: '2026-04-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: '수정 일시',
+    example: '2026-04-01T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
+export class BulkBudgetResultDto {
+  @ApiProperty({
+    description: '전체 예산 설정 결과',
+    type: () => GroupBudgetDto,
+    nullable: true,
+    required: false,
+  })
+  total?: GroupBudgetDto;
+
+  @ApiProperty({
+    description: '카테고리별 예산 설정 결과',
+    type: [BudgetDto],
+    required: false,
+  })
+  categories?: BudgetDto[];
+}
+
+export class BulkBudgetTemplateResultDto {
+  @ApiProperty({
+    description: '전체 예산 템플릿 설정 결과',
+    type: () => GroupBudgetTemplateDto,
+    nullable: true,
+    required: false,
+  })
+  total?: GroupBudgetTemplateDto;
+
+  @ApiProperty({
+    description: '카테고리별 예산 템플릿 설정 결과',
+    type: [BudgetTemplateDto],
+    required: false,
+  })
+  categories?: BudgetTemplateDto[];
+}
+
 export class RecurringCopyResultDto {
   @ApiProperty({ description: '복사된 지출 건수', example: 3 })
   count: number;

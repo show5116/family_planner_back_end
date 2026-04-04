@@ -15,18 +15,22 @@ import { IsString, Matches } from 'class-validator';
 import { HouseholdService } from './household.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
-import { CreateBudgetDto } from './dto/create-budget.dto';
-import { UpsertBudgetTemplateDto } from './dto/budget-template.dto';
+import { BulkUpsertBudgetDto } from './dto/create-budget.dto';
+import { BulkUpsertBudgetTemplateDto } from './dto/budget-template.dto';
 import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { ConfirmReceiptDto } from './dto/confirm-receipt.dto';
 import {
   ExpenseDto,
   BudgetDto,
   BudgetTemplateDto,
+  GroupBudgetDto,
+  GroupBudgetTemplateDto,
   StatisticsDto,
   YearlyStatisticsDto,
   ExpenseReceiptDto,
   ReceiptUploadUrlDto,
+  BulkBudgetResultDto,
+  BulkBudgetTemplateResultDto,
 } from './dto/household-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -213,12 +217,12 @@ export class HouseholdController {
 
   // ─── 예산 ────────────────────────────────────────────────
 
-  @Post('budgets')
-  @ApiOperation({ summary: '예산 설정 (없으면 생성, 있으면 수정)' })
-  @ApiCreated(BudgetDto, '예산 설정 성공')
+  @Post('budgets/bulk')
+  @ApiOperation({ summary: '예산 일괄 설정 (전체 + 카테고리별)' })
+  @ApiCreated(BulkBudgetResultDto, '예산 일괄 설정 성공')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  upsertBudget(@Request() req, @Body() dto: CreateBudgetDto) {
-    return this.householdService.upsertBudget(req.user.userId, dto);
+  bulkUpsertBudget(@Request() req, @Body() dto: BulkUpsertBudgetDto) {
+    return this.householdService.bulkUpsertBudget(req.user.userId, dto);
   }
 
   @Get('budgets')
@@ -235,16 +239,15 @@ export class HouseholdController {
 
   // ─── 예산 템플릿 ─────────────────────────────────────────
 
-  @Post('budget-templates')
-  @ApiOperation({
-    summary: '예산 템플릿 설정 (없으면 생성, 있으면 수정)',
-    description:
-      '매월 1일 00:10에 스케줄러가 템플릿을 기반으로 예산을 자동 생성합니다. 해당 월에 이미 예산이 있으면 건너뜁니다.',
-  })
-  @ApiCreated(BudgetTemplateDto, '예산 템플릿 설정 성공')
+  @Post('budget-templates/bulk')
+  @ApiOperation({ summary: '예산 템플릿 일괄 설정 (전체 + 카테고리별)' })
+  @ApiCreated(BulkBudgetTemplateResultDto, '예산 템플릿 일괄 설정 성공')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  upsertBudgetTemplate(@Request() req, @Body() dto: UpsertBudgetTemplateDto) {
-    return this.householdService.upsertBudgetTemplate(req.user.userId, dto);
+  bulkUpsertBudgetTemplate(
+    @Request() req,
+    @Body() dto: BulkUpsertBudgetTemplateDto,
+  ) {
+    return this.householdService.bulkUpsertBudgetTemplate(req.user.userId, dto);
   }
 
   @Get('budget-templates')
@@ -271,6 +274,49 @@ export class HouseholdController {
       req.user.userId,
       groupId,
       category,
+    );
+  }
+
+  // ─── 그룹 전체 예산 ──────────────────────────────────────
+
+  @Get('group-budgets')
+  @ApiOperation({ summary: '그룹 전체 예산 조회 (월별)' })
+  @ApiSuccess(GroupBudgetDto, '전체 예산 조회 성공')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findGroupBudget(
+    @Request() req,
+    @Query('groupId') groupId: string,
+    @Query('month') month: string,
+  ) {
+    return this.householdService.findGroupBudget(
+      req.user.userId,
+      groupId,
+      month,
+    );
+  }
+
+  // ─── 그룹 전체 예산 템플릿 ───────────────────────────────
+
+  @Get('group-budget-templates')
+  @ApiOperation({ summary: '그룹 전체 예산 템플릿 조회' })
+  @ApiSuccess(GroupBudgetTemplateDto, '전체 예산 템플릿 조회 성공')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findGroupBudgetTemplate(@Request() req, @Query('groupId') groupId: string) {
+    return this.householdService.findGroupBudgetTemplate(
+      req.user.userId,
+      groupId,
+    );
+  }
+
+  @Delete('group-budget-templates')
+  @ApiOperation({ summary: '그룹 전체 예산 템플릿 삭제' })
+  @ApiSuccess(MessageResponseDto, '전체 예산 템플릿 삭제 성공')
+  @ApiNotFound('전체 예산 템플릿을 찾을 수 없습니다')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  removeGroupBudgetTemplate(@Request() req, @Query('groupId') groupId: string) {
+    return this.householdService.removeGroupBudgetTemplate(
+      req.user.userId,
+      groupId,
     );
   }
 }
