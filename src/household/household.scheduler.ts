@@ -108,9 +108,9 @@ export class HouseholdScheduler {
   @Cron('10 0 1 * *')
   async autoGenerateBudgetsFromTemplates() {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0-based
-    const monthDate = new Date(year, month, 1);
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth(); // 0-based
+    const monthDate = new Date(Date.UTC(year, month, 1));
 
     this.logger.log(
       `예산 자동 생성 실행 — 기준월: ${year}-${String(month + 1).padStart(2, '0')}`,

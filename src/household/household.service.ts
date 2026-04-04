@@ -645,85 +645,70 @@ export class HouseholdService {
     await this.validateGroupMember(userId, dto.groupId);
 
     const now = new Date();
-    const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
 
     const results: { total?: unknown; categories?: unknown[] } = {};
 
     if (dto.total !== undefined) {
-      const isNew = !(await this.prisma.groupBudgetTemplate.findUnique({
-        where: { groupId: dto.groupId },
-      }));
-
       results.total = await this.prisma.groupBudgetTemplate.upsert({
         where: { groupId: dto.groupId },
         create: { groupId: dto.groupId, amount: dto.total },
         update: { amount: dto.total },
       });
 
-      if (isNew) {
-        const exists = await this.prisma.groupBudget.findUnique({
-          where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
+      const existingGroupBudget = await this.prisma.groupBudget.findUnique({
+        where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
+      });
+      if (!existingGroupBudget) {
+        await this.prisma.groupBudget.create({
+          data: { groupId: dto.groupId, amount: dto.total, month: monthDate },
         });
-        if (!exists) {
-          await this.prisma.groupBudget.create({
-            data: { groupId: dto.groupId, amount: dto.total, month: monthDate },
-          });
-        }
       }
     }
 
     if (dto.categories && dto.categories.length > 0) {
-      results.categories = await Promise.all(
-        dto.categories.map(async (item) => {
-          const isNew = !(await this.prisma.budgetTemplate.findUnique({
-            where: {
-              groupId_category: {
-                groupId: dto.groupId,
-                category: item.category,
-              },
+      const categoryResults: unknown[] = [];
+      for (const item of dto.categories) {
+        const template = await this.prisma.budgetTemplate.upsert({
+          where: {
+            groupId_category: {
+              groupId: dto.groupId,
+              category: item.category,
             },
-          }));
+          },
+          create: {
+            groupId: dto.groupId,
+            category: item.category,
+            amount: item.amount,
+          },
+          update: { amount: item.amount },
+        });
 
-          const template = await this.prisma.budgetTemplate.upsert({
-            where: {
-              groupId_category: {
-                groupId: dto.groupId,
-                category: item.category,
-              },
+        const existingBudget = await this.prisma.budget.findUnique({
+          where: {
+            groupId_category_month: {
+              groupId: dto.groupId,
+              category: item.category,
+              month: monthDate,
             },
-            create: {
+          },
+        });
+        if (!existingBudget) {
+          await this.prisma.budget.create({
+            data: {
               groupId: dto.groupId,
               category: item.category,
               amount: item.amount,
+              month: monthDate,
             },
-            update: { amount: item.amount },
           });
+        }
 
-          if (isNew) {
-            const exists = await this.prisma.budget.findUnique({
-              where: {
-                groupId_category_month: {
-                  groupId: dto.groupId,
-                  category: item.category,
-                  month: monthDate,
-                },
-              },
-            });
-            if (!exists) {
-              await this.prisma.budget.create({
-                data: {
-                  groupId: dto.groupId,
-                  category: item.category,
-                  amount: item.amount,
-                  month: monthDate,
-                },
-              });
-            }
-          }
-
-          return template;
-        }),
-      );
+        categoryResults.push(template);
+      }
+      results.categories = categoryResults;
     }
 
     return results;
