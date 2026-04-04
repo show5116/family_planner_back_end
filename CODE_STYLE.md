@@ -108,6 +108,18 @@ export class MessageResponseDto {
 }
 ```
 
+### 인라인 클래스 금지
+Controller 파일 안에 DTO 클래스를 직접 정의하지 않습니다. Query DTO 포함 모든 DTO는 반드시 별도 파일로 분리하세요.
+
+```typescript
+// ✅ 별도 파일로 분리
+// household/dto/household-query.dto.ts
+export class BudgetQueryDto { ... }
+
+// ❌ Controller 안에 인라인 정의 금지
+class BudgetQueryDto { ... }  // controller.ts 안에 작성 금지
+```
+
 ### Request DTO
 ```typescript
 export class CreateNotificationDto {
@@ -166,6 +178,7 @@ export class CreateNotificationDto {
 
 ### DTO
 - [ ] Response DTO 별도 파일 작성
+- [ ] Query DTO 포함 **모든 DTO를 별도 파일로 분리** (인라인 클래스 금지)
 - [ ] `@ApiProperty` 필수
 - [ ] nullable, required 명시
 

@@ -9,8 +9,7 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 import { HouseholdService } from './household.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
@@ -19,6 +18,12 @@ import { BulkUpsertBudgetDto } from './dto/create-budget.dto';
 import { BulkUpsertBudgetTemplateDto } from './dto/budget-template.dto';
 import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { ConfirmReceiptDto } from './dto/confirm-receipt.dto';
+import {
+  StatisticsQueryDto,
+  YearlyStatisticsQueryDto,
+  BudgetQueryDto,
+  ReceiptUploadQueryDto,
+} from './dto/household-query.dto';
 import {
   ExpenseDto,
   BudgetDto,
@@ -40,43 +45,6 @@ import {
   ApiNotFound,
   ApiForbidden,
 } from '@/common/decorators/api-responses.decorator';
-
-class StatisticsQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
-  @IsString()
-  groupId: string;
-
-  @ApiProperty({ description: '조회 월 (YYYY-MM)', example: '2026-02' })
-  @IsString()
-  month: string;
-}
-
-class YearlyStatisticsQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
-  @IsString()
-  groupId: string;
-
-  @ApiProperty({ description: '조회 연도 (YYYY)', example: '2026' })
-  @IsString()
-  @Matches(/^\d{4}$/, { message: '연도 형식은 YYYY이어야 합니다' })
-  year: string;
-}
-
-class BudgetQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
-  @IsString()
-  groupId: string;
-
-  @ApiProperty({ description: '조회 월 (YYYY-MM)', example: '2026-02' })
-  @IsString()
-  month: string;
-}
-
-class ReceiptUploadQueryDto {
-  @ApiProperty({ description: 'MIME 타입', example: 'image/jpeg' })
-  @IsString()
-  mimeType: string;
-}
 
 /**
  * 가계부 컨트롤러

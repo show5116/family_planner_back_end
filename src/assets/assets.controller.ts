@@ -9,14 +9,14 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
-import { ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AssetsService } from './assets.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateAccountRecordDto } from './dto/create-account-record.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
+import { StatisticsQueryDto } from './dto/assets-query.dto';
 import {
   AccountDto,
   AccountRecordDto,
@@ -30,12 +30,6 @@ import {
   ApiNotFound,
   ApiSuccess,
 } from '@/common/decorators/api-responses.decorator';
-
-class StatisticsQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
-  @IsString()
-  groupId: string;
-}
 
 /**
  * 자산 관리 컨트롤러
