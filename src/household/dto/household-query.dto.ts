@@ -3,9 +3,14 @@ import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
 import { ExpenseCategory } from '@prisma/client';
 
 export class StatisticsQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 조회 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({ description: '조회 월 (YYYY-MM)', example: '2026-02' })
   @IsString()
@@ -13,9 +18,14 @@ export class StatisticsQueryDto {
 }
 
 export class YearlyStatisticsQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 조회 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({ description: '조회 연도 (YYYY)', example: '2026' })
   @IsString()
@@ -24,9 +34,14 @@ export class YearlyStatisticsQueryDto {
 }
 
 export class BudgetQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 예산 조회 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({ description: '조회 월 (YYYY-MM)', example: '2026-02' })
   @IsString()

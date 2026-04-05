@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
   IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -14,10 +13,14 @@ import { Type } from 'class-transformer';
 import { ExpenseCategory } from '@prisma/client';
 
 export class CreateBudgetDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 예산 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({
     description: '카테고리',
@@ -57,10 +60,14 @@ export class CategoryBudgetItemDto {
 }
 
 export class BulkUpsertBudgetDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 예산 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({
     description: '예산 월 (YYYY-MM)',

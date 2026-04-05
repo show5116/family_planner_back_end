@@ -129,8 +129,9 @@ export class HouseholdScheduler {
     for (const template of templates) {
       const exists = await this.prisma.budget.findUnique({
         where: {
-          groupId_category_month: {
+          groupId_userId_category_month: {
             groupId: template.groupId,
+            userId: template.userId,
             category: template.category,
             month: monthDate,
           },
@@ -145,6 +146,7 @@ export class HouseholdScheduler {
       await this.prisma.budget.create({
         data: {
           groupId: template.groupId,
+          userId: template.userId,
           category: template.category,
           amount: template.amount,
           month: monthDate,

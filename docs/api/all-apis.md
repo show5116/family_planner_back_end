@@ -2812,7 +2812,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ```json
 {
-  "groupId": "uuid-1234", // 그룹 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (개인 지출 시 생략) (string?)
   "amount": 15000, // 금액 (number)
   "category": null, // 카테고리 (ExpenseCategory)
   "date": "2026-02-27", // 지출 날짜 (YYYY-MM-DD) (string)
@@ -2852,7 +2852,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `groupId` (`string`): 그룹 ID
+- `groupId` (`string`) (Optional): 그룹 ID (개인 조회 시 생략)
 - `month` (`string`) (Optional): 조회 월 (YYYY-MM)
 - `category` (`ExpenseCategory`) (Optional): 카테고리 필터
 - `paymentMethod` (`PaymentMethod`) (Optional): 결제 수단 필터
@@ -3123,7 +3123,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `groupId` (`string`): 그룹 ID
+- `groupId` (`string`) (Optional): 그룹 ID (개인 조회 시 생략)
 - `year` (`string`): 조회 연도 (YYYY)
 
 **Responses:**
@@ -3156,7 +3156,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ```json
 {
-  "groupId": "uuid-1234", // 그룹 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (개인 예산 시 생략) (string?)
   "month": "2026-04", // 예산 월 (YYYY-MM) (string)
   "total": 1500000, // 전체 예산 금액 (number?)
   "categories": [
@@ -3199,7 +3199,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `groupId` (`string`): 그룹 ID
+- `groupId` (`string`) (Optional): 그룹 ID (개인 예산 조회 시 생략)
 - `month` (`string`): 조회 월 (YYYY-MM)
 - `category` (`ExpenseCategory`) (Optional): 카테고리 필터
 
@@ -3231,7 +3231,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ```json
 {
-  "groupId": "uuid-1234", // 그룹 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (개인 템플릿 시 생략) (string?)
   "total": 1500000, // 전체 예산 템플릿 금액 (number?)
   "categories": [
     {
@@ -3268,11 +3268,11 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ### GET `household/budget-templates`
 
-**요약:** 예산 템플릿 목록 조회
+**요약:** 예산 템플릿 목록 조회 (groupId 생략 시 개인 템플릿)
 
 **Query Parameters:**
 
-- `groupId` (`string`)
+- `groupId` (`string`) - Optional
 
 **Responses:**
 
@@ -3295,7 +3295,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ### DELETE `household/budget-templates/:category`
 
-**요약:** 예산 템플릿 삭제
+**요약:** 예산 템플릿 삭제 (groupId 생략 시 개인 템플릿)
 
 **Path Parameters:**
 
@@ -3303,7 +3303,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `groupId` (`string`)
+- `groupId` (`string`) - Optional
 
 **Responses:**
 

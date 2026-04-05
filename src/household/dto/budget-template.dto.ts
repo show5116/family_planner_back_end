@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
   IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -13,10 +12,14 @@ import { Type } from 'class-transformer';
 import { ExpenseCategory } from '@prisma/client';
 
 export class UpsertBudgetTemplateDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 템플릿 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({
     description: '카테고리',
@@ -48,10 +51,14 @@ export class CategoryTemplateItemDto {
 }
 
 export class BulkUpsertBudgetTemplateDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 템플릿 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({
     description: '전체 예산 템플릿 금액',
@@ -76,10 +83,14 @@ export class BulkUpsertBudgetTemplateDto {
 }
 
 export class DeleteBudgetTemplateDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 템플릿 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({
     description: '카테고리',

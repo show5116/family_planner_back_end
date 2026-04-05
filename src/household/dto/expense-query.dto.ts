@@ -3,9 +3,14 @@ import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
 import { ExpenseCategory, PaymentMethod } from '@prisma/client';
 
 export class ExpenseQueryDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 조회 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({
     description: '조회 월 (YYYY-MM)',

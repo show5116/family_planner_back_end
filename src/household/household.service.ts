@@ -42,11 +42,13 @@ export class HouseholdService {
    * 지출 등록 (예산 초과 알림 포함)
    */
   async createExpense(userId: string, dto: CreateExpenseDto) {
-    await this.validateGroupMember(userId, dto.groupId);
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
+    }
 
     const expense = await this.prisma.expense.create({
       data: {
-        groupId: dto.groupId,
+        groupId: dto.groupId ?? null,
         userId,
         amount: dto.amount,
         category: dto.category,
@@ -57,13 +59,15 @@ export class HouseholdService {
       },
     });
 
-    // 예산 초과 여부 확인 후 알림 (비동기, 실패해도 등록은 완료)
-    this.checkBudgetExceeded(
-      userId,
-      dto.groupId,
-      dto.date,
-      expense.category,
-    ).catch(() => null);
+    // 예산 초과 여부 확인 후 알림 (그룹 지출인 경우만)
+    if (dto.groupId) {
+      this.checkBudgetExceeded(
+        userId,
+        dto.groupId,
+        dto.date,
+        expense.category,
+      ).catch(() => null);
+    }
 
     return expense;
   }
@@ -72,9 +76,13 @@ export class HouseholdService {
    * 지출 목록 조회
    */
   async findAllExpenses(userId: string, query: ExpenseQueryDto) {
-    await this.validateGroupMember(userId, query.groupId);
+    if (query.groupId) {
+      await this.validateGroupMember(userId, query.groupId);
+    }
 
-    const where: Record<string, unknown> = { groupId: query.groupId };
+    const where: Record<string, unknown> = query.groupId
+      ? { groupId: query.groupId }
+      : { groupId: null, userId };
 
     if (query.month) {
       const [year, month] = query.month.split('-').map(Number);
@@ -112,7 +120,11 @@ export class HouseholdService {
       throw new NotFoundException('지출 내역을 찾을 수 없습니다');
     }
 
-    await this.validateGroupMember(userId, expense.groupId);
+    if (expense.groupId) {
+      await this.validateGroupMember(userId, expense.groupId);
+    } else if (expense.userId !== userId) {
+      throw new ForbiddenException('본인의 지출 내역만 조회할 수 있습니다');
+    }
 
     return expense;
   }
@@ -176,30 +188,40 @@ export class HouseholdService {
   /**
    * 월별 통계 조회
    */
-  async getStatistics(userId: string, groupId: string, month: string) {
-    await this.validateGroupMember(userId, groupId);
+  async getStatistics(
+    userId: string,
+    groupId: string | undefined,
+    month: string,
+  ) {
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
 
     const [year, monthNum] = month.split('-').map(Number);
     const startDate = new Date(year, monthNum - 1, 1);
     const endDate = new Date(year, monthNum, 1);
     const monthDate = new Date(Date.UTC(year, monthNum - 1, 1));
 
-    const [expenses, budgets, groupBudget] = await Promise.all([
-      this.prisma.expense.findMany({
-        where: {
-          groupId,
+    const expenseWhere = groupId
+      ? { groupId, date: { gte: startDate, lt: endDate } }
+      : {
+          groupId: null,
+          userId,
           date: { gte: startDate, lt: endDate },
-        },
-      }),
-      this.prisma.budget.findMany({
-        where: {
-          groupId,
-          month: monthDate,
-        },
-      }),
-      this.prisma.groupBudget.findUnique({
-        where: { groupId_month: { groupId, month: monthDate } },
-      }),
+        };
+
+    const budgetWhere = groupId
+      ? { groupId, month: monthDate }
+      : { groupId: null, userId, month: monthDate };
+
+    const [expenses, budgets, groupBudget] = await Promise.all([
+      this.prisma.expense.findMany({ where: expenseWhere }),
+      this.prisma.budget.findMany({ where: budgetWhere }),
+      groupId
+        ? this.prisma.groupBudget.findUnique({
+            where: { groupId_month: { groupId, month: monthDate } },
+          })
+        : Promise.resolve(null),
     ]);
 
     const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));
@@ -252,18 +274,29 @@ export class HouseholdService {
   /**
    * 연별 지출 통계 조회 (월별 합계)
    */
-  async getYearlyStatistics(userId: string, groupId: string, year: string) {
-    await this.validateGroupMember(userId, groupId);
+  async getYearlyStatistics(
+    userId: string,
+    groupId: string | undefined,
+    year: string,
+  ) {
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
 
     const yearNum = Number(year);
     const startDate = new Date(yearNum, 0, 1);
     const endDate = new Date(yearNum + 1, 0, 1);
 
+    const expenseWhere = groupId
+      ? { groupId, date: { gte: startDate, lt: endDate } }
+      : {
+          groupId: null,
+          userId,
+          date: { gte: startDate, lt: endDate },
+        };
+
     const expenses = await this.prisma.expense.findMany({
-      where: {
-        groupId,
-        date: { gte: startDate, lt: endDate },
-      },
+      where: expenseWhere,
     });
 
     // 월별 집계
@@ -402,10 +435,12 @@ export class HouseholdService {
    */
   async copyRecurringExpenses(
     userId: string,
-    groupId: string,
+    groupId: string | undefined,
     targetMonth: string,
   ) {
-    await this.validateGroupMember(userId, groupId);
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
 
     const [year, monthNum] = targetMonth.split('-').map(Number);
     const prevYear = monthNum === 1 ? year - 1 : year;
@@ -414,12 +449,17 @@ export class HouseholdService {
     const prevStart = new Date(prevYear, prevMonth - 1, 1);
     const prevEnd = new Date(prevYear, prevMonth, 1);
 
+    const recurringWhere = groupId
+      ? { groupId, isRecurring: true, date: { gte: prevStart, lt: prevEnd } }
+      : {
+          groupId: null,
+          userId,
+          isRecurring: true,
+          date: { gte: prevStart, lt: prevEnd },
+        };
+
     const recurringExpenses = await this.prisma.expense.findMany({
-      where: {
-        groupId,
-        isRecurring: true,
-        date: { gte: prevStart, lt: prevEnd },
-      },
+      where: recurringWhere,
     });
 
     if (recurringExpenses.length === 0) {
@@ -451,21 +491,28 @@ export class HouseholdService {
    * 예산 설정
    */
   async upsertBudget(userId: string, dto: CreateBudgetDto) {
-    await this.validateGroupMember(userId, dto.groupId);
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
+    }
 
     const [year, month] = dto.month.split('-').map(Number);
     const monthDate = new Date(Date.UTC(year, month - 1, 1));
 
+    const groupId = dto.groupId ?? null;
+    const ownerId = dto.groupId ? null : userId;
+
     return await this.prisma.budget.upsert({
       where: {
-        groupId_category_month: {
-          groupId: dto.groupId,
+        groupId_userId_category_month: {
+          groupId,
+          userId: ownerId,
           category: dto.category,
           month: monthDate,
         },
       },
       create: {
-        groupId: dto.groupId,
+        groupId,
+        userId: ownerId,
         category: dto.category,
         amount: dto.amount,
         month: monthDate,
@@ -481,21 +528,32 @@ export class HouseholdService {
    */
   async findBudgets(
     userId: string,
-    groupId: string,
+    groupId: string | undefined,
     month: string,
     category?: string,
   ) {
-    await this.validateGroupMember(userId, groupId);
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
 
     const [year, monthNum] = month.split('-').map(Number);
     const monthDate = new Date(Date.UTC(year, monthNum - 1, 1));
 
+    const where = groupId
+      ? {
+          groupId,
+          month: monthDate,
+          ...(category && { category: category as never }),
+        }
+      : {
+          groupId: null,
+          userId,
+          month: monthDate,
+          ...(category && { category: category as never }),
+        };
+
     return await this.prisma.budget.findMany({
-      where: {
-        groupId,
-        month: monthDate,
-        ...(category && { category: category as never }),
-      },
+      where,
       orderBy: { category: 'asc' },
     });
   }
@@ -505,23 +563,34 @@ export class HouseholdService {
    * 신규 등록 시 이번 달 예산이 없으면 즉시 적용
    */
   async upsertBudgetTemplate(userId: string, dto: UpsertBudgetTemplateDto) {
-    await this.validateGroupMember(userId, dto.groupId);
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
+    }
+
+    const groupId = dto.groupId ?? null;
+    const ownerId = dto.groupId ? null : userId;
 
     const isNew = !(await this.prisma.budgetTemplate.findUnique({
       where: {
-        groupId_category: { groupId: dto.groupId, category: dto.category },
+        groupId_userId_category: {
+          groupId,
+          userId: ownerId,
+          category: dto.category,
+        },
       },
     }));
 
     const template = await this.prisma.budgetTemplate.upsert({
       where: {
-        groupId_category: {
-          groupId: dto.groupId,
+        groupId_userId_category: {
+          groupId,
+          userId: ownerId,
           category: dto.category,
         },
       },
       create: {
-        groupId: dto.groupId,
+        groupId,
+        userId: ownerId,
         category: dto.category,
         amount: dto.amount,
       },
@@ -533,12 +602,15 @@ export class HouseholdService {
     // 신규 템플릿이고 이번 달 예산이 없으면 즉시 생성
     if (isNew) {
       const now = new Date();
-      const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthDate = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+      );
 
       const exists = await this.prisma.budget.findUnique({
         where: {
-          groupId_category_month: {
-            groupId: dto.groupId,
+          groupId_userId_category_month: {
+            groupId,
+            userId: ownerId,
             category: dto.category,
             month: monthDate,
           },
@@ -548,7 +620,8 @@ export class HouseholdService {
       if (!exists) {
         await this.prisma.budget.create({
           data: {
-            groupId: dto.groupId,
+            groupId,
+            userId: ownerId,
             category: dto.category,
             amount: dto.amount,
             month: monthDate,
@@ -563,11 +636,15 @@ export class HouseholdService {
   /**
    * 예산 템플릿 목록 조회
    */
-  async findBudgetTemplates(userId: string, groupId: string) {
-    await this.validateGroupMember(userId, groupId);
+  async findBudgetTemplates(userId: string, groupId?: string) {
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
+
+    const where = groupId ? { groupId } : { groupId: null, userId };
 
     return await this.prisma.budgetTemplate.findMany({
-      where: { groupId },
+      where,
       orderBy: { category: 'asc' },
     });
   }
@@ -577,15 +654,21 @@ export class HouseholdService {
    */
   async removeBudgetTemplate(
     userId: string,
-    groupId: string,
+    groupId: string | undefined,
     category: string,
   ) {
-    await this.validateGroupMember(userId, groupId);
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
+
+    const ownerId = groupId ? null : userId;
+    const gid = groupId ?? null;
 
     const template = await this.prisma.budgetTemplate.findUnique({
       where: {
-        groupId_category: {
-          groupId,
+        groupId_userId_category: {
+          groupId: gid,
+          userId: ownerId,
           category: category as never,
         },
       },
@@ -597,8 +680,9 @@ export class HouseholdService {
 
     await this.prisma.budgetTemplate.delete({
       where: {
-        groupId_category: {
-          groupId,
+        groupId_userId_category: {
+          groupId: gid,
+          userId: ownerId,
           category: category as never,
         },
       },
@@ -611,14 +695,20 @@ export class HouseholdService {
    * 예산 일괄 설정 (전체 + 카테고리별 한번에)
    */
   async bulkUpsertBudget(userId: string, dto: BulkUpsertBudgetDto) {
-    await this.validateGroupMember(userId, dto.groupId);
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
+    }
 
     const [year, month] = dto.month.split('-').map(Number);
     const monthDate = new Date(Date.UTC(year, month - 1, 1));
 
+    const groupId = dto.groupId ?? null;
+    const ownerId = dto.groupId ? null : userId;
+
     const results: { total?: unknown; categories?: unknown[] } = {};
 
-    if (dto.total !== undefined) {
+    // total은 그룹 전체 예산(groupBudget) — 개인 모드에서는 미지원
+    if (dto.total !== undefined && dto.groupId) {
       results.total = await this.prisma.groupBudget.upsert({
         where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
         create: { groupId: dto.groupId, amount: dto.total, month: monthDate },
@@ -631,14 +721,16 @@ export class HouseholdService {
         dto.categories.map((item) =>
           this.prisma.budget.upsert({
             where: {
-              groupId_category_month: {
-                groupId: dto.groupId,
+              groupId_userId_category_month: {
+                groupId,
+                userId: ownerId,
                 category: item.category,
                 month: monthDate,
               },
             },
             create: {
-              groupId: dto.groupId,
+              groupId,
+              userId: ownerId,
               category: item.category,
               amount: item.amount,
               month: monthDate,
@@ -660,7 +752,12 @@ export class HouseholdService {
     userId: string,
     dto: BulkUpsertBudgetTemplateDto,
   ) {
-    await this.validateGroupMember(userId, dto.groupId);
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
+    }
+
+    const groupId = dto.groupId ?? null;
+    const ownerId = dto.groupId ? null : userId;
 
     const now = new Date();
     const monthDate = new Date(
@@ -669,7 +766,8 @@ export class HouseholdService {
 
     const results: { total?: unknown; categories?: unknown[] } = {};
 
-    if (dto.total !== undefined) {
+    // total(그룹 전체 예산 템플릿)은 그룹 모드에서만 지원
+    if (dto.total !== undefined && dto.groupId) {
       results.total = await this.prisma.groupBudgetTemplate.upsert({
         where: { groupId: dto.groupId },
         create: { groupId: dto.groupId, amount: dto.total },
@@ -691,13 +789,15 @@ export class HouseholdService {
       for (const item of dto.categories) {
         const template = await this.prisma.budgetTemplate.upsert({
           where: {
-            groupId_category: {
-              groupId: dto.groupId,
+            groupId_userId_category: {
+              groupId,
+              userId: ownerId,
               category: item.category,
             },
           },
           create: {
-            groupId: dto.groupId,
+            groupId,
+            userId: ownerId,
             category: item.category,
             amount: item.amount,
           },
@@ -706,8 +806,9 @@ export class HouseholdService {
 
         const existingBudget = await this.prisma.budget.findUnique({
           where: {
-            groupId_category_month: {
-              groupId: dto.groupId,
+            groupId_userId_category_month: {
+              groupId,
+              userId: ownerId,
               category: item.category,
               month: monthDate,
             },
@@ -716,7 +817,8 @@ export class HouseholdService {
         if (!existingBudget) {
           await this.prisma.budget.create({
             data: {
-              groupId: dto.groupId,
+              groupId,
+              userId: ownerId,
               category: item.category,
               amount: item.amount,
               month: monthDate,
@@ -866,8 +968,9 @@ export class HouseholdService {
 
     const budget = await this.prisma.budget.findUnique({
       where: {
-        groupId_category_month: {
+        groupId_userId_category_month: {
           groupId,
+          userId: null,
           category: category as never,
           month: startDate,
         },
