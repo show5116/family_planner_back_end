@@ -1,11 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, Min, Matches } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Min, Matches } from 'class-validator';
 
 export class UpsertGroupBudgetDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 총 예산 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({ description: '전체 예산 금액', example: 1500000 })
   @IsNumber()
@@ -22,10 +26,14 @@ export class UpsertGroupBudgetDto {
 }
 
 export class UpsertGroupBudgetTemplateDto {
-  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
+  @ApiProperty({
+    description: '그룹 ID (개인 총 예산 템플릿 시 생략)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  groupId: string;
+  groupId?: string;
 
   @ApiProperty({
     description: '매월 자동 적용할 전체 예산 금액',

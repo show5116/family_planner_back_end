@@ -214,14 +214,15 @@ export class HouseholdService {
       ? { groupId, month: monthDate }
       : { groupId: null, userId, month: monthDate };
 
+    const gid = groupId ?? null;
+    const ownerId = groupId ? null : userId;
+
     const [expenses, budgets, groupBudget] = await Promise.all([
       this.prisma.expense.findMany({ where: expenseWhere }),
       this.prisma.budget.findMany({ where: budgetWhere }),
-      groupId
-        ? this.prisma.groupBudget.findUnique({
-            where: { groupId_month: { groupId, month: monthDate } },
-          })
-        : Promise.resolve(null),
+      this.prisma.groupBudget.findFirst({
+        where: { groupId: gid, userId: ownerId, month: monthDate },
+      }),
     ]);
 
     const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));
@@ -501,26 +502,13 @@ export class HouseholdService {
     const groupId = dto.groupId ?? null;
     const ownerId = dto.groupId ? null : userId;
 
-    return await this.prisma.budget.upsert({
-      where: {
-        groupId_userId_category_month: {
-          groupId,
-          userId: ownerId,
-          category: dto.category,
-          month: monthDate,
-        },
-      },
-      create: {
-        groupId,
-        userId: ownerId,
-        category: dto.category,
-        amount: dto.amount,
-        month: monthDate,
-      },
-      update: {
-        amount: dto.amount,
-      },
-    });
+    return this.upsertBudgetRecord(
+      groupId,
+      ownerId,
+      dto.category,
+      monthDate,
+      dto.amount,
+    );
   }
 
   /**
@@ -570,34 +558,17 @@ export class HouseholdService {
     const groupId = dto.groupId ?? null;
     const ownerId = dto.groupId ? null : userId;
 
-    const isNew = !(await this.prisma.budgetTemplate.findUnique({
-      where: {
-        groupId_userId_category: {
-          groupId,
-          userId: ownerId,
-          category: dto.category,
-        },
-      },
-    }));
-
-    const template = await this.prisma.budgetTemplate.upsert({
-      where: {
-        groupId_userId_category: {
-          groupId,
-          userId: ownerId,
-          category: dto.category,
-        },
-      },
-      create: {
-        groupId,
-        userId: ownerId,
-        category: dto.category,
-        amount: dto.amount,
-      },
-      update: {
-        amount: dto.amount,
-      },
+    const existing = await this.prisma.budgetTemplate.findFirst({
+      where: { groupId, userId: ownerId, category: dto.category },
     });
+    const isNew = !existing;
+
+    const template = await this.upsertBudgetTemplateRecord(
+      groupId,
+      ownerId,
+      dto.category,
+      dto.amount,
+    );
 
     // 신규 템플릿이고 이번 달 예산이 없으면 즉시 생성
     if (isNew) {
@@ -606,18 +577,16 @@ export class HouseholdService {
         Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
       );
 
-      const exists = await this.prisma.budget.findUnique({
+      const existsBudget = await this.prisma.budget.findFirst({
         where: {
-          groupId_userId_category_month: {
-            groupId,
-            userId: ownerId,
-            category: dto.category,
-            month: monthDate,
-          },
+          groupId,
+          userId: ownerId,
+          category: dto.category,
+          month: monthDate,
         },
       });
 
-      if (!exists) {
+      if (!existsBudget) {
         await this.prisma.budget.create({
           data: {
             groupId,
@@ -664,29 +633,15 @@ export class HouseholdService {
     const ownerId = groupId ? null : userId;
     const gid = groupId ?? null;
 
-    const template = await this.prisma.budgetTemplate.findUnique({
-      where: {
-        groupId_userId_category: {
-          groupId: gid,
-          userId: ownerId,
-          category: category as never,
-        },
-      },
+    const template = await this.prisma.budgetTemplate.findFirst({
+      where: { groupId: gid, userId: ownerId, category: category as never },
     });
 
     if (!template) {
       throw new NotFoundException('예산 템플릿을 찾을 수 없습니다');
     }
 
-    await this.prisma.budgetTemplate.delete({
-      where: {
-        groupId_userId_category: {
-          groupId: gid,
-          userId: ownerId,
-          category: category as never,
-        },
-      },
-    });
+    await this.prisma.budgetTemplate.delete({ where: { id: template.id } });
 
     return { message: '예산 템플릿이 삭제되었습니다' };
   }
@@ -707,36 +662,25 @@ export class HouseholdService {
 
     const results: { total?: unknown; categories?: unknown[] } = {};
 
-    // total은 그룹 전체 예산(groupBudget) — 개인 모드에서는 미지원
-    if (dto.total !== undefined && dto.groupId) {
-      results.total = await this.prisma.groupBudget.upsert({
-        where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
-        create: { groupId: dto.groupId, amount: dto.total, month: monthDate },
-        update: { amount: dto.total },
-      });
+    if (dto.total !== undefined) {
+      results.total = await this.upsertGroupBudgetRecord(
+        groupId,
+        ownerId,
+        monthDate,
+        dto.total,
+      );
     }
 
     if (dto.categories && dto.categories.length > 0) {
       results.categories = await Promise.all(
         dto.categories.map((item) =>
-          this.prisma.budget.upsert({
-            where: {
-              groupId_userId_category_month: {
-                groupId,
-                userId: ownerId,
-                category: item.category,
-                month: monthDate,
-              },
-            },
-            create: {
-              groupId,
-              userId: ownerId,
-              category: item.category,
-              amount: item.amount,
-              month: monthDate,
-            },
-            update: { amount: item.amount },
-          }),
+          this.upsertBudgetRecord(
+            groupId,
+            ownerId,
+            item.category,
+            monthDate,
+            item.amount,
+          ),
         ),
       );
     }
@@ -766,20 +710,25 @@ export class HouseholdService {
 
     const results: { total?: unknown; categories?: unknown[] } = {};
 
-    // total(그룹 전체 예산 템플릿)은 그룹 모드에서만 지원
-    if (dto.total !== undefined && dto.groupId) {
+    if (dto.total !== undefined) {
+      const whereKey = groupId ? { groupId } : { userId: ownerId };
       results.total = await this.prisma.groupBudgetTemplate.upsert({
-        where: { groupId: dto.groupId },
-        create: { groupId: dto.groupId, amount: dto.total },
+        where: whereKey,
+        create: { groupId, userId: ownerId, amount: dto.total },
         update: { amount: dto.total },
       });
 
-      const existingGroupBudget = await this.prisma.groupBudget.findUnique({
-        where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
+      const existingGroupBudget = await this.prisma.groupBudget.findFirst({
+        where: { groupId, userId: ownerId, month: monthDate },
       });
       if (!existingGroupBudget) {
         await this.prisma.groupBudget.create({
-          data: { groupId: dto.groupId, amount: dto.total, month: monthDate },
+          data: {
+            groupId,
+            userId: ownerId,
+            amount: dto.total,
+            month: monthDate,
+          },
         });
       }
     }
@@ -787,31 +736,19 @@ export class HouseholdService {
     if (dto.categories && dto.categories.length > 0) {
       const categoryResults: unknown[] = [];
       for (const item of dto.categories) {
-        const template = await this.prisma.budgetTemplate.upsert({
+        const template = await this.upsertBudgetTemplateRecord(
+          groupId,
+          ownerId,
+          item.category,
+          item.amount,
+        );
+
+        const existingBudget = await this.prisma.budget.findFirst({
           where: {
-            groupId_userId_category: {
-              groupId,
-              userId: ownerId,
-              category: item.category,
-            },
-          },
-          create: {
             groupId,
             userId: ownerId,
             category: item.category,
-            amount: item.amount,
-          },
-          update: { amount: item.amount },
-        });
-
-        const existingBudget = await this.prisma.budget.findUnique({
-          where: {
-            groupId_userId_category_month: {
-              groupId,
-              userId: ownerId,
-              category: item.category,
-              month: monthDate,
-            },
+            month: monthDate,
           },
         });
         if (!existingBudget) {
@@ -835,84 +772,92 @@ export class HouseholdService {
   }
 
   /**
-   * 그룹 전체 예산 설정 (월별 수동)
+   * 전체 예산 설정 (월별 수동)
    */
   async upsertGroupBudget(userId: string, dto: UpsertGroupBudgetDto) {
-    await this.validateGroupMember(userId, dto.groupId);
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
+    }
+
+    const groupId = dto.groupId ?? null;
+    const ownerId = dto.groupId ? null : userId;
 
     const [year, month] = dto.month.split('-').map(Number);
     const monthDate = new Date(Date.UTC(year, month - 1, 1));
 
-    return await this.prisma.groupBudget.upsert({
-      where: {
-        groupId_month: {
-          groupId: dto.groupId,
-          month: monthDate,
-        },
-      },
-      create: {
-        groupId: dto.groupId,
-        amount: dto.amount,
-        month: monthDate,
-      },
-      update: {
-        amount: dto.amount,
-      },
-    });
+    return this.upsertGroupBudgetRecord(
+      groupId,
+      ownerId,
+      monthDate,
+      dto.amount,
+    );
   }
 
   /**
-   * 그룹 전체 예산 조회 (월별)
+   * 전체 예산 조회 (월별)
    */
-  async findGroupBudget(userId: string, groupId: string, month: string) {
-    await this.validateGroupMember(userId, groupId);
+  async findGroupBudget(
+    userId: string,
+    groupId: string | undefined,
+    month: string,
+  ) {
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
+
+    const gid = groupId ?? null;
+    const ownerId = groupId ? null : userId;
 
     const [year, monthNum] = month.split('-').map(Number);
     const monthDate = new Date(Date.UTC(year, monthNum - 1, 1));
 
-    return await this.prisma.groupBudget.findUnique({
-      where: { groupId_month: { groupId, month: monthDate } },
+    return this.prisma.groupBudget.findFirst({
+      where: { groupId: gid, userId: ownerId, month: monthDate },
     });
   }
 
   /**
-   * 그룹 전체 예산 템플릿 설정 (자동 적용)
+   * 전체 예산 템플릿 설정 (자동 적용)
    * 신규 등록 시 이번 달 전체 예산이 없으면 즉시 적용
    */
   async upsertGroupBudgetTemplate(
     userId: string,
     dto: UpsertGroupBudgetTemplateDto,
   ) {
-    await this.validateGroupMember(userId, dto.groupId);
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
+    }
+
+    const groupId = dto.groupId ?? null;
+    const ownerId = dto.groupId ? null : userId;
+
+    const whereKey = groupId ? { groupId } : { userId: ownerId };
 
     const isNew = !(await this.prisma.groupBudgetTemplate.findUnique({
-      where: { groupId: dto.groupId },
+      where: whereKey,
     }));
 
     const template = await this.prisma.groupBudgetTemplate.upsert({
-      where: { groupId: dto.groupId },
-      create: {
-        groupId: dto.groupId,
-        amount: dto.amount,
-      },
-      update: {
-        amount: dto.amount,
-      },
+      where: whereKey,
+      create: { groupId, userId: ownerId, amount: dto.amount },
+      update: { amount: dto.amount },
     });
 
-    // 신규 템플릿이고 이번 달 전체 예산이 없으면 즉시 생성
     if (isNew) {
       const now = new Date();
-      const monthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthDate = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+      );
 
-      const exists = await this.prisma.groupBudget.findUnique({
-        where: { groupId_month: { groupId: dto.groupId, month: monthDate } },
+      const exists = await this.prisma.groupBudget.findFirst({
+        where: { groupId, userId: ownerId, month: monthDate },
       });
 
       if (!exists) {
         await this.prisma.groupBudget.create({
           data: {
-            groupId: dto.groupId,
+            groupId,
+            userId: ownerId,
             amount: dto.amount,
             month: monthDate,
           },
@@ -924,31 +869,39 @@ export class HouseholdService {
   }
 
   /**
-   * 그룹 전체 예산 템플릿 조회
+   * 전체 예산 템플릿 조회
    */
-  async findGroupBudgetTemplate(userId: string, groupId: string) {
-    await this.validateGroupMember(userId, groupId);
+  async findGroupBudgetTemplate(userId: string, groupId?: string) {
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
+
+    const whereKey = groupId ? { groupId } : { userId };
 
     return await this.prisma.groupBudgetTemplate.findUnique({
-      where: { groupId },
+      where: whereKey,
     });
   }
 
   /**
-   * 그룹 전체 예산 템플릿 삭제
+   * 전체 예산 템플릿 삭제
    */
-  async removeGroupBudgetTemplate(userId: string, groupId: string) {
-    await this.validateGroupMember(userId, groupId);
+  async removeGroupBudgetTemplate(userId: string, groupId?: string) {
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
+
+    const whereKey = groupId ? { groupId } : { userId };
 
     const template = await this.prisma.groupBudgetTemplate.findUnique({
-      where: { groupId },
+      where: whereKey,
     });
 
     if (!template) {
       throw new NotFoundException('전체 예산 템플릿을 찾을 수 없습니다');
     }
 
-    await this.prisma.groupBudgetTemplate.delete({ where: { groupId } });
+    await this.prisma.groupBudgetTemplate.delete({ where: whereKey });
 
     return { message: '전체 예산 템플릿이 삭제되었습니다' };
   }
@@ -966,14 +919,12 @@ export class HouseholdService {
     const startDate = new Date(d.getFullYear(), d.getMonth(), 1);
     const endDate = new Date(d.getFullYear(), d.getMonth() + 1, 1);
 
-    const budget = await this.prisma.budget.findUnique({
+    const budget = await this.prisma.budget.findFirst({
       where: {
-        groupId_userId_category_month: {
-          groupId,
-          userId: null,
-          category: category as never,
-          month: startDate,
-        },
+        groupId,
+        userId: null,
+        category: category as never,
+        month: startDate,
       },
     });
     if (!budget) return;
@@ -1019,6 +970,82 @@ export class HouseholdService {
     }
 
     void userId; // unused param (멤버 검증은 상위에서 완료)
+  }
+
+  /**
+   * Budget upsert — nullable composite key 때문에 findFirst + create/update 사용
+   */
+  private async upsertBudgetRecord(
+    groupId: string | null,
+    userId: string | null,
+    category: string,
+    month: Date,
+    amount: number,
+  ) {
+    const existing = await this.prisma.budget.findFirst({
+      where: { groupId, userId, category: category as never, month },
+    });
+
+    if (existing) {
+      return this.prisma.budget.update({
+        where: { id: existing.id },
+        data: { amount },
+      });
+    }
+
+    return this.prisma.budget.create({
+      data: { groupId, userId, category: category as never, amount, month },
+    });
+  }
+
+  /**
+   * BudgetTemplate upsert — nullable composite key 때문에 findFirst + create/update 사용
+   */
+  private async upsertBudgetTemplateRecord(
+    groupId: string | null,
+    userId: string | null,
+    category: string,
+    amount: number,
+  ) {
+    const existing = await this.prisma.budgetTemplate.findFirst({
+      where: { groupId, userId, category: category as never },
+    });
+
+    if (existing) {
+      return this.prisma.budgetTemplate.update({
+        where: { id: existing.id },
+        data: { amount },
+      });
+    }
+
+    return this.prisma.budgetTemplate.create({
+      data: { groupId, userId, category: category as never, amount },
+    });
+  }
+
+  /**
+   * GroupBudget upsert — nullable composite key 때문에 findFirst + create/update 사용
+   */
+  private async upsertGroupBudgetRecord(
+    groupId: string | null,
+    userId: string | null,
+    month: Date,
+    amount: number,
+  ) {
+    const existing = await this.prisma.groupBudget.findFirst({
+      where: { groupId, userId, month },
+    });
+
+    if (existing) {
+      return this.prisma.groupBudget.update({
+        where: { id: existing.id },
+        data: { amount },
+      });
+    }
+
+    return this.prisma.groupBudget.create({
+      data: { groupId, userId, amount, month },
+    });
   }
 
   /**

@@ -253,12 +253,12 @@ export class HouseholdController {
   // ─── 그룹 전체 예산 ──────────────────────────────────────
 
   @Get('group-budgets')
-  @ApiOperation({ summary: '그룹 전체 예산 조회 (월별)' })
+  @ApiOperation({ summary: '전체 예산 조회 (월별, groupId 생략 시 개인)' })
   @ApiSuccess(GroupBudgetDto, '전체 예산 조회 성공')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
   findGroupBudget(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query('groupId') groupId: string | undefined,
     @Query('month') month: string,
   ) {
     return this.householdService.findGroupBudget(
@@ -268,13 +268,13 @@ export class HouseholdController {
     );
   }
 
-  // ─── 그룹 전체 예산 템플릿 ───────────────────────────────
+  // ─── 전체 예산 템플릿 ────────────────────────────────────
 
   @Get('group-budget-templates')
-  @ApiOperation({ summary: '그룹 전체 예산 템플릿 조회' })
+  @ApiOperation({ summary: '전체 예산 템플릿 조회 (groupId 생략 시 개인)' })
   @ApiSuccess(GroupBudgetTemplateDto, '전체 예산 템플릿 조회 성공')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  findGroupBudgetTemplate(@Request() req, @Query('groupId') groupId: string) {
+  findGroupBudgetTemplate(@Request() req, @Query('groupId') groupId?: string) {
     return this.householdService.findGroupBudgetTemplate(
       req.user.userId,
       groupId,
@@ -282,11 +282,14 @@ export class HouseholdController {
   }
 
   @Delete('group-budget-templates')
-  @ApiOperation({ summary: '그룹 전체 예산 템플릿 삭제' })
+  @ApiOperation({ summary: '전체 예산 템플릿 삭제 (groupId 생략 시 개인)' })
   @ApiSuccess(MessageResponseDto, '전체 예산 템플릿 삭제 성공')
   @ApiNotFound('전체 예산 템플릿을 찾을 수 없습니다')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  removeGroupBudgetTemplate(@Request() req, @Query('groupId') groupId: string) {
+  removeGroupBudgetTemplate(
+    @Request() req,
+    @Query('groupId') groupId?: string,
+  ) {
     return this.householdService.removeGroupBudgetTemplate(
       req.user.userId,
       groupId,
