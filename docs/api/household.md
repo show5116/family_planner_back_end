@@ -527,11 +527,11 @@
 
 ### GET `household/group-budgets`
 
-**요약:** 그룹 전체 예산 조회 (월별)
+**요약:** 전체 예산 조회 (월별, groupId 생략 시 개인)
 
 **Query Parameters:**
 
-- `groupId` (`string`)
+- `groupId` (`string | undefined`)
 - `month` (`string`)
 
 **Responses:**
@@ -555,11 +555,11 @@
 
 ### GET `household/group-budget-templates`
 
-**요약:** 그룹 전체 예산 템플릿 조회
+**요약:** 전체 예산 템플릿 조회 (groupId 생략 시 개인)
 
 **Query Parameters:**
 
-- `groupId` (`string`)
+- `groupId` (`string`) - Optional
 
 **Responses:**
 
@@ -581,11 +581,11 @@
 
 ### DELETE `household/group-budget-templates`
 
-**요약:** 그룹 전체 예산 템플릿 삭제
+**요약:** 전체 예산 템플릿 삭제 (groupId 생략 시 개인)
 
 **Query Parameters:**
 
-- `groupId` (`string`)
+- `groupId` (`string`) - Optional
 
 **Responses:**
 

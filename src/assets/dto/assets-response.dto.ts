@@ -20,6 +20,9 @@ export class AccountRecordDto {
   @ApiProperty({ description: '수익금', example: '200000.00' })
   profit: string;
 
+  @ApiProperty({ description: '수익률 (%)', example: '4.17' })
+  profitRate: string;
+
   @ApiProperty({ description: '메모', example: '이자 입금', nullable: true })
   note: string | null;
 

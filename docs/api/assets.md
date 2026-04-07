@@ -197,9 +197,12 @@
 ```json
 {
   "recordDate": "2026-03-01", // 기록 날짜 (YYYY-MM-DD) (string)
-  "balance": 5000000, // 잔액 (number)
-  "principal": 4800000, // 원금 (number)
-  "profit": 200000, // 수익금 (number)
+  "inputMode": null, // 입력 방식 (manual: 직접 입력, auto: 자동 계산) (RecordInputMode?)
+  "balance": 5000000, // [manual] 잔액 (number?)
+  "principal": 4800000, // [manual] 원금 (number?)
+  "profit": 200000, // [manual] 수익금 (number?)
+  "currentBalance": 5000000, // [auto] 현재 잔액 (number?)
+  "additionalPrincipal": 300000, // [auto] 이번 달 추가 원금 (첫 기록이면 초기 원금) (number?)
   "note": "이자 입금" // 메모 (string?)
 }
 ```
@@ -216,6 +219,7 @@
   "balance": "5000000.00", // 잔액 (string)
   "principal": "4800000.00", // 원금 (string)
   "profit": "200000.00", // 수익금 (string)
+  "profitRate": "4.17", // 수익률 (%) (string)
   "note": "이자 입금", // 메모 (string | null)
   "createdAt": "2025-01-01T00:00:00Z" // 생성일시 (Date)
 }
@@ -247,6 +251,7 @@
   "balance": "5000000.00", // 잔액 (string)
   "principal": "4800000.00", // 원금 (string)
   "profit": "200000.00", // 수익금 (string)
+  "profitRate": "4.17", // 수익률 (%) (string)
   "note": "이자 입금", // 메모 (string | null)
   "createdAt": "2025-01-01T00:00:00Z" // 생성일시 (Date)
 }
@@ -255,6 +260,31 @@
 #### 404 - 계좌를 찾을 수 없습니다
 
 #### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### DELETE `assets/accounts/:id/records/:recordId`
+
+**요약:** 자산 기록 삭제
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `recordId` (`string`)
+
+**Responses:**
+
+#### 200 - 자산 기록 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 계좌 또는 기록을 찾을 수 없습니다
+
+#### 403 - 본인의 계좌 기록만 삭제할 수 있습니다
 
 ---
 

@@ -114,6 +114,23 @@ export class AssetsController {
     return this.assetsService.findAccountRecords(req.user.userId, id);
   }
 
+  @Delete('accounts/:id/records/:recordId')
+  @ApiOperation({ summary: '자산 기록 삭제' })
+  @ApiSuccess(MessageResponseDto, '자산 기록 삭제 성공')
+  @ApiNotFound('계좌 또는 기록을 찾을 수 없습니다')
+  @ApiForbidden('본인의 계좌 기록만 삭제할 수 있습니다')
+  removeAccountRecord(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('recordId') recordId: string,
+  ) {
+    return this.assetsService.removeAccountRecord(
+      req.user.userId,
+      id,
+      recordId,
+    );
+  }
+
   // ─── 통계 ─────────────────────────────────────────────────
 
   @Get('statistics')

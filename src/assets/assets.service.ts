@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -10,7 +11,10 @@ import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { CreateAccountRecordDto } from './dto/create-account-record.dto';
+import {
+  CreateAccountRecordDto,
+  RecordInputMode,
+} from './dto/create-account-record.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
 
 @Injectable()
@@ -198,24 +202,54 @@ export class AssetsService {
       throw new ForbiddenException('본인의 계좌에만 기록을 추가할 수 있습니다');
     }
 
+    const recordDate = new Date(dto.recordDate);
+
+    const duplicate = await this.prisma.accountRecord.findUnique({
+      where: { accountId_recordDate: { accountId, recordDate } },
+    });
+
+    if (duplicate) {
+      throw new ConflictException('해당 날짜에 이미 기록이 존재합니다');
+    }
+
+    let balance: number;
+    let principal: number;
+    let profit: number;
+
+    if (dto.inputMode === RecordInputMode.AUTO) {
+      const prevRecord = await this.prisma.accountRecord.findFirst({
+        where: { accountId, recordDate: { lt: recordDate } },
+        orderBy: { recordDate: 'desc' },
+      });
+
+      const prevPrincipal = prevRecord ? Number(prevRecord.principal) : 0;
+      balance = dto.currentBalance ?? 0;
+      principal = prevPrincipal + (dto.additionalPrincipal ?? 0);
+      profit = balance - principal;
+    } else {
+      balance = dto.balance ?? 0;
+      principal = dto.principal ?? 0;
+      profit = dto.profit ?? 0;
+    }
+
     const record = await this.prisma.accountRecord.create({
       data: {
         accountId,
-        recordDate: new Date(dto.recordDate),
-        balance: dto.balance,
-        principal: dto.principal,
-        profit: dto.profit,
+        recordDate,
+        balance,
+        principal,
+        profit,
         note: dto.note,
       },
     });
 
     // 계좌 소유자에게 잔액 기록 알림
-    const balance = Number(dto.balance).toLocaleString('ko-KR');
+    const balanceFormatted = balance.toLocaleString('ko-KR');
     await this.notificationService.sendNotification({
       userId,
       category: NotificationCategory.ASSET,
       title: '자산 잔액 업데이트',
-      body: `"${account.name}" 잔액이 ${balance}원으로 기록되었습니다`,
+      body: `"${account.name}" 잔액이 ${balanceFormatted}원으로 기록되었습니다`,
       data: { accountId, recordId: record.id },
     });
 
@@ -242,6 +276,39 @@ export class AssetsService {
     });
 
     return records.map((r) => this.formatRecord(r));
+  }
+
+  /**
+   * 자산 기록 삭제 (소유자만)
+   */
+  async removeAccountRecord(
+    userId: string,
+    accountId: string,
+    recordId: string,
+  ) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    if (account.userId !== userId) {
+      throw new ForbiddenException('본인의 계좌 기록만 삭제할 수 있습니다');
+    }
+
+    const record = await this.prisma.accountRecord.findUnique({
+      where: { id: recordId },
+    });
+
+    if (!record || record.accountId !== accountId) {
+      throw new NotFoundException('기록을 찾을 수 없습니다');
+    }
+
+    await this.prisma.accountRecord.delete({ where: { id: recordId } });
+
+    return { message: '기록이 삭제되었습니다' };
   }
 
   /**
@@ -382,13 +449,19 @@ export class AssetsService {
     note: string | null;
     createdAt: Date;
   }) {
+    const principal = Number(record.principal);
+    const profit = Number(record.profit);
+    const profitRate =
+      principal > 0 ? ((profit / principal) * 100).toFixed(2) : '0.00';
+
     return {
       id: record.id,
       accountId: record.accountId,
       recordDate: record.recordDate,
       balance: Number(record.balance).toFixed(2),
-      principal: Number(record.principal).toFixed(2),
-      profit: Number(record.profit).toFixed(2),
+      principal: principal.toFixed(2),
+      profit: profit.toFixed(2),
+      profitRate,
       note: record.note,
       createdAt: record.createdAt,
     };
