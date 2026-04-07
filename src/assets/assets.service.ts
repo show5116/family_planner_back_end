@@ -16,6 +16,11 @@ import {
   RecordInputMode,
 } from './dto/create-account-record.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
+import {
+  AccountTrendQueryDto,
+  TrendPeriod,
+  TrendQueryDto,
+} from './dto/assets-query.dto';
 
 @Injectable()
 export class AssetsService {
@@ -439,6 +444,154 @@ export class AssetsService {
   /**
    * 기록 포맷 헬퍼
    */
+  /**
+   * 그룹 전체 자산 기간 통계
+   */
+  async getGroupTrend(userId: string, query: TrendQueryDto) {
+    await this.validateGroupMember(userId, query.groupId);
+
+    const accounts = await this.prisma.account.findMany({
+      where: { groupId: query.groupId },
+      select: { id: true },
+    });
+    const accountIds = accounts.map((a) => a.id);
+
+    if (accountIds.length === 0) return [];
+
+    const where =
+      query.period === TrendPeriod.MONTHLY
+        ? {
+            accountId: { in: accountIds },
+            recordDate: {
+              gte: new Date(`${query.year}-01-01`),
+              lt: new Date(`${Number(query.year) + 1}-01-01`),
+            },
+          }
+        : { accountId: { in: accountIds } };
+
+    const records = await this.prisma.accountRecord.findMany({
+      where,
+      orderBy: { recordDate: 'asc' },
+      select: {
+        accountId: true,
+        recordDate: true,
+        balance: true,
+        principal: true,
+        profit: true,
+      },
+    });
+
+    return this.aggregateTrend(records, query.period);
+  }
+
+  /**
+   * 계좌별 기간 통계
+   */
+  async getAccountTrend(
+    userId: string,
+    accountId: string,
+    query: AccountTrendQueryDto,
+  ) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    await this.validateGroupMember(userId, account.groupId);
+
+    const where =
+      query.period === TrendPeriod.MONTHLY
+        ? {
+            accountId,
+            recordDate: {
+              gte: new Date(`${query.year}-01-01`),
+              lt: new Date(`${Number(query.year) + 1}-01-01`),
+            },
+          }
+        : { accountId };
+
+    const records = await this.prisma.accountRecord.findMany({
+      where,
+      orderBy: { recordDate: 'asc' },
+      select: {
+        accountId: true,
+        recordDate: true,
+        balance: true,
+        principal: true,
+        profit: true,
+      },
+    });
+
+    return this.aggregateTrend(records, query.period);
+  }
+
+  /**
+   * 기간별 통계 집계 헬퍼
+   * - 각 기간(월/년)마다 계좌별 마지막 기록을 합산
+   */
+  private aggregateTrend(
+    records: {
+      accountId: string;
+      recordDate: Date;
+      balance: unknown;
+      principal: unknown;
+      profit: unknown;
+    }[],
+    period: TrendPeriod,
+  ) {
+    const getPeriodKey = (date: Date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      return period === TrendPeriod.MONTHLY ? `${y}-${m}` : `${y}`;
+    };
+
+    // 기간 → 계좌 → 마지막 기록 (recordDate asc 정렬이므로 덮어쓰면 됨)
+    const periodMap = new Map<
+      string,
+      Map<string, { balance: number; principal: number; profit: number }>
+    >();
+
+    for (const r of records) {
+      const key = getPeriodKey(r.recordDate);
+      if (!periodMap.has(key)) periodMap.set(key, new Map());
+      const periodEntry = periodMap.get(key);
+      if (periodEntry)
+        periodEntry.set(r.accountId, {
+          balance: Number(r.balance),
+          principal: Number(r.principal),
+          profit: Number(r.profit),
+        });
+    }
+
+    return Array.from(periodMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, accountMap]) => {
+        let balance = 0;
+        let principal = 0;
+        let profit = 0;
+
+        for (const v of accountMap.values()) {
+          balance += v.balance;
+          principal += v.principal;
+          profit += v.profit;
+        }
+
+        const profitRate =
+          principal > 0 ? ((profit / principal) * 100).toFixed(2) : '0.00';
+
+        return {
+          period: key,
+          balance: balance.toFixed(2),
+          principal: principal.toFixed(2),
+          profit: profit.toFixed(2),
+          profitRate,
+        };
+      });
+  }
+
   private formatRecord(record: {
     id: string;
     accountId: string;

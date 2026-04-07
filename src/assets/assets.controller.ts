@@ -16,11 +16,16 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateAccountRecordDto } from './dto/create-account-record.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
-import { StatisticsQueryDto } from './dto/assets-query.dto';
+import {
+  AccountTrendQueryDto,
+  StatisticsQueryDto,
+  TrendQueryDto,
+} from './dto/assets-query.dto';
 import {
   AccountDto,
   AccountRecordDto,
   AccountStatisticsDto,
+  TrendItemDto,
 } from './dto/assets-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -139,5 +144,33 @@ export class AssetsController {
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
   getStatistics(@Request() req, @Query() query: StatisticsQueryDto) {
     return this.assetsService.getStatistics(req.user.userId, query.groupId);
+  }
+
+  @Get('statistics/trend')
+  @ApiOperation({
+    summary: '그룹 전체 자산 기간 통계 (월별/연도별)',
+    description:
+      'period=monthly 시 year 필수. 각 기간마다 계좌별 마지막 기록 합산.',
+  })
+  @ApiSuccess(TrendItemDto, '그룹 자산 기간 통계 조회 성공', { isArray: true })
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  getGroupTrend(@Request() req, @Query() query: TrendQueryDto) {
+    return this.assetsService.getGroupTrend(req.user.userId, query);
+  }
+
+  @Get('accounts/:id/statistics/trend')
+  @ApiOperation({
+    summary: '계좌별 자산 기간 통계 (월별/연도별)',
+    description: 'period=monthly 시 year 필수.',
+  })
+  @ApiSuccess(TrendItemDto, '계좌 자산 기간 통계 조회 성공', { isArray: true })
+  @ApiNotFound('계좌를 찾을 수 없습니다')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  getAccountTrend(
+    @Request() req,
+    @Param('id') id: string,
+    @Query() query: AccountTrendQueryDto,
+  ) {
+    return this.assetsService.getAccountTrend(req.user.userId, id, query);
   }
 }

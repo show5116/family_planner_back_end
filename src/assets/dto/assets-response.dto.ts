@@ -99,6 +99,26 @@ export class SavingsGoalSummaryDto {
   currentAmount: string;
 }
 
+export class TrendItemDto {
+  @ApiProperty({
+    description: '기간 (monthly: YYYY-MM, yearly: YYYY)',
+    example: '2026-03',
+  })
+  period: string;
+
+  @ApiProperty({ description: '잔액', example: '5000000.00' })
+  balance: string;
+
+  @ApiProperty({ description: '원금', example: '4800000.00' })
+  principal: string;
+
+  @ApiProperty({ description: '수익금', example: '200000.00' })
+  profit: string;
+
+  @ApiProperty({ description: '수익률 (%)', example: '4.17' })
+  profitRate: string;
+}
+
 export class AccountStatisticsDto {
   @ApiProperty({ description: '총 잔액 (계좌)', example: '50000000.00' })
   totalBalance: string;

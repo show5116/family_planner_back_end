@@ -647,6 +647,73 @@
 
 ---
 
+### GET `assets/statistics/trend`
+
+**요약:** 그룹 전체 자산 기간 통계 (월별/연도별)
+
+**설명:**
+period=monthly 시 year 필수. 각 기간마다 계좌별 마지막 기록 합산.
+
+**Query Parameters:**
+
+- `groupId` (`string`): 그룹 ID
+- `period` (`TrendPeriod`): 기간 단위 (monthly: 월별, yearly: 연도별)
+- `year` (`string`) (Optional): [monthly 전용] 조회 연도 (YYYY)
+
+**Responses:**
+
+#### 200 - 그룹 자산 기간 통계 조회 성공
+
+```json
+{
+  "period": "2026-03", // 기간 (monthly: YYYY-MM, yearly: YYYY) (string)
+  "balance": "5000000.00", // 잔액 (string)
+  "principal": "4800000.00", // 원금 (string)
+  "profit": "200000.00", // 수익금 (string)
+  "profitRate": "4.17" // 수익률 (%) (string)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### GET `assets/accounts/:id/statistics/trend`
+
+**요약:** 계좌별 자산 기간 통계 (월별/연도별)
+
+**설명:**
+period=monthly 시 year 필수.
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Query Parameters:**
+
+- `period` (`TrendPeriod`): 기간 단위 (monthly: 월별, yearly: 연도별)
+- `year` (`string`) (Optional): [monthly 전용] 조회 연도 (YYYY)
+
+**Responses:**
+
+#### 200 - 계좌 자산 기간 통계 조회 성공
+
+```json
+{
+  "period": "2026-03", // 기간 (monthly: YYYY-MM, yearly: YYYY) (string)
+  "balance": "5000000.00", // 잔액 (string)
+  "principal": "4800000.00", // 원금 (string)
+  "profit": "200000.00", // 수익금 (string)
+  "profitRate": "4.17" // 수익률 (%) (string)
+}
+```
+
+#### 404 - 계좌를 찾을 수 없습니다
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
 ## 인증
 
 **Base Path:** `/auth`
