@@ -19,6 +19,45 @@ const LOCK_TTL = {
   fearGreed: 10 * 60, // 10분 (1시간 주기 크론)
 } as const;
 
+/**
+ * 심볼별 거래 시간 (UTC 기준, [시작분, 종료분] — 자정 기준 분 단위)
+ * 이 범위 밖의 데이터는 장 마감 후 마지막 가격 반복이므로 저장 skip
+ * null = 24시간 거래 (FX, 선물 등)
+ */
+const TRADING_MINUTES_UTC: Record<string, [number, number] | null> = {
+  KOSPI: [30, 390], // KST 09:30~15:30 → UTC 00:30~06:30 (장 초반 30분 워밍업 제외)
+  KOSDAQ: [30, 390],
+  NIKKEI225: [30, 390], // JST 09:30~15:30 → UTC 00:30~06:30
+  TWSE: [60, 330], // TST 09:00~13:30 → UTC 01:00~05:30
+  SP500: [810, 1260], // ET 09:30~16:00 → UTC 13:30~21:00 (서머타임 12:30~20:00)
+  NASDAQ: [810, 1260],
+  NQ100: [810, 1260],
+  DJI: [810, 1260],
+  RUSSELL2000: [810, 1260],
+  VIX: [810, 1260],
+  US10Y: [810, 1260],
+  // FX, 선물, 원자재 — 24시간 또는 거의 24시간
+  USD_KRW: null,
+  DXY: null,
+  GOLD_USD: null,
+  SILVER: null,
+  WTI: null,
+  COPPER: null,
+  NAT_GAS: null,
+  WHEAT: null,
+  KR3Y: null,
+  BUFFETT_US: null,
+};
+
+/** 현재 UTC 시각이 해당 심볼의 거래 시간 내인지 확인 */
+function isMarketOpen(symbol: string, utcDate: Date): boolean {
+  const minutes = TRADING_MINUTES_UTC[symbol];
+  if (minutes === undefined || minutes === null) return true;
+  const utcMinutes = utcDate.getUTCHours() * 60 + utcDate.getUTCMinutes();
+  const [start, end] = minutes;
+  return utcMinutes >= start && utcMinutes < end;
+}
+
 @Injectable()
 export class InvestmentScheduler {
   private readonly logger = new Logger(InvestmentScheduler.name);
@@ -56,6 +95,7 @@ export class InvestmentScheduler {
 
       for (const q of quotes) {
         if (q.symbol === 'BUFFETT_W5000') continue;
+        if (!isMarketOpen(q.symbol, now)) continue; // 장 외 시간 skip
 
         await this.investmentService.savePrice(
           q.symbol,

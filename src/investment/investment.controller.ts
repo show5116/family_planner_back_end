@@ -107,15 +107,18 @@ export class InvestmentController {
   }
 
   @Post('admin/init-history')
-  @HttpCode(200)
+  @HttpCode(202)
   @UseGuards(AdminGuard)
   @ApiOperation({
     summary: '[어드민] 과거 데이터 일괄 초기화',
     description:
-      '배포 후 1회 실행. Yahoo/CoinGecko/BOK에서 지정 기간 과거 시세를 수집해 DB에 저장합니다.',
+      '배포 후 1회 실행. Yahoo/CoinGecko/BOK에서 지정 기간 과거 시세를 백그라운드로 수집합니다. 결과는 서버 로그에서 확인하세요.',
   })
-  @ApiSuccess(HistoricalInitResultDto, '히스토리 초기화 완료')
+  @ApiSuccess(Object, '히스토리 초기화 시작됨 (백그라운드 실행)')
   initHistory(@Query() query: HistoricalInitQueryDto) {
-    return this.investmentService.initializeHistoricalData(query.days ?? 365);
+    const days = query.days ?? 365;
+    // 오래 걸리는 작업이므로 응답을 먼저 반환하고 백그라운드에서 실행
+    this.investmentService.initializeHistoricalData(days).catch(() => {});
+    return { message: `히스토리 초기화 시작됨 (${days}일, 백그라운드 실행)` };
   }
 }

@@ -339,6 +339,7 @@ export class InvestmentService implements OnModuleInit {
 
     const since = new Date();
     since.setDate(since.getDate() - days);
+    since.setUTCHours(0, 0, 0, 0); // UTC 자정 기준으로 정규화 (MySQL 타임존 차이 방지)
 
     type RawRow = { bucket: string; price: string };
 
@@ -346,31 +347,40 @@ export class InvestmentService implements OnModuleInit {
     let rows: RawRow[];
 
     if (days <= 7) {
-      // 1시간 단위: 'YYYY-MM-DD HH:00:00'
+      // 5분 단위: raw 데이터 그대로 반환 (KST ISO 문자열로 변환)
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
-          CONCAT(DATE_FORMAT(recordedAt, '%Y-%m-%d %H'), ':00:00') AS bucket,
-          CAST(AVG(price) AS CHAR) AS price
+          DATE_FORMAT(DATE_ADD(recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d %H:%i:00+09:00') AS bucket,
+          CAST(price AS CHAR) AS price
         FROM indicator_prices
         WHERE indicatorId = ${ind.id}
           AND recordedAt >= ${since}
-        GROUP BY bucket
-        ORDER BY bucket ASC
+        ORDER BY recordedAt ASC
       `;
     } else {
-      // 6시간 단위: FLOOR(hour/6)*6 → '00','06','12','18'
+      // 6시간 단위: 버킷 내 마지막 가격 (종가 개념)
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
           CONCAT(
-            DATE_FORMAT(recordedAt, '%Y-%m-%d '),
-            LPAD(FLOOR(HOUR(recordedAt) / 6) * 6, 2, '0'),
-            ':00:00'
+            DATE_FORMAT(DATE_ADD(p.recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d '),
+            LPAD(FLOOR(HOUR(DATE_ADD(p.recordedAt, INTERVAL 9 HOUR)) / 6) * 6, 2, '0'),
+            ':00:00+09:00'
           ) AS bucket,
-          CAST(AVG(price) AS CHAR) AS price
-        FROM indicator_prices
-        WHERE indicatorId = ${ind.id}
-          AND recordedAt >= ${since}
-        GROUP BY bucket
+          CAST(p.price AS CHAR) AS price
+        FROM indicator_prices p
+        INNER JOIN (
+          SELECT
+            CONCAT(
+              DATE_FORMAT(DATE_ADD(recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d '),
+              LPAD(FLOOR(HOUR(DATE_ADD(recordedAt, INTERVAL 9 HOUR)) / 6) * 6, 2, '0'),
+              ':00:00+09:00'
+            ) AS bucket,
+            MAX(recordedAt) AS lastRecordedAt
+          FROM indicator_prices
+          WHERE indicatorId = ${ind.id}
+            AND recordedAt >= ${since}
+          GROUP BY bucket
+        ) last ON p.recordedAt = last.lastRecordedAt AND p.indicatorId = ${ind.id}
         ORDER BY bucket ASC
       `;
     }
@@ -381,17 +391,17 @@ export class InvestmentService implements OnModuleInit {
       ind.category === 'CRYPTO'
         ? rows
         : rows.filter((r) => {
-            const dow = new Date(r.bucket).getDay(); // 0=일, 6=토
+            const dow = new Date(r.bucket).getDay(); // bucket이 +09:00 오프셋 포함 → UTC 변환 후 요일 계산
             return dow !== 0 && dow !== 6;
           });
 
     const history = filteredRows.map((r) => ({
       price: Number(r.price).toString(),
-      recordedAt: new Date(r.bucket),
+      recordedAt: r.bucket, // KST ISO 문자열 그대로 반환 (e.g. "2026-04-07 09:00:00+09:00")
     }));
 
     // GOLD_KRW_SPOT: 동일 버킷의 GOLD_USD·USD_KRW로 이격률 시계열 추가
-    let spreadHistory: { spread: string; recordedAt: Date }[] | undefined;
+    let spreadHistory: { spread: string; recordedAt: string }[] | undefined;
     if (ind.symbol === 'GOLD_KRW_SPOT' && rows.length > 0) {
       const [goldUsdInd, usdKrwInd] = await Promise.all([
         this.prisma.indicator.findUnique({ where: { symbol: 'GOLD_USD' } }),
@@ -405,33 +415,53 @@ export class InvestmentService implements OnModuleInit {
         if (days <= 7) {
           spreadRows = await this.prisma.$queryRaw<SpreadRow[]>`
             SELECT
-              CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d %H'), ':00:00') AS bucket,
-              CAST(AVG(g.price) AS CHAR) AS goldUsd,
-              CAST(AVG(u.price) AS CHAR) AS usdKrw
+              CONCAT(DATE_FORMAT(DATE_ADD(g.recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d %H'), ':00:00+09:00') AS bucket,
+              CAST(g.price AS CHAR) AS goldUsd,
+              CAST(u.price AS CHAR) AS usdKrw
             FROM indicator_prices g
-            JOIN indicator_prices u
-              ON CONCAT(DATE_FORMAT(u.recordedAt, '%Y-%m-%d %H'), ':00:00')
-               = CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d %H'), ':00:00')
-            WHERE g.indicatorId = ${goldUsdInd.id}
-              AND u.indicatorId = ${usdKrwInd.id}
-              AND g.recordedAt >= ${since}
-            GROUP BY bucket
+            JOIN (
+              SELECT
+                CONCAT(DATE_FORMAT(DATE_ADD(recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d %H'), ':00:00+09:00') AS bucket,
+                MAX(recordedAt) AS lastRecordedAt
+              FROM indicator_prices
+              WHERE indicatorId = ${goldUsdInd.id} AND recordedAt >= ${since}
+              GROUP BY bucket
+            ) lg ON g.recordedAt = lg.lastRecordedAt AND g.indicatorId = ${goldUsdInd.id}
+            JOIN (
+              SELECT
+                CONCAT(DATE_FORMAT(DATE_ADD(recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d %H'), ':00:00+09:00') AS bucket,
+                MAX(recordedAt) AS lastRecordedAt
+              FROM indicator_prices
+              WHERE indicatorId = ${usdKrwInd.id} AND recordedAt >= ${since}
+              GROUP BY bucket
+            ) lu ON lu.bucket = lg.bucket
+            JOIN indicator_prices u ON u.recordedAt = lu.lastRecordedAt AND u.indicatorId = ${usdKrwInd.id}
             ORDER BY bucket ASC
           `;
         } else {
           spreadRows = await this.prisma.$queryRaw<SpreadRow[]>`
             SELECT
-              CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d '), LPAD(FLOOR(HOUR(g.recordedAt)/6)*6,2,'0'), ':00:00') AS bucket,
-              CAST(AVG(g.price) AS CHAR) AS goldUsd,
-              CAST(AVG(u.price) AS CHAR) AS usdKrw
+              CONCAT(DATE_FORMAT(DATE_ADD(g.recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d '), LPAD(FLOOR(HOUR(DATE_ADD(g.recordedAt, INTERVAL 9 HOUR))/6)*6,2,'0'), ':00:00+09:00') AS bucket,
+              CAST(g.price AS CHAR) AS goldUsd,
+              CAST(u.price AS CHAR) AS usdKrw
             FROM indicator_prices g
-            JOIN indicator_prices u
-              ON CONCAT(DATE_FORMAT(u.recordedAt, '%Y-%m-%d '), LPAD(FLOOR(HOUR(u.recordedAt)/6)*6,2,'0'), ':00:00')
-               = CONCAT(DATE_FORMAT(g.recordedAt, '%Y-%m-%d '), LPAD(FLOOR(HOUR(g.recordedAt)/6)*6,2,'0'), ':00:00')
-            WHERE g.indicatorId = ${goldUsdInd.id}
-              AND u.indicatorId = ${usdKrwInd.id}
-              AND g.recordedAt >= ${since}
-            GROUP BY bucket
+            JOIN (
+              SELECT
+                CONCAT(DATE_FORMAT(DATE_ADD(recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d '), LPAD(FLOOR(HOUR(DATE_ADD(recordedAt, INTERVAL 9 HOUR))/6)*6,2,'0'), ':00:00+09:00') AS bucket,
+                MAX(recordedAt) AS lastRecordedAt
+              FROM indicator_prices
+              WHERE indicatorId = ${goldUsdInd.id} AND recordedAt >= ${since}
+              GROUP BY bucket
+            ) lg ON g.recordedAt = lg.lastRecordedAt AND g.indicatorId = ${goldUsdInd.id}
+            JOIN (
+              SELECT
+                CONCAT(DATE_FORMAT(DATE_ADD(recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d '), LPAD(FLOOR(HOUR(DATE_ADD(recordedAt, INTERVAL 9 HOUR))/6)*6,2,'0'), ':00:00+09:00') AS bucket,
+                MAX(recordedAt) AS lastRecordedAt
+              FROM indicator_prices
+              WHERE indicatorId = ${usdKrwInd.id} AND recordedAt >= ${since}
+              GROUP BY bucket
+            ) lu ON lu.bucket = lg.bucket
+            JOIN indicator_prices u ON u.recordedAt = lu.lastRecordedAt AND u.indicatorId = ${usdKrwInd.id}
             ORDER BY bucket ASC
           `;
         }
@@ -449,10 +479,12 @@ export class InvestmentService implements OnModuleInit {
             if (calc <= 0) return null;
             return {
               spread: (((spot - calc) / calc) * 100).toFixed(2),
-              recordedAt: new Date(r.bucket),
+              recordedAt: r.bucket,
             };
           })
-          .filter((r): r is { spread: string; recordedAt: Date } => r !== null);
+          .filter(
+            (r): r is { spread: string; recordedAt: string } => r !== null,
+          );
       }
     }
 
@@ -698,6 +730,9 @@ export class InvestmentService implements OnModuleInit {
       resolvedPrev = last ? Number(last.price) : null;
     }
 
+    // 직전 가격과 동일하면 저장 skip (장 마감 후 야후가 같은 값을 반복 반환하는 노이즈 방지)
+    if (resolvedPrev != null && Math.abs(price - resolvedPrev) < 0.0001) return;
+
     const change = resolvedPrev != null ? price - resolvedPrev : null;
     const changeRate =
       resolvedPrev != null && resolvedPrev !== 0
@@ -742,10 +777,17 @@ export class InvestmentService implements OnModuleInit {
     bond: number;
     goldSpot: number;
     fearGreed: number;
+    deleted: number;
   }> {
     const to = new Date();
     const from = new Date();
     from.setDate(from.getDate() - days);
+
+    // 30일 이내 일별 데이터(TIME = 00:00:00)는 실시간 수집이 담당하므로 저장하지 않음
+    // init-history는 30일 초과 장기 데이터만 담당
+    const REALTIME_THRESHOLD_DAYS = 30;
+    const realtimeCutoff = new Date();
+    realtimeCutoff.setDate(realtimeCutoff.getDate() - REALTIME_THRESHOLD_DAYS);
 
     // 이미 있는 indicatorId를 캐싱 (매 row마다 findUnique 방지)
     const indicators = await this.prisma.indicator.findMany({
@@ -753,14 +795,57 @@ export class InvestmentService implements OnModuleInit {
     });
     const idMap = new Map(indicators.map((i) => [i.symbol, i.id]));
 
+    // ── 기존에 잘못 저장된 30일 이내 장 외 시간 데이터 삭제 ──
+    // 1) 일별 init 데이터 (TIME = 00:00:00)
+    // 2) 장 마감 후 중복 수집된 아시아/미국 지수 데이터 (장 외 UTC 시간대)
+    this.logger.log(
+      `[HistInit] Cleaning up stale data within ${REALTIME_THRESHOLD_DAYS}d ...`,
+    );
+
+    // 일별 init 데이터 삭제 (30일 이내만 — 장기 데이터는 일별이 정상)
+    const deletedDaily = await this.prisma.$executeRaw`
+      DELETE FROM indicator_prices
+      WHERE recordedAt >= ${realtimeCutoff}
+        AND TIME(recordedAt) = '00:00:00'
+    `;
+
+    // 장 외 시간 아시아 지수 삭제 — 전체 기간
+    // UTC 00:30 이전(장 초반 워밍업) 또는 06:30 이후(장 마감 후)
+    const deletedAsiaAfterClose = await this.prisma.$executeRaw`
+      DELETE ip FROM indicator_prices ip
+      JOIN indicators i ON ip.indicatorId = i.id
+      WHERE i.symbol IN ('KOSPI', 'KOSDAQ', 'NIKKEI225', 'TWSE')
+        AND (
+          (HOUR(ip.recordedAt) * 60 + MINUTE(ip.recordedAt)) < 30
+          OR (HOUR(ip.recordedAt) * 60 + MINUTE(ip.recordedAt)) >= 390
+        )
+    `;
+
+    // 장 외 시간 미국 지수 삭제 — 전체 기간 (UTC 13:30 이전 또는 21:00 이후)
+    const deletedUsAfterClose = await this.prisma.$executeRaw`
+      DELETE ip FROM indicator_prices ip
+      JOIN indicators i ON ip.indicatorId = i.id
+      WHERE i.symbol IN ('SP500', 'NASDAQ', 'NQ100', 'DJI', 'RUSSELL2000', 'VIX', 'US10Y')
+        AND (
+          (HOUR(ip.recordedAt) * 60 + MINUTE(ip.recordedAt)) < 810
+          OR (HOUR(ip.recordedAt) * 60 + MINUTE(ip.recordedAt)) >= 1260
+        )
+    `;
+
+    const deleteResult =
+      deletedDaily + deletedAsiaAfterClose + deletedUsAfterClose;
+    this.logger.log(
+      `[HistInit] Deleted ${deleteResult} stale rows (daily:${deletedDaily} asiaOOH:${deletedAsiaAfterClose} usOOH:${deletedUsAfterClose})`,
+    );
+
     let yahooCount = 0;
 
-    // ── Yahoo historical ─────────────────────────────────────────
+    // ── Yahoo historical (30일 초과분만) ─────────────────────────
     this.logger.log(`[HistInit] Yahoo historical ${days}d ...`);
     const yahooRows = await this.yahoo.collectHistorical(from, to);
 
     const yahooInserts = yahooRows
-      .filter((r) => idMap.has(r.symbol))
+      .filter((r) => idMap.has(r.symbol) && r.date < realtimeCutoff)
       .map((r) => ({
         indicatorId: idMap.get(r.symbol),
         price: r.close,
@@ -778,7 +863,7 @@ export class InvestmentService implements OnModuleInit {
       yahooCount = yahooInserts.length;
     }
 
-    // ── CoinGecko BTC/KRW ────────────────────────────────────────
+    // ── CoinGecko BTC/KRW (30일 초과분만) ───────────────────────
     this.logger.log(`[HistInit] CoinGecko historical ${days}d ...`);
     const btcRows = await this.coinGecko.collectHistorical(Math.min(days, 365));
     const btcId = idMap.get('BTC_KRW');
@@ -786,20 +871,22 @@ export class InvestmentService implements OnModuleInit {
 
     if (btcId && btcRows.length > 0) {
       await this.prisma.indicatorPrice.createMany({
-        data: btcRows.map((r) => ({
-          indicatorId: btcId,
-          price: r.price,
-          prevPrice: null,
-          change: null,
-          changeRate: null,
-          recordedAt: r.date,
-        })),
+        data: btcRows
+          .filter((r) => r.date < realtimeCutoff)
+          .map((r) => ({
+            indicatorId: btcId,
+            price: r.price,
+            prevPrice: null,
+            change: null,
+            changeRate: null,
+            recordedAt: r.date,
+          })),
         skipDuplicates: true,
       });
-      cryptoCount = btcRows.length;
+      cryptoCount = btcRows.filter((r) => r.date < realtimeCutoff).length;
     }
 
-    // ── BOK KR3Y ─────────────────────────────────────────────────
+    // ── BOK KR3Y (30일 초과분만) ─────────────────────────────────
     this.logger.log(`[HistInit] BOK KR3Y historical ${days}d ...`);
     const bokRows = await this.bok.getKr3yHistory(from, to);
     const kr3yId = idMap.get('KR3Y');
@@ -807,17 +894,19 @@ export class InvestmentService implements OnModuleInit {
 
     if (kr3yId && bokRows.length > 0) {
       await this.prisma.indicatorPrice.createMany({
-        data: bokRows.map((r) => ({
-          indicatorId: kr3yId,
-          price: r.rate,
-          prevPrice: null,
-          change: null,
-          changeRate: null,
-          recordedAt: r.date,
-        })),
+        data: bokRows
+          .filter((r) => r.date < realtimeCutoff)
+          .map((r) => ({
+            indicatorId: kr3yId,
+            price: r.rate,
+            prevPrice: null,
+            change: null,
+            changeRate: null,
+            recordedAt: r.date,
+          })),
         skipDuplicates: true,
       });
-      bondCount = bokRows.length;
+      bondCount = bokRows.filter((r) => r.date < realtimeCutoff).length;
     }
 
     // ── GOLD_KRW_SPOT 현물가 전체 기간 ───────────────────────────
@@ -828,20 +917,22 @@ export class InvestmentService implements OnModuleInit {
 
     if (goldSpotId && goldRows.length > 0) {
       await this.prisma.indicatorPrice.createMany({
-        data: goldRows.map((r) => ({
-          indicatorId: goldSpotId,
-          price: r.pricePerGram,
-          prevPrice: null,
-          change: null,
-          changeRate: null,
-          recordedAt: r.date,
-        })),
+        data: goldRows
+          .filter((r) => r.date < realtimeCutoff)
+          .map((r) => ({
+            indicatorId: goldSpotId,
+            price: r.pricePerGram,
+            prevPrice: null,
+            change: null,
+            changeRate: null,
+            recordedAt: r.date,
+          })),
         skipDuplicates: true,
       });
-      goldSpotCount = goldRows.length;
+      goldSpotCount = goldRows.filter((r) => r.date < realtimeCutoff).length;
     }
 
-    // ── Fear & Greed Index ───────────────────────────────────────
+    // ── Fear & Greed Index (30일 초과분만) ───────────────────────
     this.logger.log(
       `[HistInit] Fear & Greed historical ${Math.min(days, 365)}d ...`,
     );
@@ -851,21 +942,23 @@ export class InvestmentService implements OnModuleInit {
 
     if (fgId && fgRows.length > 0) {
       await this.prisma.indicatorPrice.createMany({
-        data: fgRows.map((r) => ({
-          indicatorId: fgId,
-          price: r.value,
-          prevPrice: null,
-          change: null,
-          changeRate: null,
-          recordedAt: r.date,
-        })),
+        data: fgRows
+          .filter((r) => r.date < realtimeCutoff)
+          .map((r) => ({
+            indicatorId: fgId,
+            price: r.value,
+            prevPrice: null,
+            change: null,
+            changeRate: null,
+            recordedAt: r.date,
+          })),
         skipDuplicates: true,
       });
-      fearGreedCount = fgRows.length;
+      fearGreedCount = fgRows.filter((r) => r.date < realtimeCutoff).length;
     }
 
     this.logger.log(
-      `[HistInit] Done — yahoo:${yahooCount} crypto:${cryptoCount} bond:${bondCount} goldSpot:${goldSpotCount} fearGreed:${fearGreedCount}`,
+      `[HistInit] Done — yahoo:${yahooCount} crypto:${cryptoCount} bond:${bondCount} goldSpot:${goldSpotCount} fearGreed:${fearGreedCount} deleted:${deleteResult}`,
     );
 
     return {
@@ -874,6 +967,7 @@ export class InvestmentService implements OnModuleInit {
       bond: bondCount,
       goldSpot: goldSpotCount,
       fearGreed: fearGreedCount,
+      deleted: deleteResult,
     };
   }
 

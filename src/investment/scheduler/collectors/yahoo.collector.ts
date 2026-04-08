@@ -88,7 +88,8 @@ export class YahooCollector {
   }
 
   /**
-   * Yahoo Finance historical() — 날짜 범위 일별 종가 수집
+   * Yahoo Finance chart() — 날짜 범위 일별 종가 수집
+   * historical()은 내부에서 close=null row를 에러로 처리하는 버그가 있어 chart() 직접 사용
    * BUFFETT_W5000은 제외 (버핏 지수는 별도 계산)
    */
   async collectHistorical(
@@ -97,18 +98,18 @@ export class YahooCollector {
   ): Promise<YahooHistoricalPoint[]> {
     const results: YahooHistoricalPoint[] = [];
 
-    // GOLD_KRW는 계산값이므로 Yahoo 직접 수집 대상에서 제외
     const targets = YAHOO_SYMBOLS.filter((s) => s.symbol !== 'BUFFETT_W5000');
 
     for (const { symbol, ticker } of targets) {
       try {
-        const histPromise = yahooFinance.historical(ticker, {
-          period1: from,
-          period2: to,
-          interval: '1d',
-        }) as unknown as Promise<any[]>;
+        const chartPromise = yahooFinance.chart(
+          ticker,
+          { period1: from, period2: to, interval: '1d' },
+          { validateResult: false },
+        ) as unknown as Promise<any>;
 
-        const rows = await histPromise;
+        const result = await chartPromise;
+        const rows: any[] = result?.quotes ?? [];
 
         for (const row of rows) {
           if (row.close == null) continue;
@@ -132,7 +133,7 @@ export class YahooCollector {
   }
 
   /**
-   * 단일 심볼 Yahoo Historical 조회 (30일 초과 히스토리 차트용)
+   * 단일 심볼 Yahoo chart() 조회 (30일 초과 히스토리 차트용)
    */
   async collectHistoricalForSymbol(
     symbol: string,
@@ -142,13 +143,14 @@ export class YahooCollector {
     const target = YAHOO_SYMBOLS.find((s) => s.symbol === symbol);
     if (!target) return [];
 
-    const histPromise = yahooFinance.historical(target.ticker, {
-      period1: from,
-      period2: to,
-      interval: '1d',
-    }) as unknown as Promise<any[]>;
+    const chartPromise = yahooFinance.chart(
+      target.ticker,
+      { period1: from, period2: to, interval: '1d' },
+      { validateResult: false },
+    ) as unknown as Promise<any>;
 
-    const rows = await histPromise;
+    const result = await chartPromise;
+    const rows: any[] = result?.quotes ?? [];
 
     return rows
       .filter((row) => row.close != null)
