@@ -321,6 +321,36 @@
 
 ---
 
+### POST `auth/google/mobile`
+
+**요약:** Google 모바일 로그인 (ID Token)
+
+**Responses:**
+
+#### 200 - Google 모바일 로그인 성공, 토큰 반환
+
+```json
+{
+  "user": {
+    "id": "user_clxxx123", // 사용자 ID (string)
+    "email": "user@example.com", // 이메일 (string)
+    "name": "홍길동", // 사용자 이름 (string)
+    "isEmailVerified": true, // 이메일 인증 여부 (boolean)
+    "isAdmin": false, // 운영자 여부 (boolean)
+    "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
+    "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
+    "socialProvider": "google", // 소셜 로그인 제공자 (string?)
+    "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
+  } // 사용자 정보 (UserDto)
+}
+```
+
+#### 401 - 유효하지 않은 ID Token
+
+---
+
 ### GET `auth/google`
 
 **요약:** Google 로그인 시작

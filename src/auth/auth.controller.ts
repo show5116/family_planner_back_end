@@ -494,6 +494,28 @@ export class AuthController {
   // ===== 소셜 로그인 =====
 
   @Public()
+  @Post('google/mobile')
+  @ApiOperation({ summary: 'Google 모바일 로그인 (ID Token)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        idToken: { type: 'string', description: 'Google ID Token' },
+      },
+      required: ['idToken'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Google 모바일 로그인 성공, 토큰 반환',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({ status: 401, description: '유효하지 않은 ID Token' })
+  googleMobileLogin(@Body('idToken') idToken: string) {
+    return this.authService.googleMobileLogin(idToken);
+  }
+
+  @Public()
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google 로그인 시작' })

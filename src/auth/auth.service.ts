@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { OAuth2Client } from 'google-auth-library';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EmailService } from '@/email/email.service';
@@ -469,6 +470,36 @@ export class AuthService {
     ]);
 
     return { message: '비밀번호가 성공적으로 재설정되었습니다' };
+  }
+
+  /**
+   * 모바일 Google 로그인 (ID Token 검증)
+   */
+  async googleMobileLogin(idToken: string) {
+    const client = new OAuth2Client();
+
+    let payload: any;
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: [
+          this.configService.get<string>('GOOGLE_ANDROID_CLIENT_ID'),
+          this.configService.get<string>('GOOGLE_IOS_CLIENT_ID'),
+          this.configService.get<string>('GOOGLE_CLIENT_ID'), // Web Client ID (토큰 audience로 사용될 수 있음)
+        ].filter(Boolean),
+      });
+      payload = ticket.getPayload();
+    } catch {
+      throw new UnauthorizedException('유효하지 않은 Google ID Token입니다');
+    }
+
+    return this.validateSocialUser({
+      provider: 'GOOGLE',
+      providerId: payload.sub,
+      email: payload.email ?? null,
+      name: payload.name ?? payload.email ?? '사용자',
+      profileImage: payload.picture,
+    });
   }
 
   /**
