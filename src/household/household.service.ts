@@ -59,8 +59,8 @@ export class HouseholdService {
       },
     });
 
-    // 예산 초과 여부 확인 후 알림 (그룹 지출인 경우만)
-    if (dto.groupId) {
+    // 예산 초과 여부 확인 후 알림 (그룹 지출이고 카테고리가 있는 경우만)
+    if (dto.groupId && expense.category) {
       this.checkBudgetExceeded(
         userId,
         dto.groupId,

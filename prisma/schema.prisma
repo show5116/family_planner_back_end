@@ -649,7 +649,7 @@ model Expense {
   groupId       String?
   userId        String
   amount        Decimal         @db.Decimal(10, 2)
-  category      ExpenseCategory
+  category      ExpenseCategory?
   date          DateTime        @db.Date
   description   String?         @db.VarChar(200)
   paymentMethod PaymentMethod?

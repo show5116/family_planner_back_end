@@ -30,9 +30,11 @@ export class CreateExpenseDto {
     description: '카테고리',
     enum: ExpenseCategory,
     example: ExpenseCategory.FOOD,
+    required: false,
   })
+  @IsOptional()
   @IsEnum(ExpenseCategory)
-  category: ExpenseCategory;
+  category?: ExpenseCategory;
 
   @ApiProperty({ description: '지출 날짜 (YYYY-MM-DD)', example: '2026-02-27' })
   @IsDateString()
