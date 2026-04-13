@@ -74,15 +74,7 @@ export class QnaService {
 
     // 필터별 WHERE 조건 추가
     if (filter === 'public') {
-      // 공개 질문 + 내 질문(비공개 포함)
-      if (userId) {
-        where.AND = where.AND || [];
-        where.AND.push({
-          OR: [{ visibility: QuestionVisibility.PUBLIC }, { userId: userId }],
-        });
-      } else {
-        where.visibility = QuestionVisibility.PUBLIC;
-      }
+      where.visibility = QuestionVisibility.PUBLIC;
     } else if (filter === 'my') {
       where.userId = userId;
     }
@@ -123,11 +115,6 @@ export class QnaService {
         const isMyQuestion = q.userId === userId;
         return {
           ...q,
-          // 공개 질문 조회 시: 내 질문은 전체 내용, 타인 질문은 내용 숨김
-          ...(filter === 'public' && {
-            content: isMyQuestion ? q.content : null,
-          }),
-          // 내 질문이면 유저 정보 표시, 타인 질문이면 숨김 (ADMIN 제외)
           user: isMyQuestion || filter === 'all' ? (q as any).user : null,
           answerCount: q.answers.length,
           answers: undefined,
