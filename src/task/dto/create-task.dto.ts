@@ -230,9 +230,10 @@ export class CreateTaskDto {
   @IsOptional()
   priority?: TaskPriority;
 
-  @ApiProperty({ description: '카테고리 ID', example: 'uuid' })
+  @ApiPropertyOptional({ description: '카테고리 ID', example: 'uuid' })
   @IsUUID()
-  categoryId: string;
+  @IsOptional()
+  categoryId?: string;
 
   @ApiPropertyOptional({
     description: '그룹 ID (그룹 Task 생성 시)',

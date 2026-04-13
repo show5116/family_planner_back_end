@@ -132,11 +132,13 @@ export class TaskService {
       }
     }
 
-    const category = await this.prisma.category.findUnique({
-      where: { id: dto.categoryId },
-    });
-    if (!category) {
-      throw new NotFoundException('카테고리를 찾을 수 없습니다');
+    if (dto.categoryId) {
+      const category = await this.prisma.category.findUnique({
+        where: { id: dto.categoryId },
+      });
+      if (!category) {
+        throw new NotFoundException('카테고리를 찾을 수 없습니다');
+      }
     }
 
     if (dto.participantIds && dto.participantIds.length > 0) {
