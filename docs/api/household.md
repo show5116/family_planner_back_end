@@ -18,7 +18,7 @@
 {
   "groupId": "uuid-1234", // 그룹 ID (개인 지출 시 생략) (string?)
   "amount": 15000, // 금액 (number)
-  "category": null, // 카테고리 (ExpenseCategory)
+  "category": null, // 카테고리 (ExpenseCategory?)
   "date": "2026-02-27", // 지출 날짜 (YYYY-MM-DD) (string)
   "description": "점심 식사", // 내용 (string?)
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
@@ -58,7 +58,7 @@
 
 - `groupId` (`string`) (Optional): 그룹 ID (개인 조회 시 생략)
 - `month` (`string`) (Optional): 조회 월 (YYYY-MM)
-- `category` (`ExpenseCategory`) (Optional): 카테고리 필터
+- `category` (`ExpenseCategoryFilter`) (Optional): 카테고리 필터 (NONE: 카테고리 없는 항목 조회)
 - `paymentMethod` (`PaymentMethod`) (Optional): 결제 수단 필터
 
 **Responses:**

@@ -727,7 +727,7 @@ period=monthly 시 year 필수.
 ```json
 {
   "email": "user@example.com", // 이메일 (string)
-  "password": "password123", // 비밀번호 (최소 6자) (string)
+  "password": "Password1!", // 비밀번호 (최소 8자, 대문자·소문자·숫자·특수문자 각 1개 이상) (string)
   "name": "홍길동" // 사용자 이름 (string)
 }
 ```
@@ -2941,7 +2941,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 {
   "groupId": "uuid-1234", // 그룹 ID (개인 지출 시 생략) (string?)
   "amount": 15000, // 금액 (number)
-  "category": null, // 카테고리 (ExpenseCategory)
+  "category": null, // 카테고리 (ExpenseCategory?)
   "date": "2026-02-27", // 지출 날짜 (YYYY-MM-DD) (string)
   "description": "점심 식사", // 내용 (string?)
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
@@ -2981,7 +2981,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 - `groupId` (`string`) (Optional): 그룹 ID (개인 조회 시 생략)
 - `month` (`string`) (Optional): 조회 월 (YYYY-MM)
-- `category` (`ExpenseCategory`) (Optional): 카테고리 필터
+- `category` (`ExpenseCategoryFilter`) (Optional): 카테고리 필터 (NONE: 카테고리 없는 항목 조회)
 - `paymentMethod` (`PaymentMethod`) (Optional): 결제 수단 필터
 
 **Responses:**
@@ -6519,7 +6519,7 @@ R2에 파일이 존재하는지 확인합니다.
   "location": "본사 2층 회의실", // 장소 (string?)
   "type": null, // Task 타입 (TaskType)
   "priority": null, // 우선순위 (TaskPriority?)
-  "categoryId": "uuid", // 카테고리 ID (string)
+  "categoryId": "uuid", // 카테고리 ID (string?)
   "groupId": "uuid", // 그룹 ID (그룹 Task 생성 시) (string?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)

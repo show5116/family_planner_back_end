@@ -93,7 +93,7 @@ export class HouseholdService {
     }
 
     if (query.category) {
-      where.category = query.category;
+      where.category = query.category === 'NONE' ? null : query.category;
     }
 
     if (query.paymentMethod) {

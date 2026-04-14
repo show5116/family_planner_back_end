@@ -17,7 +17,7 @@
 ```json
 {
   "email": "user@example.com", // 이메일 (string)
-  "password": "password123", // 비밀번호 (최소 6자) (string)
+  "password": "Password1!", // 비밀번호 (최소 8자, 대문자·소문자·숫자·특수문자 각 1개 이상) (string)
   "name": "홍길동" // 사용자 이름 (string)
 }
 ```

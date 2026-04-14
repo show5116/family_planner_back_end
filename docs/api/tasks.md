@@ -277,7 +277,7 @@
   "location": "본사 2층 회의실", // 장소 (string?)
   "type": null, // Task 타입 (TaskType)
   "priority": null, // 우선순위 (TaskPriority?)
-  "categoryId": "uuid", // 카테고리 ID (string)
+  "categoryId": "uuid", // 카테고리 ID (string?)
   "groupId": "uuid", // 그룹 ID (그룹 Task 생성 시) (string?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
