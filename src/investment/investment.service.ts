@@ -566,56 +566,98 @@ export class InvestmentService implements OnModuleInit {
    * 즐겨찾기 목록 + 최신 시세
    */
   async findBookmarks(userId: string) {
-    const bookmarks = await this.prisma.indicatorBookmark.findMany({
-      where: { userId },
-      include: {
-        indicator: {
-          include: {
-            prices: {
-              orderBy: { recordedAt: 'desc' },
-              take: 1,
-            },
-          },
-        },
-      },
-      orderBy: { sortOrder: 'asc' },
-    });
+    type BookmarkRow = {
+      symbol: string;
+      name: string;
+      nameKo: string;
+      category: IndicatorCategory;
+      unit: string;
+      price: Decimal | null;
+      prevPrice: Decimal | null;
+      change: Decimal | null;
+      changeRate: Decimal | null;
+      recordedAt: Date | null;
+    };
 
-    const hasGoldSpot = bookmarks.some(
-      (b) => b.indicator.symbol === 'GOLD_KRW_SPOT',
-    );
+    const rows = await this.prisma.$queryRaw<BookmarkRow[]>`
+      SELECT
+        i.symbol,
+        i.name,
+        i.nameKo,
+        i.category,
+        i.unit,
+        ip.price,
+        ip.prevPrice,
+        ip.\`change\`,
+        ip.changeRate,
+        ip.recordedAt
+      FROM indicator_bookmarks ib
+      JOIN indicators i ON ib.indicatorId = i.id
+      LEFT JOIN indicator_prices ip
+        ON ip.indicatorId = i.id
+        AND ip.recordedAt = (
+          SELECT MAX(ip2.recordedAt)
+          FROM indicator_prices ip2
+          WHERE ip2.indicatorId = i.id
+        )
+      WHERE ib.userId = ${userId}
+      ORDER BY ib.sortOrder ASC
+    `;
+
+    const hasGoldSpot = rows.some((r) => r.symbol === 'GOLD_KRW_SPOT');
     let goldUsdPrice: LatestPrice = null;
     let usdKrwPrice: LatestPrice = null;
 
     if (hasGoldSpot) {
-      const [goldUsdInd, usdKrwInd] = await Promise.all([
-        this.prisma.indicator.findUnique({
-          where: { symbol: 'GOLD_USD' },
-          include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
-        }),
-        this.prisma.indicator.findUnique({
-          where: { symbol: 'USD_KRW' },
-          include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
-        }),
+      type SpreadRow = {
+        price: Decimal;
+        prevPrice: Decimal | null;
+        change: Decimal | null;
+        changeRate: Decimal | null;
+        recordedAt: Date;
+      };
+      const [goldUsdRows, usdKrwRows] = await Promise.all([
+        this.prisma.$queryRaw<SpreadRow[]>`
+          SELECT ip.price, ip.prevPrice, ip.\`change\`, ip.changeRate, ip.recordedAt
+          FROM indicators i
+          JOIN indicator_prices ip ON ip.indicatorId = i.id
+          WHERE i.symbol = 'GOLD_USD'
+          ORDER BY ip.recordedAt DESC
+          LIMIT 1
+        `,
+        this.prisma.$queryRaw<SpreadRow[]>`
+          SELECT ip.price, ip.prevPrice, ip.\`change\`, ip.changeRate, ip.recordedAt
+          FROM indicators i
+          JOIN indicator_prices ip ON ip.indicatorId = i.id
+          WHERE i.symbol = 'USD_KRW'
+          ORDER BY ip.recordedAt DESC
+          LIMIT 1
+        `,
       ]);
-      goldUsdPrice = goldUsdInd?.prices[0] ?? null;
-      usdKrwPrice = usdKrwInd?.prices[0] ?? null;
+      goldUsdPrice = goldUsdRows[0] ?? null;
+      usdKrwPrice = usdKrwRows[0] ?? null;
     }
 
-    return bookmarks.map((b) =>
-      this.formatIndicator(
-        b.indicator,
-        b.indicator.prices[0] ?? null,
+    return rows.map((r) => {
+      const latestPrice: LatestPrice = r.price
+        ? {
+            price: r.price,
+            prevPrice: r.prevPrice,
+            change: r.change,
+            changeRate: r.changeRate,
+            recordedAt: r.recordedAt,
+          }
+        : null;
+
+      return this.formatIndicator(
+        r,
+        latestPrice,
         true,
-        b.indicator.symbol === 'GOLD_KRW_SPOT'
-          ? this.calcGoldSpread(
-              b.indicator.prices[0] ?? null,
-              goldUsdPrice,
-              usdKrwPrice,
-            )
+        r.symbol === 'GOLD_KRW_SPOT'
+          ? this.calcGoldSpread(latestPrice, goldUsdPrice, usdKrwPrice)
           : null,
-      ),
-    );
+      );
+    });
   }
 
   /**

@@ -29,6 +29,7 @@ import {
 import { IndicatorHistoryQueryDto } from './dto/indicator-history-query.dto';
 import { HistoricalInitQueryDto } from './dto/historical-init-query.dto';
 import { ReorderBookmarksDto } from './dto/reorder-bookmarks.dto';
+import { Timeout } from '@/common/decorators/timeout.decorator';
 
 @ApiTags('투자지표')
 @Controller('indicators')
@@ -45,6 +46,7 @@ export class InvestmentController {
   }
 
   @Get('bookmarks')
+  @Timeout(120000)
   @ApiOperation({ summary: '즐겨찾기 목록 + 최신 시세' })
   @ApiSuccess(IndicatorDto, '즐겨찾기 목록 조회 성공', { isArray: true })
   findBookmarks(@Request() req) {
