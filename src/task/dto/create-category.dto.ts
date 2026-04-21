@@ -24,11 +24,6 @@ export class CreateCategoryDto {
   @IsOptional()
   emoji?: string;
 
-  @ApiPropertyOptional({ description: '색상 코드 (HEX)', example: '#3B82F6' })
-  @IsString()
-  @IsOptional()
-  color?: string;
-
   @ApiPropertyOptional({
     description: '그룹 ID (그룹 카테고리 생성 시)',
     example: 'uuid',

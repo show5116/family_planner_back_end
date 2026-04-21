@@ -26,17 +26,15 @@ export class TaskQueryBuilder {
     }
 
     // 그룹 일정 필터링
+    // groupIds가 명시적으로 전달된 경우에만 해당 그룹 일정 포함
+    // 미전달(undefined), null, 빈 배열 모두 그룹 일정 미포함
     if (query.groupIds && query.groupIds.length > 0) {
-      // 요청된 그룹 중 사용자가 속한 그룹만 필터링
       const validGroupIds = query.groupIds.filter((gid) =>
         userGroupIds.includes(gid),
       );
       if (validGroupIds.length > 0) {
         orConditions.push({ groupId: { in: validGroupIds } });
       }
-    } else if (userGroupIds.length > 0) {
-      // groupIds가 없으면 사용자가 속한 모든 그룹 조회
-      orConditions.push({ groupId: { in: userGroupIds } });
     }
 
     // 조건이 없으면 빈 결과 반환

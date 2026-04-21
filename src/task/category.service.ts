@@ -58,7 +58,6 @@ export class CategoryService {
         name: dto.name,
         description: dto.description || null,
         emoji: dto.emoji || null,
-        color: dto.color || null,
       },
     });
   }
@@ -98,7 +97,6 @@ export class CategoryService {
         name: dto.name,
         description: dto.description,
         emoji: dto.emoji,
-        color: dto.color,
       },
     });
   }

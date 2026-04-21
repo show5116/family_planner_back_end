@@ -18,9 +18,4 @@ export class UpdateCategoryDto {
   @IsString()
   @IsOptional()
   emoji?: string;
-
-  @ApiPropertyOptional({ description: '색상 코드 (HEX)', example: '#3B82F6' })
-  @IsString()
-  @IsOptional()
-  color?: string;
 }

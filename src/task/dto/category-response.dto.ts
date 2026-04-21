@@ -28,13 +28,6 @@ export class CategoryDto {
   emoji: string | null;
 
   @ApiProperty({
-    description: '색상 코드 (HEX)',
-    example: '#3B82F6',
-    nullable: true,
-  })
-  color: string | null;
-
-  @ApiProperty({
     description: '생성일',
     example: '2025-12-30T00:00:00Z',
   })

@@ -27,6 +27,7 @@ export class QueryTasksDto {
     type: [String],
   })
   @Transform(({ value }) => {
+    if (value === null || value === '') return [];
     if (!value) return undefined;
     if (Array.isArray(value)) return value;
     return value.split(',').map((v: string) => v.trim());
