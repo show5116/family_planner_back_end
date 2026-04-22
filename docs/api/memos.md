@@ -177,6 +177,11 @@
 
 **요약:** 핀된 메모 목록 조회 (대시보드 위젯용)
 
+**Query Parameters:**
+
+- `groupId` (`string`) (Optional): 그룹 ID (그룹 메모 태그 조회)
+- `personal` (`boolean`) (Optional): 개인 메모 태그 조회 여부
+
 **Responses:**
 
 #### 200 - 핀된 메모 목록 조회 성공

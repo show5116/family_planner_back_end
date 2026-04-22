@@ -72,8 +72,8 @@ export class MemoController {
   @Get('pinned')
   @ApiOperation({ summary: '핀된 메모 목록 조회 (대시보드 위젯용)' })
   @ApiSuccess(MemoDto, '핀된 메모 목록 조회 성공', { isArray: true })
-  findPinned(@Request() req) {
-    return this.memoService.findPinned(req.user.userId);
+  findPinned(@Request() req, @Query() query: MemoTagListQueryDto) {
+    return this.memoService.findPinned(req.user.userId, query.groupId);
   }
 
   @Get(':id')

@@ -3937,6 +3937,11 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **요약:** 핀된 메모 목록 조회 (대시보드 위젯용)
 
+**Query Parameters:**
+
+- `groupId` (`string`) (Optional): 그룹 ID (그룹 메모 태그 조회)
+- `personal` (`boolean`) (Optional): 개인 메모 태그 조회 여부
+
 **Responses:**
 
 #### 200 - 핀된 메모 목록 조회 성공
@@ -6270,7 +6275,6 @@ R2에 파일이 존재하는지 확인합니다.
   "name": "업무", // 카테고리 이름 (string)
   "description": "업무 관련 일정", // 설명 (string | null)
   "emoji": "💼", // 이모지 (string | null)
-  "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
   "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
 }
@@ -6289,7 +6293,6 @@ R2에 파일이 존재하는지 확인합니다.
   "name": "업무", // 카테고리 이름 (string)
   "description": "업무 관련 일정", // 설명 (string?)
   "emoji": "💼", // 이모지 (string?)
-  "color": "#3B82F6", // 색상 코드 (HEX) (string?)
   "groupId": "uuid" // 그룹 ID (그룹 카테고리 생성 시) (string?)
 }
 ```
@@ -6306,7 +6309,6 @@ R2에 파일이 존재하는지 확인합니다.
   "name": "업무", // 카테고리 이름 (string)
   "description": "업무 관련 일정", // 설명 (string | null)
   "emoji": "💼", // 이모지 (string | null)
-  "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
   "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
 }
@@ -6328,8 +6330,7 @@ R2에 파일이 존재하는지 확인합니다.
 {
   "name": "업무", // 카테고리 이름 (string?)
   "description": "업무 관련 일정", // 설명 (string?)
-  "emoji": "💼", // 이모지 (string?)
-  "color": "#3B82F6" // 색상 코드 (HEX) (string?)
+  "emoji": "💼" // 이모지 (string?)
 }
 ```
 
@@ -6345,7 +6346,6 @@ R2에 파일이 존재하는지 확인합니다.
   "name": "업무", // 카테고리 이름 (string)
   "description": "업무 관련 일정", // 설명 (string | null)
   "emoji": "💼", // 이모지 (string | null)
-  "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
   "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
 }
@@ -6423,7 +6423,6 @@ R2에 파일이 존재하는지 확인합니다.
         "name": "업무",
         "description": "업무 관련 일정",
         "emoji": "💼",
-        "color": "#3B82F6",
         "createdAt": "2025-12-30T00:00:00Z",
         "updatedAt": "2025-12-30T00:00:00Z"
       }, // 카테고리 (CategoryDto)
@@ -6563,7 +6562,6 @@ R2에 파일이 존재하는지 확인합니다.
     "name": "업무", // 카테고리 이름 (string)
     "description": "업무 관련 일정", // 설명 (string | null)
     "emoji": "💼", // 이모지 (string | null)
-    "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
@@ -6652,7 +6650,6 @@ R2에 파일이 존재하는지 확인합니다.
     "name": "업무", // 카테고리 이름 (string)
     "description": "업무 관련 일정", // 설명 (string | null)
     "emoji": "💼", // 이모지 (string | null)
-    "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
@@ -6734,7 +6731,6 @@ R2에 파일이 존재하는지 확인합니다.
     "name": "업무", // 카테고리 이름 (string)
     "description": "업무 관련 일정", // 설명 (string | null)
     "emoji": "💼", // 이모지 (string | null)
-    "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)

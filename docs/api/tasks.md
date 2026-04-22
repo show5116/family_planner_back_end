@@ -28,7 +28,6 @@
   "name": "업무", // 카테고리 이름 (string)
   "description": "업무 관련 일정", // 설명 (string | null)
   "emoji": "💼", // 이모지 (string | null)
-  "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
   "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
 }
@@ -47,7 +46,6 @@
   "name": "업무", // 카테고리 이름 (string)
   "description": "업무 관련 일정", // 설명 (string?)
   "emoji": "💼", // 이모지 (string?)
-  "color": "#3B82F6", // 색상 코드 (HEX) (string?)
   "groupId": "uuid" // 그룹 ID (그룹 카테고리 생성 시) (string?)
 }
 ```
@@ -64,7 +62,6 @@
   "name": "업무", // 카테고리 이름 (string)
   "description": "업무 관련 일정", // 설명 (string | null)
   "emoji": "💼", // 이모지 (string | null)
-  "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
   "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
 }
@@ -86,8 +83,7 @@
 {
   "name": "업무", // 카테고리 이름 (string?)
   "description": "업무 관련 일정", // 설명 (string?)
-  "emoji": "💼", // 이모지 (string?)
-  "color": "#3B82F6" // 색상 코드 (HEX) (string?)
+  "emoji": "💼" // 이모지 (string?)
 }
 ```
 
@@ -103,7 +99,6 @@
   "name": "업무", // 카테고리 이름 (string)
   "description": "업무 관련 일정", // 설명 (string | null)
   "emoji": "💼", // 이모지 (string | null)
-  "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
   "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
 }
@@ -181,7 +176,6 @@
         "name": "업무",
         "description": "업무 관련 일정",
         "emoji": "💼",
-        "color": "#3B82F6",
         "createdAt": "2025-12-30T00:00:00Z",
         "updatedAt": "2025-12-30T00:00:00Z"
       }, // 카테고리 (CategoryDto)
@@ -321,7 +315,6 @@
     "name": "업무", // 카테고리 이름 (string)
     "description": "업무 관련 일정", // 설명 (string | null)
     "emoji": "💼", // 이모지 (string | null)
-    "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
@@ -410,7 +403,6 @@
     "name": "업무", // 카테고리 이름 (string)
     "description": "업무 관련 일정", // 설명 (string | null)
     "emoji": "💼", // 이모지 (string | null)
-    "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
@@ -492,7 +484,6 @@
     "name": "업무", // 카테고리 이름 (string)
     "description": "업무 관련 일정", // 설명 (string | null)
     "emoji": "💼", // 이모지 (string | null)
-    "color": "#3B82F6", // 색상 코드 (HEX) (string | null)
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)

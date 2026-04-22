@@ -288,23 +288,24 @@ export class MemoService {
   /**
    * 핀된 메모 목록 조회 (대시보드 위젯용)
    */
-  async findPinned(userId: string) {
+  async findPinned(userId: string, groupId?: string) {
     const userGroupIds = await this.getUserGroupIds(userId);
+
+    const groupFilter = groupId
+      ? userGroupIds.includes(groupId)
+        ? [{ groupId, visibility: MemoVisibility.GROUP }]
+        : []
+      : userGroupIds.length > 0
+        ? [{ groupId: { in: userGroupIds }, visibility: MemoVisibility.GROUP }]
+        : [];
 
     return this.prisma.memo.findMany({
       where: {
         deletedAt: null,
         isPinned: true,
         OR: [
-          { userId, visibility: MemoVisibility.PRIVATE },
-          ...(userGroupIds.length > 0
-            ? [
-                {
-                  groupId: { in: userGroupIds },
-                  visibility: MemoVisibility.GROUP,
-                },
-              ]
-            : []),
+          ...(groupId ? [] : [{ userId, visibility: MemoVisibility.PRIVATE }]),
+          ...groupFilter,
         ],
       },
       include: {
