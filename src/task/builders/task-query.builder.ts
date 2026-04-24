@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { QueryTasksDto } from '../dto';
+import { TaskType } from '../enums';
 
 /**
  * Task 조회 쿼리 빌더
@@ -51,7 +52,15 @@ export class TaskQueryBuilder {
     if (query.categoryIds && query.categoryIds.length > 0) {
       andConditions.push({ categoryId: { in: query.categoryIds } });
     }
-    if (query.type) andConditions.push({ type: query.type });
+
+    // type 필터: 명시적으로 지정된 경우 우선, 없으면 view 기반 자동 필터링
+    if (query.type) {
+      andConditions.push({ type: query.type });
+    } else if (query.view === 'calendar') {
+      andConditions.push({ type: { not: TaskType.TODO_ONLY } });
+    } else if (query.view === 'todo') {
+      andConditions.push({ type: { not: TaskType.CALENDAR_ONLY } });
+    }
     if (query.priority) andConditions.push({ priority: query.priority });
     if (query.status) andConditions.push({ status: query.status });
 

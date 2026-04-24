@@ -14,7 +14,10 @@
 ## 핵심 개념
 
 - **하나의 Tasks 테이블**로 일정과 할일 통합 관리
-- **Type 구분**: CALENDAR_ONLY (캘린더 전용) vs TODO_LINKED (할일 연동)
+- **Type 구분**:
+  - `CALENDAR_ONLY`: 오직 일정 (캘린더 전용, 생일/기념일 등)
+  - `TODO_LINKED`: 일정 + 할일 연동 (캘린더 + 할일 모두 표시)
+  - `TODO_ONLY`: 오직 할일 (캘린더 미표시, 완료 체크 가능)
 - **이중 날짜 관리**:
   - `scheduled_at`: 수행 시작 날짜 (할일 목록 표시 시작)
   - `due_at`: 마감 날짜 (D-Day 계산 기준)
@@ -38,16 +41,19 @@
 
 ### 목록 조회 (`GET /tasks`)
 - 캘린더 뷰 vs 할일 뷰 구분
+  - `view=calendar`: CALENDAR_ONLY + TODO_LINKED 표시 (TODO_ONLY 제외)
+  - `view=todo`: TODO_LINKED + TODO_ONLY 표시 (CALENDAR_ONLY 제외)
 - 그룹, 카테고리, 타입, 우선순위, 완료 여부, 날짜 범위 필터링
 - D-Day 계산 (`daysUntilDue`)
-- 정렬: 캘린더(scheduledAt ASC), 할일(isCompleted ASC → priority DESC → dueAt ASC)
+- 정렬: 캘린더(scheduledAt ASC), 할일(status ASC → priority DESC → dueAt ASC)
 
 ### 상세 조회 (`GET /tasks/:id`)
 - 알림 목록 + 변경 이력 + 참여자 목록 포함
 - 그룹 Task는 그룹 멤버만 조회 가능
 
 ### 생성 (`POST /tasks`)
-- 제목, 타입, 카테고리 필수
+- 제목, 타입 필수 (카테고리는 선택)
+- 타입: `CALENDAR_ONLY` / `TODO_LINKED` / `TODO_ONLY`
 - 반복 일정 설정 가능 (`recurring` 객체)
 - 알림 설정 가능 (`reminders` 배열)
 - 참여자 지정 가능 (`participantIds` 배열, 그룹 Task에서만)
@@ -93,7 +99,7 @@
 ### Tasks
 - userId, groupId, categoryId, recurringId
 - title, description, location
-- type (CALENDAR_ONLY, TODO_LINKED)
+- type (CALENDAR_ONLY, TODO_LINKED, TODO_ONLY)
 - priority (LOW, MEDIUM, HIGH, URGENT)
 - scheduledAt, dueAt
 - isCompleted, completedAt
@@ -144,7 +150,7 @@
 - [x] 데이터베이스 스키마 (6개 Enum + 7개 테이블)
 - [x] 카테고리 CRUD (개인/그룹 카테고리)
 - [x] Task CRUD (생성, 조회, 수정, 삭제)
-- [x] Task 타입 구분 (CALENDAR_ONLY, TODO_LINKED)
+- [x] Task 타입 구분 (CALENDAR_ONLY, TODO_LINKED, TODO_ONLY)
 - [x] 이중 날짜 관리 (scheduledAt, dueAt)
 - [x] D-Day 계산 (daysUntilDue)
 - [x] 우선순위 설정 (LOW, MEDIUM, HIGH, URGENT)
@@ -228,10 +234,16 @@
 - MONTHLY: 날짜 기준(15일마다) 또는 요일 기준(둘째 주 월요일) 선택 가능
 - YEARLY: 특정 월/일에 반복
 
+### 2026-04-24
+- TODO_ONLY 타입 추가 (오직 할일, 캘린더 미표시)
+- view=calendar 조회 시 TODO_ONLY 자동 제외
+- view=todo 조회 시 CALENDAR_ONLY 자동 제외
+- 완료 알림 TODO_ONLY 타입에도 적용
+
 ### TODO
 - 단위 테스트 및 E2E 테스트
 
 ---
 
 **작성일**: 2025-12-29
-**최종 업데이트**: 2026-01-28
+**최종 업데이트**: 2026-04-24

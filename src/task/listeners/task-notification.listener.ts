@@ -21,10 +21,11 @@ export class TaskNotificationListener {
 
   /**
    * task.type에 따라 알림 카테고리 결정
-   * TODO_LINKED → TODO, CALENDAR_ONLY → SCHEDULE
+   * TODO_LINKED / TODO_ONLY → TODO, CALENDAR_ONLY → SCHEDULE
    */
   private getCategoryByTaskType(taskType: string): NotificationCategory {
-    return (taskType as TaskType) === TaskType.TODO_LINKED
+    const type = taskType as TaskType;
+    return type === TaskType.TODO_LINKED || type === TaskType.TODO_ONLY
       ? NotificationCategory.TODO
       : NotificationCategory.SCHEDULE;
   }
@@ -88,8 +89,9 @@ export class TaskNotificationListener {
     const { task, userId, status } = event;
 
     // TODO 완료 시 참여자들에게 알림
+    const taskType = task.type as TaskType;
     if (
-      (task.type as TaskType) === TaskType.TODO_LINKED &&
+      (taskType === TaskType.TODO_LINKED || taskType === TaskType.TODO_ONLY) &&
       (status as TaskStatus) === TaskStatus.COMPLETED
     ) {
       const participants = await this.prisma.taskParticipant.findMany({

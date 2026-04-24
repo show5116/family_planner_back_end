@@ -93,7 +93,12 @@ export class TaskController {
   // ==================== Task API ====================
 
   @Get()
-  @ApiOperation({ summary: 'Task 목록 조회 (캘린더/할일 뷰)' })
+  @ApiOperation({
+    summary: 'Task 목록 조회 (캘린더/할일 뷰)',
+    description:
+      'view=calendar: CALENDAR_ONLY + TODO_LINKED 표시 (TODO_ONLY 제외)\n' +
+      'view=todo: TODO_LINKED + TODO_ONLY 표시 (CALENDAR_ONLY 제외)',
+  })
   @ApiSuccess(PaginatedTaskDto, 'Task 목록 조회 성공')
   getTasks(@Request() req, @Query() query: QueryTasksDto) {
     return this.taskService.getTasks(req.user.userId, query);
@@ -109,7 +114,14 @@ export class TaskController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Task 생성' })
+  @ApiOperation({
+    summary: 'Task 생성',
+    description:
+      'type 설명:\n' +
+      '- CALENDAR_ONLY: 오직 일정 (캘린더 전용, 생일/기념일 등)\n' +
+      '- TODO_LINKED: 일정 + 할일 연동 (캘린더 + 할일 모두 표시)\n' +
+      '- TODO_ONLY: 오직 할일 (캘린더 미표시, 완료 체크 가능)',
+  })
   @ApiCreated(TaskDto, 'Task 생성 성공')
   createTask(@Request() req, @Body() dto: CreateTaskDto) {
     return this.taskService.createTask(req.user.userId, dto);
