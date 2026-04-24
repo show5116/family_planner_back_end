@@ -385,13 +385,6 @@ export class AuthService {
    * 로그아웃 (Refresh Token 무효화)
    */
   async logout(refreshToken: string) {
-    // Redis에서 Refresh Token 삭제
-    const exists = await this.redisService.has(`refresh-token:${refreshToken}`);
-
-    if (!exists) {
-      throw new NotFoundException('Refresh Token을 찾을 수 없습니다');
-    }
-
     await this.redisService.del(`refresh-token:${refreshToken}`);
 
     return { message: '로그아웃되었습니다' };
