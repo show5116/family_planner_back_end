@@ -115,10 +115,12 @@ export class AuthController {
    */
   private setRefreshTokenCookie(res: Response, refreshToken: string): void {
     const cookieMaxAge = this.REFRESH_TOKEN_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+    const isProduction =
+      this.configService.get<string>('app.nodeEnv') === 'production';
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: this.configService.get<string>('app.nodeEnv') === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'strict',
       maxAge: cookieMaxAge,
     });
   }
@@ -127,10 +129,12 @@ export class AuthController {
    * HttpOnly Cookie에서 Refresh Token 삭제
    */
   private clearRefreshTokenCookie(res: Response): void {
+    const isProduction =
+      this.configService.get<string>('app.nodeEnv') === 'production';
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: this.configService.get<string>('app.nodeEnv') === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'strict',
     });
   }
 
