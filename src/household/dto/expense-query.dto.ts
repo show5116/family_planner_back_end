@@ -3,7 +3,9 @@ import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
 import { ExpenseCategory, PaymentMethod } from '@prisma/client';
 
 export const EXPENSE_CATEGORY_NONE = 'NONE' as const;
-export type ExpenseCategoryFilter = ExpenseCategory | typeof EXPENSE_CATEGORY_NONE;
+export type ExpenseCategoryFilter =
+  | ExpenseCategory
+  | typeof EXPENSE_CATEGORY_NONE;
 
 export class ExpenseQueryDto {
   @ApiProperty({

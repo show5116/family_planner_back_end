@@ -59,6 +59,36 @@ export class NotificationQueueService {
   }
 
   /**
+   * 예약 발송: Waiting Room에 추가 (중복 방지)
+   * deduplicationKey가 같은 항목이 이미 있으면 추가하지 않음
+   */
+  async enqueueScheduledIfAbsent(
+    notification: QueuedNotification,
+    deduplicationKey: string,
+  ): Promise<void> {
+    if (!notification.scheduledTime) {
+      throw new Error('scheduledTime is required for scheduled notifications');
+    }
+
+    const scheduledDate = new Date(notification.scheduledTime);
+    const added = await this.redisService.addToWaitingRoomIfAbsent(
+      notification,
+      scheduledDate,
+      deduplicationKey,
+    );
+
+    if (added) {
+      this.logger.log(
+        `Enqueued scheduled notification [${deduplicationKey}] for user ${notification.userId} at ${scheduledDate.toISOString()}`,
+      );
+    } else {
+      this.logger.log(
+        `Skipped duplicate reminder [${deduplicationKey}] for user ${notification.userId}`,
+      );
+    }
+  }
+
+  /**
    * Ready Queue에서 알림 하나를 꺼내서 FCM 발송 (Non-blocking)
    * @deprecated 무한 루프 워커에서는 processOneWithBlocking() 사용 권장
    */
@@ -116,6 +146,13 @@ export class NotificationQueueService {
   }
 
   /**
+   * Waiting Room에서 특정 reminder 항목 삭제
+   */
+  async cancelScheduledReminders(reminderIds: string[]): Promise<void> {
+    await this.redisService.removeRemindersFromWaitingRoom(reminderIds);
+  }
+
+  /**
    * FCM 발송 및 DB 저장 로직
    */
   private async sendNotification(
@@ -123,7 +160,22 @@ export class NotificationQueueService {
   ): Promise<void> {
     const { userId, category, title, body, data } = notification;
 
-    // 1. 사용자 설정 확인
+    // 1. task reminder 알림인 경우, task가 삭제됐거나 완료됐으면 스킵
+    const taskId = data?.taskId as string | undefined;
+    if (taskId) {
+      const task = await this.prisma.task.findUnique({
+        where: { id: taskId },
+        select: { deletedAt: true },
+      });
+      if (!task || task.deletedAt !== null) {
+        this.logger.log(
+          `Task ${taskId} deleted — skipping stale reminder for user ${userId}`,
+        );
+        return;
+      }
+    }
+
+    // 2. 사용자 설정 확인
     const setting = await this.prisma.notificationSetting.findUnique({
       where: { userId_category: { userId, category: category as any } },
     });
@@ -135,14 +187,14 @@ export class NotificationQueueService {
       return;
     }
 
-    // 2. FCM 토큰 조회 (Look-Aside 캐싱)
+    // 3. FCM 토큰 조회 (Look-Aside 캐싱)
     const tokens = await this.tokenService.getUserTokens(userId);
     if (tokens.length === 0) {
       this.logger.warn(`No FCM tokens found for user ${userId}. Skipping.`);
       return;
     }
 
-    // 3. DB에 히스토리 저장 (sent = false)
+    // 4. DB에 히스토리 저장 (sent = false)
     const savedNotification = await this.prisma.notification.create({
       data: {
         userId,
@@ -154,7 +206,7 @@ export class NotificationQueueService {
       },
     });
 
-    // 4. FCM 메시지 발송
+    // 5. FCM 메시지 발송
     const message: messaging.MulticastMessage = {
       tokens,
       notification: { title, body },
@@ -173,7 +225,7 @@ export class NotificationQueueService {
     const messagingClient = this.firebaseService.getMessaging();
     const response = await messagingClient.sendEachForMulticast(message);
 
-    // 5. 성공 시 DB 업데이트 (sent = true, sentAt 기록)
+    // 6. 성공 시 DB 업데이트 (sent = true, sentAt 기록)
     if (response.successCount > 0) {
       await this.prisma.notification.update({
         where: { id: savedNotification.id },
@@ -181,7 +233,7 @@ export class NotificationQueueService {
       });
     }
 
-    // 6. 실패한 토큰 처리
+    // 7. 실패한 토큰 처리
     if (response.failureCount > 0) {
       const failedTokens: string[] = [];
       response.responses.forEach((res, idx) => {

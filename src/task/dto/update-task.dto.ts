@@ -7,9 +7,11 @@ import {
   MaxLength,
   IsArray,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TaskType, TaskPriority } from '@/task/enums';
+import { TaskReminderDto } from './create-task.dto';
 
 export class UpdateTaskDto {
   @ApiPropertyOptional({ description: 'Task 제목', example: '회의 참석' })
@@ -78,4 +80,14 @@ export class UpdateTaskDto {
   @IsUUID('4', { each: true })
   @IsOptional()
   participantIds?: string[];
+
+  @ApiPropertyOptional({
+    description: '알림 목록 (전달 시 기존 알림 전체 교체)',
+    type: [TaskReminderDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TaskReminderDto)
+  @IsOptional()
+  reminders?: TaskReminderDto[];
 }

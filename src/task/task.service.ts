@@ -219,6 +219,11 @@ export class TaskService {
       throw new NotFoundException('Task 생성에 실패했습니다');
     }
 
+    // 트랜잭션 밖에서 reminders 조회 (tx 내 createMany 후 findUnique 시 빈 배열 반환 이슈)
+    const reminders = await this.prisma.taskReminder.findMany({
+      where: { taskId: task.id },
+    });
+
     // 이벤트 발행 (히스토리 + 알림 처리)
     this.eventEmitter.emit(
       'task.created',
@@ -227,6 +232,7 @@ export class TaskService {
         userId,
         dto.groupId || null,
         dto.participantIds || [],
+        reminders,
       ),
     );
 
@@ -263,7 +269,14 @@ export class TaskService {
     }
 
     if (task.userId !== userId) {
-      throw new ForbiddenException('본인이 작성한 Task만 수정할 수 있습니다');
+      const isParticipant = await this.prisma.taskParticipant.findUnique({
+        where: { taskId_userId: { taskId, userId } },
+      });
+      if (!isParticipant) {
+        throw new ForbiddenException(
+          'Task 작성자 또는 참여자만 수정할 수 있습니다',
+        );
+      }
     }
 
     if (task.recurringId && !updateScope) {
@@ -272,13 +285,14 @@ export class TaskService {
       );
     }
 
-    // 참여자 검증
-    if (dto.participantIds !== undefined && task.groupId) {
+    // 참여자 검증 (빈 배열 및 null은 그룹 여부 무관하게 허용)
+    if (dto.participantIds != null && dto.participantIds.length > 0) {
+      if (!task.groupId) {
+        throw new ForbiddenException(
+          '참여자는 그룹 Task에서만 지정할 수 있습니다',
+        );
+      }
       await this.validateParticipants(task.groupId, dto.participantIds);
-    } else if (dto.participantIds !== undefined && !task.groupId) {
-      throw new ForbiddenException(
-        '참여자는 그룹 Task에서만 지정할 수 있습니다',
-      );
     }
 
     // 업데이트 데이터 준비
@@ -293,6 +307,17 @@ export class TaskService {
     // 참여자 Diff 계산
     const { newParticipantIds, removedParticipantIds } =
       await this.calculateParticipantDiff(taskId, dto.participantIds);
+
+    // reminder 교체 시 취소할 기존 reminderIds 미리 조회
+    const canceledReminderIds =
+      dto.reminders !== undefined
+        ? (
+            await this.prisma.taskReminder.findMany({
+              where: { taskId },
+              select: { id: true },
+            })
+          ).map((r) => r.id)
+        : [];
 
     if (updateScope === 'current' || !task.recurringId) {
       const updated = await this.prisma.$transaction(async (tx) => {
@@ -311,6 +336,21 @@ export class TaskService {
           removedParticipantIds,
         );
 
+        // reminder 교체 (전달된 경우에만 전체 삭제 후 재등록)
+        if (dto.reminders !== undefined) {
+          await tx.taskReminder.deleteMany({ where: { taskId } });
+          if (dto.reminders.length > 0) {
+            await tx.taskReminder.createMany({
+              data: dto.reminders.map((r) => ({
+                taskId,
+                userId,
+                reminderType: r.reminderType,
+                offsetMinutes: r.offsetMinutes,
+              })),
+            });
+          }
+        }
+
         return tx.task.findUnique({
           where: { id: taskId },
           include: TaskQueryBuilder.getListInclude(),
@@ -321,6 +361,12 @@ export class TaskService {
         throw new NotFoundException('Task 수정에 실패했습니다');
       }
 
+      // 트랜잭션 밖에서 reminders 조회 (tx 내 createMany 후 findUnique 시 빈 배열 반환 이슈)
+      const reminders =
+        dto.reminders !== undefined
+          ? await this.prisma.taskReminder.findMany({ where: { taskId } })
+          : [];
+
       // 이벤트 발행
       this.eventEmitter.emit(
         'task.updated',
@@ -330,6 +376,8 @@ export class TaskService {
           before,
           changesAfter,
           newParticipantIds,
+          reminders,
+          canceledReminderIds,
         ),
       );
 
@@ -485,10 +533,18 @@ export class TaskService {
       }
     });
 
+    // 삭제된 Task들의 reminderIds 조회 (Waiting Room 취소용)
+    const reminderIds = (
+      await this.prisma.taskReminder.findMany({
+        where: { taskId: { in: deletedTaskIds } },
+        select: { id: true },
+      })
+    ).map((r) => r.id);
+
     // 이벤트 발행
     this.eventEmitter.emit(
       'task.deleted',
-      new TaskDeletedEvent(deletedTaskIds, userId),
+      new TaskDeletedEvent(deletedTaskIds, userId, reminderIds),
     );
 
     return { message: 'Task가 삭제되었습니다' };
@@ -548,7 +604,7 @@ export class TaskService {
     newParticipantIds: string[];
     removedParticipantIds: string[];
   }> {
-    if (participantIds === undefined) {
+    if (participantIds == null) {
       return { newParticipantIds: [], removedParticipantIds: [] };
     }
 
@@ -579,7 +635,7 @@ export class TaskService {
     newParticipantIds: string[],
     removedParticipantIds: string[],
   ) {
-    if (participantIds === undefined || !groupId) return;
+    if (participantIds == null || !groupId) return;
 
     if (removedParticipantIds.length > 0) {
       await tx.taskParticipant.deleteMany({

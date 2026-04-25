@@ -6625,7 +6625,13 @@ R2에 파일이 존재하는지 확인합니다.
   "priority": null, // 우선순위 (TaskPriority?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
-  "participantIds": ["uuid-1", "uuid-2"] // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
+  "participantIds": ["uuid-1", "uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
+  "reminders": [
+    {
+      "reminderType": null, // 알림 타입 (TaskReminderType)
+      "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
+    }
+  ] // 알림 목록 (전달 시 기존 알림 전체 교체) (TaskReminderDto[]?)
 }
 ```
 

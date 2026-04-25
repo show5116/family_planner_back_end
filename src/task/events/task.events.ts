@@ -1,4 +1,4 @@
-import { Task, Prisma, TaskStatus } from '@prisma/client';
+import { Task, TaskReminder, Prisma, TaskStatus } from '@prisma/client';
 
 // Prisma JSON 호환 타입
 type JsonRecord = Prisma.InputJsonObject;
@@ -12,6 +12,7 @@ export class TaskCreatedEvent {
     public readonly userId: string,
     public readonly groupId: string | null,
     public readonly participantIds: string[],
+    public readonly reminders: TaskReminder[] = [],
   ) {}
 }
 
@@ -25,6 +26,8 @@ export class TaskUpdatedEvent {
     public readonly before: JsonRecord,
     public readonly after: JsonRecord,
     public readonly newParticipantIds: string[],
+    public readonly reminders: TaskReminder[] = [],
+    public readonly canceledReminderIds: string[] = [],
   ) {}
 }
 
@@ -46,6 +49,7 @@ export class TaskDeletedEvent {
   constructor(
     public readonly taskIds: string[],
     public readonly userId: string,
+    public readonly reminderIds: string[] = [],
   ) {}
 }
 

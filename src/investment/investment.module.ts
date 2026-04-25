@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { InvestmentController } from './investment.controller';
 import { InvestmentService } from './investment.service';
@@ -12,7 +11,7 @@ import { KoreaGoldCollector } from './scheduler/collectors/korea-gold.collector'
 import { FearGreedCollector } from './scheduler/collectors/fear-greed.collector';
 
 @Module({
-  imports: [PrismaModule, ScheduleModule.forRoot()],
+  imports: [PrismaModule],
   controllers: [InvestmentController],
   providers: [
     InvestmentService,

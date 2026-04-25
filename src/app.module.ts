@@ -48,6 +48,7 @@ import { AiModule } from '@/ai/ai.module';
 import { WeatherModule } from '@/weather/weather.module';
 import { VoteModule } from '@/vote/vote.module';
 import { SavingsModule } from '@/savings/savings.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -134,6 +135,7 @@ import { SavingsModule } from '@/savings/savings.module';
       },
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     SentryModule,
     PrismaModule,
     FirebaseModule,

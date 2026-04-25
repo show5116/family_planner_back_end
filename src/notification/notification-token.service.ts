@@ -27,74 +27,79 @@ export class NotificationTokenService {
 
   /**
    * FCM 디바이스 토큰 등록 + Topic 자동 구독
+   *
+   * 플랫폼별 1개만 유지: 신규 토큰 등록 시 같은 사용자·플랫폼의 기존 토큰을 모두 교체
    */
   async registerToken(userId: string, dto: RegisterTokenDto) {
     try {
-      // 기존 토큰 조회
       const existingToken = await this.prisma.deviceToken.findUnique({
         where: { token: dto.token },
       });
 
-      let deviceToken;
       let oldUserId: string | null = null;
-      let shouldSubscribe = false;
 
-      // 다른 사용자에게 등록된 토큰이면 기존 토큰 삭제 후 새로 등록
-      // (계정 전환 시나리오: 사용자 A 로그아웃 → 사용자 B 로그인)
+      // 다른 사용자 소유 토큰: 계정 전환 시나리오
       if (existingToken && existingToken.userId !== userId) {
-        this.logger.warn(
-          `Token ${dto.token} is being transferred from user ${existingToken.userId} to ${userId}`,
-        );
-
         oldUserId = existingToken.userId;
-
-        // Prisma 트랜잭션: DB 작업 원자성 보장
-        deviceToken = await this.prisma.$transaction(async (tx) => {
-          // 1. 기존 토큰 삭제
-          await tx.deviceToken.delete({
-            where: { token: dto.token },
-          });
-
-          // 2. 새로운 사용자로 토큰 등록
-          return await tx.deviceToken.create({
-            data: {
-              userId,
-              token: dto.token,
-              platform: dto.platform,
-            },
-          });
-        });
-
-        shouldSubscribe = true;
-      } else {
-        // upsert: 같은 사용자면 업데이트, 없으면 새로 생성
-        shouldSubscribe = !existingToken;
-
-        deviceToken = await this.prisma.deviceToken.upsert({
-          where: { token: dto.token },
-          update: {
-            lastUsed: new Date(),
-            platform: dto.platform,
-          },
-          create: {
-            userId,
-            token: dto.token,
-            platform: dto.platform,
-          },
-        });
+        this.logger.warn(
+          `Token transferred from user ${existingToken.userId} to ${userId}`,
+        );
       }
 
-      // DB 트랜잭션 성공 후 Redis 캐시 무효화
-      // Race Condition 방지: addToken 대신 invalidate 사용
-      // (다음 조회 시 DB에서 최신 데이터 가져옴)
+      // 이미 같은 사용자·같은 토큰이면 lastUsed만 갱신 (플랫폼 교체 없음)
+      if (existingToken && existingToken.userId === userId) {
+        const deviceToken = await this.prisma.deviceToken.update({
+          where: { token: dto.token },
+          data: { lastUsed: new Date(), platform: dto.platform },
+        });
+        await this.redis.invalidateUserTokensCache(userId);
+        return deviceToken;
+      }
+
+      // 신규 토큰: 트랜잭션으로 기존 플랫폼 토큰 전부 교체
+      const { deviceToken, deletedTokenStrings } =
+        await this.prisma.$transaction(async (tx) => {
+          // 다른 사용자 소유였던 토큰 삭제
+          if (existingToken) {
+            await tx.deviceToken.delete({ where: { token: dto.token } });
+          }
+
+          // 같은 사용자의 동일 플랫폼 기존 토큰 모두 조회 후 삭제
+          const oldTokens = await tx.deviceToken.findMany({
+            where: { userId, platform: dto.platform },
+            select: { token: true },
+          });
+
+          if (oldTokens.length > 0) {
+            await tx.deviceToken.deleteMany({
+              where: { userId, platform: dto.platform },
+            });
+          }
+
+          const created = await tx.deviceToken.create({
+            data: { userId, token: dto.token, platform: dto.platform },
+          });
+
+          return {
+            deviceToken: created,
+            deletedTokenStrings: oldTokens.map((t) => t.token),
+          };
+        });
+
+      // Redis 캐시 무효화
       if (oldUserId) {
         await this.redis.invalidateUserTokensCache(oldUserId);
       }
       await this.redis.invalidateUserTokensCache(userId);
 
-      // Topic 구독 처리 (비동기 - 실패해도 서비스 정상 동작)
-      if (oldUserId) {
-        // 기존 사용자의 Topic 구독 해제
+      if (deletedTokenStrings.length > 0) {
+        this.logger.log(
+          `Replaced ${deletedTokenStrings.length} old ${dto.platform} token(s) for user ${userId}`,
+        );
+      }
+
+      // Topic 구독 처리 (비동기)
+      if (oldUserId && existingToken) {
         this.unsubscribeUserFromTopics(oldUserId, [dto.token]).catch((err) => {
           this.logger.error(
             `Background task failed - unsubscribe topics for user ${oldUserId}: ${err.message}`,
@@ -102,14 +107,11 @@ export class NotificationTokenService {
         });
       }
 
-      if (shouldSubscribe) {
-        // 새로운 토큰이면 Topic 구독
-        this.subscribeUserToTopics(userId, [dto.token]).catch((err) => {
-          this.logger.error(
-            `Background task failed - subscribe topics for user ${userId}: ${err.message}`,
-          );
-        });
-      }
+      this.subscribeUserToTopics(userId, [dto.token]).catch((err) => {
+        this.logger.error(
+          `Background task failed - subscribe topics for user ${userId}: ${err.message}`,
+        );
+      });
 
       return deviceToken;
     } catch (error) {

@@ -731,37 +731,58 @@ export class RedisService implements OnModuleInit {
   }
 
   /**
-   * Waiting Room에서 발송 시간이 된 알림들을 Ready Queue로 이동
+   * Waiting Room에 예약 알림 추가 (중복 방지 - NX 옵션)
+   * 동일 member 문자열이 이미 존재하면 추가하지 않음
+   * @param notification 알림 데이터 객체
+   * @param scheduledTime 발송 예정 시간
+   * @param deduplicationKey member 문자열에 포함할 고유 키 (예: reminderId)
+   * @returns 실제로 추가됐으면 true, 이미 존재하면 false
+   */
+  async addToWaitingRoomIfAbsent(
+    notification: object,
+    scheduledTime: Date,
+    deduplicationKey: string,
+  ): Promise<boolean> {
+    const member = JSON.stringify({ ...notification, _key: deduplicationKey });
+    const score = Math.floor(scheduledTime.getTime() / 1000);
+    const added = await this.redisClient.zadd(
+      this.WAITING_ROOM_KEY,
+      'NX',
+      score,
+      member,
+    );
+    return added === 1;
+  }
+
+  /**
+   * Waiting Room에서 발송 시간이 된 알림들을 Ready Queue로 이동 (원자적)
+   * Lua 스크립트로 ZRANGEBYSCORE + LPUSH + ZREMRANGEBYSCORE를 단일 트랜잭션 처리
+   * — 동시 실행 시 중복 이동 방지
    * @param currentTime 현재 Unix timestamp (초 단위)
    * @returns 이동된 알림 개수
    */
   async moveReadyNotificationsFromWaiting(
     currentTime: number,
   ): Promise<number> {
-    // ZRANGEBYSCORE: score가 -inf ~ currentTime 범위인 항목들 조회
-    const readyNotifications = await this.redisClient.zrangebyscore(
+    const script = `
+      local items = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
+      if #items == 0 then
+        return 0
+      end
+      redis.call('LPUSH', KEYS[2], unpack(items))
+      redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
+      return #items
+    `;
+
+    const moved = await this.redisClient.eval(
+      script,
+      2,
       this.WAITING_ROOM_KEY,
-      '-inf',
+      this.READY_QUEUE_KEY,
       currentTime.toString(),
     );
 
-    if (readyNotifications.length === 0) {
-      return 0;
-    }
-
-    // Ready Queue로 이동 (LPUSH)
-    if (readyNotifications.length > 0) {
-      await this.redisClient.lpush(this.READY_QUEUE_KEY, ...readyNotifications);
-    }
-
-    // Waiting Room에서 제거 (ZREMRANGEBYSCORE)
-    await this.redisClient.zremrangebyscore(
-      this.WAITING_ROOM_KEY,
-      '-inf',
-      currentTime.toString(),
-    );
-
-    return readyNotifications.length;
+    return moved as number;
   }
 
   /**
@@ -776,6 +797,45 @@ export class RedisService implements OnModuleInit {
    */
   async getWaitingRoomSize(): Promise<number> {
     return await this.redisClient.zcard(this.WAITING_ROOM_KEY);
+  }
+
+  /**
+   * Waiting Room에서 특정 reminderIds에 해당하는 항목 삭제
+   * ZSCAN으로 member를 순회하며 _key 필드가 일치하는 항목 제거
+   */
+  async removeRemindersFromWaitingRoom(reminderIds: string[]): Promise<void> {
+    if (reminderIds.length === 0) return;
+
+    const idSet = new Set(reminderIds);
+    const toRemove: string[] = [];
+    let cursor = '0';
+
+    do {
+      const [nextCursor, items] = await this.redisClient.zscan(
+        this.WAITING_ROOM_KEY,
+        cursor,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+
+      // ZSCAN은 [member, score, member, score ...] 형태로 반환
+      for (let i = 0; i < items.length; i += 2) {
+        const member = items[i];
+        try {
+          const parsed = JSON.parse(member);
+          if (parsed._key && idSet.has(parsed._key)) {
+            toRemove.push(member);
+          }
+        } catch {
+          // JSON 파싱 실패한 member는 스킵
+        }
+      }
+    } while (cursor !== '0');
+
+    if (toRemove.length > 0) {
+      await this.redisClient.zrem(this.WAITING_ROOM_KEY, ...toRemove);
+    }
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
