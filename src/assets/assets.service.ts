@@ -451,11 +451,21 @@ export class AssetsService {
   async getGroupTrend(userId: string, query: TrendQueryDto) {
     await this.validateGroupMember(userId, query.groupId);
 
-    const accounts = await this.prisma.account.findMany({
-      where: { groupId: query.groupId },
-      select: { id: true },
-    });
-    const accountIds = accounts.map((a) => a.id);
+    // accountIds 지정 시 해당 계좌들이 그룹 소속인지 검증
+    let accountIds: string[];
+    if (query.accountIds && query.accountIds.length > 0) {
+      const accounts = await this.prisma.account.findMany({
+        where: { id: { in: query.accountIds }, groupId: query.groupId },
+        select: { id: true },
+      });
+      accountIds = accounts.map((a) => a.id);
+    } else {
+      const accounts = await this.prisma.account.findMany({
+        where: { groupId: query.groupId },
+        select: { id: true },
+      });
+      accountIds = accounts.map((a) => a.id);
+    }
 
     if (accountIds.length === 0) return [];
 
