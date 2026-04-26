@@ -7,6 +7,7 @@ export enum NotificationCategory {
   SCHEDULE = 'SCHEDULE',
   TODO = 'TODO',
   HOUSEHOLD = 'HOUSEHOLD',
+  SAVINGS = 'SAVINGS',
   ASSET = 'ASSET',
   CHILDCARE = 'CHILDCARE',
   GROUP = 'GROUP',

@@ -46,12 +46,15 @@ export class TaskNotificationListener {
       title: string;
       scheduledAt: Date | null;
       dueAt: Date | null;
+      type: string;
     },
     userId: string,
     reminders: { id: string; reminderType: string; offsetMinutes: number }[],
     category: NotificationCategory,
   ) {
     const now = new Date();
+    const isTodo = category === NotificationCategory.TODO;
+    const taskData = isTodo ? { todoId: task.id } : { scheduleId: task.id };
 
     await Promise.allSettled(
       reminders.map((reminder) => {
@@ -81,7 +84,7 @@ export class TaskNotificationListener {
             category,
             title: task.title,
             body,
-            data: { taskId: task.id, reminderId: reminder.id },
+            data: { ...taskData, reminderId: reminder.id },
             scheduledTime: scheduledTime.toISOString(),
           },
           reminder.id,
@@ -95,6 +98,7 @@ export class TaskNotificationListener {
     const { task, userId, groupId, participantIds, reminders } = event;
     const category = this.getCategoryByTaskType(task.type);
     const isTodo = category === NotificationCategory.TODO;
+    const taskData = isTodo ? { todoId: task.id } : { scheduleId: task.id };
 
     // 참여자들에게 알림
     if (participantIds.length > 0) {
@@ -105,7 +109,7 @@ export class TaskNotificationListener {
           ? '새 할 일에 참여자로 지정되었습니다'
           : '새 일정에 참여자로 지정되었습니다',
         task.title,
-        { category, scheduleId: task.id },
+        taskData,
         category,
       );
     }
@@ -117,7 +121,7 @@ export class TaskNotificationListener {
         userId,
         isTodo ? '새 할 일이 추가되었습니다' : '새 일정이 추가되었습니다',
         task.title,
-        { category, scheduleId: task.id },
+        taskData,
         category,
       );
     }
@@ -134,6 +138,7 @@ export class TaskNotificationListener {
       event;
     const category = this.getCategoryByTaskType(task.type);
     const isTodo = category === NotificationCategory.TODO;
+    const taskData = isTodo ? { todoId: task.id } : { scheduleId: task.id };
 
     // 새로 추가된 참여자들에게만 알림
     if (newParticipantIds.length > 0) {
@@ -144,7 +149,7 @@ export class TaskNotificationListener {
           ? '할 일에 참여자로 지정되었습니다'
           : '일정에 참여자로 지정되었습니다',
         task.title,
-        { category, scheduleId: task.id },
+        taskData,
         category,
       );
     }
@@ -190,7 +195,7 @@ export class TaskNotificationListener {
               category: NotificationCategory.TODO,
               title: '할 일 완료',
               body: `"${task.title}"이(가) 완료되었습니다`,
-              data: { taskId: task.id },
+              data: { todoId: task.id },
             }),
           ),
       );
@@ -207,7 +212,7 @@ export class TaskNotificationListener {
         userId,
         '반복 일정이 건너뛰기 되었습니다',
         `${skipDate} 일정이 건너뛰기 되었습니다`,
-        { category: 'SCHEDULE', scheduleId: recurringId },
+        { scheduleId: recurringId },
         NotificationCategory.SCHEDULE,
       );
     }

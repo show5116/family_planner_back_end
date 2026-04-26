@@ -1,6 +1,6 @@
 # 알림 현황 맵 (Notification Map)
 
-> 마지막 업데이트: 2026-03-24
+> 마지막 업데이트: 2026-04-26
 > 전체 알림 카테고리와 실제 발송 현황을 한눈에 확인합니다.
 
 ---
@@ -36,8 +36,16 @@
 | # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
 |---|--------|------|--------|-----------|------|
 | 1 | 지출 등록 후 월별 예산 초과 | 예산 초과 알림 | 그룹 멤버 전체 | 큐 (즉시) | [household.service.ts](../../src/household/household.service.ts) |
-
 > **본문 예시**: `"식비 예산을 초과했습니다. (지출 50,000원 / 예산 40,000원)"`
+
+---
+
+### 💵 SAVINGS — 저축 목표 알림
+
+| # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
+|---|--------|------|--------|-----------|------|
+| 1 | 적립 목표 달성 (수동 입금) | 적립 목표 달성! | 그룹 멤버 전체 | 큐 (즉시) | [savings.service.ts](../../src/savings/savings.service.ts) |
+| 2 | 적립 목표 달성 (자동 월별 적립) | 적립 목표 달성! | 그룹 멤버 전체 | 큐 (즉시, 스케줄러) | [savings.scheduler.ts](../../src/savings/savings.scheduler.ts) |
 
 ---
 
@@ -105,6 +113,28 @@
 | **큐 (즉시)** | `notificationQueue.enqueueImmediate()` → Redis Ready Queue → Worker가 FCM 발송 |
 | **예약** | `notificationService.scheduleNotification()` → Redis Waiting Room → 시간 도달 시 발송 |
 | **FCM Topic** | `sendAnnouncementNotification()` → FCM Topic 직접 브로드캐스트 (DB 미저장) |
+
+---
+
+## FCM data 필드 (클라이언트 화면 이동용)
+
+알림 클릭 시 화면 이동에 필요한 `data` 키 목록입니다. 모든 값은 `string` 타입으로 전송됩니다.
+
+| 카테고리 | data 키 | 예시 |
+|---------|---------|------|
+| **SCHEDULE** | `scheduleId` | `{ "scheduleId": "uuid" }` |
+| **SCHEDULE** (리마인더) | `scheduleId`, `reminderId` | `{ "scheduleId": "uuid", "reminderId": "uuid" }` |
+| **TODO** | `todoId` | `{ "todoId": "uuid" }` |
+| **TODO** (리마인더) | `todoId`, `reminderId` | `{ "todoId": "uuid", "reminderId": "uuid" }` |
+| **HOUSEHOLD** | `householdId` | `{ "householdId": "group-uuid" }` |
+| **SAVINGS** | `savingsId` | `{ "savingsId": "goal-uuid" }` |
+| **ASSET** | `assetId` | `{ "assetId": "account-uuid" }` |
+| **CHILDCARE** | `childId` | `{ "childId": "uuid" }` |
+| **GROUP** | `groupId` | `{ "groupId": "uuid" }` |
+| **SYSTEM** (공지사항) | `announcementId` | `{ "announcementId": "uuid" }` |
+| **SYSTEM** (Q&A) | `questionId` | `{ "questionId": "uuid" }` |
+
+> **HOUSEHOLD**: 가계부는 그룹 단위로 관리되므로 `householdId`는 `groupId`와 동일한 값입니다.
 
 ---
 

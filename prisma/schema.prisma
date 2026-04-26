@@ -543,6 +543,7 @@ enum notification_settings_category {
   SCHEDULE
   TODO
   HOUSEHOLD
+  SAVINGS
   ASSET
   CHILDCARE
   GROUP
@@ -553,6 +554,7 @@ enum notifications_category {
   SCHEDULE
   TODO
   HOUSEHOLD
+  SAVINGS
   ASSET
   CHILDCARE
   GROUP

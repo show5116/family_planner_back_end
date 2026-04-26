@@ -328,7 +328,12 @@ export class ChildcareService {
     ]);
 
     if (account.child.userId) {
-      this.notifyChild(account.child.userId, type, amount).catch(() => null);
+      this.notifyChild(
+        account.child.userId,
+        type,
+        amount,
+        account.child.id,
+      ).catch(() => null);
     }
 
     return transaction;
@@ -905,6 +910,7 @@ export class ChildcareService {
     userId: string,
     type: ChildcareTransactionType,
     amount: number,
+    childId: string,
   ) {
     const isEarning = ChildcareEarningTypes.includes(type);
 
@@ -915,7 +921,7 @@ export class ChildcareService {
       body: isEarning
         ? `${amount} 포인트가 적립되었습니다`
         : `${amount} 포인트가 차감되었습니다`,
-      data: { type, amount },
+      data: { childId },
     });
   }
 

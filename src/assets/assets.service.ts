@@ -74,7 +74,7 @@ export class AssetsService {
             category: NotificationCategory.ASSET,
             title: '새 자산 계좌 등록',
             body: `"${dto.name}" 계좌가 등록되었습니다`,
-            data: { accountId: account.id, groupId: dto.groupId },
+            data: { assetId: account.id },
           }),
         ),
     );
@@ -255,7 +255,7 @@ export class AssetsService {
       category: NotificationCategory.ASSET,
       title: '자산 잔액 업데이트',
       body: `"${account.name}" 잔액이 ${balanceFormatted}원으로 기록되었습니다`,
-      data: { accountId, recordId: record.id },
+      data: { assetId: accountId },
     });
 
     return this.formatRecord(record);

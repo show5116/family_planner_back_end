@@ -157,7 +157,7 @@ export class ChildcareScheduler {
                 autoSavings > 0
                   ? `${plan.monthlyPoints} 포인트 지급, ${autoSavings} 포인트 자동 적금`
                   : `${plan.monthlyPoints} 포인트가 적립되었습니다`,
-              data: { type: 'ALLOWANCE', amount: plan.monthlyPoints },
+              data: { childId: child.id },
             })
             .catch(() => null);
         }
@@ -172,7 +172,7 @@ export class ChildcareScheduler {
               autoSavings > 0
                 ? `${plan.monthlyPoints}p 지급, ${autoSavings}p 자동 적금`
                 : `${plan.monthlyPoints} 포인트가 지급되었습니다`,
-            data: { type: 'ALLOWANCE', amount: plan.monthlyPoints },
+            data: { childId: child.id },
           })
           .catch(() => null);
 
@@ -249,7 +249,7 @@ export class ChildcareScheduler {
             category: NotificationCategory.CHILDCARE,
             title,
             body,
-            data: { type: 'NEGOTIATION', childId: child.id },
+            data: { childId: child.id },
           })
           .catch(() => null);
 
@@ -263,7 +263,7 @@ export class ChildcareScheduler {
                 ? '오늘 용돈 협상일이에요!'
                 : '내일 용돈 협상일이에요',
               body,
-              data: { type: 'NEGOTIATION', childId: child.id },
+              data: { childId: child.id },
             })
             .catch(() => null);
         }
@@ -379,10 +379,7 @@ export class ChildcareScheduler {
               category: NotificationCategory.CHILDCARE,
               title: '적금 만기 축하해요! 🎉',
               body: `원금 ${principal}p + 이자 ${expectedInterest}p = ${principal + expectedInterest}p가 지급됐어요`,
-              data: {
-                type: 'SAVINGS_MATURED',
-                amount: principal + expectedInterest,
-              },
+              data: { childId: account.child.id },
             })
             .catch(() => null);
         }
@@ -394,10 +391,7 @@ export class ChildcareScheduler {
             category: NotificationCategory.CHILDCARE,
             title: `${account.child.name} 적금 만기 완료`,
             body: `원금 ${principal}p + 이자 ${expectedInterest}p = ${principal + expectedInterest}p 지급`,
-            data: {
-              type: 'SAVINGS_MATURED',
-              amount: principal + expectedInterest,
-            },
+            data: { childId: account.child.id },
           })
           .catch(() => null);
 

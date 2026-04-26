@@ -210,7 +210,7 @@ export class NotificationQueueService {
     const message: messaging.MulticastMessage = {
       tokens,
       notification: { title, body },
-      data: data ? this.convertDataToStringMap(data) : undefined,
+      data: this.convertDataToStringMap({ category, ...(data || {}) }),
       android: {
         priority: 'high',
         notification: { channelId: category },

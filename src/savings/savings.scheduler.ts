@@ -115,7 +115,9 @@ export class SavingsScheduler {
           updatedGoal.targetAmount &&
           Number(updatedGoal.currentAmount) >= Number(updatedGoal.targetAmount)
         ) {
-          this.notifyGoalReached(goal.groupId, goal.name).catch(() => null);
+          this.notifyGoalReached(goal.groupId, goal.name, goal.id).catch(
+            () => null,
+          );
         }
       }
 
@@ -125,7 +127,11 @@ export class SavingsScheduler {
     }
   }
 
-  private async notifyGoalReached(groupId: string, goalName: string) {
+  private async notifyGoalReached(
+    groupId: string,
+    goalName: string,
+    goalId: string,
+  ) {
     const members = await this.prisma.groupMember.findMany({
       where: { groupId },
       select: { userId: true },
@@ -134,10 +140,10 @@ export class SavingsScheduler {
     for (const member of members) {
       await this.notificationQueue.enqueueImmediate({
         userId: member.userId,
-        category: NotificationCategory.HOUSEHOLD,
+        category: NotificationCategory.SAVINGS,
         title: '적립 목표 달성!',
         body: `"${goalName}" 목표 금액을 달성했습니다.`,
-        data: { groupId },
+        data: { savingsId: goalId },
       });
     }
   }

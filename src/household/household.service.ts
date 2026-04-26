@@ -965,7 +965,7 @@ export class HouseholdService {
         category: NotificationCategory.HOUSEHOLD,
         title: '예산 초과 알림',
         body: `${label} 예산을 초과했습니다. (지출 ${totalSpent.toLocaleString()}원 / 예산 ${budgetAmount.toLocaleString()}원)`,
-        data: { groupId, category },
+        data: { householdId: groupId },
       });
     }
 
