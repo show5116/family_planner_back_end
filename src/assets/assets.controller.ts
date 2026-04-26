@@ -15,6 +15,7 @@ import { AssetsService } from './assets.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateAccountRecordDto } from './dto/create-account-record.dto';
+import { CreateAccountWithdrawalDto } from './dto/create-account-withdrawal.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
 import {
   AccountTrendQueryDto,
@@ -25,6 +26,7 @@ import {
   AccountDto,
   AccountRecordDto,
   AccountStatisticsDto,
+  AccountWithdrawalDto,
   TrendItemDto,
 } from './dto/assets-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
@@ -133,6 +135,51 @@ export class AssetsController {
       req.user.userId,
       id,
       recordId,
+    );
+  }
+
+  // ─── 출금 ─────────────────────────────────────────────────
+
+  @Post('accounts/:id/withdrawals')
+  @ApiOperation({
+    summary: '출금 기록 추가 (출금일 이후 원금/수익 자동 재계산)',
+  })
+  @ApiCreated(AccountWithdrawalDto, '출금 기록 추가 성공')
+  @ApiNotFound('계좌를 찾을 수 없습니다')
+  @ApiForbidden('본인의 계좌에만 출금 기록을 추가할 수 있습니다')
+  createWithdrawal(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: CreateAccountWithdrawalDto,
+  ) {
+    return this.assetsService.createWithdrawal(req.user.userId, id, dto);
+  }
+
+  @Get('accounts/:id/withdrawals')
+  @ApiOperation({ summary: '출금 기록 목록 조회' })
+  @ApiSuccess(AccountWithdrawalDto, '출금 기록 목록 조회 성공', {
+    isArray: true,
+  })
+  @ApiNotFound('계좌를 찾을 수 없습니다')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findWithdrawals(@Request() req, @Param('id') id: string) {
+    return this.assetsService.findWithdrawals(req.user.userId, id);
+  }
+
+  @Delete('accounts/:id/withdrawals/:withdrawalId')
+  @ApiOperation({ summary: '출금 기록 삭제 (출금일 이후 원금/수익 원복)' })
+  @ApiSuccess(MessageResponseDto, '출금 기록 삭제 성공')
+  @ApiNotFound('출금 기록을 찾을 수 없습니다')
+  @ApiForbidden('본인의 계좌 출금 기록만 삭제할 수 있습니다')
+  removeWithdrawal(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('withdrawalId') withdrawalId: string,
+  ) {
+    return this.assetsService.removeWithdrawal(
+      req.user.userId,
+      id,
+      withdrawalId,
     );
   }
 

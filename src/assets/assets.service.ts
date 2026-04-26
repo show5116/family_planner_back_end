@@ -15,6 +15,7 @@ import {
   CreateAccountRecordDto,
   RecordInputMode,
 } from './dto/create-account-record.dto';
+import { CreateAccountWithdrawalDto } from './dto/create-account-withdrawal.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
 import {
   AccountTrendQueryDto,
@@ -590,6 +591,170 @@ export class AssetsService {
           profitRate,
         };
       });
+  }
+
+  /**
+   * 출금 기록 추가 (소유자만)
+   * - 출금 금액만큼 출금일 이후 모든 AccountRecord의 principal 재계산
+   * - profit = balance - principal 재계산
+   */
+  async createWithdrawal(
+    userId: string,
+    accountId: string,
+    dto: CreateAccountWithdrawalDto,
+  ) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    if (account.userId !== userId) {
+      throw new ForbiddenException(
+        '본인의 계좌에만 출금 기록을 추가할 수 있습니다',
+      );
+    }
+
+    const withdrawalDate = new Date(dto.withdrawalDate);
+
+    const withdrawal = await this.prisma.accountWithdrawal.create({
+      data: {
+        accountId,
+        withdrawalDate,
+        amount: dto.amount,
+        note: dto.note,
+      },
+    });
+
+    // 출금일 이후(당일 포함) AccountRecord의 principal, profit 재계산
+    const affectedRecords = await this.prisma.accountRecord.findMany({
+      where: { accountId, recordDate: { gte: withdrawalDate } },
+      orderBy: { recordDate: 'asc' },
+    });
+
+    await Promise.all(
+      affectedRecords.map((record) => {
+        const newPrincipal = Math.max(0, Number(record.principal) - dto.amount);
+        const newProfit = Number(record.balance) - newPrincipal;
+        return this.prisma.accountRecord.update({
+          where: { id: record.id },
+          data: { principal: newPrincipal, profit: newProfit },
+        });
+      }),
+    );
+
+    const amountFormatted = dto.amount.toLocaleString('ko-KR');
+    await this.notificationService.sendNotification({
+      userId,
+      category: NotificationCategory.ASSET,
+      title: '출금 기록 추가',
+      body: `"${account.name}"에서 ${amountFormatted}원이 출금되었습니다`,
+      data: { assetId: accountId },
+    });
+
+    return this.formatWithdrawal(withdrawal);
+  }
+
+  /**
+   * 출금 기록 목록 조회 (그룹 멤버)
+   */
+  async findWithdrawals(userId: string, accountId: string) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    await this.validateGroupMember(userId, account.groupId);
+
+    const withdrawals = await this.prisma.accountWithdrawal.findMany({
+      where: { accountId },
+      orderBy: { withdrawalDate: 'desc' },
+    });
+
+    return withdrawals.map((w) => this.formatWithdrawal(w));
+  }
+
+  /**
+   * 출금 기록 삭제 (소유자만)
+   * - 삭제 시 해당 출금일 이후 AccountRecord의 principal 원복
+   */
+  async removeWithdrawal(
+    userId: string,
+    accountId: string,
+    withdrawalId: string,
+  ) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    if (account.userId !== userId) {
+      throw new ForbiddenException(
+        '본인의 계좌 출금 기록만 삭제할 수 있습니다',
+      );
+    }
+
+    const withdrawal = await this.prisma.accountWithdrawal.findUnique({
+      where: { id: withdrawalId },
+    });
+
+    if (!withdrawal || withdrawal.accountId !== accountId) {
+      throw new NotFoundException('출금 기록을 찾을 수 없습니다');
+    }
+
+    await this.prisma.accountWithdrawal.delete({ where: { id: withdrawalId } });
+
+    // 출금일 이후 AccountRecord의 principal 원복
+    const affectedRecords = await this.prisma.accountRecord.findMany({
+      where: {
+        accountId,
+        recordDate: { gte: withdrawal.withdrawalDate },
+      },
+      orderBy: { recordDate: 'asc' },
+    });
+
+    await Promise.all(
+      affectedRecords.map((record) => {
+        const restoredPrincipal =
+          Number(record.principal) + Number(withdrawal.amount);
+        const restoredProfit = Number(record.balance) - restoredPrincipal;
+        return this.prisma.accountRecord.update({
+          where: { id: record.id },
+          data: {
+            principal: restoredPrincipal,
+            profit: restoredProfit,
+          },
+        });
+      }),
+    );
+
+    return { message: '출금 기록이 삭제되었습니다' };
+  }
+
+  private formatWithdrawal(withdrawal: {
+    id: string;
+    accountId: string;
+    withdrawalDate: Date;
+    amount: unknown;
+    note: string | null;
+    createdAt: Date;
+  }) {
+    return {
+      id: withdrawal.id,
+      accountId: withdrawal.accountId,
+      withdrawalDate: withdrawal.withdrawalDate,
+      amount: Number(withdrawal.amount).toFixed(2),
+      note: withdrawal.note,
+      createdAt: withdrawal.createdAt,
+    };
   }
 
   private formatRecord(record: {

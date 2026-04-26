@@ -119,6 +119,26 @@ export class TrendItemDto {
   profitRate: string;
 }
 
+export class AccountWithdrawalDto {
+  @ApiProperty({ description: '출금 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '계좌 ID', example: 'uuid-5678' })
+  accountId: string;
+
+  @ApiProperty({ description: '출금 날짜', example: '2026-04-27' })
+  withdrawalDate: Date;
+
+  @ApiProperty({ description: '출금 금액', example: '500000.00' })
+  amount: string;
+
+  @ApiProperty({ description: '메모', example: '생활비 출금', nullable: true })
+  note: string | null;
+
+  @ApiProperty({ description: '생성일시' })
+  createdAt: Date;
+}
+
 export class AccountStatisticsDto {
   @ApiProperty({ description: '총 잔액 (계좌)', example: '50000000.00' })
   totalBalance: string;

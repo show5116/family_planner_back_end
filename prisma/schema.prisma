@@ -774,19 +774,20 @@ enum PaymentMethod {
 }
 
 model Account {
-  id            String        @id @default(uuid())
+  id            String              @id @default(uuid())
   groupId       String
   userId        String
-  name          String        @db.VarChar(100)
-  accountNumber String?       @db.VarChar(50)
-  institution   String        @db.VarChar(100)
+  name          String              @db.VarChar(100)
+  accountNumber String?             @db.VarChar(50)
+  institution   String              @db.VarChar(100)
   type          AccountType
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
-  group         Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group         Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   records       AccountRecord[]
+  withdrawals   AccountWithdrawal[]
 
   @@index([groupId])
   @@index([userId])
@@ -817,6 +818,20 @@ model AccountRecord {
   @@unique([accountId, recordDate])
   @@index([accountId, recordDate(sort: Desc)])
   @@map("account_records")
+}
+
+model AccountWithdrawal {
+  id             String   @id @default(uuid())
+  accountId      String
+  withdrawalDate DateTime @db.Date
+  amount         Decimal  @db.Decimal(15, 2)
+  note           String?  @db.VarChar(200)
+  createdAt      DateTime @default(now())
+
+  account        Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, withdrawalDate(sort: Desc)])
+  @@map("account_withdrawals")
 }
 
 // ============================================================

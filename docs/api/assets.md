@@ -288,6 +288,99 @@
 
 ---
 
+### POST `assets/accounts/:id/withdrawals`
+
+**요약:** 출금 기록 추가 (출금일 이후 원금/수익 자동 재계산)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "withdrawalDate": "2026-04-27", // 출금 날짜 (YYYY-MM-DD) (string)
+  "amount": 500000, // 출금 금액 (number)
+  "note": "생활비 출금" // 메모 (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 출금 기록 추가 성공
+
+```json
+{
+  "id": "uuid-1234", // 출금 ID (string)
+  "accountId": "uuid-5678", // 계좌 ID (string)
+  "withdrawalDate": "2026-04-27", // 출금 날짜 (Date)
+  "amount": "500000.00", // 출금 금액 (string)
+  "note": "생활비 출금", // 메모 (string | null)
+  "createdAt": "2025-01-01T00:00:00Z" // 생성일시 (Date)
+}
+```
+
+#### 404 - 계좌를 찾을 수 없습니다
+
+#### 403 - 본인의 계좌에만 출금 기록을 추가할 수 있습니다
+
+---
+
+### GET `assets/accounts/:id/withdrawals`
+
+**요약:** 출금 기록 목록 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 출금 기록 목록 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 출금 ID (string)
+  "accountId": "uuid-5678", // 계좌 ID (string)
+  "withdrawalDate": "2026-04-27", // 출금 날짜 (Date)
+  "amount": "500000.00", // 출금 금액 (string)
+  "note": "생활비 출금", // 메모 (string | null)
+  "createdAt": "2025-01-01T00:00:00Z" // 생성일시 (Date)
+}
+```
+
+#### 404 - 계좌를 찾을 수 없습니다
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### DELETE `assets/accounts/:id/withdrawals/:withdrawalId`
+
+**요약:** 출금 기록 삭제 (출금일 이후 원금/수익 원복)
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `withdrawalId` (`string`)
+
+**Responses:**
+
+#### 200 - 출금 기록 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 출금 기록을 찾을 수 없습니다
+
+#### 403 - 본인의 계좌 출금 기록만 삭제할 수 있습니다
+
+---
+
 ### GET `assets/statistics`
 
 **요약:** 그룹 자산 통계 조회
