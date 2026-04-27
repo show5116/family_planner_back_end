@@ -469,14 +469,20 @@ export class AssetsService {
 
     if (accountIds.length === 0) return [];
 
-    const where =
+    const rangeStart =
       query.period === TrendPeriod.MONTHLY
+        ? new Date(`${query.year}-01-01`)
+        : null;
+    const rangeEnd =
+      query.period === TrendPeriod.MONTHLY
+        ? new Date(`${Number(query.year) + 1}-01-01`)
+        : null;
+
+    const where =
+      rangeStart && rangeEnd
         ? {
             accountId: { in: accountIds },
-            recordDate: {
-              gte: new Date(`${query.year}-01-01`),
-              lt: new Date(`${Number(query.year) + 1}-01-01`),
-            },
+            recordDate: { gte: rangeStart, lt: rangeEnd },
           }
         : { accountId: { in: accountIds } };
 
@@ -492,7 +498,28 @@ export class AssetsService {
       },
     });
 
-    return this.aggregateTrend(records, query.period);
+    // monthly 모드: 조회 범위 이전의 계좌별 마지막 기록을 carry-forward 시작값으로 추가
+    let seedRecords: typeof records = [];
+    if (rangeStart) {
+      const lastBeforeRange = await Promise.all(
+        accountIds.map((id) =>
+          this.prisma.accountRecord.findFirst({
+            where: { accountId: id, recordDate: { lt: rangeStart } },
+            orderBy: { recordDate: 'desc' },
+            select: {
+              accountId: true,
+              recordDate: true,
+              balance: true,
+              principal: true,
+              profit: true,
+            },
+          }),
+        ),
+      );
+      seedRecords = lastBeforeRange.filter((r) => r !== null);
+    }
+
+    return this.aggregateTrend(seedRecords, records, query.period, rangeStart);
   }
 
   /**
@@ -513,14 +540,20 @@ export class AssetsService {
 
     await this.validateGroupMember(userId, account.groupId);
 
-    const where =
+    const rangeStart =
       query.period === TrendPeriod.MONTHLY
+        ? new Date(`${query.year}-01-01`)
+        : null;
+    const rangeEnd =
+      query.period === TrendPeriod.MONTHLY
+        ? new Date(`${Number(query.year) + 1}-01-01`)
+        : null;
+
+    const where =
+      rangeStart && rangeEnd
         ? {
             accountId,
-            recordDate: {
-              gte: new Date(`${query.year}-01-01`),
-              lt: new Date(`${Number(query.year) + 1}-01-01`),
-            },
+            recordDate: { gte: rangeStart, lt: rangeEnd },
           }
         : { accountId };
 
@@ -536,14 +569,39 @@ export class AssetsService {
       },
     });
 
-    return this.aggregateTrend(records, query.period);
+    // monthly 모드: 조회 범위 이전의 마지막 기록을 carry-forward 시작값으로 추가
+    let seedRecords: typeof records = [];
+    if (rangeStart) {
+      const lastBefore = await this.prisma.accountRecord.findFirst({
+        where: { accountId, recordDate: { lt: rangeStart } },
+        orderBy: { recordDate: 'desc' },
+        select: {
+          accountId: true,
+          recordDate: true,
+          balance: true,
+          principal: true,
+          profit: true,
+        },
+      });
+      if (lastBefore) seedRecords = [lastBefore];
+    }
+
+    return this.aggregateTrend(seedRecords, records, query.period, rangeStart);
   }
 
   /**
    * 기간별 통계 집계 헬퍼
    * - 각 기간(월/년)마다 계좌별 마지막 기록을 합산
+   * - 기록 없는 기간은 직전 기록값을 carry-forward (빈 달 채우기)
    */
   private aggregateTrend(
+    seedRecords: {
+      accountId: string;
+      recordDate: Date;
+      balance: unknown;
+      principal: unknown;
+      profit: unknown;
+    }[],
     records: {
       accountId: string;
       recordDate: Date;
@@ -552,55 +610,146 @@ export class AssetsService {
       profit: unknown;
     }[],
     period: TrendPeriod,
+    rangeStart: Date | null,
   ) {
+    // 실제 출력할 기간 범위는 records 기준으로 생성
+    // rangeStart가 있으면 해당 월부터 시작 보장 (records가 비어도)
+    if (records.length === 0 && seedRecords.length === 0) return [];
+
     const getPeriodKey = (date: Date) => {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getUTCFullYear();
+      const m = String(date.getUTCMonth() + 1).padStart(2, '0');
       return period === TrendPeriod.MONTHLY ? `${y}-${m}` : `${y}`;
     };
 
-    // 기간 → 계좌 → 마지막 기록 (recordDate asc 정렬이므로 덮어쓰면 됨)
-    const periodMap = new Map<
+    // 출력 키 범위: rangeStart가 있으면 그 달부터, 없으면 records 전체 범위
+    const allKeys = this.generatePeriodKeys(records, period, rangeStart);
+    if (allKeys.length === 0) return [];
+
+    const rawMap = new Map<
       string,
       Map<string, { balance: number; principal: number; profit: number }>
     >();
+    for (const key of allKeys) {
+      rawMap.set(key, new Map());
+    }
 
+    // 실제 기간 내 기록 삽입
     for (const r of records) {
       const key = getPeriodKey(r.recordDate);
-      if (!periodMap.has(key)) periodMap.set(key, new Map());
-      const periodEntry = periodMap.get(key);
-      if (periodEntry)
-        periodEntry.set(r.accountId, {
+      const entry = rawMap.get(key);
+      if (entry) {
+        entry.set(r.accountId, {
           balance: Number(r.balance),
           principal: Number(r.principal),
           profit: Number(r.profit),
         });
+      }
     }
 
-    return Array.from(periodMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, accountMap]) => {
-        let balance = 0;
-        let principal = 0;
-        let profit = 0;
-
-        for (const v of accountMap.values()) {
-          balance += v.balance;
-          principal += v.principal;
-          profit += v.profit;
-        }
-
-        const profitRate =
-          principal > 0 ? ((profit / principal) * 100).toFixed(2) : '0.00';
-
-        return {
-          period: key,
-          balance: balance.toFixed(2),
-          principal: principal.toFixed(2),
-          profit: profit.toFixed(2),
-          profitRate,
-        };
+    // carry-forward 시작값: seed 기록으로 lastKnown 초기화
+    const accountIds = [
+      ...new Set([
+        ...seedRecords.map((r) => r.accountId),
+        ...records.map((r) => r.accountId),
+      ]),
+    ];
+    const lastKnown = new Map<
+      string,
+      { balance: number; principal: number; profit: number }
+    >();
+    for (const r of seedRecords) {
+      lastKnown.set(r.accountId, {
+        balance: Number(r.balance),
+        principal: Number(r.principal),
+        profit: Number(r.profit),
       });
+    }
+
+    // carry-forward: 빈 기간에 직전 값 채우기
+    for (const key of allKeys) {
+      const periodEntry = rawMap.get(key);
+      for (const accountId of accountIds) {
+        if (periodEntry.has(accountId)) {
+          lastKnown.set(accountId, periodEntry.get(accountId));
+        } else if (lastKnown.has(accountId)) {
+          periodEntry.set(accountId, lastKnown.get(accountId));
+        }
+      }
+    }
+
+    return allKeys.map((key) => {
+      const accountMap = rawMap.get(key);
+      let balance = 0;
+      let principal = 0;
+      let profit = 0;
+
+      for (const v of accountMap.values()) {
+        balance += v.balance;
+        principal += v.principal;
+        profit += v.profit;
+      }
+
+      const profitRate =
+        principal > 0 ? ((profit / principal) * 100).toFixed(2) : '0.00';
+
+      return {
+        period: key,
+        balance: balance.toFixed(2),
+        principal: principal.toFixed(2),
+        profit: profit.toFixed(2),
+        profitRate,
+      };
+    });
+  }
+
+  /**
+   * 기록의 최솟값~최댓값 범위에서 모든 기간 키 목록 생성
+   */
+  private generatePeriodKeys(
+    records: { recordDate: Date }[],
+    period: TrendPeriod,
+    rangeStart: Date | null,
+  ): string[] {
+    if (records.length === 0 && !rangeStart) return [];
+
+    const keys: string[] = [];
+
+    if (period === TrendPeriod.MONTHLY) {
+      // 시작: rangeStart가 있으면 그 달, 없으면 records 최솟값
+      const startBase =
+        rangeStart ??
+        new Date(Math.min(...records.map((r) => r.recordDate.getTime())));
+      // 끝: records 최댓값 (없으면 rangeStart 달)
+      const endBase =
+        records.length > 0
+          ? new Date(Math.max(...records.map((r) => r.recordDate.getTime())))
+          : startBase;
+
+      const cur = new Date(
+        Date.UTC(startBase.getUTCFullYear(), startBase.getUTCMonth(), 1),
+      );
+      const end = new Date(
+        Date.UTC(endBase.getUTCFullYear(), endBase.getUTCMonth(), 1),
+      );
+      while (cur <= end) {
+        const y = cur.getUTCFullYear();
+        const m = String(cur.getUTCMonth() + 1).padStart(2, '0');
+        keys.push(`${y}-${m}`);
+        cur.setUTCMonth(cur.getUTCMonth() + 1);
+      }
+    } else {
+      const dates = records.map((r) => r.recordDate.getTime());
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date(Math.max(...dates));
+      const startYear = minDate.getUTCFullYear();
+      const endYear = maxDate.getUTCFullYear();
+      for (let y = startYear; y <= endYear; y++) {
+        keys.push(`${y}`);
+      }
+    }
+
+    return keys;
   }
 
   /**
