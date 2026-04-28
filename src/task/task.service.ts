@@ -296,7 +296,8 @@ export class TaskService {
     }
 
     // 업데이트 데이터 준비
-    const { updateData, changesAfter } = this.buildUpdateData(dto);
+    const { updateData, updateManyData, changesAfter } =
+      this.buildUpdateData(dto);
 
     const before = {
       title: task.title,
@@ -398,7 +399,7 @@ export class TaskService {
 
         await tx.task.updateMany({
           where: { id: { in: futureTasks.map((t) => t.id) } },
-          data: updateData as Prisma.TaskUpdateManyMutationInput,
+          data: updateManyData,
         });
 
         // 일괄 수정 이벤트 발행
@@ -557,41 +558,57 @@ export class TaskService {
    */
   private buildUpdateData(dto: UpdateTaskDto): {
     updateData: Prisma.TaskUpdateInput;
+    updateManyData: Prisma.TaskUncheckedUpdateManyInput;
     changesAfter: Record<string, string | null>;
   } {
     const updateData: Prisma.TaskUpdateInput = {};
+    const updateManyData: Prisma.TaskUncheckedUpdateManyInput = {};
     const changesAfter: Record<string, string | null> = {};
 
+    if (dto.categoryId !== undefined) {
+      updateData.category = dto.categoryId
+        ? { connect: { id: dto.categoryId } }
+        : { disconnect: true };
+      updateManyData.categoryId = dto.categoryId ?? null;
+      changesAfter.categoryId = dto.categoryId ?? null;
+    }
     if (dto.title) {
       updateData.title = dto.title;
+      updateManyData.title = dto.title;
       changesAfter.title = dto.title;
     }
     if (dto.description !== undefined) {
       updateData.description = dto.description;
+      updateManyData.description = dto.description;
       changesAfter.description = dto.description ?? null;
     }
     if (dto.location !== undefined) {
       updateData.location = dto.location;
+      updateManyData.location = dto.location;
       changesAfter.location = dto.location ?? null;
     }
     if (dto.type) {
       updateData.type = dto.type;
+      updateManyData.type = dto.type;
       changesAfter.type = dto.type;
     }
     if (dto.priority) {
       updateData.priority = dto.priority;
+      updateManyData.priority = dto.priority;
       changesAfter.priority = dto.priority;
     }
     if (dto.scheduledAt) {
       updateData.scheduledAt = dto.scheduledAt;
+      updateManyData.scheduledAt = dto.scheduledAt;
       changesAfter.scheduledAt = dto.scheduledAt.toISOString();
     }
     if (dto.dueAt) {
       updateData.dueAt = dto.dueAt;
+      updateManyData.dueAt = dto.dueAt;
       changesAfter.dueAt = dto.dueAt.toISOString();
     }
 
-    return { updateData, changesAfter };
+    return { updateData, updateManyData, changesAfter };
   }
 
   /**

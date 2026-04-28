@@ -37,6 +37,11 @@ export class UpdateTaskDto {
   @IsOptional()
   location?: string;
 
+  @ApiPropertyOptional({ description: '카테고리 ID', example: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  categoryId?: string;
+
   @ApiPropertyOptional({
     description: 'Task 타입',
     enum: TaskType,

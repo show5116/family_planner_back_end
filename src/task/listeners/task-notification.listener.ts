@@ -114,7 +114,7 @@ export class TaskNotificationListener {
       );
     }
 
-    // 그룹 멤버들에게 알림
+    // 그룹 멤버들에게 알림 (참여자는 이미 위에서 알림 받았으므로 제외)
     if (groupId) {
       await this.sendGroupNotification(
         groupId,
@@ -123,6 +123,7 @@ export class TaskNotificationListener {
         task.title,
         taskData,
         category,
+        participantIds,
       );
     }
 
@@ -228,15 +229,18 @@ export class TaskNotificationListener {
     body: string,
     data: object,
     category: NotificationCategory,
+    excludeUserIds: string[] = [],
   ) {
     const members = await this.prisma.groupMember.findMany({
       where: { groupId },
       select: { userId: true },
     });
 
+    const excluded = new Set([excludeUserId, ...excludeUserIds]);
+
     await Promise.allSettled(
       members
-        .filter((m) => m.userId !== excludeUserId)
+        .filter((m) => !excluded.has(m.userId))
         .map((m) =>
           this.notificationService.sendNotification({
             userId: m.userId,

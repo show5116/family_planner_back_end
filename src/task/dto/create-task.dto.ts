@@ -140,6 +140,16 @@ export class RuleConfigDto {
   @Min(1)
   @Max(12)
   month?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'YEARLY 반복 타입 (dayOfMonth: 날짜 기준, weekOfMonth: 요일 기준)',
+    example: 'dayOfMonth',
+    enum: ['dayOfMonth', 'weekOfMonth'],
+  })
+  @IsOptional()
+  @IsEnum(['dayOfMonth', 'weekOfMonth'])
+  yearlyType?: 'dayOfMonth' | 'weekOfMonth';
 }
 
 /**

@@ -374,6 +374,7 @@
   "title": "회의 참석", // Task 제목 (string?)
   "description": "분기 결산 회의", // 상세 설명 (string?)
   "location": "본사 2층 회의실", // 장소 (string?)
+  "categoryId": "uuid", // 카테고리 ID (string?)
   "type": null, // Task 타입 (TaskType?)
   "priority": null, // 우선순위 (TaskPriority?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)

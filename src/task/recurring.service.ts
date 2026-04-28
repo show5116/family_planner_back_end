@@ -161,19 +161,23 @@ export class RecurringService {
       ),
     );
 
-    // 시작 날짜 계산
-    const fromDate = recurring.lastGeneratedAt
-      ? new Date(recurring.lastGeneratedAt)
-      : new Date();
-    fromDate.setDate(fromDate.getDate() + 1);
+    // 시작 날짜 계산: 항상 오늘 기준으로 탐색 (existingDates로 중복 방지)
+    // lastGeneratedAt 기준으로 하면 YEARLY처럼 범위가 넓은 경우
+    // fromDate가 이미 생성된 날짜 이후를 가리켜 중복 생성될 수 있음
+    const fromDate = new Date();
     fromDate.setHours(0, 0, 0, 0);
 
-    // 미래 3개월 분량 날짜 계산
+    // ruleType에 따라 생성 범위 결정 (YEARLY/MONTHLY는 범위가 넓어야 미래 일정이 보임)
+    const monthsAhead = this.resolveMonthsAhead(
+      recurring.ruleType as RecurringRuleType,
+      ruleConfig.interval,
+    );
+
     const newDates = RecurringDateUtil.calculateNextDates(
       recurring.ruleType as RecurringRuleType,
       ruleConfig,
       fromDate,
-      3,
+      monthsAhead,
       existingDates,
       skipDates,
     );
@@ -435,6 +439,24 @@ export class RecurringService {
     }
 
     return newTask;
+  }
+
+  /**
+   * ruleType과 interval에 따라 생성할 개월 수 결정
+   * YEARLY: 최소 13개월(내년 포함), MONTHLY: interval * 3개월, 나머지: 3개월
+   */
+  private resolveMonthsAhead(
+    ruleType: RecurringRuleType,
+    interval: number,
+  ): number {
+    const safeInterval = Math.max(1, interval || 1);
+    if (ruleType === RecurringRuleType.YEARLY) {
+      return safeInterval * 12 + 1;
+    }
+    if (ruleType === RecurringRuleType.MONTHLY) {
+      return safeInterval * 3;
+    }
+    return 3;
   }
 
   /**
