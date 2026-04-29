@@ -8,6 +8,33 @@
 
 **Base Path:** `/groups`
 
+### GET `groups/my-join-requests`
+
+**요약:** 내 그룹 가입 신청 목록 조회
+
+**Query Parameters:**
+
+- `status` (`string`) - Optional
+
+**Responses:**
+
+#### 200 - 내 가입 신청 목록 조회 성공
+
+```json
+{
+  "id": "uuid", // 가입 요청 ID (string)
+  "group": {
+    "id": "uuid", // 그룹 ID (string)
+    "name": "우리 가족" // 그룹명 (string)
+  }, // MyJoinRequestGroupDto
+  "status": "PENDING", // 상태 (string)
+  "createdAt": "2025-12-04T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-04T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
 ### POST `groups/join`
 
 **요약:** 초대 코드로 그룹 가입

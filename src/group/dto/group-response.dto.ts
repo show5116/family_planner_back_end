@@ -398,3 +398,37 @@ export class ReorderMyGroupsResponseDto {
   @ApiProperty({ example: '그룹 순서가 변경되었습니다' })
   message: string;
 }
+
+export class MyJoinRequestGroupDto {
+  @ApiProperty({ description: '그룹 ID', example: 'uuid' })
+  id: string;
+
+  @ApiProperty({ description: '그룹명', example: '우리 가족' })
+  name: string;
+}
+
+export class MyJoinRequestDto {
+  @ApiProperty({ description: '가입 요청 ID', example: 'uuid' })
+  id: string;
+
+  @ApiProperty({ type: MyJoinRequestGroupDto })
+  group: MyJoinRequestGroupDto;
+
+  @ApiProperty({
+    description: '상태',
+    example: 'PENDING',
+    enum: ['PENDING', 'ACCEPTED', 'REJECTED'],
+  })
+  status: string;
+
+  @ApiProperty({ description: '생성일', example: '2025-12-04T00:00:00Z' })
+  createdAt: Date;
+
+  @ApiProperty({ description: '수정일', example: '2025-12-04T00:00:00Z' })
+  updatedAt: Date;
+}
+
+export class GetMyJoinRequestsResponseDto {
+  @ApiProperty({ type: [MyJoinRequestDto] })
+  data: MyJoinRequestDto[];
+}

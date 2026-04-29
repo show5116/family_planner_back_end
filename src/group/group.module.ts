@@ -13,7 +13,7 @@ import { NotificationModule } from '@/notification/notification.module';
 
 @Module({
   imports: [PrismaModule, StorageModule, EmailModule, NotificationModule],
-  controllers: [GroupController, GroupMemberController, GroupRoleController],
+  controllers: [GroupMemberController, GroupController, GroupRoleController],
   providers: [
     GroupService,
     GroupMemberService,

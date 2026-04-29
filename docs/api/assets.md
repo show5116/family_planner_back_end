@@ -115,6 +115,33 @@
 
 ---
 
+### PATCH `assets/accounts/reorder`
+
+**요약:** 그룹 계좌 순서 변경
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid-1234", // 그룹 ID (string)
+  "accountIds": ["uuid-a", "uuid-b", "uuid-c"] // 순서대로 정렬된 계좌 ID 목록 (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 계좌 순서 변경 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
 ### PATCH `assets/accounts/:id`
 
 **요약:** 계좌 수정
@@ -181,33 +208,6 @@
 #### 404 - 계좌를 찾을 수 없습니다
 
 #### 403 - 본인의 계좌만 삭제할 수 있습니다
-
----
-
-### PATCH `assets/accounts/reorder`
-
-**요약:** 그룹 계좌 순서 변경
-
-**Request Body:**
-
-```json
-{
-  "groupId": "uuid-1234", // 그룹 ID (string)
-  "accountIds": ["uuid-a", "uuid-b", "uuid-c"] // 순서대로 정렬된 계좌 ID 목록 (string[])
-}
-```
-
-**Responses:**
-
-#### 200 - 계좌 순서 변경 성공
-
-```json
-{
-  "message": "작업이 완료되었습니다" // string
-}
-```
-
-#### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
 

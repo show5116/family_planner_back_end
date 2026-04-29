@@ -307,6 +307,43 @@ export class GroupInviteService {
   }
 
   /**
+   * 내 가입 신청 목록 조회
+   */
+  async getMyJoinRequests(userId: string, status?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    const where: any = {
+      email: user.email,
+      type: 'REQUEST',
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    return this.prisma.groupJoinRequest.findMany({
+      where,
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        group: {
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
    * 초대 코드 재생성 (INVITE_MEMBER 권한 필요)
    */
   async regenerateInviteCode(groupId: string) {

@@ -72,6 +72,13 @@
 - **승인** (`POST /groups/:id/join-requests/:requestId/accept`): 멤버로 자동 추가, 기본 역할 부여
 - **거부** (`POST /groups/:id/join-requests/:requestId/reject`)
 
+### 내 가입 신청 조회
+- **내 신청 목록** (`GET /groups/my-join-requests`):
+  - 로그인 사용자의 이메일로 REQUEST 타입 신청 내역 조회
+  - 그룹 정보(id, name) 포함
+  - 상태별 필터링 가능 (`?status=PENDING|ACCEPTED|REJECTED`)
+  - 최신순 정렬
+
 ---
 
 ## 멤버 관리
@@ -245,6 +252,7 @@ model GroupJoinRequest {
 - [x] 이메일 초대 시스템
 - [x] 초대 취소 및 재전송
 - [x] 가입 요청 관리 (승인/거부)
+- [x] 내 가입 신청 목록 조회
 - [x] 멤버 목록 조회
 - [x] 멤버 역할 변경 (MANAGE_MEMBER 권한)
 - [x] 멤버 삭제 (MANAGE_MEMBER 권한)
@@ -276,6 +284,7 @@ model GroupJoinRequest {
 | PATCH  | `/groups/:id`                                 | 그룹 수정           | JWT, UPDATE        |
 | DELETE | `/groups/:id`                                 | 그룹 삭제           | JWT, DELETE        |
 | POST   | `/groups/join`                                | 초대 코드로 가입    | JWT                |
+| GET    | `/groups/my-join-requests`                    | 내 가입 신청 목록   | JWT                |
 | POST   | `/groups/:id/regenerate-code`                 | 초대 코드 재생성    | JWT, INVITE_MEMBER |
 | POST   | `/groups/:id/invite-by-email`                 | 이메일로 초대       | JWT, INVITE_MEMBER |
 | DELETE | `/groups/:id/invites/:requestId`              | 초대 취소           | JWT, INVITE_MEMBER |

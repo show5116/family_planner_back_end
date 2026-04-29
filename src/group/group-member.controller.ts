@@ -32,6 +32,7 @@ import {
   JoinGroupResponseDto,
   CancelInviteResponseDto,
   ResendInviteResponseDto,
+  MyJoinRequestDto,
 } from '@/group/dto/group-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
@@ -57,6 +58,20 @@ export class GroupMemberController {
     private readonly groupMemberService: GroupMemberService,
     private readonly groupInviteService: GroupInviteService,
   ) {}
+
+  @Get('my-join-requests')
+  @ApiOperation({
+    summary: '내 그룹 가입 신청 목록 조회',
+    description:
+      '내가 초대 코드로 신청한 가입 요청 목록을 조회합니다.\n\n' +
+      'status 쿼리 파라미터로 필터링 가능 (PENDING, ACCEPTED, REJECTED)',
+  })
+  @ApiSuccess(MyJoinRequestDto, '내 가입 신청 목록 조회 성공', {
+    isArray: true,
+  })
+  getMyJoinRequests(@Request() req: any, @Query('status') status?: string) {
+    return this.groupInviteService.getMyJoinRequests(req.user.userId, status);
+  }
 
   @Post('join')
   @ApiOperation({
