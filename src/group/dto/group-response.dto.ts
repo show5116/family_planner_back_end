@@ -393,3 +393,8 @@ export class ResendInviteResponseDto {
   @ApiProperty({ description: '가입 요청 ID', example: 'uuid' })
   joinRequestId: string;
 }
+
+export class ReorderMyGroupsResponseDto {
+  @ApiProperty({ example: '그룹 순서가 변경되었습니다' })
+  message: string;
+}

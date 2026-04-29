@@ -2869,6 +2869,30 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ---
 
+### PATCH `groups/my-order`
+
+**요약:** 내 그룹 목록 순서 변경
+
+**Request Body:**
+
+```json
+{
+  "groupIds": ["uuid1", "uuid2", "uuid3"] // 원하는 순서대로 정렬한 그룹 ID 배열 (본인이 속한 그룹 전체) (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 그룹 순서 변경 성공
+
+```json
+{
+  "message": "그룹 순서가 변경되었습니다" // string
+}
+```
+
+---
+
 ### GET `groups/:id`
 
 **요약:** 그룹 상세 조회

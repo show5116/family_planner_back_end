@@ -410,4 +410,35 @@ export class GroupMemberService {
       newOwner: membersWithUrls.find((m) => m.userId === newOwnerId),
     };
   }
+
+  /**
+   * 내 그룹 순서 변경
+   * groupIds 배열의 인덱스 순서를 sortOrder로 저장
+   */
+  async reorderMyGroups(userId: string, groupIds: string[]) {
+    // 실제로 해당 유저가 속한 그룹들인지 검증
+    const memberships = await this.prisma.groupMember.findMany({
+      where: { userId, groupId: { in: groupIds } },
+      select: { groupId: true },
+    });
+
+    const validGroupIds = new Set(memberships.map((m) => m.groupId));
+    const invalidIds = groupIds.filter((id) => !validGroupIds.has(id));
+    if (invalidIds.length > 0) {
+      throw new BadRequestException(
+        '본인이 속하지 않은 그룹이 포함되어 있습니다',
+      );
+    }
+
+    await this.prisma.$transaction(
+      groupIds.map((groupId, index) =>
+        this.prisma.groupMember.update({
+          where: { groupId_userId: { groupId, userId } },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+
+    return { message: '그룹 순서가 변경되었습니다' };
+  }
 }

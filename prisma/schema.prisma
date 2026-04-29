@@ -113,6 +113,7 @@ model GroupMember {
   joinedAt    DateTime @default(now())
   customColor String?  @db.VarChar(7)
   roleId      String
+  sortOrder   Int      @default(0)
   group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   role        Role     @relation(fields: [roleId], references: [id])
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -121,6 +122,7 @@ model GroupMember {
   @@index([groupId])
   @@index([userId])
   @@index([roleId])
+  @@index([userId, sortOrder])
   @@map("group_members")
 }
 

@@ -32,6 +32,9 @@ async function bootstrap() {
     rawBody: true, // Raw body 활성화
   });
 
+  // ETag 비활성화: 304 응답으로 인한 클라이언트 재호출 루프 방지
+  app.getHttpAdapter().getInstance().set('etag', false);
+
   // Pino Logger 설정
   app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService);

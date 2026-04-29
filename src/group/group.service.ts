@@ -108,39 +108,24 @@ export class GroupService {
    * 내가 속한 그룹 목록 조회
    */
   async findMyGroups(userId: string) {
-    const groups = await this.prisma.group.findMany({
-      where: {
-        members: {
-          some: {
-            userId,
-          },
-        },
-      },
+    const memberships = await this.prisma.groupMember.findMany({
+      where: { userId },
       include: {
-        members: {
-          where: {
-            userId, // 내 멤버십 정보만 포함
-          },
+        role: true,
+        group: {
           include: {
-            role: true,
-          },
-        },
-        _count: {
-          select: {
-            members: true,
+            _count: { select: { members: true } },
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { sortOrder: 'asc' },
     });
 
-    // 개인 커스텀 색상 또는 그룹 기본 색상 반환
-    return groups.map((group) => ({
+    return memberships.map(({ group, role, customColor, sortOrder }) => ({
       ...group,
-      myColor: group.members[0]?.customColor || group.defaultColor,
-      myRole: group.members[0]?.role,
+      myColor: customColor || group.defaultColor,
+      myRole: role,
+      sortOrder,
     }));
   }
 

@@ -11,12 +11,15 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { GroupService } from '@/group/group.service';
+import { GroupMemberService } from '@/group/group-member.service';
 import { CreateGroupDto } from '@/group/dto/create-group.dto';
 import { UpdateGroupDto } from '@/group/dto/update-group.dto';
+import { ReorderMyGroupsDto } from '@/group/dto/reorder-my-groups.dto';
 import {
   GroupDto,
   MyGroupDto,
   DeleteGroupResponseDto,
+  ReorderMyGroupsResponseDto,
 } from '@/group/dto/group-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
@@ -24,6 +27,7 @@ import {
   ApiCreated,
   ApiNotFound,
   ApiForbidden,
+  ApiBadRequest,
 } from '@/common/decorators/api-responses.decorator';
 import {
   GroupPermissionGuard,
@@ -36,7 +40,10 @@ import { PermissionCode } from '@prisma/client';
 @Controller('groups')
 @ApiCommonAuthResponses()
 export class GroupController {
-  constructor(private readonly groupService: GroupService) {}
+  constructor(
+    private readonly groupService: GroupService,
+    private readonly groupMemberService: GroupMemberService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: '그룹 생성' })
@@ -50,6 +57,17 @@ export class GroupController {
   @ApiSuccess(MyGroupDto, '그룹 목록 반환', { isArray: true })
   findMyGroups(@Request() req) {
     return this.groupService.findMyGroups(req.user.userId);
+  }
+
+  @Patch('my-order')
+  @ApiOperation({ summary: '내 그룹 목록 순서 변경' })
+  @ApiSuccess(ReorderMyGroupsResponseDto, '그룹 순서 변경 성공')
+  @ApiBadRequest('본인이 속하지 않은 그룹 포함')
+  reorderMyGroups(@Request() req: any, @Body() dto: ReorderMyGroupsDto) {
+    return this.groupMemberService.reorderMyGroups(
+      req.user.userId,
+      dto.groupIds,
+    );
   }
 
   @Get(':id')
