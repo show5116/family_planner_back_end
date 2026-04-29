@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -17,6 +18,7 @@ import {
 } from './dto/create-account-record.dto';
 import { CreateAccountWithdrawalDto } from './dto/create-account-withdrawal.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
+import { ReorderAccountsDto } from './dto/reorder-accounts.dto';
 import {
   AccountTrendQueryDto,
   TrendPeriod,
@@ -100,7 +102,7 @@ export class AssetsService {
           take: 1,
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
     return accounts.map((account) => {
@@ -186,6 +188,37 @@ export class AssetsService {
     await this.prisma.account.delete({ where: { id } });
 
     return { message: '계좌가 삭제되었습니다' };
+  }
+
+  /**
+   * 계좌 순서 변경 (그룹 멤버)
+   */
+  async reorderAccounts(userId: string, dto: ReorderAccountsDto) {
+    await this.validateGroupMember(userId, dto.groupId);
+
+    const accounts = await this.prisma.account.findMany({
+      where: { id: { in: dto.accountIds }, groupId: dto.groupId },
+      select: { id: true },
+    });
+
+    const validIds = new Set(accounts.map((a) => a.id));
+    const invalidIds = dto.accountIds.filter((id) => !validIds.has(id));
+    if (invalidIds.length > 0) {
+      throw new BadRequestException(
+        '해당 그룹에 속하지 않은 계좌가 포함되어 있습니다',
+      );
+    }
+
+    await this.prisma.$transaction(
+      dto.accountIds.map((accountId, index) =>
+        this.prisma.account.update({
+          where: { id: accountId },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+
+    return { message: '계좌 순서가 변경되었습니다' };
   }
 
   /**

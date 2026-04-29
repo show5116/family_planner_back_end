@@ -17,6 +17,7 @@ import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateAccountRecordDto } from './dto/create-account-record.dto';
 import { CreateAccountWithdrawalDto } from './dto/create-account-withdrawal.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
+import { ReorderAccountsDto } from './dto/reorder-accounts.dto';
 import {
   AccountTrendQueryDto,
   StatisticsQueryDto,
@@ -33,6 +34,7 @@ import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiCreated,
+  ApiBadRequest,
   ApiForbidden,
   ApiNotFound,
   ApiSuccess,
@@ -73,6 +75,15 @@ export class AssetsController {
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
   findOneAccount(@Request() req, @Param('id') id: string) {
     return this.assetsService.findOneAccount(req.user.userId, id);
+  }
+
+  @Patch('accounts/reorder')
+  @ApiOperation({ summary: '그룹 계좌 순서 변경' })
+  @ApiSuccess(MessageResponseDto, '계좌 순서 변경 성공')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  @ApiBadRequest('해당 그룹에 속하지 않은 계좌가 포함되어 있습니다')
+  reorderAccounts(@Request() req, @Body() dto: ReorderAccountsDto) {
+    return this.assetsService.reorderAccounts(req.user.userId, dto);
   }
 
   @Patch('accounts/:id')

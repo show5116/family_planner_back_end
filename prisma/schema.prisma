@@ -783,6 +783,7 @@ model Account {
   accountNumber String?             @db.VarChar(50)
   institution   String              @db.VarChar(100)
   type          AccountType
+  sortOrder     Int                 @default(0)
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
@@ -791,7 +792,7 @@ model Account {
   records       AccountRecord[]
   withdrawals   AccountWithdrawal[]
 
-  @@index([groupId])
+  @@index([groupId, sortOrder])
   @@index([userId])
   @@map("accounts")
 }

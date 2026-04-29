@@ -184,6 +184,33 @@
 
 ---
 
+### PATCH `assets/accounts/reorder`
+
+**요약:** 그룹 계좌 순서 변경
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid-1234", // 그룹 ID (string)
+  "accountIds": ["uuid-a", "uuid-b", "uuid-c"] // 순서대로 정렬된 계좌 ID 목록 (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 계좌 순서 변경 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
 ### POST `assets/accounts/:id/records`
 
 **요약:** 자산 기록 추가
