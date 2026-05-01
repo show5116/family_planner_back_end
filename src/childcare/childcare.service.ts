@@ -8,6 +8,7 @@ import {
 import {
   ChildcareRuleType,
   ChildcareTransactionType,
+  PermissionCode,
   SavingsPlanStatus,
 } from '@prisma/client';
 import {
@@ -90,9 +91,7 @@ export class ChildcareService {
       throw new NotFoundException('자녀 프로필을 찾을 수 없습니다');
     }
 
-    if (child.parentUserId !== userId) {
-      throw new ForbiddenException('부모만 수행할 수 있는 작업입니다');
-    }
+    await this.validateChildcarePermission(userId, child.groupId);
 
     if (child.userId) {
       throw new ConflictException('이미 연동된 앱 계정이 있습니다');
@@ -133,7 +132,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParentOrChild(userId, account);
+    await this.validateGroupMember(userId, account.groupId);
 
     return account;
   }
@@ -157,9 +156,7 @@ export class ChildcareService {
       throw new NotFoundException('자녀 프로필을 찾을 수 없습니다');
     }
 
-    if (child.parentUserId !== userId) {
-      throw new ForbiddenException('부모만 수행할 수 있는 작업입니다');
-    }
+    await this.validateChildcarePermission(userId, child.groupId);
 
     const planData = {
       monthlyPoints: dto.monthlyPoints,
@@ -211,7 +208,7 @@ export class ChildcareService {
       throw new NotFoundException('자녀 프로필을 찾을 수 없습니다');
     }
 
-    this.validateParentOrLinkedChild(userId, child);
+    await this.validateGroupMember(userId, child.groupId);
 
     return await this.prisma.childAllowancePlan.findUnique({
       where: { childId },
@@ -231,7 +228,7 @@ export class ChildcareService {
       throw new NotFoundException('자녀 프로필을 찾을 수 없습니다');
     }
 
-    this.validateParentOrLinkedChild(userId, child);
+    await this.validateGroupMember(userId, child.groupId);
 
     if (!child.allowancePlan) {
       return [];
@@ -262,7 +259,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, account);
+    await this.validateChildcarePermission(userId, account.groupId);
 
     // shopItemId 또는 ruleId로 type/amount/description 자동 설정
     let type = dto.type;
@@ -356,7 +353,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParentOrChild(userId, account);
+    await this.validateGroupMember(userId, account.groupId);
 
     const where: Record<string, unknown> = { accountId };
 
@@ -419,7 +416,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, account);
+    await this.validateChildcarePermission(userId, account.groupId);
 
     return await this.prisma.childcareShopItem.create({
       data: {
@@ -449,7 +446,7 @@ export class ChildcareService {
       throw new NotFoundException('상점 아이템을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, item.account);
+    await this.validateChildcarePermission(userId, item.account.groupId);
 
     return await this.prisma.childcareShopItem.update({
       where: { id: itemId },
@@ -475,7 +472,7 @@ export class ChildcareService {
       throw new NotFoundException('상점 아이템을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, item.account);
+    await this.validateChildcarePermission(userId, item.account.groupId);
 
     await this.prisma.childcareShopItem.delete({ where: { id: itemId } });
 
@@ -495,7 +492,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParentOrChild(userId, account);
+    await this.validateGroupMember(userId, account.groupId);
 
     return await this.prisma.childcareShopItem.findMany({
       where: { accountId },
@@ -515,7 +512,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, account);
+    await this.validateChildcarePermission(userId, account.groupId);
 
     await this.prisma.$transaction(
       dto.ids.map((id, index) =>
@@ -543,7 +540,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, account);
+    await this.validateChildcarePermission(userId, account.groupId);
 
     return await this.prisma.childcareRule.create({
       data: {
@@ -575,7 +572,7 @@ export class ChildcareService {
       throw new NotFoundException('규칙을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, rule.account);
+    await this.validateChildcarePermission(userId, rule.account.groupId);
 
     return await this.prisma.childcareRule.update({
       where: { id: ruleId },
@@ -602,7 +599,7 @@ export class ChildcareService {
       throw new NotFoundException('규칙을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, rule.account);
+    await this.validateChildcarePermission(userId, rule.account.groupId);
 
     await this.prisma.childcareRule.delete({ where: { id: ruleId } });
 
@@ -622,7 +619,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParentOrChild(userId, account);
+    await this.validateGroupMember(userId, account.groupId);
 
     return await this.prisma.childcareRule.findMany({
       where: { accountId },
@@ -642,7 +639,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, account);
+    await this.validateChildcarePermission(userId, account.groupId);
 
     await this.prisma.$transaction(
       dto.ids.map((id, index) =>
@@ -675,7 +672,11 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParentOrChild(userId, account);
+    await this.validateChildcarePermissionOrLinkedChild(
+      userId,
+      account.groupId,
+      account.child.userId,
+    );
 
     if (account.balance < dto.amount) {
       throw new BadRequestException('포인트 잔액이 부족합니다');
@@ -719,7 +720,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, account);
+    await this.validateChildcarePermission(userId, account.groupId);
 
     if (account.savingsBalance < dto.amount) {
       throw new BadRequestException('적금 잔액이 부족합니다');
@@ -786,7 +787,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, account);
+    await this.validateChildcarePermission(userId, account.groupId);
 
     if (account.savingsPlan) {
       throw new ConflictException('이미 진행 중인 적금 플랜이 있습니다');
@@ -824,7 +825,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParentOrChild(userId, account);
+    await this.validateGroupMember(userId, account.groupId);
 
     return account.savingsPlan;
   }
@@ -842,7 +843,7 @@ export class ChildcareService {
       throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
     }
 
-    this.validateParent(userId, account);
+    await this.validateChildcarePermission(userId, account.groupId);
 
     const plan = account.savingsPlan;
 
@@ -935,37 +936,34 @@ export class ChildcareService {
     }
   }
 
-  private validateParent(
+  private async validateChildcarePermission(
     userId: string,
-    account: { parentUserId: string },
-  ): void {
-    if (account.parentUserId !== userId) {
-      throw new ForbiddenException('부모만 수행할 수 있는 작업입니다');
+    groupId: string,
+  ): Promise<void> {
+    const member = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+      include: { role: true },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('해당 그룹의 멤버가 아닙니다');
+    }
+
+    const permissions = member.role.permissions as PermissionCode[];
+    if (!permissions.includes(PermissionCode.MANAGE_CHILDCARE)) {
+      throw new ForbiddenException('자녀 관리 권한이 없습니다');
     }
   }
 
-  private validateParentOrChild(
+  private async validateChildcarePermissionOrLinkedChild(
     userId: string,
-    account: { parentUserId: string; child: { userId: string | null } },
-  ): void {
-    const isParent = account.parentUserId === userId;
-    const isChild =
-      account.child.userId !== null && account.child.userId === userId;
-
-    if (!isParent && !isChild) {
-      throw new ForbiddenException('해당 계정에 접근할 권한이 없습니다');
+    groupId: string,
+    linkedUserId: string | null,
+  ): Promise<void> {
+    if (linkedUserId !== null && linkedUserId === userId) {
+      return;
     }
-  }
 
-  private validateParentOrLinkedChild(
-    userId: string,
-    child: { parentUserId: string; userId: string | null },
-  ): void {
-    const isParent = child.parentUserId === userId;
-    const isChild = child.userId !== null && child.userId === userId;
-
-    if (!isParent && !isChild) {
-      throw new ForbiddenException('해당 자녀 프로필에 접근할 권한이 없습니다');
-    }
+    await this.validateChildcarePermission(userId, groupId);
   }
 }

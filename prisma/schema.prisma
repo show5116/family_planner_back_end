@@ -436,6 +436,7 @@ enum Provider {
 enum PermissionCategory {
   GROUP
   TASK
+  CHILDCARE
 }
 
 enum PermissionCode {
@@ -449,6 +450,7 @@ enum PermissionCode {
   UPDATE_TASK
   DELETE_TASK
   MANAGE_CATEGORY
+  MANAGE_CHILDCARE
 }
 
 enum JoinRequestType {
