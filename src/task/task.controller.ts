@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TaskService } from './task.service';
 import { CategoryService } from './category.service';
 import { RecurringService } from './recurring.service';
+import { HolidayService } from './holiday.service';
 import {
   CreateCategoryDto,
   UpdateCategoryDto,
@@ -30,6 +31,8 @@ import {
   TaskSkipDto,
   MessageResponseDto,
 } from './dto';
+import { HolidayQueryDto } from './dto/holiday-query.dto';
+import { HolidayListDto } from './dto/holiday-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiSuccess,
@@ -50,7 +53,17 @@ export class TaskController {
     private readonly taskService: TaskService,
     private readonly categoryService: CategoryService,
     private readonly recurringService: RecurringService,
+    private readonly holidayService: HolidayService,
   ) {}
+
+  // ==================== 공휴일 API ====================
+
+  @Get('holidays')
+  @ApiOperation({ summary: '공휴일 목록 조회' })
+  @ApiSuccess(HolidayListDto, '공휴일 목록 조회 성공')
+  getHolidays(@Query() query: HolidayQueryDto): Promise<HolidayListDto> {
+    return this.holidayService.getHolidays(query);
+  }
 
   // ==================== 카테고리 API ====================
 

@@ -6427,6 +6427,35 @@ R2에 파일이 존재하는지 확인합니다.
 
 **Base Path:** `/tasks`
 
+### GET `tasks/holidays`
+
+**요약:** 공휴일 목록 조회
+
+**Query Parameters:**
+
+- `year` (`number`): 연도
+- `month` (`number`): 월 (1-12)
+
+**Responses:**
+
+#### 200 - 공휴일 목록 조회 성공
+
+```json
+{
+  "year": 2025, // 연도 (number)
+  "month": 5, // 월 (number)
+  "holidays": [
+    {
+      "date": "2025-01-01", // 날짜 (YYYY-MM-DD) (string)
+      "name": "신정", // 공휴일 명칭 (string)
+      "isSubstitute": false // 대체공휴일 여부 (boolean)
+    }
+  ] // 공휴일 목록 (HolidayDto[])
+}
+```
+
+---
+
 ### GET `tasks/categories`
 
 **요약:** 카테고리 목록 조회
