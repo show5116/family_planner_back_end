@@ -6737,11 +6737,17 @@ R2에 파일이 존재하는지 확인합니다.
       "dayOfWeek": 1,
       "month": 3,
       "yearlyType": "dayOfMonth",
+      "lunarMonth": 9,
+      "lunarDay": 9,
+      "isLeapMonth": false,
       "skipWeekends": false,
       "skipHolidays": false,
       "skipBehavior": null
     }, // 반복 설정 (RuleConfigDto)
-    "generationType": null // 생성 방식 (RecurringGenerationType)
+    "generationType": null, // 생성 방식 (RecurringGenerationType)
+    "skipWeekends": false, // 주말 제외 여부 (boolean?)
+    "skipHolidays": false, // 공휴일 제외 여부 (boolean?)
+    "skipBehavior": null // 주말/공휴일 해당 시 동작 방식 (SKIP: 건너뜀, MOVE_TO_NEXT_WEEKDAY: 다음 평일로 이동) (SkipBehavior?)
   }, // 반복 규칙 (RecurringRuleDto?)
   "reminders": [
     {

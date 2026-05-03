@@ -62,6 +62,7 @@
     "google-auth-library": "^10.6.2",
     "ioredis": "^5.8.2",
     "joi": "^18.0.2",
+    "korean-lunar-calendar": "^0.3.6",
     "multer": "^2.0.2",
     "nest-winston": "^1.10.2",
     "nestjs-pino": "^4.5.0",

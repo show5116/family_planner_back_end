@@ -152,6 +152,40 @@ export class RuleConfigDto {
   @IsEnum(['dayOfMonth', 'weekOfMonth'])
   yearlyType?: 'dayOfMonth' | 'weekOfMonth';
 
+  @ApiPropertyOptional({
+    description:
+      '음력 월 (1-12, YEARLY 음력 반복인 경우) - 설정 시 month/dayOfMonth 대신 음력 기준으로 날짜 계산',
+    example: 9,
+    minimum: 1,
+    maximum: 12,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  lunarMonth?: number;
+
+  @ApiPropertyOptional({
+    description: '음력 일 (1-30, YEARLY 음력 반복인 경우)',
+    example: 9,
+    minimum: 1,
+    maximum: 30,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  lunarDay?: number;
+
+  @ApiPropertyOptional({
+    description:
+      '윤달 여부 (음력 반복이고 윤달인 경우 true, 해당 연도에 윤달 없으면 평달로 fallback)',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isLeapMonth?: boolean;
+
   @ApiPropertyOptional({ description: '주말 제외 여부', example: false })
   @IsOptional()
   @IsBoolean()

@@ -1,3 +1,4 @@
+import KoreanLunarCalendar from 'korean-lunar-calendar';
 import { RecurringRuleType } from '@/task/enums';
 import {
   RecurringEndType,
@@ -418,8 +419,32 @@ export class RecurringDateUtil {
   }
 
   /**
+   * 음력 날짜를 해당 연도의 양력 날짜로 변환
+   * 윤달(isLeapMonth=true)이 해당 연도에 없으면 평달로 fallback
+   */
+  private static lunarToSolar(
+    year: number,
+    lunarMonth: number,
+    lunarDay: number,
+    isLeapMonth: boolean,
+  ): Date | null {
+    try {
+      const cal = new KoreanLunarCalendar();
+      // 패키지 타입 선언이 private으로 잘못 선언되어 있어 any로 우회
+      (cal as any).setSolarDateByLunarDate(year, lunarMonth, lunarDay, isLeapMonth);
+      const solar = cal.getSolarCalendar();
+      if (!solar || !solar.year) return null;
+      const date = new Date(solar.year, solar.month - 1, solar.day);
+      date.setHours(12, 0, 0, 0);
+      return date;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * YEARLY 날짜 계산
-   * 날짜 기준(12월 25일) 또는 주차/요일 기준(5월 2번째 일요일) 지원
+   * 날짜 기준(12월 25일), 주차/요일 기준(5월 2번째 일요일), 음력 기준(음력 9월 9일) 지원
    */
   private static calculateYearlyDates(
     fromDate: Date,
@@ -432,7 +457,16 @@ export class RecurringDateUtil {
   ): Date[] {
     const dates: Date[] = [];
     const interval = this.sanitizeInterval(config.interval);
-    const { month, yearlyType, dayOfMonth, weekOfMonth, dayOfWeek } = config;
+    const {
+      month,
+      yearlyType,
+      dayOfMonth,
+      weekOfMonth,
+      dayOfWeek,
+      lunarMonth,
+      lunarDay,
+      isLeapMonth = false,
+    } = config;
 
     const currentYear = fromDate.getFullYear();
     let addedCount = 0;
@@ -446,7 +480,15 @@ export class RecurringDateUtil {
       const targetYear = currentYear + yearCount * interval;
       let targetDate: Date | null = null;
 
-      if (
+      if (lunarMonth && lunarDay) {
+        // 음력 기준 (예: 음력 9월 9일 -> 해당 연도 양력 날짜)
+        targetDate = this.lunarToSolar(
+          targetYear,
+          lunarMonth,
+          lunarDay,
+          isLeapMonth,
+        );
+      } else if (
         yearlyType === 'weekOfMonth' &&
         weekOfMonth !== undefined &&
         dayOfWeek !== undefined

@@ -89,6 +89,12 @@ export interface YearlyRuleConfig extends BaseRuleConfig {
   weekOfMonth?: number;
   /** 요일 (0-6, yearlyType이 weekOfMonth인 경우) */
   dayOfWeek?: number;
+  /** 음력 월 (1-12, 음력 반복인 경우) - 설정 시 month/dayOfMonth 대신 음력 기준으로 날짜 계산 */
+  lunarMonth?: number;
+  /** 음력 일 (1-30, 음력 반복인 경우) */
+  lunarDay?: number;
+  /** 윤달 여부 (음력 반복이고 윤달인 경우 true, 해당 연도에 윤달 없으면 평달로 fallback) */
+  isLeapMonth?: boolean;
 }
 
 /**
