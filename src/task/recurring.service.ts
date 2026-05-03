@@ -11,12 +11,14 @@ import { TaskHistoryAction, RecurringRuleType } from './enums';
 import { RecurringDateUtil } from './recurring-date.util';
 import { RuleConfig, RecurringEndType } from './interfaces';
 import { RecurringSkippedEvent, RecurringTasksGeneratedEvent } from './events';
+import { HolidayService } from './holiday.service';
 
 @Injectable()
 export class RecurringService {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
+    private holidayService: HolidayService,
   ) {}
 
   /**
@@ -173,6 +175,12 @@ export class RecurringService {
       ruleConfig.interval,
     );
 
+    const holidayDates = await this.fetchHolidayDates(
+      ruleConfig,
+      fromDate,
+      monthsAhead,
+    );
+
     const newDates = RecurringDateUtil.calculateNextDates(
       recurring.ruleType as RecurringRuleType,
       ruleConfig,
@@ -180,90 +188,101 @@ export class RecurringService {
       monthsAhead,
       existingDates,
       skipDates,
+      holidayDates,
     );
 
     if (newDates.length === 0) return;
 
-    // 트랜잭션으로 모든 DB 작업 수행
-    const createdTaskIds = await this.prisma.$transaction(async (tx) => {
-      const taskIds: string[] = [];
+    // 트랜잭션 전에 삽입 데이터를 미리 계산 (트랜잭션 시간 최소화)
+    const taskDataList = newDates.map((date) => {
+      const { scheduledAt, dueAt } = this.calculateTaskDates(
+        date,
+        templateTask.scheduledAt,
+        templateTask.dueAt,
+      );
+      return {
+        userId: recurring.userId,
+        groupId: recurring.groupId,
+        categoryId: templateTask.categoryId,
+        recurringId: recurring.id,
+        title: templateTask.title,
+        description: templateTask.description,
+        location: templateTask.location,
+        type: templateTask.type,
+        priority: templateTask.priority,
+        scheduledAt,
+        dueAt,
+      };
+    });
 
-      for (const date of newDates) {
-        const { scheduledAt, dueAt } = this.calculateTaskDates(
-          date,
-          templateTask.scheduledAt,
-          templateTask.dueAt,
-        );
+    // 트랜잭션으로 모든 DB 작업 수행 (createMany로 DB 왕복 최소화)
+    const createdTaskIds = await this.prisma.$transaction(
+      async (tx) => {
+        const insertedAt = new Date();
+        await tx.task.createMany({ data: taskDataList });
 
-        const task = await tx.task.create({
-          data: {
-            userId: recurring.userId,
-            groupId: recurring.groupId,
-            categoryId: templateTask.categoryId,
+        // createMany는 ID를 반환하지 않으므로 삽입 시각 + recurringId로 조회
+        const createdTasks = await tx.task.findMany({
+          where: {
             recurringId: recurring.id,
-            title: templateTask.title,
-            description: templateTask.description,
-            location: templateTask.location,
-            type: templateTask.type,
-            priority: templateTask.priority,
-            scheduledAt,
-            dueAt,
+            createdAt: { gte: insertedAt },
           },
+          select: { id: true },
         });
 
-        taskIds.push(task.id);
+        const taskIds = createdTasks.map((t) => t.id);
 
-        // Reminder 복사
+        // Reminder 복사 (전체 한 번에)
         if (templateTask.reminders.length > 0) {
           await tx.taskReminder.createMany({
-            data: templateTask.reminders.map((r) => ({
-              taskId: task.id,
-              userId: r.userId,
-              reminderType: r.reminderType,
-              offsetMinutes: r.offsetMinutes,
-            })),
+            data: taskIds.flatMap((taskId) =>
+              templateTask.reminders.map((r) => ({
+                taskId,
+                userId: r.userId,
+                reminderType: r.reminderType,
+                offsetMinutes: r.offsetMinutes,
+              })),
+            ),
           });
         }
 
-        // 참여자 복사 (Critical Fix)
+        // 참여자 복사 (전체 한 번에)
         if (templateTask.participants.length > 0) {
           await tx.taskParticipant.createMany({
-            data: templateTask.participants.map((p) => ({
-              taskId: task.id,
-              userId: p.userId,
-            })),
+            data: taskIds.flatMap((taskId) =>
+              templateTask.participants.map((p) => ({
+                taskId,
+                userId: p.userId,
+              })),
+            ),
           });
         }
 
-        // TaskHistory 생성
-        await tx.taskHistory.create({
-          data: {
-            taskId: task.id,
+        // TaskHistory 생성 (전체 한 번에)
+        await tx.taskHistory.createMany({
+          data: taskIds.map((taskId) => ({
+            taskId,
             userId: recurring.userId,
             action: TaskHistoryAction.CREATE,
             changes: { source: 'SCHEDULER' } as Prisma.InputJsonValue,
+          })),
+        });
+
+        // 생성 횟수 및 마지막 생성일 업데이트
+        const newGeneratedCount =
+          (ruleConfig.generatedCount || 0) + taskIds.length;
+        await tx.recurring.update({
+          where: { id: recurringId },
+          data: {
+            lastGeneratedAt: new Date(),
+            ruleConfig: { ...ruleConfig, generatedCount: newGeneratedCount },
           },
         });
-      }
 
-      // 생성 횟수 및 마지막 생성일 업데이트
-      const newGeneratedCount =
-        (ruleConfig.generatedCount || 0) + taskIds.length;
-      const updatedRuleConfig = {
-        ...ruleConfig,
-        generatedCount: newGeneratedCount,
-      };
-
-      await tx.recurring.update({
-        where: { id: recurringId },
-        data: {
-          lastGeneratedAt: new Date(),
-          ruleConfig: updatedRuleConfig,
-        },
-      });
-
-      return taskIds;
-    });
+        return taskIds;
+      },
+      { timeout: 30000 },
+    );
 
     // 이벤트 발행
     if (createdTaskIds.length > 0) {
@@ -439,6 +458,48 @@ export class RecurringService {
     }
 
     return newTask;
+  }
+
+  /**
+   * skipHolidays 옵션이 켜진 경우 생성 범위의 공휴일 날짜를 조회
+   * 범위에 걸친 연/월을 순회하며 병렬 조회 후 하나의 Set으로 합침
+   */
+  private async fetchHolidayDates(
+    ruleConfig: RuleConfig,
+    fromDate: Date,
+    monthsAhead: number,
+  ): Promise<Set<string>> {
+    if (!ruleConfig.skipHolidays) return new Set();
+
+    const endDate = new Date(fromDate);
+    endDate.setMonth(endDate.getMonth() + monthsAhead);
+
+    const yearMonths: { year: number; month: number }[] = [];
+    const cursor = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+
+    while (cursor <= endDate) {
+      yearMonths.push({
+        year: cursor.getFullYear(),
+        month: cursor.getMonth() + 1,
+      });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    const results = await Promise.all(
+      yearMonths.map(({ year, month }) =>
+        this.holidayService.getHolidays({ year, month }).catch(() => null),
+      ),
+    );
+
+    const holidayDates = new Set<string>();
+    for (const result of results) {
+      if (!result) continue;
+      for (const h of result.holidays) {
+        holidayDates.add(h.date);
+      }
+    }
+
+    return holidayDates;
   }
 
   /**

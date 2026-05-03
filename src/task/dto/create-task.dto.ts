@@ -15,6 +15,7 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
   ValidateIf,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -24,7 +25,7 @@ import {
   RecurringGenerationType,
   TaskReminderType,
 } from '@/task/enums';
-import { RecurringEndType } from '@/task/interfaces';
+import { RecurringEndType, SkipBehavior } from '@/task/interfaces';
 
 /**
  * 반복 규칙 설정 DTO
@@ -150,6 +151,26 @@ export class RuleConfigDto {
   @IsOptional()
   @IsEnum(['dayOfMonth', 'weekOfMonth'])
   yearlyType?: 'dayOfMonth' | 'weekOfMonth';
+
+  @ApiPropertyOptional({ description: '주말 제외 여부', example: false })
+  @IsOptional()
+  @IsBoolean()
+  skipWeekends?: boolean;
+
+  @ApiPropertyOptional({ description: '공휴일 제외 여부', example: false })
+  @IsOptional()
+  @IsBoolean()
+  skipHolidays?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      '주말/공휴일 해당 시 동작 방식 (SKIP: 건너뜀, MOVE_TO_NEXT_WEEKDAY: 다음 평일로 이동)',
+    enum: SkipBehavior,
+    example: SkipBehavior.SKIP,
+  })
+  @IsOptional()
+  @IsEnum(SkipBehavior)
+  skipBehavior?: SkipBehavior;
 }
 
 /**
@@ -167,11 +188,6 @@ export class RecurringRuleDto {
   @ApiProperty({
     description: '반복 설정',
     type: RuleConfigDto,
-    example: {
-      interval: 1,
-      endType: 'NEVER',
-      daysOfWeek: [1, 3, 5],
-    },
   })
   @ValidateNested()
   @Type(() => RuleConfigDto)
@@ -184,6 +200,26 @@ export class RecurringRuleDto {
   })
   @IsEnum(RecurringGenerationType)
   generationType: RecurringGenerationType;
+
+  @ApiPropertyOptional({ description: '주말 제외 여부', example: false })
+  @IsOptional()
+  @IsBoolean()
+  skipWeekends?: boolean;
+
+  @ApiPropertyOptional({ description: '공휴일 제외 여부', example: false })
+  @IsOptional()
+  @IsBoolean()
+  skipHolidays?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      '주말/공휴일 해당 시 동작 방식 (SKIP: 건너뜀, MOVE_TO_NEXT_WEEKDAY: 다음 평일로 이동)',
+    enum: SkipBehavior,
+    example: SkipBehavior.SKIP,
+  })
+  @IsOptional()
+  @IsEnum(SkipBehavior)
+  skipBehavior?: SkipBehavior;
 }
 
 export class TaskReminderDto {
@@ -282,6 +318,7 @@ export class CreateTaskDto {
     description: '알림 목록',
     type: [TaskReminderDto],
   })
+  @ValidateIf((o) => o.reminders != null)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TaskReminderDto)
@@ -293,6 +330,7 @@ export class CreateTaskDto {
     example: ['uuid-1', 'uuid-2'],
     type: [String],
   })
+  @ValidateIf((o) => o.participantIds != null)
   @IsArray()
   @IsUUID('4', { each: true })
   @IsOptional()

@@ -1,6 +1,7 @@
 import { RecurringRuleType } from '@/task/enums';
 import {
   RecurringEndType,
+  SkipBehavior,
   RuleConfig,
   WeeklyRuleConfig,
   MonthlyRuleConfig,
@@ -60,6 +61,7 @@ export class RecurringDateUtil {
    * @param monthsAhead 미래 몇 개월까지 생성할지
    * @param existingDates 이미 존재하는 날짜들 (중복 방지)
    * @param skipDates 건너뛰기 날짜들
+   * @param holidayDates 공휴일 날짜들 (YYYY-MM-DD Set, skipHolidays 옵션용)
    */
   static calculateNextDates(
     ruleType: RecurringRuleType,
@@ -68,6 +70,7 @@ export class RecurringDateUtil {
     monthsAhead: number,
     existingDates: Set<string>,
     skipDates: Set<string>,
+    holidayDates: Set<string> = new Set(),
   ): Date[] {
     // interval 검증
     const safeConfig = {
@@ -116,6 +119,7 @@ export class RecurringDateUtil {
           remainingCount,
           existingDates,
           skipDates,
+          holidayDates,
         );
       case RecurringRuleType.WEEKLY:
         return this.calculateWeeklyDates(
@@ -125,6 +129,7 @@ export class RecurringDateUtil {
           remainingCount,
           existingDates,
           skipDates,
+          holidayDates,
         );
       case RecurringRuleType.MONTHLY:
         return this.calculateMonthlyDates(
@@ -134,6 +139,7 @@ export class RecurringDateUtil {
           remainingCount,
           existingDates,
           skipDates,
+          holidayDates,
         );
       case RecurringRuleType.YEARLY:
         return this.calculateYearlyDates(
@@ -143,10 +149,63 @@ export class RecurringDateUtil {
           remainingCount,
           existingDates,
           skipDates,
+          holidayDates,
         );
       default:
         return [];
     }
+  }
+
+  /**
+   * 주말/공휴일 여부 확인
+   */
+  private static isWeekend(date: Date): boolean {
+    const day = date.getDay();
+    return day === 0 || day === 6;
+  }
+
+  private static isHoliday(date: Date, holidayDates: Set<string>): boolean {
+    return holidayDates.has(this.formatDateString(date));
+  }
+
+  /**
+   * skipWeekends/skipHolidays 옵션에 따라 날짜를 처리
+   * - SKIP: null 반환 (해당 날짜 버림)
+   * - MOVE_TO_NEXT_WEEKDAY: 다음 평일로 이동 후 반환
+   *   이동 후 existingDates에 이미 있으면 null 반환 (중복 방지)
+   */
+  private static resolveDate(
+    date: Date,
+    config: RuleConfig,
+    existingDates: Set<string>,
+    holidayDates: Set<string>,
+  ): Date | null {
+    const {
+      skipWeekends,
+      skipHolidays,
+      skipBehavior = SkipBehavior.SKIP,
+    } = config;
+
+    const needsSkip = (d: Date) =>
+      (skipWeekends && this.isWeekend(d)) ||
+      (skipHolidays && this.isHoliday(d, holidayDates));
+
+    if (!needsSkip(date)) return date;
+
+    if (skipBehavior === SkipBehavior.SKIP) return null;
+
+    // MOVE_TO_NEXT_WEEKDAY: 최대 7일 앞으로 탐색 (무한 루프 방지)
+    let candidate = this.addDays(date, 1);
+    for (let i = 0; i < 7; i++) {
+      if (!needsSkip(candidate)) {
+        // 이동 후 이미 존재하는 날짜면 버림 (중복 방지)
+        if (existingDates.has(this.formatDateString(candidate))) return null;
+        return candidate;
+      }
+      candidate = this.addDays(candidate, 1);
+    }
+
+    return null;
   }
 
   /**
@@ -159,6 +218,7 @@ export class RecurringDateUtil {
     remainingCount: number,
     existingDates: Set<string>,
     skipDates: Set<string>,
+    holidayDates: Set<string>,
   ): Date[] {
     const dates: Date[] = [];
     const interval = this.sanitizeInterval(config.interval);
@@ -171,11 +231,22 @@ export class RecurringDateUtil {
       addedCount < remainingCount &&
       iterationCount < this.MAX_DATES_PER_CALCULATION
     ) {
-      const dateStr = this.formatDateString(currentDate);
+      const resolved = this.resolveDate(
+        currentDate,
+        config,
+        existingDates,
+        holidayDates,
+      );
 
-      if (!existingDates.has(dateStr) && !skipDates.has(dateStr)) {
-        dates.push(new Date(currentDate));
-        addedCount++;
+      if (resolved) {
+        const dateStr = this.formatDateString(resolved);
+        if (!existingDates.has(dateStr) && !skipDates.has(dateStr)) {
+          dates.push(new Date(resolved));
+          // MOVE_TO_NEXT_WEEKDAY로 이동된 날짜도 즉시 existingDates에 등록해
+          // 같은 날로 중복 이동되는 것을 방지
+          existingDates.add(dateStr);
+          addedCount++;
+        }
       }
 
       currentDate = this.addDays(currentDate, interval);
@@ -199,6 +270,7 @@ export class RecurringDateUtil {
     remainingCount: number,
     existingDates: Set<string>,
     skipDates: Set<string>,
+    holidayDates: Set<string>,
   ): Date[] {
     const dates: Date[] = [];
     const interval = this.sanitizeInterval(config.interval);
@@ -236,10 +308,20 @@ export class RecurringDateUtil {
         // fromDate 이전이거나 endDate 이후면 스킵
         if (targetDate < fromDate || targetDate > endDate) continue;
 
-        const dateStr = this.formatDateString(targetDate);
+        const resolved = this.resolveDate(
+          targetDate,
+          config,
+          existingDates,
+          holidayDates,
+        );
+
+        if (!resolved) continue;
+
+        const dateStr = this.formatDateString(resolved);
 
         if (!existingDates.has(dateStr) && !skipDates.has(dateStr)) {
-          dates.push(new Date(targetDate));
+          dates.push(new Date(resolved));
+          existingDates.add(dateStr);
           addedCount++;
         }
       }
@@ -261,6 +343,7 @@ export class RecurringDateUtil {
     remainingCount: number,
     existingDates: Set<string>,
     skipDates: Set<string>,
+    holidayDates: Set<string>,
   ): Date[] {
     const dates: Date[] = [];
     const interval = this.sanitizeInterval(config.interval);
@@ -310,11 +393,20 @@ export class RecurringDateUtil {
       }
 
       if (targetDate && targetDate >= fromDate && targetDate <= endDate) {
-        const dateStr = this.formatDateString(targetDate);
+        const resolved = this.resolveDate(
+          targetDate,
+          config,
+          existingDates,
+          holidayDates,
+        );
 
-        if (!existingDates.has(dateStr) && !skipDates.has(dateStr)) {
-          dates.push(targetDate);
-          addedCount++;
+        if (resolved) {
+          const dateStr = this.formatDateString(resolved);
+          if (!existingDates.has(dateStr) && !skipDates.has(dateStr)) {
+            dates.push(resolved);
+            existingDates.add(dateStr);
+            addedCount++;
+          }
         }
       }
 
@@ -336,6 +428,7 @@ export class RecurringDateUtil {
     remainingCount: number,
     existingDates: Set<string>,
     skipDates: Set<string>,
+    holidayDates: Set<string>,
   ): Date[] {
     const dates: Date[] = [];
     const interval = this.sanitizeInterval(config.interval);
@@ -373,11 +466,20 @@ export class RecurringDateUtil {
       if (targetDate && targetDate > endDate) break;
 
       if (targetDate && targetDate >= fromDate) {
-        const dateStr = this.formatDateString(targetDate);
+        const resolved = this.resolveDate(
+          targetDate,
+          config,
+          existingDates,
+          holidayDates,
+        );
 
-        if (!existingDates.has(dateStr) && !skipDates.has(dateStr)) {
-          dates.push(targetDate);
-          addedCount++;
+        if (resolved) {
+          const dateStr = this.formatDateString(resolved);
+          if (!existingDates.has(dateStr) && !skipDates.has(dateStr)) {
+            dates.push(resolved);
+            existingDates.add(dateStr);
+            addedCount++;
+          }
         }
       }
 

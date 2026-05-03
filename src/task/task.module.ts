@@ -22,6 +22,6 @@ import { RedisModule } from '@/redis/redis.module';
     TaskNotificationListener,
     HolidayService,
   ],
-  exports: [TaskService, CategoryService, RecurringService],
+  exports: [TaskService, CategoryService, RecurringService, HolidayService],
 })
 export class TaskModule {}

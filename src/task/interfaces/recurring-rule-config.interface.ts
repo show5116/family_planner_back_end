@@ -12,6 +12,16 @@ export enum RecurringEndType {
 }
 
 /**
+ * 주말/공휴일 해당 시 동작 방식
+ * - SKIP: 해당 날짜를 건너뜀
+ * - MOVE_TO_NEXT_WEEKDAY: 다음 평일로 이동 (이동 후 중복이면 버림)
+ */
+export enum SkipBehavior {
+  SKIP = 'SKIP',
+  MOVE_TO_NEXT_WEEKDAY = 'MOVE_TO_NEXT_WEEKDAY',
+}
+
+/**
  * 기본 반복 규칙 설정
  */
 export interface BaseRuleConfig {
@@ -25,6 +35,12 @@ export interface BaseRuleConfig {
   count?: number;
   /** 현재까지 생성된 횟수 (내부 추적용) */
   generatedCount?: number;
+  /** 주말 제외 여부 */
+  skipWeekends?: boolean;
+  /** 공휴일 제외 여부 */
+  skipHolidays?: boolean;
+  /** 주말/공휴일 해당 시 동작 방식 (기본값: SKIP) */
+  skipBehavior?: SkipBehavior;
 }
 
 /**

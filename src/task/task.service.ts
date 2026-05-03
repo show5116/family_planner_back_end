@@ -162,7 +162,18 @@ export class TaskService {
             userId,
             groupId: dto.groupId || null,
             ruleType: dto.recurring.ruleType,
-            ruleConfig: dto.recurring.ruleConfig as object,
+            ruleConfig: {
+              ...dto.recurring.ruleConfig,
+              ...(dto.recurring.skipWeekends != null && {
+                skipWeekends: dto.recurring.skipWeekends,
+              }),
+              ...(dto.recurring.skipHolidays != null && {
+                skipHolidays: dto.recurring.skipHolidays,
+              }),
+              ...(dto.recurring.skipBehavior != null && {
+                skipBehavior: dto.recurring.skipBehavior,
+              }),
+            } as object,
             generationType: dto.recurring.generationType,
           },
         });

@@ -11,7 +11,8 @@
       "Bash(PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 npx prisma generate:*)",
       "Bash(npx prisma:*)",
       "Bash(find:*)",
-      "Bash(npm run check:*)"
+      "Bash(npm run check:*)",
+      "Bash(npm run *)"
     ],
     "deny": [],
     "ask": []

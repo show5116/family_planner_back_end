@@ -6727,8 +6727,19 @@ R2에 파일이 존재하는지 확인합니다.
     "ruleType": null, // 반복 타입 (RecurringRuleType)
     "ruleConfig": {
       "interval": 1,
-      "endType": "NEVER",
-      "daysOfWeek": [1, 3, 5]
+      "endType": null,
+      "endDate": "2026-12-31",
+      "count": 10,
+      "daysOfWeek": [1, 3, 5],
+      "monthlyType": "dayOfMonth",
+      "dayOfMonth": 15,
+      "weekOfMonth": 2,
+      "dayOfWeek": 1,
+      "month": 3,
+      "yearlyType": "dayOfMonth",
+      "skipWeekends": false,
+      "skipHolidays": false,
+      "skipBehavior": null
     }, // 반복 설정 (RuleConfigDto)
     "generationType": null // 생성 방식 (RecurringGenerationType)
   }, // 반복 규칙 (RecurringRuleDto?)
