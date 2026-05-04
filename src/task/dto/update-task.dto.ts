@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TaskType, TaskPriority } from '@/task/enums';
-import { TaskReminderDto } from './create-task.dto';
+import { TaskReminderDto, LocationDto } from './create-task.dto';
 
 export class UpdateTaskDto {
   @ApiPropertyOptional({ description: 'Task 제목', example: '회의 참석' })
@@ -31,11 +31,12 @@ export class UpdateTaskDto {
 
   @ApiPropertyOptional({
     description: '장소',
-    example: '본사 2층 회의실',
+    type: LocationDto,
   })
-  @IsString()
+  @ValidateNested()
+  @Type(() => LocationDto)
   @IsOptional()
-  location?: string;
+  location?: LocationDto;
 
   @ApiPropertyOptional({ description: '카테고리 ID', example: 'uuid' })
   @IsUUID()

@@ -431,7 +431,12 @@ export class RecurringDateUtil {
     try {
       const cal = new KoreanLunarCalendar();
       // 패키지 타입 선언이 private으로 잘못 선언되어 있어 any로 우회
-      (cal as any).setSolarDateByLunarDate(year, lunarMonth, lunarDay, isLeapMonth);
+      (cal as any).setSolarDateByLunarDate(
+        year,
+        lunarMonth,
+        lunarDay,
+        isLeapMonth,
+      );
       const solar = cal.getSolarCalendar();
       if (!solar || !solar.year) return null;
       const date = new Date(solar.year, solar.month - 1, solar.day);

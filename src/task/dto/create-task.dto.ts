@@ -16,7 +16,39 @@ import {
   ArrayMaxSize,
   ValidateIf,
   IsBoolean,
+  IsNumber,
+  IsLatitude,
+  IsLongitude,
 } from 'class-validator';
+
+/**
+ * 카카오 지도 연동 장소 DTO
+ */
+export class LocationDto {
+  @ApiProperty({ description: '장소명', example: '스타벅스 강남점' })
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional({
+    description: '주소',
+    example: '서울 강남구 테헤란로 212',
+  })
+  @IsString()
+  @IsOptional()
+  address?: string;
+
+  @ApiPropertyOptional({ description: '위도', example: 37.4979 })
+  @IsNumber()
+  @IsLatitude()
+  @IsOptional()
+  lat?: number;
+
+  @ApiPropertyOptional({ description: '경도', example: 127.0276 })
+  @IsNumber()
+  @IsLongitude()
+  @IsOptional()
+  lng?: number;
+}
 import { Type } from 'class-transformer';
 import {
   TaskType,
@@ -287,11 +319,12 @@ export class CreateTaskDto {
 
   @ApiPropertyOptional({
     description: '장소',
-    example: '본사 2층 회의실',
+    type: LocationDto,
   })
-  @IsString()
+  @ValidateNested()
+  @Type(() => LocationDto)
   @IsOptional()
-  location?: string;
+  location?: LocationDto;
 
   @ApiProperty({
     description: 'Task 타입',

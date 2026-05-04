@@ -190,7 +190,7 @@ export class TaskService {
           recurringId,
           title: dto.title,
           description: dto.description || null,
-          location: dto.location || null,
+          location: (dto.location as unknown as Prisma.InputJsonValue) ?? null,
           type: dto.type,
           priority: dto.priority || 'MEDIUM',
           scheduledAt: dto.scheduledAt || null,
@@ -570,11 +570,11 @@ export class TaskService {
   private buildUpdateData(dto: UpdateTaskDto): {
     updateData: Prisma.TaskUpdateInput;
     updateManyData: Prisma.TaskUncheckedUpdateManyInput;
-    changesAfter: Record<string, string | null>;
+    changesAfter: Prisma.InputJsonObject;
   } {
     const updateData: Prisma.TaskUpdateInput = {};
     const updateManyData: Prisma.TaskUncheckedUpdateManyInput = {};
-    const changesAfter: Record<string, string | null> = {};
+    const changesAfter: Record<string, Prisma.InputJsonValue | null> = {};
 
     if (dto.categoryId !== undefined) {
       updateData.category = dto.categoryId
@@ -594,9 +594,11 @@ export class TaskService {
       changesAfter.description = dto.description ?? null;
     }
     if (dto.location !== undefined) {
-      updateData.location = dto.location;
-      updateManyData.location = dto.location;
-      changesAfter.location = dto.location ?? null;
+      const loc = (dto.location as unknown as Prisma.InputJsonValue) ?? null;
+      updateData.location = loc;
+      updateManyData.location = loc;
+      changesAfter.location =
+        (dto.location as unknown as Prisma.InputJsonValue) ?? null;
     }
     if (dto.type) {
       updateData.type = dto.type;

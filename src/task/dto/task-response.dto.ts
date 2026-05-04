@@ -8,6 +8,7 @@ import {
 import { CategoryDto } from './category-response.dto';
 import { PaginationMetaDto } from './common-response.dto';
 import { TaskParticipantDto } from './participant-response.dto';
+import { LocationDto } from './create-task.dto';
 
 export class RecurringDto {
   @ApiProperty({ description: 'ID', example: 'uuid' })
@@ -87,8 +88,8 @@ export class TaskDto {
   })
   description: string | null;
 
-  @ApiProperty({ description: '장소', nullable: true })
-  location: string | null;
+  @ApiProperty({ description: '장소', type: LocationDto, nullable: true })
+  location: LocationDto | null;
 
   @ApiProperty({ description: 'Task 타입', enum: TaskType })
   type: TaskType;

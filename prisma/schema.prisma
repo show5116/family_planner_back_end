@@ -315,7 +315,7 @@ model Task {
   recurringId  String?
   title        String            @db.VarChar(200)
   description  String?           @db.Text
-  location     String?           @db.VarChar(255)
+  location     Json?
   type         TaskType          @default(TODO_LINKED)
   priority     TaskPriority      @default(MEDIUM)
   scheduledAt  DateTime?

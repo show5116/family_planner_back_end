@@ -71,7 +71,6 @@ export class TaskQueryBuilder {
         OR: [
           { title: { contains: searchKeyword } },
           { description: { contains: searchKeyword } },
-          { location: { contains: searchKeyword } },
         ],
       });
     }

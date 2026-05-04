@@ -6614,7 +6614,12 @@ R2에 파일이 존재하는지 확인합니다.
       "groupId": "uuid", // 그룹 ID (string | null)
       "title": "회의 참석", // 제목 (string)
       "description": "분기 결산 회의", // 설명 (string | null)
-      "location": null, // 장소 (string | null)
+      "location": {
+        "name": "스타벅스 강남점",
+        "address": "서울 강남구 테헤란로 212",
+        "lat": 37,
+        "lng": 127
+      }, // 장소 (LocationDto | null)
       "type": null, // Task 타입 (TaskType)
       "priority": null, // 우선순위 (TaskPriority)
       "category": {
@@ -6716,7 +6721,12 @@ R2에 파일이 존재하는지 확인합니다.
 {
   "title": "회의 참석", // Task 제목 (string)
   "description": "분기 결산 회의", // 상세 설명 (string?)
-  "location": "본사 2층 회의실", // 장소 (string?)
+  "location": {
+    "name": "스타벅스 강남점", // 장소명 (string)
+    "address": "서울 강남구 테헤란로 212", // 주소 (string?)
+    "lat": 37, // 위도 (number?)
+    "lng": 127 // 경도 (number?)
+  }, // 장소 (LocationDto?)
   "type": null, // Task 타입 (TaskType)
   "priority": null, // 우선순위 (TaskPriority?)
   "categoryId": "uuid", // 카테고리 ID (string?)
@@ -6770,7 +6780,12 @@ R2에 파일이 존재하는지 확인합니다.
   "groupId": "uuid", // 그룹 ID (string | null)
   "title": "회의 참석", // 제목 (string)
   "description": "분기 결산 회의", // 설명 (string | null)
-  "location": null, // 장소 (string | null)
+  "location": {
+    "name": "스타벅스 강남점", // 장소명 (string)
+    "address": "서울 강남구 테헤란로 212", // 주소 (string?)
+    "lat": 37, // 위도 (number?)
+    "lng": 127 // 경도 (number?)
+  }, // 장소 (LocationDto | null)
   "type": null, // Task 타입 (TaskType)
   "priority": null, // 우선순위 (TaskPriority)
   "category": {
@@ -6838,7 +6853,12 @@ R2에 파일이 존재하는지 확인합니다.
 {
   "title": "회의 참석", // Task 제목 (string?)
   "description": "분기 결산 회의", // 상세 설명 (string?)
-  "location": "본사 2층 회의실", // 장소 (string?)
+  "location": {
+    "name": "스타벅스 강남점", // 장소명 (string)
+    "address": "서울 강남구 테헤란로 212", // 주소 (string?)
+    "lat": 37, // 위도 (number?)
+    "lng": 127 // 경도 (number?)
+  }, // 장소 (LocationDto?)
   "categoryId": "uuid", // 카테고리 ID (string?)
   "type": null, // Task 타입 (TaskType?)
   "priority": null, // 우선순위 (TaskPriority?)
@@ -6865,7 +6885,12 @@ R2에 파일이 존재하는지 확인합니다.
   "groupId": "uuid", // 그룹 ID (string | null)
   "title": "회의 참석", // 제목 (string)
   "description": "분기 결산 회의", // 설명 (string | null)
-  "location": null, // 장소 (string | null)
+  "location": {
+    "name": "스타벅스 강남점", // 장소명 (string)
+    "address": "서울 강남구 테헤란로 212", // 주소 (string?)
+    "lat": 37, // 위도 (number?)
+    "lng": 127 // 경도 (number?)
+  }, // 장소 (LocationDto | null)
   "type": null, // Task 타입 (TaskType)
   "priority": null, // 우선순위 (TaskPriority)
   "category": {
@@ -6946,7 +6971,12 @@ R2에 파일이 존재하는지 확인합니다.
   "groupId": "uuid", // 그룹 ID (string | null)
   "title": "회의 참석", // 제목 (string)
   "description": "분기 결산 회의", // 설명 (string | null)
-  "location": null, // 장소 (string | null)
+  "location": {
+    "name": "스타벅스 강남점", // 장소명 (string)
+    "address": "서울 강남구 테헤란로 212", // 주소 (string?)
+    "lat": 37, // 위도 (number?)
+    "lng": 127 // 경도 (number?)
+  }, // 장소 (LocationDto | null)
   "type": null, // Task 타입 (TaskType)
   "priority": null, // 우선순위 (TaskPriority)
   "category": {
