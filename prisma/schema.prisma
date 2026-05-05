@@ -768,6 +768,7 @@ enum ExpenseCategory {
   LIVING
   MEDICAL
   EDUCATION
+  ALLOWANCE
   OTHER
 }
 
