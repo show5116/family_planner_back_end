@@ -3112,6 +3112,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (개인 지출 시 생략) (string?)
+  "type": null, // 거래 유형 (기본값: EXPENSE) (TransactionType?)
   "amount": 15000, // 금액 (number)
   "category": null, // 카테고리 (ExpenseCategory?)
   "date": "2026-02-27", // 지출 날짜 (YYYY-MM-DD) (string)
@@ -3130,6 +3131,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "id": "uuid-1234", // 지출 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
   "userId": "uuid-1234", // 작성자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
   "amount": 15000, // 금액 (string)
   "category": null, // 카테고리 (ExpenseCategory)
   "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
@@ -3155,6 +3157,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 - `month` (`string`) (Optional): 조회 월 (YYYY-MM)
 - `category` (`ExpenseCategoryFilter`) (Optional): 카테고리 필터 (NONE: 카테고리 없는 항목 조회)
 - `paymentMethod` (`PaymentMethod`) (Optional): 결제 수단 필터
+- `type` (`TransactionType`) (Optional): 거래 유형 필터 (생략 시 전체 조회)
 
 **Responses:**
 
@@ -3165,6 +3168,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "id": "uuid-1234", // 지출 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
   "userId": "uuid-1234", // 작성자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
   "amount": 15000, // 금액 (string)
   "category": null, // 카테고리 (ExpenseCategory)
   "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
@@ -3197,6 +3201,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "id": "uuid-1234", // 지출 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
   "userId": "uuid-1234", // 작성자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
   "amount": 15000, // 금액 (string)
   "category": null, // 카테고리 (ExpenseCategory)
   "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
@@ -3226,6 +3231,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ```json
 {
+  "type": null, // 거래 유형 (TransactionType?)
   "amount": 15000, // 금액 (number?)
   "category": null, // 카테고리 (ExpenseCategory?)
   "date": "2026-02-27", // 지출 날짜 (YYYY-MM-DD) (string?)
@@ -3244,6 +3250,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "id": "uuid-1234", // 지출 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
   "userId": "uuid-1234", // 작성자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
   "amount": 15000, // 금액 (string)
   "category": null, // 카테고리 (ExpenseCategory)
   "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
@@ -3398,7 +3405,9 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```json
 {
   "month": "2026-02", // 조회 월 (string)
+  "totalIncome": "2000000.00", // 총 입금 (string)
   "totalExpense": "350000.00", // 총 지출 (string)
+  "balance": "1650000.00", // 순수지 (입금 - 지출) (string)
   "totalBudget": "500000.00", // 총 예산 (string)
   "categories": [
     {
@@ -3408,7 +3417,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
       "budget": "300000.00", // 예산 (string | null)
       "budgetRatio": 40 // 예산 대비 지출 비율 (%) (number | null)
     }
-  ] // 카테고리별 통계 (CategoryStatDto[])
+  ] // 카테고리별 통계 (지출만) (CategoryStatDto[])
 }
 ```
 
@@ -3432,14 +3441,18 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```json
 {
   "year": "2026", // 조회 연도 (string)
+  "totalIncome": "24000000.00", // 연간 총 입금 (string)
   "totalExpense": "4200000.00", // 연간 총 지출 (string)
+  "balance": "19800000.00", // 연간 순수지 (입금 - 지출) (string)
   "months": [
     {
       "month": "2026-01", // 월 (YYYY-MM) (string)
-      "total": "350000.00", // 총 지출 (string)
+      "totalIncome": "2000000.00", // 총 입금 (string)
+      "totalExpense": "350000.00", // 총 지출 (string)
+      "balance": "1650000.00", // 순수지 (입금 - 지출) (string)
       "count": 15 // 지출 건수 (number)
     }
-  ] // 월별 지출 목록 (MonthlyTotalDto[])
+  ] // 월별 통계 목록 (MonthlyTotalDto[])
 }
 ```
 

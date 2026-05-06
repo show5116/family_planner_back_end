@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ExpenseCategory, PaymentMethod } from '@prisma/client';
+import {
+  ExpenseCategory,
+  PaymentMethod,
+  TransactionType,
+} from '@prisma/client';
 
 export class ExpenseReceiptDto {
   @ApiProperty({ description: '영수증 ID', example: 'uuid-1234' })
@@ -49,6 +53,13 @@ export class ExpenseDto {
 
   @ApiProperty({ description: '작성자 ID', example: 'uuid-1234' })
   userId: string;
+
+  @ApiProperty({
+    description: '거래 유형',
+    enum: TransactionType,
+    example: TransactionType.EXPENSE,
+  })
+  type: TransactionType;
 
   @ApiProperty({ description: '금액', example: 15000 })
   amount: string;
@@ -163,13 +174,22 @@ export class StatisticsDto {
   @ApiProperty({ description: '조회 월', example: '2026-02' })
   month: string;
 
+  @ApiProperty({ description: '총 입금', example: '2000000.00' })
+  totalIncome: string;
+
   @ApiProperty({ description: '총 지출', example: '350000.00' })
   totalExpense: string;
+
+  @ApiProperty({ description: '순수지 (입금 - 지출)', example: '1650000.00' })
+  balance: string;
 
   @ApiProperty({ description: '총 예산', example: '500000.00' })
   totalBudget: string;
 
-  @ApiProperty({ description: '카테고리별 통계', type: [CategoryStatDto] })
+  @ApiProperty({
+    description: '카테고리별 통계 (지출만)',
+    type: [CategoryStatDto],
+  })
   categories: CategoryStatDto[];
 }
 
@@ -177,8 +197,14 @@ export class MonthlyTotalDto {
   @ApiProperty({ description: '월 (YYYY-MM)', example: '2026-01' })
   month: string;
 
+  @ApiProperty({ description: '총 입금', example: '2000000.00' })
+  totalIncome: string;
+
   @ApiProperty({ description: '총 지출', example: '350000.00' })
-  total: string;
+  totalExpense: string;
+
+  @ApiProperty({ description: '순수지 (입금 - 지출)', example: '1650000.00' })
+  balance: string;
 
   @ApiProperty({ description: '지출 건수', example: 15 })
   count: number;
@@ -188,10 +214,19 @@ export class YearlyStatisticsDto {
   @ApiProperty({ description: '조회 연도', example: '2026' })
   year: string;
 
+  @ApiProperty({ description: '연간 총 입금', example: '24000000.00' })
+  totalIncome: string;
+
   @ApiProperty({ description: '연간 총 지출', example: '4200000.00' })
   totalExpense: string;
 
-  @ApiProperty({ description: '월별 지출 목록', type: [MonthlyTotalDto] })
+  @ApiProperty({
+    description: '연간 순수지 (입금 - 지출)',
+    example: '19800000.00',
+  })
+  balance: string;
+
+  @ApiProperty({ description: '월별 통계 목록', type: [MonthlyTotalDto] })
   months: MonthlyTotalDto[];
 }
 

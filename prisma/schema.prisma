@@ -651,17 +651,18 @@ model ChecklistItem {
 }
 
 model Expense {
-  id            String          @id @default(uuid())
+  id            String           @id @default(uuid())
   groupId       String?
   userId        String
-  amount        Decimal         @db.Decimal(10, 2)
+  type          TransactionType  @default(EXPENSE)
+  amount        Decimal          @db.Decimal(10, 2)
   category      ExpenseCategory?
-  date          DateTime        @db.Date
-  description   String?         @db.VarChar(200)
+  date          DateTime         @db.Date
+  description   String?          @db.VarChar(200)
   paymentMethod PaymentMethod?
-  isRecurring   Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  isRecurring   Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   group         Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -671,6 +672,7 @@ model Expense {
   @@index([userId, date(sort: Desc)])
   @@index([category])
   @@index([date(sort: Desc)])
+  @@index([type])
   @@map("expenses")
 }
 
@@ -761,6 +763,11 @@ model GroupBudgetTemplate {
   @@map("group_budget_templates")
 }
 
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
 enum ExpenseCategory {
   TRANSPORTATION
   FOOD
@@ -769,6 +776,9 @@ enum ExpenseCategory {
   MEDICAL
   EDUCATION
   ALLOWANCE
+  CELEBRATION
+  ASSET_TRANSFER
+  CHILDCARE
   OTHER
 }
 

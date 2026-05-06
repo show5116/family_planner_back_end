@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
-import { ExpenseCategory, PaymentMethod } from '@prisma/client';
+import {
+  ExpenseCategory,
+  PaymentMethod,
+  TransactionType,
+} from '@prisma/client';
 
 export const EXPENSE_CATEGORY_NONE = 'NONE' as const;
 export type ExpenseCategoryFilter =
@@ -44,4 +48,13 @@ export class ExpenseQueryDto {
   @IsOptional()
   @IsEnum(PaymentMethod)
   paymentMethod?: PaymentMethod;
+
+  @ApiProperty({
+    description: '거래 유형 필터 (생략 시 전체 조회)',
+    enum: TransactionType,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(TransactionType)
+  type?: TransactionType;
 }

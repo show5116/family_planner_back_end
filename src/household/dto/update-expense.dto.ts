@@ -8,9 +8,23 @@ import {
   IsDateString,
   Min,
 } from 'class-validator';
-import { ExpenseCategory, PaymentMethod } from '@prisma/client';
+import {
+  ExpenseCategory,
+  PaymentMethod,
+  TransactionType,
+} from '@prisma/client';
 
 export class UpdateExpenseDto {
+  @ApiProperty({
+    description: '거래 유형',
+    enum: TransactionType,
+    example: TransactionType.EXPENSE,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(TransactionType)
+  type?: TransactionType;
+
   @ApiProperty({ description: '금액', example: 15000, required: false })
   @IsOptional()
   @IsNumber()

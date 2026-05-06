@@ -14,8 +14,9 @@
 ## 주요 기능
 
 ### 가계부 작성
-- 일일 지출 내역 입력 (날짜, 금액, 카테고리, 메모, 결제 수단)
-- 카테고리: 교통비, 식비, 여가비, 생활비, 의료비, 교육비, 용돈, 기타
+- 일일 거래 내역 입력 (날짜, 유형, 금액, 카테고리, 메모, 결제 수단)
+- 거래 유형: 입금(INCOME), 지출(EXPENSE)
+- 카테고리: 교통비, 식비, 여가비, 생활비, 의료비, 교육비, 용돈, 경조사비, 자산이동, 육아비, 기타
 
 ### 고정비용 관리
 - 매달/매년 고정 금액 등록 (월세, 관리비, 보험료, 구독 서비스)
@@ -23,7 +24,7 @@
 
 ### 데이터 분석
 - 카테고리별 지출 통계 (표/차트)
-- 월별/연별 비교 분석
+- 월별/연별 비교 분석 (입금, 지출, 순수지)
 - 예산 설정 및 예산 대비 지출 현황
 
 ---
@@ -32,17 +33,23 @@
 
 ```prisma
 model Expense {
-  id            String          @id @default(uuid())
-  groupId       String
+  id            String           @id @default(uuid())
+  groupId       String?
   userId        String
-  amount        Decimal         @db.Decimal(10, 2)
-  category      ExpenseCategory
-  date          DateTime        @db.Date
-  description   String?         @db.VarChar(200)
+  type          TransactionType  @default(EXPENSE)
+  amount        Decimal          @db.Decimal(10, 2)
+  category      ExpenseCategory?
+  date          DateTime         @db.Date
+  description   String?          @db.VarChar(200)
   paymentMethod PaymentMethod?
-  isRecurring   Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  isRecurring   Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
 }
 
 model Budget {
@@ -65,6 +72,9 @@ enum ExpenseCategory {
   MEDICAL
   EDUCATION
   ALLOWANCE
+  CELEBRATION
+  ASSET_TRANSFER
+  CHILDCARE
   OTHER
 }
 

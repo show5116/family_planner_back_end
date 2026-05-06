@@ -50,6 +50,7 @@ export class HouseholdService {
       data: {
         groupId: dto.groupId ?? null,
         userId,
+        type: dto.type ?? 'EXPENSE',
         amount: dto.amount,
         category: dto.category,
         date: new Date(dto.date),
@@ -60,7 +61,7 @@ export class HouseholdService {
     });
 
     // 예산 초과 여부 확인 후 알림 (그룹 지출이고 카테고리가 있는 경우만)
-    if (dto.groupId && expense.category) {
+    if (dto.type !== 'INCOME' && dto.groupId && expense.category) {
       this.checkBudgetExceeded(
         userId,
         dto.groupId,
@@ -98,6 +99,10 @@ export class HouseholdService {
 
     if (query.paymentMethod) {
       where.paymentMethod = query.paymentMethod;
+    }
+
+    if (query.type) {
+      where.type = query.type;
     }
 
     return await this.prisma.expense.findMany({
@@ -146,6 +151,7 @@ export class HouseholdService {
     return await this.prisma.expense.update({
       where: { id },
       data: {
+        ...(dto.type !== undefined && { type: dto.type }),
         ...(dto.amount !== undefined && { amount: dto.amount }),
         ...(dto.category !== undefined && { category: dto.category }),
         ...(dto.date !== undefined && { date: new Date(dto.date) }),
@@ -217,7 +223,7 @@ export class HouseholdService {
     const gid = groupId ?? null;
     const ownerId = groupId ? null : userId;
 
-    const [expenses, budgets, groupBudget] = await Promise.all([
+    const [transactions, budgets, groupBudget] = await Promise.all([
       this.prisma.expense.findMany({ where: expenseWhere }),
       this.prisma.budget.findMany({ where: budgetWhere }),
       this.prisma.groupBudget.findFirst({
@@ -227,7 +233,11 @@ export class HouseholdService {
 
     const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));
 
-    // 카테고리별 집계
+    // 입금/지출 분리
+    const incomes = transactions.filter((t) => t.type === 'INCOME');
+    const expenses = transactions.filter((t) => t.type === 'EXPENSE');
+
+    // 카테고리별 집계 (지출만)
     const categoryMap = new Map<string, { total: number; count: number }>();
 
     for (const expense of expenses) {
@@ -239,6 +249,7 @@ export class HouseholdService {
       });
     }
 
+    const totalIncome = incomes.reduce((sum, e) => sum + Number(e.amount), 0);
     const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
     const categoryBudgetSum = budgets.reduce(
       (sum, b) => sum + Number(b.amount),
@@ -266,7 +277,9 @@ export class HouseholdService {
 
     return {
       month,
+      totalIncome: totalIncome.toFixed(2),
       totalExpense: totalExpense.toFixed(2),
+      balance: (totalIncome - totalExpense).toFixed(2),
       totalBudget: totalBudget.toFixed(2),
       categories,
     };
@@ -296,39 +309,60 @@ export class HouseholdService {
           date: { gte: startDate, lt: endDate },
         };
 
-    const expenses = await this.prisma.expense.findMany({
+    const transactions = await this.prisma.expense.findMany({
       where: expenseWhere,
     });
 
-    // 월별 집계
-    const monthMap = new Map<string, { total: number; count: number }>();
+    // 월별 집계 (입금/지출 분리)
+    const monthMap = new Map<
+      string,
+      { income: number; expense: number; count: number }
+    >();
 
-    for (const expense of expenses) {
-      const d = new Date(expense.date);
+    for (const tx of transactions) {
+      const d = new Date(tx.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const current = monthMap.get(key) ?? { total: 0, count: 0 };
-      monthMap.set(key, {
-        total: current.total + Number(expense.amount),
-        count: current.count + 1,
-      });
+      const current = monthMap.get(key) ?? { income: 0, expense: 0, count: 0 };
+      if (tx.type === 'INCOME') {
+        monthMap.set(key, {
+          ...current,
+          income: current.income + Number(tx.amount),
+          count: current.count + 1,
+        });
+      } else {
+        monthMap.set(key, {
+          ...current,
+          expense: current.expense + Number(tx.amount),
+          count: current.count + 1,
+        });
+      }
     }
 
     // 1~12월 전체 채우기
     const months = Array.from({ length: 12 }, (_, i) => {
       const key = `${year}-${String(i + 1).padStart(2, '0')}`;
-      const stat = monthMap.get(key) ?? { total: 0, count: 0 };
+      const stat = monthMap.get(key) ?? { income: 0, expense: 0, count: 0 };
       return {
         month: key,
-        total: stat.total.toFixed(2),
+        totalIncome: stat.income.toFixed(2),
+        totalExpense: stat.expense.toFixed(2),
+        balance: (stat.income - stat.expense).toFixed(2),
         count: stat.count,
       };
     });
 
-    const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalIncome = transactions
+      .filter((t) => t.type === 'INCOME')
+      .reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalExpense = transactions
+      .filter((t) => t.type === 'EXPENSE')
+      .reduce((sum, e) => sum + Number(e.amount), 0);
 
     return {
       year,
+      totalIncome: totalIncome.toFixed(2),
       totalExpense: totalExpense.toFixed(2),
+      balance: (totalIncome - totalExpense).toFixed(2),
       months,
     };
   }
