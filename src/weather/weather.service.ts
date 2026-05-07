@@ -56,17 +56,19 @@ interface AirKoreaResponse<T> {
   };
 }
 
-// 위경도 범위 기반 시도명 매핑
+// 위경도 범위 기반 시도명 매핑 (좁은 범위 광역시를 도(道)보다 먼저 체크)
 function getSidoName(lat: number, lon: number): string {
+  // 광역시/특별시/특별자치시 (좁은 범위) 먼저
   if (lat >= 37.4 && lat <= 37.7 && lon >= 126.7 && lon <= 127.2) return '서울';
   if (lat >= 37.3 && lat <= 37.8 && lon >= 126.4 && lon <= 127.0) return '인천';
-  if (lat >= 37.1 && lat <= 37.8 && lon >= 126.7 && lon <= 127.8) return '경기';
+  if (lat >= 36.3 && lat <= 36.6 && lon >= 127.3 && lon <= 127.6) return '세종';
   if (lat >= 36.1 && lat <= 36.7 && lon >= 127.2 && lon <= 127.7) return '대전';
   if (lat >= 35.8 && lat <= 36.1 && lon >= 128.4 && lon <= 128.8) return '대구';
-  if (lat >= 35.0 && lat <= 35.3 && lon >= 128.9 && lon <= 129.3) return '부산';
   if (lat >= 35.4 && lat <= 35.7 && lon >= 128.6 && lon <= 129.0) return '울산';
+  if (lat >= 35.0 && lat <= 35.3 && lon >= 128.9 && lon <= 129.3) return '부산';
   if (lat >= 35.1 && lat <= 35.4 && lon >= 126.7 && lon <= 127.1) return '광주';
-  if (lat >= 36.3 && lat <= 36.6 && lon >= 127.3 && lon <= 127.6) return '세종';
+  // 도(道) (넓은 범위) 나중에
+  if (lat >= 37.1 && lat <= 37.8 && lon >= 126.7 && lon <= 127.8) return '경기';
   if (lat >= 37.0 && lat <= 38.6 && lon >= 127.5 && lon <= 129.4) return '강원';
   if (lat >= 36.1 && lat <= 37.1 && lon >= 127.0 && lon <= 128.0) return '충북';
   if (lat >= 35.9 && lat <= 36.8 && lon >= 126.3 && lon <= 127.4) return '충남';
