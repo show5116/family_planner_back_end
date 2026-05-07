@@ -144,7 +144,9 @@ export class HouseholdService {
       throw new NotFoundException('지출 내역을 찾을 수 없습니다');
     }
 
-    if (expense.userId !== userId) {
+    if (expense.groupId) {
+      await this.validateGroupMember(userId, expense.groupId);
+    } else if (expense.userId !== userId) {
       throw new ForbiddenException('본인이 등록한 지출만 수정할 수 있습니다');
     }
 
@@ -178,7 +180,9 @@ export class HouseholdService {
       throw new NotFoundException('지출 내역을 찾을 수 없습니다');
     }
 
-    if (expense.userId !== userId) {
+    if (expense.groupId) {
+      await this.validateGroupMember(userId, expense.groupId);
+    } else if (expense.userId !== userId) {
       throw new ForbiddenException('본인이 등록한 지출만 삭제할 수 있습니다');
     }
 
@@ -389,7 +393,9 @@ export class HouseholdService {
       throw new NotFoundException('지출 내역을 찾을 수 없습니다');
     }
 
-    if (expense.userId !== userId) {
+    if (expense.groupId) {
+      await this.validateGroupMember(userId, expense.groupId);
+    } else if (expense.userId !== userId) {
       throw new ForbiddenException('본인이 등록한 지출만 수정할 수 있습니다');
     }
 
@@ -422,7 +428,9 @@ export class HouseholdService {
       throw new NotFoundException('지출 내역을 찾을 수 없습니다');
     }
 
-    if (expense.userId !== userId) {
+    if (expense.groupId) {
+      await this.validateGroupMember(userId, expense.groupId);
+    } else if (expense.userId !== userId) {
       throw new ForbiddenException('본인이 등록한 지출만 수정할 수 있습니다');
     }
 
@@ -453,7 +461,9 @@ export class HouseholdService {
       throw new NotFoundException('영수증을 찾을 수 없습니다');
     }
 
-    if (receipt.expense.userId !== userId) {
+    if (receipt.expense.groupId) {
+      await this.validateGroupMember(userId, receipt.expense.groupId);
+    } else if (receipt.expense.userId !== userId) {
       throw new ForbiddenException(
         '본인이 등록한 지출의 영수증만 삭제할 수 있습니다',
       );
