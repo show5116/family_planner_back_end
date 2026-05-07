@@ -60,6 +60,13 @@ export class HouseholdService {
       },
     });
 
+    // 그룹 지출 등록 알림 (등록자 제외 그룹 멤버 전체)
+    if (dto.groupId) {
+      this.sendExpenseCreatedNotification(userId, dto.groupId, expense).catch(
+        () => null,
+      );
+    }
+
     // 예산 초과 여부 확인 후 알림 (그룹 지출이고 카테고리가 있는 경우만)
     if (dto.type !== 'INCOME' && dto.groupId && expense.category) {
       this.checkBudgetExceeded(
@@ -948,6 +955,58 @@ export class HouseholdService {
     await this.prisma.groupBudgetTemplate.delete({ where: whereKey });
 
     return { message: '전체 예산 템플릿이 삭제되었습니다' };
+  }
+
+  /**
+   * 가계 등록 시 그룹 멤버에게 알림 발송 (등록자 제외)
+   */
+  private async sendExpenseCreatedNotification(
+    userId: string,
+    groupId: string,
+    expense: {
+      id: string;
+      type: string;
+      amount: unknown;
+      category: string | null;
+    },
+  ) {
+    const members = await this.prisma.groupMember.findMany({
+      where: { groupId },
+      select: { userId: true },
+    });
+
+    const typeLabel = expense.type === 'INCOME' ? '입금' : '지출';
+    const categoryLabel: Record<string, string> = {
+      TRANSPORTATION: '교통비',
+      FOOD: '식비',
+      LEISURE: '여가비',
+      LIVING: '생활비',
+      MEDICAL: '의료비',
+      EDUCATION: '교육비',
+      ALLOWANCE: '용돈',
+      CONDOLENCE: '경조사비',
+      ASSET_TRANSFER: '자산이동',
+      CHILDCARE: '육아비',
+      OTHER: '기타',
+    };
+    const catLabel = expense.category
+      ? (categoryLabel[expense.category] ?? expense.category)
+      : '';
+    const amountStr = Number(expense.amount).toLocaleString();
+    const body = catLabel
+      ? `${catLabel} ${typeLabel} ${amountStr}원이 등록되었습니다`
+      : `${typeLabel} ${amountStr}원이 등록되었습니다`;
+
+    for (const member of members) {
+      if (member.userId === userId) continue;
+      await this.notificationQueue.enqueueImmediate({
+        userId: member.userId,
+        category: NotificationCategory.HOUSEHOLD,
+        title: '가계부 내역 등록',
+        body,
+        data: { householdId: groupId },
+      });
+    }
   }
 
   /**
