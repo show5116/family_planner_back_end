@@ -59,24 +59,41 @@ interface AirKoreaResponse<T> {
 // 위경도 범위 기반 시도명 매핑 (좁은 범위 광역시를 도(道)보다 먼저 체크)
 function getSidoName(lat: number, lon: number): string {
   // 광역시/특별시/특별자치시 (좁은 범위) 먼저
-  if (lat >= 37.4 && lat <= 37.7 && lon >= 126.7 && lon <= 127.2) return '서울';
-  if (lat >= 37.3 && lat <= 37.8 && lon >= 126.4 && lon <= 127.0) return '인천';
-  if (lat >= 36.3 && lat <= 36.6 && lon >= 127.3 && lon <= 127.6) return '세종';
-  if (lat >= 36.1 && lat <= 36.7 && lon >= 127.2 && lon <= 127.7) return '대전';
-  if (lat >= 35.8 && lat <= 36.1 && lon >= 128.4 && lon <= 128.8) return '대구';
-  if (lat >= 35.4 && lat <= 35.7 && lon >= 128.6 && lon <= 129.0) return '울산';
-  if (lat >= 35.0 && lat <= 35.3 && lon >= 128.9 && lon <= 129.3) return '부산';
-  if (lat >= 35.1 && lat <= 35.4 && lon >= 126.7 && lon <= 127.1) return '광주';
+  if (lat >= 37.43 && lat <= 37.7 && lon >= 126.76 && lon <= 127.18)
+    return '서울';
+  if (lat >= 37.15 && lat <= 37.81 && lon >= 126.2 && lon <= 126.78)
+    return '인천';
+  if (lat >= 36.26 && lat <= 36.65 && lon >= 127.18 && lon <= 127.5)
+    return '세종';
+  if (lat >= 36.2 && lat <= 36.5 && lon >= 127.29 && lon <= 127.51)
+    return '대전';
+  if (lat >= 35.78 && lat <= 36.03 && lon >= 128.4 && lon <= 128.76)
+    return '대구';
+  if (lat >= 35.46 && lat <= 35.78 && lon >= 128.97 && lon <= 129.46)
+    return '울산';
+  if (lat >= 34.88 && lat <= 35.4 && lon >= 128.74 && lon <= 129.33)
+    return '부산';
+  if (lat >= 35.08 && lat <= 35.25 && lon >= 126.72 && lon <= 126.96)
+    return '광주';
   // 도(道) (넓은 범위) 나중에
-  if (lat >= 37.1 && lat <= 37.8 && lon >= 126.7 && lon <= 127.8) return '경기';
-  if (lat >= 37.0 && lat <= 38.6 && lon >= 127.5 && lon <= 129.4) return '강원';
-  if (lat >= 36.1 && lat <= 37.1 && lon >= 127.0 && lon <= 128.0) return '충북';
-  if (lat >= 35.9 && lat <= 36.8 && lon >= 126.3 && lon <= 127.4) return '충남';
-  if (lat >= 35.6 && lat <= 36.5 && lon >= 127.1 && lon <= 128.0) return '전북';
-  if (lat >= 34.2 && lat <= 35.6 && lon >= 126.2 && lon <= 127.3) return '전남';
-  if (lat >= 35.5 && lat <= 37.0 && lon >= 128.0 && lon <= 129.4) return '경북';
-  if (lat >= 34.6 && lat <= 35.7 && lon >= 127.6 && lon <= 129.3) return '경남';
-  if (lat >= 33.1 && lat <= 33.6 && lon >= 126.1 && lon <= 126.9) return '제주';
+  if (lat >= 36.93 && lat <= 38.3 && lon >= 126.32 && lon <= 127.86)
+    return '경기';
+  if (lat >= 37.0 && lat <= 38.62 && lon >= 127.19 && lon <= 129.37)
+    return '강원';
+  if (lat >= 36.06 && lat <= 37.18 && lon >= 127.4 && lon <= 128.52)
+    return '충북';
+  if (lat >= 35.9 && lat <= 37.07 && lon >= 125.91 && lon <= 127.55)
+    return '충남';
+  if (lat >= 35.4 && lat <= 36.15 && lon >= 126.35 && lon <= 127.83)
+    return '전북';
+  if (lat >= 34.06 && lat <= 35.52 && lon >= 125.58 && lon <= 127.62)
+    return '전남';
+  if (lat >= 35.57 && lat <= 37.22 && lon >= 127.98 && lon <= 129.57)
+    return '경북';
+  if (lat >= 34.67 && lat <= 35.81 && lon >= 127.55 && lon <= 129.46)
+    return '경남';
+  if (lat >= 33.11 && lat <= 33.56 && lon >= 126.15 && lon <= 126.96)
+    return '제주';
   return '서울'; // fallback
 }
 
