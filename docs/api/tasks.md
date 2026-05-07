@@ -31,7 +31,13 @@
       "name": "신정", // 공휴일 명칭 (string)
       "isSubstitute": false // 대체공휴일 여부 (boolean)
     }
-  ] // 공휴일 목록 (HolidayDto[])
+  ], // 공휴일 목록 (휴일 O) (HolidayDto[])
+  "specialDays": [
+    {
+      "date": "2025-05-08", // 날짜 (YYYY-MM-DD) (string)
+      "name": "어버이날" // 특별한 날 명칭 (string)
+    }
+  ] // 특별한 날 목록 (휴일 X — 기념일/이벤트성 날) (SpecialDayDto[])
 }
 ```
 
