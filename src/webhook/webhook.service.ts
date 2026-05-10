@@ -76,9 +76,20 @@ export class WebhookService {
 
     const color = colorMap[action] || 0xffa500; // 기본 주황
 
+    const issue = data?.issue;
+    const metadata = issue?.metadata;
+
+    // 에러 타입 + 메시지를 title로
+    const errorType = metadata?.type || issue?.type || '';
+    const errorMessage = metadata?.value || '';
+    const title =
+      errorType && errorMessage
+        ? `[${errorType}] ${errorMessage}`
+        : issue?.title || 'Sentry 알림';
+
     const embed: any = {
-      title: data?.issue?.title || 'Sentry 알림',
-      url: data?.issue?.web_url,
+      title: title.length > 256 ? title.substring(0, 253) + '...' : title,
+      url: issue?.web_url,
       color,
       timestamp: new Date().toISOString(),
       fields: [],
@@ -92,46 +103,48 @@ export class WebhookService {
     });
 
     // 프로젝트 정보
-    if (data?.issue?.project) {
+    if (issue?.project) {
       embed.fields.push({
         name: '프로젝트',
-        value: data.issue.project.name || data.issue.project.slug,
+        value: issue.project.name || issue.project.slug,
         inline: true,
       });
     }
 
-    // 환경
-    if (data?.issue?.metadata?.value) {
-      embed.fields.push({
-        name: '환경',
-        value: data.issue.metadata.value,
-        inline: true,
-      });
-    }
-
-    // 에러 메시지
-    if (data?.issue?.culprit) {
+    // 에러 위치 (culprit)
+    if (issue?.culprit) {
       embed.fields.push({
         name: '위치',
-        value: `\`\`\`${data.issue.culprit}\`\`\``,
+        value: `\`${issue.culprit}\``,
         inline: false,
       });
     }
 
-    // 발생 횟수
-    if (data?.issue?.count) {
+    // 에러 메시지 (metadata.value가 title과 별도로 길 경우 표시)
+    if (errorMessage && errorMessage.length > 80) {
+      embed.fields.push({
+        name: '에러 메시지',
+        value:
+          errorMessage.length > 1024
+            ? errorMessage.substring(0, 1021) + '...'
+            : errorMessage,
+        inline: false,
+      });
+    }
+
+    // 발생 횟수 / 영향받은 사용자
+    if (issue?.count) {
       embed.fields.push({
         name: '발생 횟수',
-        value: data.issue.count.toString(),
+        value: issue.count.toString(),
         inline: true,
       });
     }
 
-    // 영향받은 사용자 수
-    if (data?.issue?.userCount) {
+    if (issue?.userCount) {
       embed.fields.push({
         name: '영향받은 사용자',
-        value: data.issue.userCount.toString(),
+        value: issue.userCount.toString(),
         inline: true,
       });
     }
