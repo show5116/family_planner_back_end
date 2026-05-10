@@ -337,7 +337,7 @@
   "groupId": "uuid-1234", // 그룹 ID (string)
   "name": "주택청약", // 계좌명 (string)
   "accountNumber": "123-456-789", // 계좌번호 (string?)
-  "institution": "국민은행", // 금융기관명 (string)
+  "institution": "국민은행", // 금융기관명 (string?)
   "type": null // 계좌 유형 (AccountType)
 }
 ```
@@ -353,7 +353,7 @@
   "userId": "uuid-9012", // 소유자 ID (string)
   "name": "주택청약", // 계좌명 (string)
   "accountNumber": "123-456-789", // 계좌번호 (string | null)
-  "institution": "국민은행", // 금융기관명 (string)
+  "institution": "국민은행", // 금융기관명 (string | null)
   "type": null, // 계좌 유형 (AccountType)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
@@ -386,7 +386,7 @@
   "userId": "uuid-9012", // 소유자 ID (string)
   "name": "주택청약", // 계좌명 (string)
   "accountNumber": "123-456-789", // 계좌번호 (string | null)
-  "institution": "국민은행", // 금융기관명 (string)
+  "institution": "국민은행", // 금융기관명 (string | null)
   "type": null, // 계좌 유형 (AccountType)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
@@ -418,7 +418,7 @@
   "userId": "uuid-9012", // 소유자 ID (string)
   "name": "주택청약", // 계좌명 (string)
   "accountNumber": "123-456-789", // 계좌번호 (string | null)
-  "institution": "국민은행", // 금융기관명 (string)
+  "institution": "국민은행", // 금융기관명 (string | null)
   "type": null, // 계좌 유형 (AccountType)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
@@ -490,7 +490,7 @@
   "userId": "uuid-9012", // 소유자 ID (string)
   "name": "주택청약", // 계좌명 (string)
   "accountNumber": "123-456-789", // 계좌번호 (string | null)
-  "institution": "국민은행", // 금융기관명 (string)
+  "institution": "국민은행", // 금융기관명 (string | null)
   "type": null, // 계좌 유형 (AccountType)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
@@ -542,12 +542,14 @@
 ```json
 {
   "recordDate": "2026-03-01", // 기록 날짜 (YYYY-MM-DD) (string)
-  "inputMode": null, // 입력 방식 (manual: 직접 입력, auto: 자동 계산) (RecordInputMode?)
+  "inputMode": null, // 입력 방식 (manual: 직접 입력, auto: 자동 계산, gold: 금 무게 기반 자동 계산) (RecordInputMode?)
   "balance": 5000000, // [manual] 잔액 (number?)
   "principal": 4800000, // [manual] 원금 (number?)
   "profit": 200000, // [manual] 수익금 (number?)
   "currentBalance": 5000000, // [auto] 현재 잔액 (number?)
   "additionalPrincipal": 300000, // [auto] 이번 달 추가 원금 (첫 기록이면 초기 원금) (number?)
+  "gramWeight": 37, // [gold] 보유 금 무게 (g) — balance는 gramWeight × 현재 GOLD_KRW_SPOT으로 자동 계산 (number?)
+  "purchaseCost": 4500000, // [gold] 매입 원가 — 미입력 시 gramWeight × 현재 GOLD_KRW_SPOT으로 임시 채움 (number?)
   "note": "이자 입금" // 메모 (string?)
 }
 ```
@@ -565,6 +567,7 @@
   "principal": "4800000.00", // 원금 (string)
   "profit": "200000.00", // 수익금 (string)
   "profitRate": "4.17", // 수익률 (%) (string)
+  "gramWeight": "37.5000", // 보유 금 무게 (g) — GOLD 타입 기록 전용 (string | null)
   "note": "이자 입금", // 메모 (string | null)
   "createdAt": "2025-01-01T00:00:00Z" // 생성일시 (Date)
 }
@@ -597,6 +600,7 @@
   "principal": "4800000.00", // 원금 (string)
   "profit": "200000.00", // 수익금 (string)
   "profitRate": "4.17", // 수익률 (%) (string)
+  "gramWeight": "37.5000", // 보유 금 무게 (g) — GOLD 타입 기록 전용 (string | null)
   "note": "이자 입금", // 메모 (string | null)
   "createdAt": "2025-01-01T00:00:00Z" // 생성일시 (Date)
 }
@@ -723,6 +727,19 @@
 #### 404 - 출금 기록을 찾을 수 없습니다
 
 #### 403 - 본인의 계좌 출금 기록만 삭제할 수 있습니다
+
+---
+
+### GET `assets/gold/current-price`
+
+**요약:** 현재 금 현물가 조회 (원/g)
+
+**설명:**
+GOLD 타입 계좌 생성 시 원금 임시값 계산용. GOLD_KRW_SPOT 지표의 최신 시세를 반환합니다.
+
+**Responses:**
+
+#### 200 - 금 현물가 조회 성공
 
 ---
 

@@ -20,9 +20,14 @@ export class CreateAccountDto {
   @IsString()
   accountNumber?: string;
 
-  @ApiProperty({ description: '금융기관명', example: '국민은행' })
+  @ApiProperty({
+    description: '금융기관명',
+    example: '국민은행',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  institution: string;
+  institution?: string;
 
   @ApiProperty({
     description: '계좌 유형',

@@ -12,6 +12,7 @@ import {
 export enum RecordInputMode {
   MANUAL = 'manual',
   AUTO = 'auto',
+  GOLD = 'gold',
 }
 
 export class CreateAccountRecordDto {
@@ -23,7 +24,8 @@ export class CreateAccountRecordDto {
   recordDate: string;
 
   @ApiProperty({
-    description: '입력 방식 (manual: 직접 입력, auto: 자동 계산)',
+    description:
+      '입력 방식 (manual: 직접 입력, auto: 자동 계산, gold: 금 무게 기반 자동 계산)',
     enum: RecordInputMode,
     example: RecordInputMode.AUTO,
     default: RecordInputMode.MANUAL,
@@ -84,6 +86,33 @@ export class CreateAccountRecordDto {
   @IsNumber()
   @Min(0)
   additionalPrincipal?: number;
+
+  // ─── gold 모드 필드 ─────────────────────────────────────────
+
+  @ApiProperty({
+    description:
+      '[gold] 보유 금 무게 (g) — balance는 gramWeight × 현재 GOLD_KRW_SPOT으로 자동 계산',
+    example: 37.5,
+    required: false,
+  })
+  @ValidateIf((o) => o.inputMode === RecordInputMode.GOLD)
+  @IsNumber()
+  @Min(0.0001)
+  gramWeight?: number;
+
+  @ApiProperty({
+    description:
+      '[gold] 매입 원가 — 미입력 시 gramWeight × 현재 GOLD_KRW_SPOT으로 임시 채움',
+    example: 4500000,
+    required: false,
+  })
+  @ValidateIf((o) => o.inputMode === RecordInputMode.GOLD)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  purchaseCost?: number;
+
+  // ─── 공통 ────────────────────────────────────────────────────
 
   @ApiProperty({
     description: '메모',

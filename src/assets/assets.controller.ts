@@ -194,6 +194,19 @@ export class AssetsController {
     );
   }
 
+  // ─── 금 현물가 ────────────────────────────────────────────
+
+  @Get('gold/current-price')
+  @ApiOperation({
+    summary: '현재 금 현물가 조회 (원/g)',
+    description:
+      'GOLD 타입 계좌 생성 시 원금 임시값 계산용. GOLD_KRW_SPOT 지표의 최신 시세를 반환합니다.',
+  })
+  @ApiSuccess(Object, '금 현물가 조회 성공')
+  getGoldCurrentPrice() {
+    return this.assetsService.getGoldCurrentPrice();
+  }
+
   // ─── 통계 ─────────────────────────────────────────────────
 
   @Get('statistics')

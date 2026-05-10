@@ -46,6 +46,31 @@ export class AssetsService {
   }
 
   /**
+   * 현재 GOLD_KRW_SPOT 가격 조회 (원/g)
+   */
+  async getGoldCurrentPrice() {
+    const indicator = await this.prisma.indicator.findUnique({
+      where: { symbol: 'GOLD_KRW_SPOT' },
+      include: {
+        prices: {
+          orderBy: { recordedAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    if (!indicator || indicator.prices.length === 0) {
+      return { pricePerGram: null, recordedAt: null };
+    }
+
+    const latest = indicator.prices[0];
+    return {
+      pricePerGram: Number(latest.price).toFixed(0),
+      recordedAt: latest.recordedAt,
+    };
+  }
+
+  /**
    * 계좌 생성
    */
   async createAccount(userId: string, dto: CreateAccountDto) {
@@ -57,7 +82,7 @@ export class AssetsService {
         userId,
         name: dto.name,
         accountNumber: dto.accountNumber,
-        institution: dto.institution,
+        institution: dto.institution ?? null,
         type: dto.type,
       },
     });
@@ -254,6 +279,7 @@ export class AssetsService {
     let balance: number;
     let principal: number;
     let profit: number;
+    let gramWeight: number | null = null;
 
     if (dto.inputMode === RecordInputMode.AUTO) {
       const prevRecord = await this.prisma.accountRecord.findFirst({
@@ -264,6 +290,29 @@ export class AssetsService {
       const prevPrincipal = prevRecord ? Number(prevRecord.principal) : 0;
       balance = dto.currentBalance ?? 0;
       principal = prevPrincipal + (dto.additionalPrincipal ?? 0);
+      profit = balance - principal;
+    } else if (dto.inputMode === RecordInputMode.GOLD) {
+      if (account.type !== AccountType.GOLD) {
+        throw new BadRequestException(
+          'gold 모드는 GOLD 타입 계좌에서만 사용할 수 있습니다',
+        );
+      }
+
+      const goldIndicator = await this.prisma.indicator.findUnique({
+        where: { symbol: 'GOLD_KRW_SPOT' },
+        include: { prices: { orderBy: { recordedAt: 'desc' }, take: 1 } },
+      });
+
+      if (!goldIndicator || goldIndicator.prices.length === 0) {
+        throw new BadRequestException(
+          '현재 금 시세를 조회할 수 없습니다. 잠시 후 다시 시도해 주세요',
+        );
+      }
+
+      const pricePerGram = Number(goldIndicator.prices[0].price);
+      gramWeight = dto.gramWeight ?? 0;
+      balance = gramWeight * pricePerGram;
+      principal = dto.purchaseCost ?? balance;
       profit = balance - principal;
     } else {
       balance = dto.balance ?? 0;
@@ -278,6 +327,7 @@ export class AssetsService {
         balance,
         principal,
         profit,
+        gramWeight,
         note: dto.note,
       },
     });
@@ -437,7 +487,7 @@ export class AssetsService {
       userId: string;
       name: string;
       accountNumber: string | null;
-      institution: string;
+      institution: string | null;
       type: AccountType;
       createdAt: Date;
       updatedAt: Date;
@@ -956,6 +1006,7 @@ export class AssetsService {
     balance: unknown;
     principal: unknown;
     profit: unknown;
+    gramWeight: unknown;
     note: string | null;
     createdAt: Date;
   }) {
@@ -972,6 +1023,10 @@ export class AssetsService {
       principal: principal.toFixed(2),
       profit: profit.toFixed(2),
       profitRate,
+      gramWeight:
+        record.gramWeight !== null && record.gramWeight !== undefined
+          ? Number(record.gramWeight).toFixed(4)
+          : null,
       note: record.note,
       createdAt: record.createdAt,
     };

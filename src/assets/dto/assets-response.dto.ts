@@ -23,6 +23,13 @@ export class AccountRecordDto {
   @ApiProperty({ description: '수익률 (%)', example: '4.17' })
   profitRate: string;
 
+  @ApiProperty({
+    description: '보유 금 무게 (g) — GOLD 타입 기록 전용',
+    example: '37.5000',
+    nullable: true,
+  })
+  gramWeight: string | null;
+
   @ApiProperty({ description: '메모', example: '이자 입금', nullable: true })
   note: string | null;
 
@@ -50,8 +57,12 @@ export class AccountDto {
   })
   accountNumber: string | null;
 
-  @ApiProperty({ description: '금융기관명', example: '국민은행' })
-  institution: string;
+  @ApiProperty({
+    description: '금융기관명',
+    example: '국민은행',
+    nullable: true,
+  })
+  institution: string | null;
 
   @ApiProperty({
     description: '계좌 유형',

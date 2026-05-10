@@ -36,6 +36,7 @@ model Account {
   accountNumber String?       @db.VarChar(50)
   institution   String        @db.VarChar(100)
   type          AccountType
+  gramWeight    Decimal?      @db.Decimal(10, 4)   // GOLD 타입 전용: 보유 그램수
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -55,6 +56,7 @@ enum AccountType {
   FUND
   REAL_ESTATE
   OTHER
+  GOLD         // 실물 금 — gramWeight × GOLD_KRW_SPOT으로 매달 자동 계산
 }
 
 model AccountRecord {
@@ -85,6 +87,7 @@ model AccountRecord {
 - [x] 자산 기록 목록 조회 (시간별 추이)
 - [x] 계좌별 수익률 계산
 - [x] 구성원별 자산 현황 통계 (유형별 분류)
+- [x] 실물 금 자산 (GOLD 타입): gramWeight 입력 → GOLD_KRW_SPOT 기준 매달 1일 자동 기록 생성
 
 ### ⬜ 향후 고려
 - [ ] 월별/연별 자산 변화 추이
@@ -108,6 +111,7 @@ model AccountRecord {
 | DELETE | `/assets/accounts/:id`            | 계좌 삭제      | JWT, Owner        |
 | POST   | `/assets/accounts/:id/records`    | 자산 기록 추가 | JWT, Owner        |
 | GET    | `/assets/accounts/:id/records`    | 자산 기록 목록 | JWT, Group Member |
+| GET    | `/assets/gold/current-price`      | 금 현물가 조회 (원/g) | JWT        |
 | GET    | `/assets/statistics`              | 통계 조회 (적립금 연동 포함) | JWT, Group Member |
 
 ---
@@ -122,6 +126,8 @@ src/assets/
     create-account-record.dto.ts
     account-query.dto.ts
     assets-response.dto.ts
+  scheduler/
+    gold-asset.scheduler.ts  — 매달 1일 KST 금 자산 자동 기록 생성
   assets.controller.ts
   assets.service.ts
   assets.module.ts
@@ -169,4 +175,14 @@ profitRate = principal > 0 ? (profit / principal) * 100 : 0
 
 ---
 
-**Last Updated**: 2026-04-02
+### 실물 금 자산 (GOLD 타입)
+
+- `type: GOLD` + `gramWeight` (g) 로 계좌 생성
+- `GET /assets/gold/current-price` — 현재 GOLD_KRW_SPOT 가격(원/g) 반환. UI가 임시 원금 계산에 사용
+- 사용자가 원금을 직접 수정하면 그 값이 최초 AccountRecord의 principal로 확정
+- 스케줄러(`GoldAssetScheduler`): 매달 1일 00:00 KST — `gramWeight × GOLD_KRW_SPOT` = balance 로 AccountRecord 자동 생성
+  - principal은 직전 기록의 principal 이어받음 (없으면 해당 달 balance로 초기화)
+  - 이미 해당 날짜 기록 존재 시 스킵 (중복 방지)
+  - Redis 분산 락 적용
+
+**Last Updated**: 2026-05-10

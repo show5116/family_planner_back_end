@@ -794,7 +794,7 @@ model Account {
   userId        String
   name          String              @db.VarChar(100)
   accountNumber String?             @db.VarChar(50)
-  institution   String              @db.VarChar(100)
+  institution   String?             @db.VarChar(100)
   type          AccountType
   sortOrder     Int                 @default(0)
   createdAt     DateTime            @default(now())
@@ -817,6 +817,7 @@ enum AccountType {
   FUND
   REAL_ESTATE
   OTHER
+  GOLD
 }
 
 model AccountRecord {
@@ -826,6 +827,7 @@ model AccountRecord {
   balance    Decimal  @db.Decimal(15, 2)
   principal  Decimal  @db.Decimal(15, 2)
   profit     Decimal  @db.Decimal(15, 2)
+  gramWeight Decimal? @db.Decimal(10, 4)
   note       String?  @db.VarChar(200)
   createdAt  DateTime @default(now())
 
