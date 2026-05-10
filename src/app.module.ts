@@ -48,6 +48,7 @@ import { AiModule } from '@/ai/ai.module';
 import { WeatherModule } from '@/weather/weather.module';
 import { VoteModule } from '@/vote/vote.module';
 import { SavingsModule } from '@/savings/savings.module';
+import { SubscriptionModule } from '@/subscription/subscription.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -161,6 +162,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     WeatherModule,
     VoteModule,
     SavingsModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [

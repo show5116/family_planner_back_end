@@ -50,6 +50,9 @@ model User {
   childProfiles        Child[]                     @relation("ChildParent")
   votesCreated         Vote[]                      @relation("VoteCreator")
   voteBallots          VoteBallot[]                @relation("VoteBallots")
+  subscriptionTier      SubscriptionTier            @default(free)
+  subscriptionExpiresAt DateTime?
+  inAppPurchaseToken    String?                     @db.VarChar(500)
 
   @@unique([provider, providerId])
   @@index([email])
@@ -431,6 +434,12 @@ enum Provider {
   KAKAO
   APPLE
   LOCAL
+}
+
+enum SubscriptionTier {
+  free
+  ad_free
+  premium
 }
 
 enum PermissionCategory {
