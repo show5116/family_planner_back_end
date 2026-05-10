@@ -477,6 +477,16 @@ export class AssetsService {
     };
   }
 
+  private maskAccountNumber(accountNumber: string | null): string | null {
+    if (!accountNumber) return null;
+    // 숫자만 추출 후 뒤 4자리만 노출, 나머지는 *로 마스킹
+    const digits = accountNumber.replace(/\D/g, '');
+    if (digits.length <= 4) return '****';
+    const visible = digits.slice(-4);
+    const masked = '*'.repeat(digits.length - 4);
+    return `${masked}${visible}`;
+  }
+
   /**
    * 계좌 포맷 헬퍼
    */
@@ -515,7 +525,7 @@ export class AssetsService {
       groupId: account.groupId,
       userId: account.userId,
       name: account.name,
-      accountNumber: account.accountNumber,
+      accountNumber: this.maskAccountNumber(account.accountNumber),
       institution: account.institution,
       type: account.type,
       createdAt: account.createdAt,

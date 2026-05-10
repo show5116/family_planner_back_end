@@ -718,8 +718,17 @@ export class AuthService {
 
     return {
       message: '프로필이 성공적으로 업데이트되었습니다',
-      user: updatedUser,
+      user: {
+        ...updatedUser,
+        phoneNumber: this.maskPhoneNumber(updatedUser.phoneNumber),
+      },
     };
+  }
+
+  private maskPhoneNumber(phone: string | null | undefined): string | null {
+    if (!phone) return phone ?? null;
+    // 010-1234-5678 → 010-****-5678
+    return phone.replace(/(\d{3})-(\d{3,4})-(\d{4})/, '$1-****-$3');
   }
 
   /**

@@ -17,12 +17,22 @@ export class SentryInterceptor implements NestInterceptor {
           // HTTP 컨텍스트 정보 추가
           const request = context.switchToHttp().getRequest();
           Sentry.withScope((scope) => {
+            const { authorization, cookie, ...safeHeaders } = request.headers;
+            const {
+              password,
+              currentPassword,
+              newPassword,
+              code,
+              idToken,
+              refreshToken,
+              ...safeBody
+            } = request.body ?? {};
             scope.setContext('http', {
               method: request.method,
               url: request.url,
-              headers: request.headers,
+              headers: safeHeaders,
               query: request.query,
-              body: request.body,
+              body: safeBody,
             });
             Sentry.captureException(exception);
           });

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
@@ -135,6 +136,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         };
       },
     }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     SentryModule,
@@ -167,6 +169,10 @@ import { ScheduleModule } from '@nestjs/schedule';
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

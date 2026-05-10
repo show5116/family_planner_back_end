@@ -12,6 +12,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -76,6 +77,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @ApiOperation({
@@ -334,6 +336,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
   @Post('resend-verification')
   @ApiOperation({ summary: '인증 이메일 재전송' })
   @ApiResponse({
@@ -359,6 +362,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
   @Post('request-password-reset')
   @ApiOperation({ summary: '비밀번호 재설정 요청' })
   @ApiResponse({
