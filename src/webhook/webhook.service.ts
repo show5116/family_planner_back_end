@@ -197,6 +197,34 @@ export class WebhookService {
   }
 
   /**
+   * Apple App Store Server Notifications V2 처리
+   * TODO: 스토어 등록 후 구현
+   *   1. signedPayload(JWT) 서명 검증 (Apple Root CA)
+   *   2. notificationType 파싱 (SUBSCRIBED / DID_RENEW / EXPIRED / REVOKE 등)
+   *   3. SubscriptionService.applyStoreSubscription / expireSubscription 호출
+   * 참고: https://developer.apple.com/documentation/appstoreservernotifications
+   */
+  handleAppleWebhook(body: any, _signature: string) {
+    this.logger.log('Apple webhook received (미구현)', JSON.stringify(body));
+    return { message: 'Apple webhook 수신 완료 (미구현)' };
+  }
+
+  /**
+   * Google Play Real-time Developer Notifications 처리
+   * TODO: 스토어 등록 후 구현
+   *   1. Pub/Sub 메시지 base64 디코딩
+   *   2. subscriptionNotification.notificationType 파싱
+   *      (1=RECOVERED, 2=RENEWED, 3=CANCELED, 12=PURCHASED 등)
+   *   3. Google Play Developer API로 purchaseToken 검증
+   *   4. SubscriptionService.applyStoreSubscription / expireSubscription 호출
+   * 참고: https://developer.android.com/google/play/billing/rtdn-reference
+   */
+  handleGoogleWebhook(body: any) {
+    this.logger.log('Google webhook received (미구현)', JSON.stringify(body));
+    return { message: 'Google webhook 수신 완료 (미구현)' };
+  }
+
+  /**
    * Q&A 새 질문 Discord 알림
    */
   async sendQuestionToDiscord(question: {

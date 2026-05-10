@@ -85,6 +85,32 @@ export class SubscriptionService {
     };
   }
 
+  async applyStoreSubscription(params: {
+    userId: string;
+    tier: SubscriptionTier;
+    expiresAt: Date | null;
+    purchaseToken: string;
+  }): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: params.userId },
+      data: {
+        subscriptionTier: params.tier,
+        subscriptionExpiresAt: params.expiresAt,
+        inAppPurchaseToken: params.purchaseToken,
+      },
+    });
+  }
+
+  async expireSubscription(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        subscriptionTier: SubscriptionTier.free,
+        subscriptionExpiresAt: null,
+      },
+    });
+  }
+
   private checkActive(tier: SubscriptionTier, expiresAt: Date | null): boolean {
     if (tier === SubscriptionTier.free) return false;
     if (!expiresAt) return true;
