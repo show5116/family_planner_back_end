@@ -19,6 +19,9 @@ import {
 import { CreateAccountWithdrawalDto } from './dto/create-account-withdrawal.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
 import { ReorderAccountsDto } from './dto/reorder-accounts.dto';
+import { CreateAccountHoldingDto } from './dto/create-account-holding.dto';
+import { UpdateAccountHoldingDto } from './dto/update-account-holding.dto';
+import { ReorderAccountHoldingsDto } from './dto/reorder-account-holdings.dto';
 import {
   AccountTrendQueryDto,
   TrendPeriod,
@@ -413,6 +416,9 @@ export class AssetsService {
           orderBy: { recordDate: 'desc' },
           take: 1,
         },
+        holdings: {
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+        },
       },
     });
 
@@ -420,6 +426,12 @@ export class AssetsService {
     let totalPrincipal = 0;
     let totalProfit = 0;
     const typeMap = new Map<AccountType, { balance: number; count: number }>();
+
+    // 종목별 집계: name+ticker 기준으로 추정 금액 합산
+    const holdingMap = new Map<
+      string,
+      { name: string; ticker: string | null; estimatedAmount: number }
+    >();
 
     for (const account of accounts) {
       const latest = account.records[0];
@@ -438,6 +450,20 @@ export class AssetsService {
         balance: existing.balance + balance,
         count: existing.count + 1,
       });
+
+      for (const h of account.holdings) {
+        const estimated = (balance * Number(h.ratio)) / 100;
+        const key = `${h.name}||${h.ticker ?? ''}`;
+        const prev = holdingMap.get(key) ?? {
+          name: h.name,
+          ticker: h.ticker,
+          estimatedAmount: 0,
+        };
+        holdingMap.set(key, {
+          ...prev,
+          estimatedAmount: prev.estimatedAmount + estimated,
+        });
+      }
     }
 
     const profitRate =
@@ -447,6 +473,16 @@ export class AssetsService {
       type,
       balance: stat.balance.toFixed(2),
       count: stat.count,
+    }));
+
+    const byHolding = Array.from(holdingMap.values()).map((h) => ({
+      name: h.name,
+      ticker: h.ticker,
+      estimatedAmount: h.estimatedAmount.toFixed(2),
+      globalRatio:
+        totalBalance > 0
+          ? ((h.estimatedAmount / totalBalance) * 100).toFixed(2)
+          : '0.00',
     }));
 
     // 자산 연동된 적립금 집계
@@ -474,6 +510,237 @@ export class AssetsService {
       byType,
       savingsTotal: savingsTotal.toFixed(2),
       savingsGoals,
+      byHolding,
+    };
+  }
+
+  /**
+   * 계좌 holding 목록 조회 (그룹 멤버)
+   */
+  async findHoldings(userId: string, accountId: string) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    await this.validateGroupMember(userId, account.groupId);
+
+    const holdings = await this.prisma.accountHolding.findMany({
+      where: { accountId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    return holdings.map((h) => this.formatHolding(h));
+  }
+
+  /**
+   * holding 추가 (소유자만) — 비율 합계 100% 초과 방지
+   */
+  async createHolding(
+    userId: string,
+    accountId: string,
+    dto: CreateAccountHoldingDto,
+  ) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    if (account.userId !== userId) {
+      throw new ForbiddenException('본인의 계좌에만 종목을 추가할 수 있습니다');
+    }
+
+    await this.validateRatioSum(accountId, dto.ratio);
+
+    const count = await this.prisma.accountHolding.count({
+      where: { accountId },
+    });
+
+    const holding = await this.prisma.accountHolding.create({
+      data: {
+        accountId,
+        name: dto.name,
+        ticker: dto.ticker ?? null,
+        ratio: dto.ratio,
+        sortOrder: count,
+      },
+    });
+
+    return this.formatHolding(holding);
+  }
+
+  /**
+   * holding 수정 (소유자만)
+   */
+  async updateHolding(
+    userId: string,
+    accountId: string,
+    holdingId: string,
+    dto: UpdateAccountHoldingDto,
+  ) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    if (account.userId !== userId) {
+      throw new ForbiddenException('본인의 계좌 종목만 수정할 수 있습니다');
+    }
+
+    const holding = await this.prisma.accountHolding.findUnique({
+      where: { id: holdingId },
+    });
+
+    if (!holding || holding.accountId !== accountId) {
+      throw new NotFoundException('종목을 찾을 수 없습니다');
+    }
+
+    if (dto.ratio !== undefined) {
+      await this.validateRatioSum(accountId, dto.ratio, holdingId);
+    }
+
+    const updated = await this.prisma.accountHolding.update({
+      where: { id: holdingId },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.ticker !== undefined && { ticker: dto.ticker }),
+        ...(dto.ratio !== undefined && { ratio: dto.ratio }),
+      },
+    });
+
+    return this.formatHolding(updated);
+  }
+
+  /**
+   * holding 삭제 (소유자만)
+   */
+  async removeHolding(userId: string, accountId: string, holdingId: string) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    if (account.userId !== userId) {
+      throw new ForbiddenException('본인의 계좌 종목만 삭제할 수 있습니다');
+    }
+
+    const holding = await this.prisma.accountHolding.findUnique({
+      where: { id: holdingId },
+    });
+
+    if (!holding || holding.accountId !== accountId) {
+      throw new NotFoundException('종목을 찾을 수 없습니다');
+    }
+
+    await this.prisma.accountHolding.delete({ where: { id: holdingId } });
+
+    return { message: '종목이 삭제되었습니다' };
+  }
+
+  /**
+   * holding 순서 변경 (소유자만)
+   */
+  async reorderHoldings(
+    userId: string,
+    accountId: string,
+    dto: ReorderAccountHoldingsDto,
+  ) {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) {
+      throw new NotFoundException('계좌를 찾을 수 없습니다');
+    }
+
+    if (account.userId !== userId) {
+      throw new ForbiddenException(
+        '본인의 계좌 종목만 순서 변경할 수 있습니다',
+      );
+    }
+
+    const holdings = await this.prisma.accountHolding.findMany({
+      where: { id: { in: dto.holdingIds }, accountId },
+      select: { id: true },
+    });
+
+    const validIds = new Set(holdings.map((h) => h.id));
+    const invalidIds = dto.holdingIds.filter((id) => !validIds.has(id));
+    if (invalidIds.length > 0) {
+      throw new BadRequestException(
+        '해당 계좌에 속하지 않은 종목이 포함되어 있습니다',
+      );
+    }
+
+    await this.prisma.$transaction(
+      dto.holdingIds.map((holdingId, index) =>
+        this.prisma.accountHolding.update({
+          where: { id: holdingId },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+
+    return { message: '종목 순서가 변경되었습니다' };
+  }
+
+  /**
+   * 비율 합계 검증 — 기존 holding 합 + 신규 ratio ≤ 100
+   * excludeId: 수정 시 자기 자신 제외
+   */
+  private async validateRatioSum(
+    accountId: string,
+    newRatio: number,
+    excludeId?: string,
+  ) {
+    const existing = await this.prisma.accountHolding.findMany({
+      where: {
+        accountId,
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+      select: { ratio: true },
+    });
+
+    const currentSum = existing.reduce((s, h) => s + Number(h.ratio), 0);
+
+    if (currentSum + newRatio > 100) {
+      throw new BadRequestException(
+        `비율 합계가 100%를 초과합니다 (현재 합계: ${currentSum.toFixed(2)}%)`,
+      );
+    }
+  }
+
+  private formatHolding(holding: {
+    id: string;
+    accountId: string;
+    name: string;
+    ticker: string | null;
+    ratio: unknown;
+    sortOrder: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    return {
+      id: holding.id,
+      accountId: holding.accountId,
+      name: holding.name,
+      ticker: holding.ticker,
+      ratio: Number(holding.ratio).toFixed(2),
+      sortOrder: holding.sortOrder,
+      createdAt: holding.createdAt,
+      updatedAt: holding.updatedAt,
     };
   }
 

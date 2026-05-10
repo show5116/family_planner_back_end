@@ -150,6 +150,56 @@ export class AccountWithdrawalDto {
   createdAt: Date;
 }
 
+export class AccountHoldingDto {
+  @ApiProperty({ description: '종목 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '계좌 ID', example: 'uuid-5678' })
+  accountId: string;
+
+  @ApiProperty({ description: '종목/자산명', example: '나스닥 ETF' })
+  name: string;
+
+  @ApiProperty({
+    description: '티커 심볼',
+    example: 'QQQ',
+    nullable: true,
+  })
+  ticker: string | null;
+
+  @ApiProperty({ description: '비율 (%)', example: '40.50' })
+  ratio: string;
+
+  @ApiProperty({ description: '정렬 순서', example: 0 })
+  sortOrder: number;
+
+  @ApiProperty({ description: '생성일시' })
+  createdAt: Date;
+
+  @ApiProperty({ description: '수정일시' })
+  updatedAt: Date;
+}
+
+export class HoldingStatDto {
+  @ApiProperty({ description: '종목/자산명', example: '나스닥 ETF' })
+  name: string;
+
+  @ApiProperty({ description: '티커 심볼', example: 'QQQ', nullable: true })
+  ticker: string | null;
+
+  @ApiProperty({ description: '계좌 내 비율 (%)', example: '40.50' })
+  ratio: string;
+
+  @ApiProperty({
+    description: '추정 금액 (계좌 잔액 × 비율)',
+    example: '2000000.00',
+  })
+  estimatedAmount: string;
+
+  @ApiProperty({ description: '전체 자산 대비 비율 (%)', example: '4.00' })
+  globalRatio: string;
+}
+
 export class AccountStatisticsDto {
   @ApiProperty({ description: '총 잔액 (계좌)', example: '50000000.00' })
   totalBalance: string;
@@ -180,4 +230,10 @@ export class AccountStatisticsDto {
     type: [SavingsGoalSummaryDto],
   })
   savingsGoals: SavingsGoalSummaryDto[];
+
+  @ApiProperty({
+    description: '전체 자산 기준 종목별 통계',
+    type: [HoldingStatDto],
+  })
+  byHolding: HoldingStatDto[];
 }

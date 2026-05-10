@@ -43,10 +43,27 @@ model Account {
   group         Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   records       AccountRecord[]
+  holdings      AccountHolding[]
 
   @@index([groupId])
   @@index([userId])
   @@map("accounts")
+}
+
+model AccountHolding {
+  id        String   @id @default(uuid())
+  accountId String
+  name      String   @db.VarChar(100)
+  ticker    String?  @db.VarChar(20)
+  ratio     Decimal  @db.Decimal(5, 2)   // 비율 (%), 합계 100 이하
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, sortOrder])
+  @@map("account_holdings")
 }
 
 enum AccountType {
@@ -88,10 +105,11 @@ model AccountRecord {
 - [x] 계좌별 수익률 계산
 - [x] 구성원별 자산 현황 통계 (유형별 분류)
 - [x] 실물 금 자산 (GOLD 타입): gramWeight 입력 → GOLD_KRW_SPOT 기준 매달 1일 자동 기록 생성
+- [x] 계좌 내 포트폴리오 종목 관리 (AccountHolding): 종목명·티커·비율(%) 입력, 합계 100% 초과 방지
+- [x] 통계 API byHolding: 전체 자산 기준 종목별 추정 금액 및 비율 집계
 
 ### ⬜ 향후 고려
 - [ ] 월별/연별 자산 변화 추이
-- [ ] 포트폴리오 분석
 - [ ] 자산 목표 설정 및 달성률
 - [ ] 자산 알림 (목표 달성, 손실 발생 등)
 
@@ -111,8 +129,13 @@ model AccountRecord {
 | DELETE | `/assets/accounts/:id`            | 계좌 삭제      | JWT, Owner        |
 | POST   | `/assets/accounts/:id/records`    | 자산 기록 추가 | JWT, Owner        |
 | GET    | `/assets/accounts/:id/records`    | 자산 기록 목록 | JWT, Group Member |
+| GET    | `/assets/accounts/:id/holdings`              | 종목 목록 조회        | JWT, Group Member |
+| POST   | `/assets/accounts/:id/holdings`              | 종목 추가             | JWT, Owner        |
+| PATCH  | `/assets/accounts/:id/holdings/reorder`      | 종목 순서 변경        | JWT, Owner        |
+| PATCH  | `/assets/accounts/:id/holdings/:holdingId`   | 종목 수정             | JWT, Owner        |
+| DELETE | `/assets/accounts/:id/holdings/:holdingId`   | 종목 삭제             | JWT, Owner        |
 | GET    | `/assets/gold/current-price`      | 금 현물가 조회 (원/g) | JWT        |
-| GET    | `/assets/statistics`              | 통계 조회 (적립금 연동 포함) | JWT, Group Member |
+| GET    | `/assets/statistics`              | 통계 조회 (적립금·종목 포함) | JWT, Group Member |
 
 ---
 
@@ -124,8 +147,11 @@ src/assets/
     create-account.dto.ts
     update-account.dto.ts
     create-account-record.dto.ts
+    create-account-holding.dto.ts
+    update-account-holding.dto.ts
+    reorder-account-holdings.dto.ts
     account-query.dto.ts
-    assets-response.dto.ts
+    assets-response.dto.ts        — AccountHoldingDto, HoldingStatDto 포함
   scheduler/
     gold-asset.scheduler.ts  — 매달 1일 KST 금 자산 자동 기록 생성
   assets.controller.ts
@@ -185,4 +211,13 @@ profitRate = principal > 0 ? (profit / principal) * 100 : 0
   - 이미 해당 날짜 기록 존재 시 스킵 (중복 방지)
   - Redis 분산 락 적용
 
-**Last Updated**: 2026-05-10
+### 포트폴리오 종목 (AccountHolding)
+
+- 계좌 내 종목·자산 구성을 비율(%)로 기록
+- `name` (필수) + `ticker` (선택, 표시용) + `ratio` (0.01~100%)
+- 계좌 내 holding 비율 합계가 100%를 초과하면 400 오류
+- 동일한 종목명+티커 조합은 `byHolding` 통계에서 합산됨
+- 추정 금액 = `AccountRecord.balance × ratio / 100`
+- `globalRatio` = 해당 종목 추정 금액 / 전체 자산 총잔액 × 100
+
+**Last Updated**: 2026-05-11
