@@ -1,6 +1,6 @@
 # 알림 현황 맵 (Notification Map)
 
-> 마지막 업데이트: 2026-04-26
+> 마지막 업데이트: 2026-05-11
 > 전체 알림 카테고리와 실제 발송 현황을 한눈에 확인합니다.
 
 ---
@@ -94,6 +94,20 @@
 
 ---
 
+### 🌤️ WEATHER — 날씨 알림
+
+| # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
+|---|--------|------|--------|-----------|------|
+| 1 | 매 정시 크론잡 — `weatherAlertHour` 일치 + 오늘 강수 예보 | 오늘의 날씨 알림 | 개인 (설정한 유저) | 큐 (즉시, 스케줄러) | [weather-alert.scheduler.ts](../../src/weather/weather-alert.scheduler.ts) |
+| 2 | 매 정시 크론잡 — `weatherAlertHour` 일치 + 전날 대비 기온 ±5°C 이상 변화 | 오늘의 날씨 알림 | 개인 (설정한 유저) | 큐 (즉시, 스케줄러) | [weather-alert.scheduler.ts](../../src/weather/weather-alert.scheduler.ts) |
+
+> **조건**: 강수 예보(`PTY > 0`) 또는 최고/최저 기온이 전날 대비 5°C 이상 차이날 때만 발송
+> **본문 예시**: `"오늘 비 예보가 있어요 ☂️ 우산을 챙기세요! · 어제보다 기온이 -6도 달라요 🌡️ (최고 8°C)"`
+> **최적화**: 동일 KMA 격자(nx/ny) 유저는 API 1회 호출 공유. 예보 Redis 캐시 TTL 1시간, 전날 기온 TTL 48시간
+> **설정**: `PUT /notifications/settings` 에서 `weatherAlertHour`(0~23) 지정. 위치는 `PUT /auth/location` 으로 저장
+
+---
+
 ### 🔔 SYSTEM — 시스템 알림
 
 | # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
@@ -135,6 +149,7 @@
 | **GROUP** | `groupId` | `{ "groupId": "uuid" }` |
 | **SYSTEM** (공지사항) | `announcementId` | `{ "announcementId": "uuid" }` |
 | **SYSTEM** (Q&A) | `questionId` | `{ "questionId": "uuid" }` |
+| **WEATHER** | `action` | `{ "action": "view_weather" }` |
 
 > **HOUSEHOLD**: 가계부는 그룹 단위로 관리되므로 `householdId`는 `groupId`와 동일한 값입니다.
 
@@ -145,3 +160,12 @@
 사용자는 카테고리별로 알림을 ON/OFF 할 수 있습니다.
 - API: `GET /notifications/settings`, `PUT /notifications/settings`
 - 비활성화된 카테고리는 발송 시 자동 스킵됩니다.
+
+### WEATHER 전용 설정
+
+| 필드 | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `weatherAlertHour` | `int` (0~23) | 7 | 날씨 알림 수신 시각 (시 단위) |
+
+- 위치 저장 API: `PUT /auth/location` — `{ lat, lon }` (날씨 알림 수신에 필수)
+- 위치 미등록 유저는 크론잡 대상에서 자동 제외

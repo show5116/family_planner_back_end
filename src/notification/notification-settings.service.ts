@@ -57,6 +57,14 @@ export class NotificationSettingsService {
    * 알림 설정 업데이트 + Topic 구독 관리
    */
   async updateSettings(userId: string, dto: UpdateSettingsDto) {
+    const updateData: Record<string, unknown> = { enabled: dto.enabled };
+    if (
+      dto.category === NotificationCategory.WEATHER &&
+      dto.weatherAlertHour !== undefined
+    ) {
+      updateData.weatherAlertHour = dto.weatherAlertHour;
+    }
+
     const result = await this.prisma.notificationSetting.upsert({
       where: {
         userId_category: {
@@ -64,13 +72,15 @@ export class NotificationSettingsService {
           category: dto.category as any,
         },
       },
-      update: {
-        enabled: dto.enabled,
-      },
+      update: updateData,
       create: {
         userId,
         category: dto.category as any,
         enabled: dto.enabled,
+        ...(dto.category === NotificationCategory.WEATHER &&
+        dto.weatherAlertHour !== undefined
+          ? { weatherAlertHour: dto.weatherAlertHour }
+          : {}),
       },
     });
 

@@ -761,4 +761,12 @@ export class AuthService {
       data: { profileImageKey },
     });
   }
+
+  async updateLocation(userId: string, lat: number, lon: number) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lastLat: lat, lastLon: lon },
+    });
+    return { message: '위치 정보가 업데이트되었습니다.' };
+  }
 }

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Post,
+  Put,
   UseGuards,
   Get,
   Request,
@@ -33,6 +34,7 @@ import { ResendVerificationDto } from '@/auth/dto/resend-verification.dto';
 import { RequestPasswordResetDto } from '@/auth/dto/request-password-reset.dto';
 import { ResetPasswordDto } from '@/auth/dto/reset-password.dto';
 import { UpdateProfileDto } from '@/auth/dto/update-profile.dto';
+import { UpdateLocationDto } from '@/auth/dto/update-location.dto';
 import {
   SignupResponseDto,
   LoginResponseDto,
@@ -567,5 +569,15 @@ export class AuthController {
   async kakaoCallback(@Request() req, @Res() res: Response) {
     const tokens = await this.authService.validateSocialUser(req.user);
     this.handleSocialLoginCallback(req, res, tokens);
+  }
+
+  @Put('location')
+  @ApiOperation({
+    summary: '사용자 위치 업데이트',
+    description: '날씨 알림 발송에 사용할 마지막 위치(위도/경도)를 저장합니다.',
+  })
+  @ApiSuccess(Object, '위치 정보 업데이트 성공')
+  updateLocation(@Request() req, @Body() dto: UpdateLocationDto) {
+    return this.authService.updateLocation(req.user.userId, dto.lat, dto.lon);
   }
 }

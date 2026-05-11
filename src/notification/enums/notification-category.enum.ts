@@ -12,4 +12,5 @@ export enum NotificationCategory {
   CHILDCARE = 'CHILDCARE',
   GROUP = 'GROUP',
   SYSTEM = 'SYSTEM',
+  WEATHER = 'WEATHER',
 }

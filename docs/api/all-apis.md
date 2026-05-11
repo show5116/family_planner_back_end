@@ -1449,6 +1449,28 @@ period=monthly 시 year 필수.
 
 ---
 
+### PUT `auth/location`
+
+**요약:** 사용자 위치 업데이트
+
+**설명:**
+날씨 알림 발송에 사용할 마지막 위치(위도/경도)를 저장합니다.
+
+**Request Body:**
+
+```json
+{
+  "lat": 37, // 위도 (number)
+  "lon": 126 // 경도 (number)
+}
+```
+
+**Responses:**
+
+#### 200 - 위치 정보 업데이트 성공
+
+---
+
 ## 육아 포인트
 
 **Base Path:** `/childcare`
@@ -5064,7 +5086,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```json
 {
   "category": null, // 알림 카테고리 (NotificationCategory)
-  "enabled": true // 알림 활성화 여부 (boolean)
+  "enabled": true, // 알림 활성화 여부 (boolean)
+  "weatherAlertHour": 7 // WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시) (number?)
 }
 ```
 

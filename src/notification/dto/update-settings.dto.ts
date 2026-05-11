@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsBoolean } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEnum,
+  IsBoolean,
+  IsInt,
+  Min,
+  Max,
+  IsOptional,
+} from 'class-validator';
 import { NotificationCategory } from '../enums/notification-category.enum';
 
 /**
@@ -20,4 +27,16 @@ export class UpdateSettingsDto {
   })
   @IsBoolean()
   enabled: boolean;
+
+  @ApiPropertyOptional({
+    description: 'WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시)',
+    example: 7,
+    minimum: 0,
+    maximum: 23,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(23)
+  weatherAlertHour?: number;
 }
