@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { AdminGuard } from '@/auth/admin.guard';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -31,6 +32,7 @@ import { HistoricalInitQueryDto } from './dto/historical-init-query.dto';
 import { ReorderBookmarksDto } from './dto/reorder-bookmarks.dto';
 import { Timeout } from '@/common/decorators/timeout.decorator';
 
+@SkipThrottle()
 @ApiTags('투자지표')
 @Controller('indicators')
 @UseGuards(JwtAuthGuard)
