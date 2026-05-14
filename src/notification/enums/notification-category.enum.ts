@@ -13,4 +13,5 @@ export enum NotificationCategory {
   GROUP = 'GROUP',
   SYSTEM = 'SYSTEM',
   WEATHER = 'WEATHER',
+  FRIDGE = 'FRIDGE',
 }

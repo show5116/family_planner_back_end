@@ -1,6 +1,6 @@
 # 알림 현황 맵 (Notification Map)
 
-> 마지막 업데이트: 2026-05-11
+> 마지막 업데이트: 2026-05-12
 > 전체 알림 카테고리와 실제 발송 현황을 한눈에 확인합니다.
 
 ---
@@ -108,6 +108,18 @@
 
 ---
 
+### 🧊 FRIDGE — 냉장고 알림
+
+| # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
+|---|--------|------|--------|-----------|------|
+| 1 | 매일 09:00 KST — expiresAt D-N일 품목 | 유통기한 임박 알림 | 그룹 멤버 전체 | 큐 (즉시, 스케줄러) | [fridge.scheduler.ts](../../src/fridge/fridge.scheduler.ts) |
+| 2 | 매일 09:00 KST — expiresAt D-0 품목 | 유통기한 만료 | 그룹 멤버 전체 | 큐 (즉시, 스케줄러) | [fridge.scheduler.ts](../../src/fridge/fridge.scheduler.ts) |
+
+> **본문 예시**: `"우유 유통기한이 3일 남았어요"` / `"계란 유통기한이 오늘까지예요!"`
+> **FCM data**: `{ "action": "view_fridge", "groupId": "uuid" }`
+
+---
+
 ### 🔔 SYSTEM — 시스템 알림
 
 | # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
@@ -150,6 +162,7 @@
 | **SYSTEM** (공지사항) | `announcementId` | `{ "announcementId": "uuid" }` |
 | **SYSTEM** (Q&A) | `questionId` | `{ "questionId": "uuid" }` |
 | **WEATHER** | `action` | `{ "action": "view_weather" }` |
+| **FRIDGE** | `action`, `groupId` | `{ "action": "view_fridge", "groupId": "uuid" }` |
 
 > **HOUSEHOLD**: 가계부는 그룹 단위로 관리되므로 `householdId`는 `groupId`와 동일한 값입니다.
 

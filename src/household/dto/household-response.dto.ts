@@ -96,6 +96,15 @@ export class ExpenseDto {
   isRecurring: boolean;
 
   @ApiProperty({
+    description:
+      '연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재)',
+    example: 'uuid-1234',
+    nullable: true,
+    required: false,
+  })
+  shoppingHistoryId: string | null;
+
+  @ApiProperty({
     description: '생성 일시',
     example: '2026-02-27T00:00:00.000Z',
   })

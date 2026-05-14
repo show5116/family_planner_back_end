@@ -86,6 +86,11 @@ model Group {
   childcareAccounts   ChildcareAccount[]
   children            Child[]
   votes               Vote[]
+  storageLocations    StorageLocation[]
+  fridgeItems         FridgeItem[]
+  frequentItems       FrequentItem[]
+  shoppingCart        ShoppingCart?
+  shoppingHistories   ShoppingHistory[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -565,6 +570,7 @@ enum notification_settings_category {
   GROUP
   SYSTEM
   WEATHER
+  FRIDGE
 }
 
 enum notifications_category {
@@ -577,6 +583,7 @@ enum notifications_category {
   GROUP
   SYSTEM
   WEATHER
+  FRIDGE
 }
 
 model Memo {
@@ -665,22 +672,24 @@ model ChecklistItem {
 }
 
 model Expense {
-  id            String           @id @default(uuid())
-  groupId       String?
-  userId        String
-  type          TransactionType  @default(EXPENSE)
-  amount        Decimal          @db.Decimal(10, 2)
-  category      ExpenseCategory?
-  date          DateTime         @db.Date
-  description   String?          @db.VarChar(200)
-  paymentMethod PaymentMethod?
-  isRecurring   Boolean          @default(false)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id                String           @id @default(uuid())
+  groupId           String?
+  userId            String
+  type              TransactionType  @default(EXPENSE)
+  amount            Decimal          @db.Decimal(10, 2)
+  category          ExpenseCategory?
+  date              DateTime         @db.Date
+  description       String?          @db.VarChar(200)
+  paymentMethod     PaymentMethod?
+  isRecurring       Boolean          @default(false)
+  shoppingHistoryId String?          @unique
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
-  group         Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  receipts      ExpenseReceipt[]
+  group           Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  receipts        ExpenseReceipt[]
+  shoppingHistory ShoppingHistory?
 
   @@index([groupId, date(sort: Desc)])
   @@index([userId, date(sort: Desc)])
@@ -1252,4 +1261,125 @@ enum SavingsType {
   DEPOSIT
   WITHDRAW
   AUTO_DEPOSIT
+}
+
+// ──────────────────────────────────────────────
+// 냉장고 & 스마트 장보기
+// ──────────────────────────────────────────────
+
+enum StorageType {
+  FRIDGE
+  FREEZER
+  PANTRY
+}
+
+model StorageLocation {
+  id        String      @id @default(uuid())
+  groupId   String
+  name      String      @db.VarChar(50)
+  type      StorageType
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
+  group     Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  items     FridgeItem[]
+
+  @@index([groupId])
+  @@map("storage_locations")
+}
+
+model FridgeItem {
+  id                String           @id @default(uuid())
+  groupId           String
+  storageLocationId String
+  name              String           @db.VarChar(100)
+  quantity          Decimal          @db.Decimal(10, 2)
+  unit              String?          @db.VarChar(20)
+  registeredAt      DateTime         @default(now())
+  expiresAt         DateTime?
+  alertDaysBefore   Int              @default(3)
+  memo              String?          @db.VarChar(200)
+  frequentItemId    String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  group             Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  storageLocation   StorageLocation  @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
+  frequentItem      FrequentItem?    @relation(fields: [frequentItemId], references: [id])
+
+  @@index([groupId])
+  @@index([storageLocationId])
+  @@index([expiresAt])
+  @@map("fridge_items")
+}
+
+model FrequentItem {
+  id           String             @id @default(uuid())
+  groupId      String
+  name         String             @db.VarChar(100)
+  defaultUnit  String?            @db.VarChar(20)
+  autoAdd      Boolean            @default(false)
+  sortOrder    Int                @default(0)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  group        Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fridgeItems  FridgeItem[]
+  cartItems    ShoppingCartItem[]
+
+  @@unique([groupId, name])
+  @@index([groupId])
+  @@map("frequent_items")
+}
+
+model ShoppingCart {
+  id        String             @id @default(uuid())
+  groupId   String             @unique
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  group     Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  items     ShoppingCartItem[]
+
+  @@map("shopping_carts")
+}
+
+model ShoppingCartItem {
+  id             String        @id @default(uuid())
+  cartId         String
+  frequentItemId String?
+  name           String        @db.VarChar(100)
+  quantity       Decimal       @db.Decimal(10, 2)
+  unit           String?       @db.VarChar(20)
+  isChecked      Boolean       @default(false)
+  memo           String?       @db.VarChar(200)
+  createdAt      DateTime      @default(now())
+  cart           ShoppingCart  @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  frequentItem   FrequentItem? @relation(fields: [frequentItemId], references: [id])
+
+  @@index([cartId])
+  @@map("shopping_cart_items")
+}
+
+model ShoppingHistory {
+  id          String                @id @default(uuid())
+  groupId     String
+  completedAt DateTime              @default(now())
+  group       Group                 @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  items       ShoppingHistoryItem[]
+  expense     Expense?              @relation(fields: [id], references: [shoppingHistoryId])
+
+  @@index([groupId])
+  @@index([completedAt])
+  @@map("shopping_histories")
+}
+
+model ShoppingHistoryItem {
+  id                  String          @id @default(uuid())
+  historyId           String
+  name                String          @db.VarChar(100)
+  quantity            Decimal         @db.Decimal(10, 2)
+  unit                String?         @db.VarChar(20)
+  transferredToFridge Boolean         @default(false)
+  fridgeItemId        String?
+  history             ShoppingHistory @relation(fields: [historyId], references: [id], onDelete: Cascade)
+
+  @@index([historyId])
+  @@map("shopping_history_items")
 }

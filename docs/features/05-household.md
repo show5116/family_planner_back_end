@@ -33,18 +33,21 @@
 
 ```prisma
 model Expense {
-  id            String           @id @default(uuid())
-  groupId       String?
-  userId        String
-  type          TransactionType  @default(EXPENSE)
-  amount        Decimal          @db.Decimal(10, 2)
-  category      ExpenseCategory?
-  date          DateTime         @db.Date
-  description   String?          @db.VarChar(200)
-  paymentMethod PaymentMethod?
-  isRecurring   Boolean          @default(false)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id                 String           @id @default(uuid())
+  groupId            String?
+  userId             String
+  type               TransactionType  @default(EXPENSE)
+  amount             Decimal          @db.Decimal(10, 2)
+  category           ExpenseCategory?
+  date               DateTime         @db.Date
+  description        String?          @db.VarChar(200)
+  paymentMethod      PaymentMethod?
+  isRecurring        Boolean          @default(false)
+  // 장보기 연동: shoppingHistoryId가 있으면 장보기 이력과 연결됨 (딥링크용)
+  shoppingHistoryId  String?          @unique
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  shoppingHistory    ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
 }
 
 enum TransactionType {
@@ -103,6 +106,11 @@ enum PaymentMethod {
 - [x] 지출 필터링 (월, 카테고리, 결제수단)
 - [x] 영수증 첨부 기능 (R2 Presigned PUT URL → DB 등록 → 삭제)
 
+### ⬜ TODO (장보기 연동)
+- [ ] `Expense` 모델에 `shoppingHistoryId` 필드 추가 (스키마 + 마이그레이션)
+- [ ] 지출 상세 응답(`ExpenseDetailDto`)에 `shoppingHistoryId` 포함
+- [ ] 클라이언트가 `shoppingHistoryId` 기반으로 장보기 이력 화면으로 딥링크 이동
+
 ---
 
 ## API 엔드포인트
@@ -151,4 +159,17 @@ enum PaymentMethod {
 
 ---
 
-**Last Updated**: 2026-04-01
+---
+
+## 장보기 연동
+
+장보기 완료 시 `ShoppingHistory`와 `Expense`가 1:1로 연결됩니다.
+
+- **연결 필드**: `Expense.shoppingHistoryId` (FK, nullable, `@unique`)
+- **생성 주체**: `POST /groups/:groupId/cart/complete` 에서 `expense` 필드 포함 시 자동 생성
+- **딥링크**: 가계부 지출 목록에서 `shoppingHistoryId`가 있는 항목에 장보기 아이콘 표시 → 클릭 시 `/groups/:groupId/shopping-history/:id` 이동
+- **역방향**: 장보기 이력 상세에서 연결된 `expenseId`로 `/household/expenses/:id` 이동 가능
+
+> 상세 구현은 `docs/features/18-fridge.md` 의 가계부 연동 섹션 참고
+
+**Last Updated**: 2026-05-12

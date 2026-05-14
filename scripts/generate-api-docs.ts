@@ -858,24 +858,28 @@ function main() {
     }
   });
 
-  // basePath별로 컨트롤러 그룹화
-  const controllersByBasePath = new Map<string, ControllerInfo[]>();
+  // basePath별로 컨트롤러 그룹화 (동적 세그먼트 제거 후 파일명 기준으로 그룹화)
+  const toFileName = (basePath: string): string =>
+    basePath
+      .replace(/\/:[^/]*/g, '')
+      .replace(/\//g, '-')
+      .replace(/^-+|-+$/g, '') || 'root';
+
+  const controllersByFileName = new Map<string, ControllerInfo[]>();
   controllers.forEach((controller) => {
-    const basePath = controller.basePath || 'root';
-    if (!controllersByBasePath.has(basePath)) {
-      controllersByBasePath.set(basePath, []);
+    const fileName = toFileName(controller.basePath || 'root');
+    if (!controllersByFileName.has(fileName)) {
+      controllersByFileName.set(fileName, []);
     }
-    const group = controllersByBasePath.get(basePath);
+    const group = controllersByFileName.get(fileName);
     if (group) {
       group.push(controller);
     }
   });
 
-  // basePath별로 문서 생성
-  controllersByBasePath.forEach((controllersGroup, basePath) => {
+  // 파일명별로 문서 생성
+  controllersByFileName.forEach((controllersGroup, fileName) => {
     const markdown = generator.generateMarkdown(controllersGroup);
-    // basePath의 슬래시를 하이픈으로 변경 (예: qna/admin -> qna-admin)
-    const fileName = basePath.replace(/\//g, '-');
     const outputFile = path.join(outputDir, `${fileName}.md`);
     fs.writeFileSync(outputFile, markdown);
     console.log(`Generated: ${path.relative(process.cwd(), outputFile)}`);

@@ -50,6 +50,7 @@ import { WeatherModule } from '@/weather/weather.module';
 import { VoteModule } from '@/vote/vote.module';
 import { SavingsModule } from '@/savings/savings.module';
 import { SubscriptionModule } from '@/subscription/subscription.module';
+import { FridgeModule } from '@/fridge/fridge.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -165,6 +166,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     VoteModule,
     SavingsModule,
     SubscriptionModule,
+    FridgeModule,
   ],
   controllers: [AppController],
   providers: [
