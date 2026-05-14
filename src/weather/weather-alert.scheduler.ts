@@ -128,9 +128,9 @@ export class WeatherAlertScheduler {
   /**
    * 매 정시 실행 — 날씨 알림 크론잡
    */
-  @Cron('0 * * * *')
+  @Cron('0 * * * *', { timeZone: 'Asia/Seoul' })
   async sendWeatherAlerts() {
-    const currentHour = dayjs().hour();
+    const currentHour = dayjs().tz('Asia/Seoul').hour();
     this.logger.log(`[WeatherAlert] ${currentHour}시 크론잡 시작`);
 
     // 1. 현재 hour에 알림 설정된 유저 조회 (lastLat/lastLon이 있는 유저만)
@@ -172,7 +172,7 @@ export class WeatherAlertScheduler {
 
     this.logger.log(`[WeatherAlert] 격자 ${gridMap.size}개로 그룹핑`);
 
-    const today = dayjs().format('YYYYMMDD');
+    const today = dayjs().tz('Asia/Seoul').format('YYYYMMDD');
 
     // 3. 격자별 처리
     for (const [gridKey, userIds] of gridMap) {
@@ -185,7 +185,7 @@ export class WeatherAlertScheduler {
         if (!forecast) continue;
 
         // 4. 전날 기온과 비교해 온도 변화 판단
-        const prevTempKey = `weather_temp:${gridKey}:${dayjs().subtract(1, 'day').format('YYYYMMDD')}`;
+        const prevTempKey = `weather_temp:${gridKey}:${dayjs().tz('Asia/Seoul').subtract(1, 'day').format('YYYYMMDD')}`;
         const prevTemp = await this.redisService.get<{
           min: number;
           max: number;
