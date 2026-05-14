@@ -14,7 +14,6 @@ import { FridgeService } from './fridge.service';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiCreated,
-  ApiForbidden,
   ApiNotFound,
   ApiSuccess,
 } from '@/common/decorators/api-responses.decorator';
@@ -27,21 +26,13 @@ import { UpdateFridgeItemDto } from './dto/update-fridge-item.dto';
 import { UpdateQuantityDto } from './dto/update-quantity.dto';
 import { CreateFrequentItemDto } from './dto/create-frequent-item.dto';
 import { UpdateFrequentItemDto } from './dto/update-frequent-item.dto';
-import { AddCartItemDto } from './dto/add-cart-item.dto';
-import { UpdateCartItemDto } from './dto/update-cart-item.dto';
-import { CompleteShoppingDto } from './dto/complete-shopping.dto';
-import { HistoryQueryDto } from './dto/history-query.dto';
 import {
-  CartItemDto,
   FridgeItemDto,
   FrequentItemDto,
-  PaginatedHistoryDto,
-  ShoppingCartDto,
-  ShoppingHistoryDto,
   StorageLocationDto,
 } from './dto/fridge-response.dto';
 
-@ApiTags('냉장고 & 장보기')
+@ApiTags('냉장고 관리')
 @Controller('fridge')
 @ApiCommonAuthResponses()
 export class FridgeController {
@@ -244,89 +235,5 @@ export class FridgeController {
       groupId,
       itemId,
     );
-  }
-
-  // ── ShoppingCart ─────────────────────────────────────────────
-
-  @Get('cart')
-  @ApiOperation({ summary: '활성 장바구니 조회' })
-  @ApiSuccess(ShoppingCartDto, '장바구니 조회 성공')
-  getCart(@Request() req, @Query('groupId') groupId: string) {
-    return this.fridgeService.getCart(req.user.userId, groupId);
-  }
-
-  @Post('cart/items')
-  @ApiOperation({ summary: '장바구니 품목 추가' })
-  @ApiCreated(CartItemDto, '품목 추가 성공')
-  addCartItem(@Request() req, @Body() dto: AddCartItemDto) {
-    return this.fridgeService.addCartItem(req.user.userId, dto.groupId, dto);
-  }
-
-  @Patch('cart/items/:itemId')
-  @ApiOperation({ summary: '장바구니 품목 수정 (수량, 체크 등)' })
-  @ApiSuccess(CartItemDto, '품목 수정 성공')
-  @ApiNotFound('품목을 찾을 수 없습니다')
-  updateCartItem(
-    @Request() req,
-    @Query('groupId') groupId: string,
-    @Param('itemId') itemId: string,
-    @Body() dto: UpdateCartItemDto,
-  ) {
-    return this.fridgeService.updateCartItem(
-      req.user.userId,
-      groupId,
-      itemId,
-      dto,
-    );
-  }
-
-  @Delete('cart/items/:itemId')
-  @ApiOperation({ summary: '장바구니 품목 삭제' })
-  @ApiSuccess(MessageResponseDto, '품목 삭제 성공')
-  @ApiNotFound('품목을 찾을 수 없습니다')
-  removeCartItem(
-    @Request() req,
-    @Query('groupId') groupId: string,
-    @Param('itemId') itemId: string,
-  ) {
-    return this.fridgeService.removeCartItem(req.user.userId, groupId, itemId);
-  }
-
-  @Post('cart/complete')
-  @ApiOperation({ summary: '장보기 완료 — 이력 저장 및 냉장고 이관' })
-  @ApiCreated(ShoppingHistoryDto, '장보기 완료 성공')
-  @ApiNotFound('장바구니가 비어 있습니다')
-  @ApiForbidden('그룹 멤버만 접근할 수 있습니다')
-  completeShopping(@Request() req, @Body() dto: CompleteShoppingDto) {
-    return this.fridgeService.completeShopping(
-      req.user.userId,
-      dto.groupId,
-      dto,
-    );
-  }
-
-  // ── ShoppingHistory ──────────────────────────────────────────
-
-  @Get('shopping-history')
-  @ApiOperation({ summary: '구매 이력 목록 조회 (페이지네이션)' })
-  @ApiSuccess(PaginatedHistoryDto, '이력 조회 성공')
-  getHistories(@Request() req, @Query() query: HistoryQueryDto) {
-    return this.fridgeService.getHistories(
-      req.user.userId,
-      query.groupId,
-      query,
-    );
-  }
-
-  @Get('shopping-history/:historyId')
-  @ApiOperation({ summary: '구매 이력 상세 조회' })
-  @ApiSuccess(ShoppingHistoryDto, '이력 상세 조회 성공')
-  @ApiNotFound('구매 이력을 찾을 수 없습니다')
-  getHistory(
-    @Request() req,
-    @Query('groupId') groupId: string,
-    @Param('historyId') historyId: string,
-  ) {
-    return this.fridgeService.getHistory(req.user.userId, groupId, historyId);
   }
 }

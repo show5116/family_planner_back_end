@@ -51,6 +51,7 @@ import { VoteModule } from '@/vote/vote.module';
 import { SavingsModule } from '@/savings/savings.module';
 import { SubscriptionModule } from '@/subscription/subscription.module';
 import { FridgeModule } from '@/fridge/fridge.module';
+import { ShoppingModule } from '@/shopping/shopping.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -167,6 +168,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     SavingsModule,
     SubscriptionModule,
     FridgeModule,
+    ShoppingModule,
   ],
   controllers: [AppController],
   providers: [
