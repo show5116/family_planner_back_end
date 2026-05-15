@@ -332,22 +332,59 @@ export class InvestmentService implements OnModuleInit {
       throw new NotFoundException('지표를 찾을 수 없습니다');
     }
 
-    // 30일 초과: Yahoo Historical API 직접 조회 (공휴일/휴장일 자동 제거됨)
+    // Yahoo 지원 심볼은 days 무관하게 chart() 우선 사용 (실시간 수집 누락 보완)
+    // days <= 7은 5분봉, 그 외는 1일봉
     if (days > 30) {
       return this.findHistoryFromYahoo(ind, days);
     }
 
+    const YAHOO_UNSUPPORTED = new Set([
+      'BTC_KRW',
+      'BUFFETT_US',
+      'GOLD_KRW_SPOT',
+      'FEAR_GREED',
+      'KR3Y',
+    ]);
+
+    if (!YAHOO_UNSUPPORTED.has(ind.symbol)) {
+      try {
+        const to = new Date();
+        const from = new Date();
+        from.setUTCDate(from.getUTCDate() - days);
+        from.setUTCHours(0, 0, 0, 0);
+
+        const interval = days <= 7 ? ('5m' as const) : ('1d' as const);
+        const yahooRows = await this.yahoo.collectHistoricalForSymbol(
+          ind.symbol,
+          from,
+          to,
+          interval,
+        );
+
+        if (yahooRows.length > 0) {
+          const history = yahooRows.map((r) => ({
+            price: r.close.toString(),
+            recordedAt: r.date,
+          }));
+          return { symbol: ind.symbol, nameKo: ind.nameKo, history };
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Yahoo chart fallback to DB for ${ind.symbol}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    // DB fallback (Yahoo 미지원 심볼 또는 Yahoo 실패 시)
     const since = new Date();
-    since.setDate(since.getDate() - days);
-    since.setUTCHours(0, 0, 0, 0); // UTC 자정 기준으로 정규화 (MySQL 타임존 차이 방지)
+    since.setUTCDate(since.getUTCDate() - days);
+    since.setUTCHours(0, 0, 0, 0);
 
     type RawRow = { bucket: string; price: string };
 
-    // 기간별 집계 버킷 결정 (INTERVAL/FORMAT은 파라미터 바인딩 불가 → Prisma.raw 사용)
     let rows: RawRow[];
 
     if (days <= 7) {
-      // 5분 단위: raw 데이터 그대로 반환 (KST ISO 문자열로 변환)
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
           DATE_FORMAT(DATE_ADD(recordedAt, INTERVAL 9 HOUR), '%Y-%m-%d %H:%i:00+09:00') AS bucket,
@@ -358,7 +395,6 @@ export class InvestmentService implements OnModuleInit {
         ORDER BY recordedAt ASC
       `;
     } else {
-      // 6시간 단위: 버킷 내 마지막 가격 (종가 개념)
       rows = await this.prisma.$queryRaw<RawRow[]>`
         SELECT
           CONCAT(
@@ -385,19 +421,17 @@ export class InvestmentService implements OnModuleInit {
       `;
     }
 
-    // CRYPTO(BTC)는 24/7 거래 → 주말 필터 없음
-    // 그 외(INDEX, CURRENCY, COMMODITY, BOND, MACRO 등)는 주말 bucket 제거
     const filteredRows =
       ind.category === 'CRYPTO'
         ? rows
         : rows.filter((r) => {
-            const dow = new Date(r.bucket).getDay(); // bucket이 +09:00 오프셋 포함 → UTC 변환 후 요일 계산
+            const dow = new Date(r.bucket).getDay();
             return dow !== 0 && dow !== 6;
           });
 
     const history = filteredRows.map((r) => ({
       price: Number(r.price).toString(),
-      recordedAt: r.bucket, // KST ISO 문자열 그대로 반환 (e.g. "2026-04-07 09:00:00+09:00")
+      recordedAt: r.bucket,
     }));
 
     // GOLD_KRW_SPOT: 동일 버킷의 GOLD_USD·USD_KRW로 이격률 시계열 추가

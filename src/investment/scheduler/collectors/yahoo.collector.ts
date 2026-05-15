@@ -7,6 +7,7 @@ export interface YahooQuoteResult {
   symbol: string;
   price: number;
   prevPrice: number | null;
+  marketTime: Date | null;
 }
 
 export interface YahooHistoricalPoint {
@@ -71,12 +72,14 @@ export class YahooCollector {
           | number
           | null;
 
+        const marketTime = (quote?.regularMarketTime as Date | null) ?? null;
+
         if (price == null) {
           this.logger.warn(`No price for ${symbol} (${ticker})`);
           continue;
         }
 
-        results.push({ symbol, price, prevPrice });
+        results.push({ symbol, price, prevPrice, marketTime });
       } catch (err) {
         this.logger.error(
           `Failed to fetch ${symbol} (${ticker}): ${(err as Error).message}`,
@@ -139,13 +142,14 @@ export class YahooCollector {
     symbol: string,
     from: Date,
     to: Date,
+    interval: '1d' | '5m' = '1d',
   ): Promise<YahooHistoricalPoint[]> {
     const target = YAHOO_SYMBOLS.find((s) => s.symbol === symbol);
     if (!target) return [];
 
     const chartPromise = yahooFinance.chart(
       target.ticker,
-      { period1: from, period2: to, interval: '1d' },
+      { period1: from, period2: to, interval },
       { validateResult: false },
     ) as unknown as Promise<any>;
 

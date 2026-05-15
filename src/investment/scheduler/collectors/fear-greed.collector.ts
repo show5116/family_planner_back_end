@@ -1,27 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-interface FearGreedAllResponse {
-  score: number;
+interface CnnFearGreedResponse {
+  fear_and_greed: {
+    score: number;
+    rating: string;
+    timestamp: string;
+    previous_close: number;
+  };
+  fear_and_greed_historical: {
+    data: { x: number; y: number; rating: string }[];
+  };
 }
 
-interface FearGreedHistoryItem {
-  date: string;
-  score: number;
-}
+const CNN_URL =
+  'https://production.dataviz.cnn.io/index/fearandgreed/graphdata';
+
+const HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  Accept: 'application/json',
+  Referer: 'https://edition.cnn.com/markets/fear-and-greed',
+  Origin: 'https://edition.cnn.com',
+};
 
 @Injectable()
 export class FearGreedCollector {
   private readonly logger = new Logger(FearGreedCollector.name);
-  private readonly BASE_URL = 'https://feargreedchart.com/api/';
 
-  /**
-   * feargreedchart.com — 주식시장 기반 공포탐욕지수 (CNN 기준과 동일한 방식)
-   * VIX, S&P500 모멘텀, Put/Call 비율, 안전자산 수요, 정크본드 수요 5개 지표 합산
-   */
   async collect(): Promise<{ value: number } | null> {
     try {
-      const res = await fetch(`${this.BASE_URL}?action=all`, {
-        headers: { Accept: 'application/json' },
+      const res = await fetch(CNN_URL, {
+        headers: HEADERS,
         signal: AbortSignal.timeout(10000),
       });
 
@@ -29,30 +38,27 @@ export class FearGreedCollector {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      const data = (await res.json()) as FearGreedAllResponse;
+      const data = (await res.json()) as CnnFearGreedResponse;
+      const score = data?.fear_and_greed?.score;
 
-      if (typeof data?.score !== 'number') {
-        this.logger.warn('FearGreed: no score in response');
+      if (score == null || typeof score !== 'number') {
+        this.logger.warn('FearGreed: no score in CNN response');
         return null;
       }
 
-      return { value: data.score };
+      return { value: Math.round(score) };
     } catch (err) {
       this.logger.error(`FearGreed collect failed: ${(err as Error).message}`);
       return null;
     }
   }
 
-  /**
-   * 과거 N일 Fear & Greed 데이터 수집
-   * feargreedchart.com은 2016-01-20부터 전체 history 제공
-   */
   async collectHistorical(
     days: number,
   ): Promise<{ date: Date; value: number }[]> {
     try {
-      const res = await fetch(`${this.BASE_URL}?action=history`, {
-        headers: { Accept: 'application/json' },
+      const res = await fetch(CNN_URL, {
+        headers: HEADERS,
         signal: AbortSignal.timeout(15000),
       });
 
@@ -60,21 +66,21 @@ export class FearGreedCollector {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      const data = (await res.json()) as FearGreedHistoryItem[];
+      const data = (await res.json()) as CnnFearGreedResponse;
+      const items = data?.fear_and_greed_historical?.data;
 
-      if (!Array.isArray(data)) {
-        this.logger.warn('FearGreed: history response is not an array');
+      if (!Array.isArray(items)) {
+        this.logger.warn('FearGreed: history data is not an array');
         return [];
       }
 
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
 
-      return data
-        .filter((item) => new Date(item.date) >= cutoff)
+      return items
+        .filter((item) => item.x >= cutoff && item.y != null)
         .map((item) => ({
-          date: new Date(item.date),
-          value: item.score,
+          date: new Date(item.x),
+          value: Math.round(item.y),
         }));
     } catch (err) {
       this.logger.error(
