@@ -26,6 +26,7 @@ import { UpdateFridgeItemDto } from './dto/update-fridge-item.dto';
 import { UpdateQuantityDto } from './dto/update-quantity.dto';
 import { CreateFrequentItemDto } from './dto/create-frequent-item.dto';
 import { UpdateFrequentItemDto } from './dto/update-frequent-item.dto';
+import { GroupIdQueryDto } from './dto/group-id-query.dto';
 import {
   FridgeItemDto,
   FrequentItemDto,
@@ -43,8 +44,8 @@ export class FridgeController {
   @Get('storages')
   @ApiOperation({ summary: '보관소 목록 조회' })
   @ApiSuccess(StorageLocationDto, '보관소 목록 조회 성공', { isArray: true })
-  getStorages(@Request() req, @Query('groupId') groupId: string) {
-    return this.fridgeService.getStorages(req.user.userId, groupId);
+  getStorages(@Request() req, @Query() query: GroupIdQueryDto) {
+    return this.fridgeService.getStorages(req.user.userId, query.groupId);
   }
 
   @Post('storages')
@@ -71,13 +72,13 @@ export class FridgeController {
   @ApiNotFound('보관소를 찾을 수 없습니다')
   updateStorage(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('storageId') storageId: string,
     @Body() dto: UpdateStorageDto,
   ) {
     return this.fridgeService.updateStorage(
       req.user.userId,
-      groupId,
+      query.groupId,
       storageId,
       dto,
     );
@@ -89,12 +90,12 @@ export class FridgeController {
   @ApiNotFound('보관소를 찾을 수 없습니다')
   deleteStorage(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('storageId') storageId: string,
   ) {
     return this.fridgeService.deleteStorage(
       req.user.userId,
-      groupId,
+      query.groupId,
       storageId,
     );
   }
@@ -104,8 +105,8 @@ export class FridgeController {
   @Get('items')
   @ApiOperation({ summary: '냉장고 전체 품목 조회 (보관소별)' })
   @ApiSuccess(StorageLocationDto, '조회 성공', { isArray: true })
-  getFridgeItems(@Request() req, @Query('groupId') groupId: string) {
-    return this.fridgeService.getFridgeItems(req.user.userId, groupId);
+  getFridgeItems(@Request() req, @Query() query: GroupIdQueryDto) {
+    return this.fridgeService.getFridgeItems(req.user.userId, query.groupId);
   }
 
   @Post('items')
@@ -126,13 +127,13 @@ export class FridgeController {
   @ApiNotFound('품목을 찾을 수 없습니다')
   updateFridgeItem(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('itemId') itemId: string,
     @Body() dto: UpdateFridgeItemDto,
   ) {
     return this.fridgeService.updateFridgeItem(
       req.user.userId,
-      groupId,
+      query.groupId,
       itemId,
       dto,
     );
@@ -144,12 +145,12 @@ export class FridgeController {
   @ApiNotFound('품목을 찾을 수 없습니다')
   deleteFridgeItem(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('itemId') itemId: string,
   ) {
     return this.fridgeService.deleteFridgeItem(
       req.user.userId,
-      groupId,
+      query.groupId,
       itemId,
     );
   }
@@ -160,13 +161,13 @@ export class FridgeController {
   @ApiNotFound('품목을 찾을 수 없습니다')
   updateQuantity(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('itemId') itemId: string,
     @Body() dto: UpdateQuantityDto,
   ) {
     return this.fridgeService.updateQuantity(
       req.user.userId,
-      groupId,
+      query.groupId,
       itemId,
       dto,
     );
@@ -177,8 +178,8 @@ export class FridgeController {
   @Get('frequent-items')
   @ApiOperation({ summary: '자주 사는 항목 목록 조회' })
   @ApiSuccess(FrequentItemDto, '조회 성공', { isArray: true })
-  getFrequentItems(@Request() req, @Query('groupId') groupId: string) {
-    return this.fridgeService.getFrequentItems(req.user.userId, groupId);
+  getFrequentItems(@Request() req, @Query() query: GroupIdQueryDto) {
+    return this.fridgeService.getFrequentItems(req.user.userId, query.groupId);
   }
 
   @Post('frequent-items')
@@ -209,13 +210,13 @@ export class FridgeController {
   @ApiNotFound('자주 사는 항목을 찾을 수 없습니다')
   updateFrequentItem(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('itemId') itemId: string,
     @Body() dto: UpdateFrequentItemDto,
   ) {
     return this.fridgeService.updateFrequentItem(
       req.user.userId,
-      groupId,
+      query.groupId,
       itemId,
       dto,
     );
@@ -227,12 +228,12 @@ export class FridgeController {
   @ApiNotFound('자주 사는 항목을 찾을 수 없습니다')
   deleteFrequentItem(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('itemId') itemId: string,
   ) {
     return this.fridgeService.deleteFrequentItem(
       req.user.userId,
-      groupId,
+      query.groupId,
       itemId,
     );
   }

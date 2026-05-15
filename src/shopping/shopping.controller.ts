@@ -23,6 +23,7 @@ import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { CompleteShoppingDto } from './dto/complete-shopping.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
+import { GroupIdQueryDto } from './dto/group-id-query.dto';
 import {
   CartItemDto,
   PaginatedHistoryDto,
@@ -41,8 +42,8 @@ export class ShoppingController {
   @Get('cart')
   @ApiOperation({ summary: '활성 장바구니 조회' })
   @ApiSuccess(ShoppingCartDto, '장바구니 조회 성공')
-  getCart(@Request() req, @Query('groupId') groupId: string) {
-    return this.shoppingService.getCart(req.user.userId, groupId);
+  getCart(@Request() req, @Query() query: GroupIdQueryDto) {
+    return this.shoppingService.getCart(req.user.userId, query.groupId);
   }
 
   @Post('cart/items')
@@ -58,13 +59,13 @@ export class ShoppingController {
   @ApiNotFound('품목을 찾을 수 없습니다')
   updateCartItem(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('itemId') itemId: string,
     @Body() dto: UpdateCartItemDto,
   ) {
     return this.shoppingService.updateCartItem(
       req.user.userId,
-      groupId,
+      query.groupId,
       itemId,
       dto,
     );
@@ -76,12 +77,12 @@ export class ShoppingController {
   @ApiNotFound('품목을 찾을 수 없습니다')
   removeCartItem(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('itemId') itemId: string,
   ) {
     return this.shoppingService.removeCartItem(
       req.user.userId,
-      groupId,
+      query.groupId,
       itemId,
     );
   }
@@ -118,9 +119,13 @@ export class ShoppingController {
   @ApiNotFound('구매 이력을 찾을 수 없습니다')
   getHistory(
     @Request() req,
-    @Query('groupId') groupId: string,
+    @Query() query: GroupIdQueryDto,
     @Param('historyId') historyId: string,
   ) {
-    return this.shoppingService.getHistory(req.user.userId, groupId, historyId);
+    return this.shoppingService.getHistory(
+      req.user.userId,
+      query.groupId,
+      historyId,
+    );
   }
 }
