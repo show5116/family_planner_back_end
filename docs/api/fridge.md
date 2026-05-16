@@ -230,6 +230,56 @@
 
 ---
 
+### POST `fridge/items/bulk`
+
+**요약:** 냉장고 품목 일괄 등록
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid-group", // string
+  "items": [
+    {
+      "storageLocationId": "uuid-storage", // string
+      "name": "우유", // string
+      "quantity": 2, // number
+      "unit": "개", // string?
+      "expiresAt": "2026-05-20", // string?
+      "alertDaysBefore": 3, // number?
+      "memo": "유기농", // string?
+      "frequentItemId": "uuid-frequent" // string?
+    }
+  ] // FridgeItemEntryDto[]
+}
+```
+
+**Responses:**
+
+#### 200 - 품목 일괄 등록 성공
+
+```json
+{
+  "id": "uuid-1234", // string
+  "groupId": "uuid-group", // string
+  "storageLocationId": "uuid-storage", // string
+  "name": "우유", // string
+  "quantity": 2, // number
+  "unit": "개", // string | null
+  "registeredAt": "2025-01-01T00:00:00Z", // Date
+  "expiresAt": "2026-05-20T00:00:00.000Z", // Date | null
+  "alertDaysBefore": 3, // number
+  "memo": "유기농", // string | null
+  "frequentItemId": "uuid-frequent", // string | null
+  "createdAt": "2025-01-01T00:00:00Z", // Date
+  "updatedAt": "2025-01-01T00:00:00Z" // Date
+}
+```
+
+#### 404 - 일부 보관소를 찾을 수 없습니다
+
+---
+
 ### PATCH `fridge/items/:itemId`
 
 **요약:** 냉장고 품목 수정

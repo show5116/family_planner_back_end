@@ -12,6 +12,7 @@ import { UpdateFridgeItemDto } from './dto/update-fridge-item.dto';
 import { UpdateQuantityDto } from './dto/update-quantity.dto';
 import { CreateFrequentItemDto } from './dto/create-frequent-item.dto';
 import { UpdateFrequentItemDto } from './dto/update-frequent-item.dto';
+import { BulkCreateFridgeItemDto } from './dto/bulk-create-fridge-item.dto';
 
 @Injectable()
 export class FridgeService {
@@ -132,6 +133,40 @@ export class FridgeService {
         frequentItemId: dto.frequentItemId,
       },
     });
+  }
+
+  async bulkCreateFridgeItems(
+    userId: string,
+    groupId: string,
+    dto: BulkCreateFridgeItemDto,
+  ) {
+    await this.assertMember(userId, groupId);
+
+    const storageIds = [...new Set(dto.items.map((i) => i.storageLocationId))];
+    const storages = await this.prisma.storageLocation.findMany({
+      where: { id: { in: storageIds }, groupId },
+    });
+    if (storages.length !== storageIds.length) {
+      throw new NotFoundException('일부 보관소를 찾을 수 없습니다');
+    }
+
+    return this.prisma.$transaction(
+      dto.items.map((item) =>
+        this.prisma.fridgeItem.create({
+          data: {
+            groupId,
+            storageLocationId: item.storageLocationId,
+            name: item.name,
+            quantity: item.quantity,
+            unit: item.unit,
+            expiresAt: item.expiresAt ? new Date(item.expiresAt) : undefined,
+            alertDaysBefore: item.alertDaysBefore ?? 3,
+            memo: item.memo,
+            frequentItemId: item.frequentItemId,
+          },
+        }),
+      ),
+    );
   }
 
   async updateFridgeItem(

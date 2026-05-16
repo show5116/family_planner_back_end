@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
+import { BulkAddCartItemDto } from './dto/bulk-add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { CompleteShoppingDto } from './dto/complete-shopping.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
@@ -49,6 +50,30 @@ export class ShoppingService {
         memo: dto.memo,
       },
     });
+  }
+
+  async bulkAddCartItems(
+    userId: string,
+    groupId: string,
+    dto: BulkAddCartItemDto,
+  ) {
+    await this.assertMember(userId, groupId);
+    const cart = await this.getOrCreateCart(groupId);
+    const created = await this.prisma.$transaction(
+      dto.items.map((item) =>
+        this.prisma.shoppingCartItem.create({
+          data: {
+            cartId: cart.id,
+            frequentItemId: item.frequentItemId,
+            name: item.name,
+            quantity: item.quantity,
+            unit: item.unit,
+            memo: item.memo,
+          },
+        }),
+      ),
+    );
+    return created;
   }
 
   async updateCartItem(

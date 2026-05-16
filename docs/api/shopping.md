@@ -81,6 +81,47 @@
 
 ---
 
+### POST `shopping/cart/items/bulk`
+
+**요약:** 장바구니 품목 일괄 추가
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid-group", // string
+  "items": [
+    {
+      "frequentItemId": "uuid-frequent", // string?
+      "name": "우유", // string
+      "quantity": 2, // number
+      "unit": "개", // string?
+      "memo": "1+1 행사" // string?
+    }
+  ] // CartItemEntryDto[]
+}
+```
+
+**Responses:**
+
+#### 200 - 품목 일괄 추가 성공
+
+```json
+{
+  "id": "uuid-1234", // string
+  "cartId": "uuid-cart", // string
+  "frequentItemId": "uuid-frequent", // string | null
+  "name": "우유", // string
+  "quantity": 2, // number
+  "unit": "개", // string | null
+  "isChecked": false, // boolean
+  "memo": "1+1 행사", // string | null
+  "createdAt": "2025-01-01T00:00:00Z" // Date
+}
+```
+
+---
+
 ### PATCH `shopping/cart/items/:itemId`
 
 **요약:** 장바구니 품목 수정 (수량, 체크 등)

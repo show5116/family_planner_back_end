@@ -22,6 +22,7 @@ import { CreateStorageDto } from './dto/create-storage.dto';
 import { UpdateStorageDto } from './dto/update-storage.dto';
 import { ReorderDto } from './dto/reorder.dto';
 import { CreateFridgeItemDto } from './dto/create-fridge-item.dto';
+import { BulkCreateFridgeItemDto } from './dto/bulk-create-fridge-item.dto';
 import { UpdateFridgeItemDto } from './dto/update-fridge-item.dto';
 import { UpdateQuantityDto } from './dto/update-quantity.dto';
 import { CreateFrequentItemDto } from './dto/create-frequent-item.dto';
@@ -115,6 +116,18 @@ export class FridgeController {
   @ApiNotFound('보관소를 찾을 수 없습니다')
   createFridgeItem(@Request() req, @Body() dto: CreateFridgeItemDto) {
     return this.fridgeService.createFridgeItem(
+      req.user.userId,
+      dto.groupId,
+      dto,
+    );
+  }
+
+  @Post('items/bulk')
+  @ApiOperation({ summary: '냉장고 품목 일괄 등록' })
+  @ApiSuccess(FridgeItemDto, '품목 일괄 등록 성공', { isArray: true })
+  @ApiNotFound('일부 보관소를 찾을 수 없습니다')
+  bulkCreateFridgeItems(@Request() req, @Body() dto: BulkCreateFridgeItemDto) {
+    return this.fridgeService.bulkCreateFridgeItems(
       req.user.userId,
       dto.groupId,
       dto,
