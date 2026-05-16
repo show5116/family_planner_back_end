@@ -120,6 +120,15 @@ export class FridgeService {
       where: { id: dto.storageLocationId, groupId },
     });
     if (!storage) throw new NotFoundException('보관소를 찾을 수 없습니다');
+
+    let frequentItemId = dto.frequentItemId;
+    if (!frequentItemId) {
+      const frequent = await this.prisma.frequentItem.findUnique({
+        where: { groupId_name: { groupId, name: dto.name } },
+      });
+      if (frequent) frequentItemId = frequent.id;
+    }
+
     return this.prisma.fridgeItem.create({
       data: {
         groupId,
@@ -130,7 +139,7 @@ export class FridgeService {
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
         alertDaysBefore: dto.alertDaysBefore ?? 3,
         memo: dto.memo,
-        frequentItemId: dto.frequentItemId,
+        frequentItemId,
       },
     });
   }
@@ -150,6 +159,14 @@ export class FridgeService {
       throw new NotFoundException('일부 보관소를 찾을 수 없습니다');
     }
 
+    const allNames = dto.items
+      .filter((i) => !i.frequentItemId)
+      .map((i) => i.name);
+    const frequentItems = await this.prisma.frequentItem.findMany({
+      where: { groupId, name: { in: allNames } },
+    });
+    const frequentMap = new Map(frequentItems.map((f) => [f.name, f.id]));
+
     return this.prisma.$transaction(
       dto.items.map((item) =>
         this.prisma.fridgeItem.create({
@@ -162,7 +179,7 @@ export class FridgeService {
             expiresAt: item.expiresAt ? new Date(item.expiresAt) : undefined,
             alertDaysBefore: item.alertDaysBefore ?? 3,
             memo: item.memo,
-            frequentItemId: item.frequentItemId,
+            frequentItemId: item.frequentItemId ?? frequentMap.get(item.name),
           },
         }),
       ),
