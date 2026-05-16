@@ -132,13 +132,13 @@ export class ShoppingService {
 
     const transferMap = new Map(dto.transfers.map((t) => [t.cartItemId, t]));
 
-    return this.prisma.$transaction(async (tx) => {
-      const history = await tx.shoppingHistory.create({
-        data: { groupId },
-      });
+    const historyId = await this.prisma.$transaction(
+      async (tx) => {
+        const history = await tx.shoppingHistory.create({
+          data: { groupId },
+        });
 
-      await Promise.all(
-        cart.items.map(async (ci) => {
+        for (const ci of cart.items) {
           const transfer = transferMap.get(ci.id);
           let fridgeItemId: string | null = null;
 
@@ -170,32 +170,35 @@ export class ShoppingService {
               fridgeItemId,
             },
           });
-        }),
-      );
+        }
 
-      if (dto.expense) {
-        const today = new Date().toISOString().slice(0, 10);
-        await tx.expense.create({
-          data: {
-            groupId,
-            userId,
-            type: 'EXPENSE',
-            amount: dto.expense.amount,
-            category: dto.expense.category ?? 'FOOD',
-            date: new Date(dto.expense.date ?? today),
-            description: dto.expense.description ?? '장보기',
-            paymentMethod: dto.expense.paymentMethod,
-            shoppingHistoryId: history.id,
-          },
-        });
-      }
+        if (dto.expense) {
+          const today = new Date().toISOString().slice(0, 10);
+          await tx.expense.create({
+            data: {
+              groupId,
+              userId,
+              type: 'EXPENSE',
+              amount: dto.expense.amount,
+              category: dto.expense.category ?? 'FOOD',
+              date: new Date(dto.expense.date ?? today),
+              description: dto.expense.description ?? '장보기',
+              paymentMethod: dto.expense.paymentMethod,
+              shoppingHistoryId: history.id,
+            },
+          });
+        }
 
-      await tx.shoppingCartItem.deleteMany({ where: { cartId: cart.id } });
+        await tx.shoppingCartItem.deleteMany({ where: { cartId: cart.id } });
 
-      return tx.shoppingHistory.findUnique({
-        where: { id: history.id },
-        include: { items: true, expense: true },
-      });
+        return history.id;
+      },
+      { timeout: 30000 },
+    );
+
+    return this.prisma.shoppingHistory.findUnique({
+      where: { id: historyId },
+      include: { items: true, expense: true },
     });
   }
 

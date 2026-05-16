@@ -689,7 +689,7 @@ model Expense {
   group           Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   receipts        ExpenseReceipt[]
-  shoppingHistory ShoppingHistory?
+  shoppingHistory ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
 
   @@index([groupId, date(sort: Desc)])
   @@index([userId, date(sort: Desc)])
@@ -1363,7 +1363,7 @@ model ShoppingHistory {
   completedAt DateTime              @default(now())
   group       Group                 @relation(fields: [groupId], references: [id], onDelete: Cascade)
   items       ShoppingHistoryItem[]
-  expense     Expense?              @relation(fields: [id], references: [shoppingHistoryId])
+  expense     Expense?
 
   @@index([groupId])
   @@index([completedAt])

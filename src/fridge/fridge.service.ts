@@ -215,32 +215,12 @@ export class FridgeService {
     await this.assertMember(userId, groupId);
     const item = await this.prisma.fridgeItem.findFirst({
       where: { id: itemId, groupId },
-    });
-    if (!item) throw new NotFoundException('품목을 찾을 수 없습니다');
-    await this.prisma.fridgeItem.delete({ where: { id: itemId } });
-    return { message: '품목이 삭제되었습니다' };
-  }
-
-  async updateQuantity(
-    userId: string,
-    groupId: string,
-    itemId: string,
-    dto: UpdateQuantityDto,
-  ) {
-    await this.assertMember(userId, groupId);
-    const item = await this.prisma.fridgeItem.findFirst({
-      where: { id: itemId, groupId },
       include: { frequentItem: true },
     });
     if (!item) throw new NotFoundException('품목을 찾을 수 없습니다');
+    await this.prisma.fridgeItem.delete({ where: { id: itemId } });
 
-    const updated = await this.prisma.fridgeItem.update({
-      where: { id: itemId },
-      data: { quantity: dto.quantity },
-    });
-
-    // 소진 트리거: 수량 0 + 자주 사는 항목 + autoAdd 활성화
-    if (dto.quantity === 0 && item.frequentItem?.autoAdd) {
+    if (item.frequentItem?.autoAdd) {
       const cart = await this.prisma.shoppingCart.upsert({
         where: { groupId },
         create: { groupId },
@@ -262,7 +242,24 @@ export class FridgeService {
       }
     }
 
-    return updated;
+    return { message: '품목이 삭제되었습니다' };
+  }
+
+  async updateQuantity(
+    userId: string,
+    groupId: string,
+    itemId: string,
+    dto: UpdateQuantityDto,
+  ) {
+    await this.assertMember(userId, groupId);
+    const item = await this.prisma.fridgeItem.findFirst({
+      where: { id: itemId, groupId },
+    });
+    if (!item) throw new NotFoundException('품목을 찾을 수 없습니다');
+    return this.prisma.fridgeItem.update({
+      where: { id: itemId },
+      data: { quantity: dto.quantity },
+    });
   }
 
   // ── FrequentItem ─────────────────────────────────────────────
