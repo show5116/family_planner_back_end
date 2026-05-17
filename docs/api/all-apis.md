@@ -2473,8 +2473,7 @@ period=monthly 시 year 필수.
   "unit": "개", // string?
   "expiresAt": "2026-05-20", // string?
   "alertDaysBefore": 3, // number?
-  "memo": "유기농", // string?
-  "frequentItemId": "uuid-frequent" // string?
+  "memo": "유기농" // string?
 }
 ```
 
@@ -2494,7 +2493,6 @@ period=monthly 시 year 필수.
   "expiresAt": "2026-05-20T00:00:00.000Z", // Date | null
   "alertDaysBefore": 3, // number
   "memo": "유기농", // string | null
-  "frequentItemId": "uuid-frequent", // string | null
   "createdAt": "2025-01-01T00:00:00Z", // Date
   "updatedAt": "2025-01-01T00:00:00Z" // Date
 }
@@ -2521,8 +2519,7 @@ period=monthly 시 year 필수.
       "unit": "개", // string?
       "expiresAt": "2026-05-20", // string?
       "alertDaysBefore": 3, // number?
-      "memo": "유기농", // string?
-      "frequentItemId": "uuid-frequent" // string?
+      "memo": "유기농" // string?
     }
   ] // FridgeItemEntryDto[]
 }
@@ -2544,13 +2541,54 @@ period=monthly 시 year 필수.
   "expiresAt": "2026-05-20T00:00:00.000Z", // Date | null
   "alertDaysBefore": 3, // number
   "memo": "유기농", // string | null
-  "frequentItemId": "uuid-frequent", // string | null
   "createdAt": "2025-01-01T00:00:00Z", // Date
   "updatedAt": "2025-01-01T00:00:00Z" // Date
 }
 ```
 
 #### 404 - 일부 보관소를 찾을 수 없습니다
+
+---
+
+### PATCH `fridge/items/bulk`
+
+**요약:** 냉장고 품목 일괄 수정/삭제
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid-group", // string
+  "updates": [
+    {
+      "id": "uuid-fridge-item", // string
+      "storageLocationId": "uuid-storage", // string?
+      "name": "우유", // string?
+      "quantity": 2, // number?
+      "unit": "개", // string?
+      "expiresAt": "2026-05-20", // string?
+      "alertDaysBefore": 3, // number?
+      "memo": "유기농" // string?
+    }
+  ], // FridgeItemUpdateEntryDto[]?
+  "deletes": ["uuid-1", "uuid-2"] // string[]?
+}
+```
+
+**Responses:**
+
+#### 200 - 일괄 수정/삭제 성공
+
+```json
+{
+  "id": "uuid-1234", // string
+  "groupId": "uuid-group", // string
+  "name": "우리집 냉장고", // string
+  "type": "FRIDGE", // string
+  "sortOrder": 0, // number
+  "createdAt": "2025-01-01T00:00:00Z" // Date
+}
+```
 
 ---
 
@@ -2576,8 +2614,7 @@ period=monthly 시 year 필수.
   "unit": "개", // string?
   "expiresAt": "2026-05-20", // string?
   "alertDaysBefore": 3, // number?
-  "memo": "유기농", // string?
-  "frequentItemId": "uuid-frequent" // string | null?
+  "memo": "유기농" // string?
 }
 ```
 
@@ -2597,7 +2634,6 @@ period=monthly 시 year 필수.
   "expiresAt": "2026-05-20T00:00:00.000Z", // Date | null
   "alertDaysBefore": 3, // number
   "memo": "유기농", // string | null
-  "frequentItemId": "uuid-frequent", // string | null
   "createdAt": "2025-01-01T00:00:00Z", // Date
   "updatedAt": "2025-01-01T00:00:00Z" // Date
 }
@@ -2669,7 +2705,6 @@ period=monthly 시 year 필수.
   "expiresAt": "2026-05-20T00:00:00.000Z", // Date | null
   "alertDaysBefore": 3, // number
   "memo": "유기농", // string | null
-  "frequentItemId": "uuid-frequent", // string | null
   "createdAt": "2025-01-01T00:00:00Z", // Date
   "updatedAt": "2025-01-01T00:00:00Z" // Date
 }
@@ -7150,7 +7185,6 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
     {
       "id": "uuid-1234", // string
       "cartId": "uuid-cart", // string
-      "frequentItemId": "uuid-frequent", // string | null
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
@@ -7175,7 +7209,6 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 ```json
 {
   "groupId": "uuid-group", // string
-  "frequentItemId": "uuid-frequent", // string?
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string?
@@ -7191,7 +7224,6 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 {
   "id": "uuid-1234", // string
   "cartId": "uuid-cart", // string
-  "frequentItemId": "uuid-frequent", // string | null
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
@@ -7214,7 +7246,6 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "groupId": "uuid-group", // string
   "items": [
     {
-      "frequentItemId": "uuid-frequent", // string?
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string?
@@ -7232,13 +7263,61 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 {
   "id": "uuid-1234", // string
   "cartId": "uuid-cart", // string
-  "frequentItemId": "uuid-frequent", // string | null
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
+}
+```
+
+---
+
+### PATCH `shopping/cart/items/bulk`
+
+**요약:** 장바구니 품목 일괄 수정/삭제
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid-group", // string
+  "updates": [
+    {
+      "id": "uuid-cart-item", // string
+      "quantity": 2, // number?
+      "unit": "개", // string?
+      "isChecked": true, // boolean?
+      "memo": "1+1 행사" // string?
+    }
+  ], // CartItemUpdateEntryDto[]?
+  "deletes": ["uuid-1", "uuid-2"] // string[]?
+}
+```
+
+**Responses:**
+
+#### 200 - 일괄 수정/삭제 성공
+
+```json
+{
+  "id": "uuid-cart", // string
+  "groupId": "uuid-group", // string
+  "items": [
+    {
+      "id": "uuid-1234", // string
+      "cartId": "uuid-cart", // string
+      "name": "우유", // string
+      "quantity": 2, // number
+      "unit": "개", // string | null
+      "isChecked": false, // boolean
+      "memo": "1+1 행사", // string | null
+      "createdAt": "2025-01-01T00:00:00Z" // Date
+    }
+  ], // CartItemDto[]
+  "createdAt": "2025-01-01T00:00:00Z", // Date
+  "updatedAt": "2025-01-01T00:00:00Z" // Date
 }
 ```
 
@@ -7275,7 +7354,6 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 {
   "id": "uuid-1234", // string
   "cartId": "uuid-cart", // string
-  "frequentItemId": "uuid-frequent", // string | null
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
@@ -7330,12 +7408,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "storageLocationId": "uuid-storage", // string
       "quantity": 2, // number?
       "unit": "개", // string?
+      "price": 3500, // 품목 금액 (number?)
       "expiresAt": "2026-05-30", // string?
       "alertDaysBefore": 3 // number?
     }
   ], // 냉장고로 이관할 품목 목록 (TransferItemDto[])
   "expense": {
-    "amount": 45000, // 총 구매액 (number)
+    "amount": 45000, // 총 구매액 (생략 시 품목별 금액 합계로 자동 계산) (number?)
     "paymentMethod": "CARD", // 결제 수단 (PaymentMethod?)
     "date": "2026-05-12", // 지출 날짜 (기본: 오늘) (string?)
     "description": "마트 장보기", // 지출 내용 (string?)
@@ -7359,6 +7438,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "transferredToFridge": true, // boolean
       "fridgeItemId": "uuid-fridge-item" // string | null
     }
@@ -7406,6 +7486,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
         "name": "우유",
         "quantity": 2,
         "unit": "개",
+        "price": 3500,
         "transferredToFridge": true,
         "fridgeItemId": "uuid-fridge-item"
       }, // ShoppingHistoryItemDto[]
@@ -7454,6 +7535,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "transferredToFridge": true, // boolean
       "fridgeItemId": "uuid-fridge-item" // string | null
     }

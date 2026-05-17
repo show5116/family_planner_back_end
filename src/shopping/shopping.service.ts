@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '@/prisma/prisma.service';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { BulkAddCartItemDto } from './dto/bulk-add-cart-item.dto';
+import { BulkUpdateCartItemDto } from './dto/bulk-update-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { CompleteShoppingDto } from './dto/complete-shopping.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
@@ -40,10 +41,13 @@ export class ShoppingService {
   async addCartItem(userId: string, groupId: string, dto: AddCartItemDto) {
     await this.assertMember(userId, groupId);
     const cart = await this.getOrCreateCart(groupId);
+    const frequent = await this.prisma.frequentItem.findUnique({
+      where: { groupId_name: { groupId, name: dto.name } },
+    });
     return this.prisma.shoppingCartItem.create({
       data: {
         cartId: cart.id,
-        frequentItemId: dto.frequentItemId,
+        frequentItemId: frequent?.id,
         name: dto.name,
         quantity: dto.quantity,
         unit: dto.unit,
@@ -59,12 +63,17 @@ export class ShoppingService {
   ) {
     await this.assertMember(userId, groupId);
     const cart = await this.getOrCreateCart(groupId);
-    const created = await this.prisma.$transaction(
+    const allNames = dto.items.map((i) => i.name);
+    const frequentItems = await this.prisma.frequentItem.findMany({
+      where: { groupId, name: { in: allNames } },
+    });
+    const frequentMap = new Map(frequentItems.map((f) => [f.name, f.id]));
+    return this.prisma.$transaction(
       dto.items.map((item) =>
         this.prisma.shoppingCartItem.create({
           data: {
             cartId: cart.id,
-            frequentItemId: item.frequentItemId,
+            frequentItemId: frequentMap.get(item.name),
             name: item.name,
             quantity: item.quantity,
             unit: item.unit,
@@ -73,7 +82,50 @@ export class ShoppingService {
         }),
       ),
     );
-    return created;
+  }
+
+  async bulkUpdateCartItems(
+    userId: string,
+    groupId: string,
+    dto: BulkUpdateCartItemDto,
+  ) {
+    await this.assertMember(userId, groupId);
+    const cart = await this.prisma.shoppingCart.findUnique({
+      where: { groupId },
+    });
+    if (!cart) throw new NotFoundException('장바구니를 찾을 수 없습니다');
+
+    const updates = dto.updates ?? [];
+    const deletes = dto.deletes ?? [];
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const u of updates) {
+        const item = await tx.shoppingCartItem.findFirst({
+          where: { id: u.id, cartId: cart.id },
+        });
+        if (!item) continue;
+        await tx.shoppingCartItem.update({
+          where: { id: u.id },
+          data: {
+            ...(u.quantity !== undefined && { quantity: u.quantity }),
+            ...(u.unit !== undefined && { unit: u.unit }),
+            ...(u.isChecked !== undefined && { isChecked: u.isChecked }),
+            ...(u.memo !== undefined && { memo: u.memo }),
+          },
+        });
+      }
+
+      if (deletes.length > 0) {
+        await tx.shoppingCartItem.deleteMany({
+          where: { id: { in: deletes }, cartId: cart.id },
+        });
+      }
+    });
+
+    return this.prisma.shoppingCart.findUnique({
+      where: { groupId },
+      include: { items: { orderBy: { createdAt: 'asc' } } },
+    });
   }
 
   async updateCartItem(
@@ -138,6 +190,8 @@ export class ShoppingService {
           data: { groupId },
         });
 
+        let totalPrice = 0;
+
         for (const ci of cart.items) {
           const transfer = transferMap.get(ci.id);
           let fridgeItemId: string | null = null;
@@ -160,12 +214,16 @@ export class ShoppingService {
             fridgeItemId = created.id;
           }
 
+          const itemPrice = transferMap.get(ci.id)?.price ?? null;
+          if (itemPrice != null) totalPrice += itemPrice;
+
           await tx.shoppingHistoryItem.create({
             data: {
               historyId: history.id,
               name: ci.name,
               quantity: ci.quantity,
               unit: ci.unit,
+              price: itemPrice,
               transferredToFridge: !!transfer,
               fridgeItemId,
             },
@@ -173,13 +231,14 @@ export class ShoppingService {
         }
 
         if (dto.expense) {
+          const amount = dto.expense.amount ?? totalPrice;
           const today = new Date().toISOString().slice(0, 10);
           await tx.expense.create({
             data: {
               groupId,
               userId,
               type: 'EXPENSE',
-              amount: dto.expense.amount,
+              amount,
               category: dto.expense.category ?? 'FOOD',
               date: new Date(dto.expense.date ?? today),
               description: dto.expense.description ?? '장보기',

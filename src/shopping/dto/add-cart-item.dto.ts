@@ -13,11 +13,6 @@ export class AddCartItemDto {
   @IsUUID()
   groupId: string;
 
-  @ApiProperty({ example: 'uuid-frequent', required: false })
-  @IsOptional()
-  @IsUUID()
-  frequentItemId?: string;
-
   @ApiProperty({ example: '우유', maxLength: 100 })
   @IsString()
   @MaxLength(100)

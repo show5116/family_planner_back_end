@@ -37,6 +37,12 @@ export class TransferItemDto {
   @MaxLength(20)
   unit?: string;
 
+  @ApiProperty({ example: 3500, required: false, description: '품목 금액' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  price?: number;
+
   @ApiProperty({ example: '2026-05-30', required: false })
   @IsOptional()
   @IsDateString()
@@ -51,10 +57,15 @@ export class TransferItemDto {
 }
 
 export class ShoppingExpenseDto {
-  @ApiProperty({ example: 45000, description: '총 구매액' })
+  @ApiProperty({
+    example: 45000,
+    required: false,
+    description: '총 구매액 (생략 시 품목별 금액 합계로 자동 계산)',
+  })
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  amount: number;
+  amount?: number;
 
   @ApiProperty({
     enum: PaymentMethod,

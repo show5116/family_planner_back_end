@@ -51,9 +51,6 @@ export class FridgeItemDto {
   @ApiProperty({ example: '유기농', nullable: true })
   memo: string | null;
 
-  @ApiProperty({ example: 'uuid-frequent', nullable: true })
-  frequentItemId: string | null;
-
   @ApiProperty()
   createdAt: Date;
 

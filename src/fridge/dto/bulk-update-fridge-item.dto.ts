@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsArray,
   IsDateString,
   IsInt,
   IsNumber,
@@ -9,9 +10,15 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class UpdateFridgeItemDto {
+export class FridgeItemUpdateEntryDto {
+  @ApiProperty({ example: 'uuid-fridge-item' })
+  @IsUUID()
+  id: string;
+
   @ApiProperty({ example: 'uuid-storage', required: false })
   @IsOptional()
   @IsUUID()
@@ -26,7 +33,7 @@ export class UpdateFridgeItemDto {
   @ApiProperty({ example: 2, required: false })
   @IsOptional()
   @IsNumber()
-  @Min(0)
+  @Min(1)
   quantity?: number;
 
   @ApiProperty({ example: '개', required: false })
@@ -52,4 +59,23 @@ export class UpdateFridgeItemDto {
   @IsString()
   @MaxLength(200)
   memo?: string;
+}
+
+export class BulkUpdateFridgeItemDto {
+  @ApiProperty({ example: 'uuid-group' })
+  @IsUUID()
+  groupId: string;
+
+  @ApiProperty({ type: [FridgeItemUpdateEntryDto], required: false })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FridgeItemUpdateEntryDto)
+  updates?: FridgeItemUpdateEntryDto[];
+
+  @ApiProperty({ example: ['uuid-1', 'uuid-2'], required: false })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  deletes?: string[];
 }

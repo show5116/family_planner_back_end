@@ -1376,6 +1376,7 @@ model ShoppingHistoryItem {
   name                String          @db.VarChar(100)
   quantity            Decimal         @db.Decimal(10, 2)
   unit                String?         @db.VarChar(20)
+  price               Decimal?        @db.Decimal(10, 2)
   transferredToFridge Boolean         @default(false)
   fridgeItemId        String?
   history             ShoppingHistory @relation(fields: [historyId], references: [id], onDelete: Cascade)

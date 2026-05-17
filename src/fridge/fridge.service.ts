@@ -13,6 +13,7 @@ import { UpdateQuantityDto } from './dto/update-quantity.dto';
 import { CreateFrequentItemDto } from './dto/create-frequent-item.dto';
 import { UpdateFrequentItemDto } from './dto/update-frequent-item.dto';
 import { BulkCreateFridgeItemDto } from './dto/bulk-create-fridge-item.dto';
+import { BulkUpdateFridgeItemDto } from './dto/bulk-update-fridge-item.dto';
 
 @Injectable()
 export class FridgeService {
@@ -121,13 +122,9 @@ export class FridgeService {
     });
     if (!storage) throw new NotFoundException('보관소를 찾을 수 없습니다');
 
-    let frequentItemId = dto.frequentItemId;
-    if (!frequentItemId) {
-      const frequent = await this.prisma.frequentItem.findUnique({
-        where: { groupId_name: { groupId, name: dto.name } },
-      });
-      if (frequent) frequentItemId = frequent.id;
-    }
+    const frequent = await this.prisma.frequentItem.findUnique({
+      where: { groupId_name: { groupId, name: dto.name } },
+    });
 
     return this.prisma.fridgeItem.create({
       data: {
@@ -139,7 +136,7 @@ export class FridgeService {
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
         alertDaysBefore: dto.alertDaysBefore ?? 3,
         memo: dto.memo,
-        frequentItemId,
+        frequentItemId: frequent?.id,
       },
     });
   }
@@ -159,9 +156,7 @@ export class FridgeService {
       throw new NotFoundException('일부 보관소를 찾을 수 없습니다');
     }
 
-    const allNames = dto.items
-      .filter((i) => !i.frequentItemId)
-      .map((i) => i.name);
+    const allNames = dto.items.map((i) => i.name);
     const frequentItems = await this.prisma.frequentItem.findMany({
       where: { groupId, name: { in: allNames } },
     });
@@ -179,7 +174,7 @@ export class FridgeService {
             expiresAt: item.expiresAt ? new Date(item.expiresAt) : undefined,
             alertDaysBefore: item.alertDaysBefore ?? 3,
             memo: item.memo,
-            frequentItemId: item.frequentItemId ?? frequentMap.get(item.name),
+            frequentItemId: frequentMap.get(item.name),
           },
         }),
       ),
@@ -205,6 +200,14 @@ export class FridgeService {
       if (!storage) throw new NotFoundException('보관소를 찾을 수 없습니다');
     }
 
+    let frequentItemId: string | null | undefined = undefined;
+    if (dto.name && dto.name !== item.name) {
+      const frequent = await this.prisma.frequentItem.findUnique({
+        where: { groupId_name: { groupId, name: dto.name } },
+      });
+      frequentItemId = frequent?.id ?? null;
+    }
+
     return this.prisma.fridgeItem.update({
       where: { id: itemId },
       data: {
@@ -221,9 +224,7 @@ export class FridgeService {
           alertDaysBefore: dto.alertDaysBefore,
         }),
         ...(dto.memo !== undefined && { memo: dto.memo }),
-        ...(dto.frequentItemId !== undefined && {
-          frequentItemId: dto.frequentItemId,
-        }),
+        ...(frequentItemId !== undefined && { frequentItemId }),
       },
     });
   }
@@ -244,7 +245,7 @@ export class FridgeService {
         update: {},
       });
       const exists = await this.prisma.shoppingCartItem.findFirst({
-        where: { cartId: cart.id, frequentItemId: item.frequentItemId },
+        where: { cartId: cart.id, name: item.frequentItem.name },
       });
       if (!exists) {
         await this.prisma.shoppingCartItem.create({
@@ -260,6 +261,107 @@ export class FridgeService {
     }
 
     return { message: '품목이 삭제되었습니다' };
+  }
+
+  async bulkUpdateFridgeItems(
+    userId: string,
+    groupId: string,
+    dto: BulkUpdateFridgeItemDto,
+  ) {
+    await this.assertMember(userId, groupId);
+
+    const updates = dto.updates ?? [];
+    const deletes = dto.deletes ?? [];
+
+    // 이름 변경이 있는 항목의 frequentItem 미리 조회
+    const changedNames = updates
+      .filter((u): u is typeof u & { name: string } => !!u.name)
+      .map((u) => u.name);
+    const frequentItems =
+      changedNames.length > 0
+        ? await this.prisma.frequentItem.findMany({
+            where: { groupId, name: { in: changedNames } },
+          })
+        : [];
+    const frequentMap = new Map(frequentItems.map((f) => [f.name, f.id]));
+
+    // 삭제 대상 품목 조회 (소진 트리거용)
+    const deleteTargets =
+      deletes.length > 0
+        ? await this.prisma.fridgeItem.findMany({
+            where: { id: { in: deletes }, groupId },
+            include: { frequentItem: true },
+          })
+        : [];
+
+    await this.prisma.$transaction(async (tx) => {
+      // 수정
+      for (const u of updates) {
+        const current = await tx.fridgeItem.findFirst({
+          where: { id: u.id, groupId },
+        });
+        if (!current) continue;
+
+        await tx.fridgeItem.update({
+          where: { id: u.id },
+          data: {
+            ...(u.storageLocationId && {
+              storageLocationId: u.storageLocationId,
+            }),
+            ...(u.name && { name: u.name }),
+            ...(u.name && {
+              frequentItemId: frequentMap.get(u.name) ?? null,
+            }),
+            ...(u.quantity !== undefined && { quantity: u.quantity }),
+            ...(u.unit !== undefined && { unit: u.unit }),
+            ...(u.expiresAt !== undefined && {
+              expiresAt: u.expiresAt ? new Date(u.expiresAt) : null,
+            }),
+            ...(u.alertDaysBefore !== undefined && {
+              alertDaysBefore: u.alertDaysBefore,
+            }),
+            ...(u.memo !== undefined && { memo: u.memo }),
+          },
+        });
+      }
+
+      // 삭제
+      if (deletes.length > 0) {
+        await tx.fridgeItem.deleteMany({
+          where: { id: { in: deletes }, groupId },
+        });
+      }
+    });
+
+    // 소진 트리거 (트랜잭션 밖에서 처리)
+    for (const item of deleteTargets) {
+      if (!item.frequentItem?.autoAdd) continue;
+      const cart = await this.prisma.shoppingCart.upsert({
+        where: { groupId },
+        create: { groupId },
+        update: {},
+      });
+      const exists = await this.prisma.shoppingCartItem.findFirst({
+        where: { cartId: cart.id, name: item.frequentItem.name },
+      });
+      if (!exists) {
+        await this.prisma.shoppingCartItem.create({
+          data: {
+            cartId: cart.id,
+            frequentItemId: item.frequentItemId,
+            name: item.frequentItem.name,
+            quantity: 1,
+            unit: item.frequentItem.defaultUnit,
+          },
+        });
+      }
+    }
+
+    return this.prisma.storageLocation.findMany({
+      where: { groupId },
+      orderBy: { sortOrder: 'asc' },
+      include: { items: { orderBy: { createdAt: 'asc' } } },
+    });
   }
 
   async updateQuantity(

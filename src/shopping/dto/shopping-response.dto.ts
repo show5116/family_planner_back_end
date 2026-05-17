@@ -7,9 +7,6 @@ export class CartItemDto {
   @ApiProperty({ example: 'uuid-cart' })
   cartId: string;
 
-  @ApiProperty({ example: 'uuid-frequent', nullable: true })
-  frequentItemId: string | null;
-
   @ApiProperty({ example: '우유' })
   name: string;
 
@@ -58,6 +55,9 @@ export class ShoppingHistoryItemDto {
 
   @ApiProperty({ example: '개', nullable: true })
   unit: string | null;
+
+  @ApiProperty({ example: 3500, nullable: true })
+  price: number | null;
 
   @ApiProperty({ example: true })
   transferredToFridge: boolean;

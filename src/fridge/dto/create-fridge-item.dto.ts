@@ -53,9 +53,4 @@ export class CreateFridgeItemDto {
   @IsString()
   @MaxLength(200)
   memo?: string;
-
-  @ApiProperty({ example: 'uuid-frequent', required: false })
-  @IsOptional()
-  @IsUUID()
-  frequentItemId?: string;
 }

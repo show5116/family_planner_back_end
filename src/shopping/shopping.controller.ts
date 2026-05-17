@@ -21,6 +21,7 @@ import {
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { BulkAddCartItemDto } from './dto/bulk-add-cart-item.dto';
+import { BulkUpdateCartItemDto } from './dto/bulk-update-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { CompleteShoppingDto } from './dto/complete-shopping.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
@@ -59,6 +60,17 @@ export class ShoppingController {
   @ApiSuccess(CartItemDto, '품목 일괄 추가 성공', { isArray: true })
   bulkAddCartItems(@Request() req, @Body() dto: BulkAddCartItemDto) {
     return this.shoppingService.bulkAddCartItems(
+      req.user.userId,
+      dto.groupId,
+      dto,
+    );
+  }
+
+  @Patch('cart/items/bulk')
+  @ApiOperation({ summary: '장바구니 품목 일괄 수정/삭제' })
+  @ApiSuccess(ShoppingCartDto, '일괄 수정/삭제 성공')
+  bulkUpdateCartItems(@Request() req, @Body() dto: BulkUpdateCartItemDto) {
+    return this.shoppingService.bulkUpdateCartItems(
       req.user.userId,
       dto.groupId,
       dto,

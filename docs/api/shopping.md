@@ -28,7 +28,6 @@
     {
       "id": "uuid-1234", // string
       "cartId": "uuid-cart", // string
-      "frequentItemId": "uuid-frequent", // string | null
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
@@ -53,7 +52,6 @@
 ```json
 {
   "groupId": "uuid-group", // string
-  "frequentItemId": "uuid-frequent", // string?
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string?
@@ -69,7 +67,6 @@
 {
   "id": "uuid-1234", // string
   "cartId": "uuid-cart", // string
-  "frequentItemId": "uuid-frequent", // string | null
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
@@ -92,7 +89,6 @@
   "groupId": "uuid-group", // string
   "items": [
     {
-      "frequentItemId": "uuid-frequent", // string?
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string?
@@ -110,13 +106,61 @@
 {
   "id": "uuid-1234", // string
   "cartId": "uuid-cart", // string
-  "frequentItemId": "uuid-frequent", // string | null
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
+}
+```
+
+---
+
+### PATCH `shopping/cart/items/bulk`
+
+**요약:** 장바구니 품목 일괄 수정/삭제
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid-group", // string
+  "updates": [
+    {
+      "id": "uuid-cart-item", // string
+      "quantity": 2, // number?
+      "unit": "개", // string?
+      "isChecked": true, // boolean?
+      "memo": "1+1 행사" // string?
+    }
+  ], // CartItemUpdateEntryDto[]?
+  "deletes": ["uuid-1", "uuid-2"] // string[]?
+}
+```
+
+**Responses:**
+
+#### 200 - 일괄 수정/삭제 성공
+
+```json
+{
+  "id": "uuid-cart", // string
+  "groupId": "uuid-group", // string
+  "items": [
+    {
+      "id": "uuid-1234", // string
+      "cartId": "uuid-cart", // string
+      "name": "우유", // string
+      "quantity": 2, // number
+      "unit": "개", // string | null
+      "isChecked": false, // boolean
+      "memo": "1+1 행사", // string | null
+      "createdAt": "2025-01-01T00:00:00Z" // Date
+    }
+  ], // CartItemDto[]
+  "createdAt": "2025-01-01T00:00:00Z", // Date
+  "updatedAt": "2025-01-01T00:00:00Z" // Date
 }
 ```
 
@@ -153,7 +197,6 @@
 {
   "id": "uuid-1234", // string
   "cartId": "uuid-cart", // string
-  "frequentItemId": "uuid-frequent", // string | null
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
@@ -208,12 +251,13 @@
       "storageLocationId": "uuid-storage", // string
       "quantity": 2, // number?
       "unit": "개", // string?
+      "price": 3500, // 품목 금액 (number?)
       "expiresAt": "2026-05-30", // string?
       "alertDaysBefore": 3 // number?
     }
   ], // 냉장고로 이관할 품목 목록 (TransferItemDto[])
   "expense": {
-    "amount": 45000, // 총 구매액 (number)
+    "amount": 45000, // 총 구매액 (생략 시 품목별 금액 합계로 자동 계산) (number?)
     "paymentMethod": "CARD", // 결제 수단 (PaymentMethod?)
     "date": "2026-05-12", // 지출 날짜 (기본: 오늘) (string?)
     "description": "마트 장보기", // 지출 내용 (string?)
@@ -237,6 +281,7 @@
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "transferredToFridge": true, // boolean
       "fridgeItemId": "uuid-fridge-item" // string | null
     }
@@ -284,6 +329,7 @@
         "name": "우유",
         "quantity": 2,
         "unit": "개",
+        "price": 3500,
         "transferredToFridge": true,
         "fridgeItemId": "uuid-fridge-item"
       }, // ShoppingHistoryItemDto[]
@@ -332,6 +378,7 @@
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "transferredToFridge": true, // boolean
       "fridgeItemId": "uuid-fridge-item" // string | null
     }
