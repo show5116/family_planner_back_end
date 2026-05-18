@@ -239,7 +239,7 @@ export class ShoppingService {
               userId,
               type: 'EXPENSE',
               amount,
-              category: dto.expense.category ?? 'FOOD',
+              category: dto.expense.category ?? 'GROCERIES',
               date: new Date(dto.expense.date ?? today),
               description: dto.expense.description ?? '장보기',
               paymentMethod: dto.expense.paymentMethod,

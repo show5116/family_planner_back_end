@@ -98,9 +98,9 @@ export class ShoppingExpenseDto {
 
   @ApiProperty({
     enum: ExpenseCategory,
-    example: 'FOOD',
+    example: 'GROCERIES',
     required: false,
-    description: '가계부 카테고리 (기본: FOOD)',
+    description: '가계부 카테고리 (기본: GROCERIES)',
   })
   @IsOptional()
   @IsEnum(ExpenseCategory)

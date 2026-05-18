@@ -979,6 +979,7 @@ export class HouseholdService {
     const categoryLabel: Record<string, string> = {
       TRANSPORTATION: '교통비',
       FOOD: '식비',
+      GROCERIES: '장보기',
       LEISURE: '여가비',
       LIVING: '생활비',
       MEDICAL: '의료비',
@@ -1054,6 +1055,7 @@ export class HouseholdService {
     const categoryLabel: Record<string, string> = {
       TRANSPORTATION: '교통비',
       FOOD: '식비',
+      GROCERIES: '장보기',
       LEISURE: '여가비',
       LIVING: '생활비',
       MEDICAL: '의료비',
