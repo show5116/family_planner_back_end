@@ -47,12 +47,11 @@
       "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
     }
   ], // 질문 목록 (QuestionListDto[])
-  "meta": { "total": 100, "page": 1, "limit": 20, "totalPages": 5 } // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
+  "meta": {"total":100,"page":1,"limit":20,"totalPages":5} // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
 }
 ```
 
 ---
-
 ### GET `qna/admin/statistics`
 
 **요약:** 통계 조회 (ADMIN 전용)
@@ -71,7 +70,6 @@
 ```
 
 ---
-
 ### POST `qna/admin/questions/:questionId/answers`
 
 **요약:** 답변 작성 (ADMIN 전용)
@@ -123,7 +121,6 @@
 #### 404 - 질문을 찾을 수 없습니다
 
 ---
-
 ### PUT `qna/admin/questions/:questionId/answers/:id`
 
 **요약:** 답변 수정 (ADMIN 전용)
@@ -175,7 +172,6 @@
 #### 404 - 답변을 찾을 수 없습니다
 
 ---
-
 ### DELETE `qna/admin/questions/:questionId/answers/:id`
 
 **요약:** 답변 삭제 (ADMIN 전용)

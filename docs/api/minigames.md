@@ -19,9 +19,9 @@
   "groupId": "uuid-1234", // 그룹 ID (string)
   "gameType": null, // 게임 타입 (MinigameType)
   "title": "저녁 메뉴 정하기", // 게임 제목 (string)
-  "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
-  "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
-  "result": { "assignments": [{ "participant": "아빠", "option": "치킨" }] } // 게임 결과 (Record<string, unknown>)
+  "participants": ["아빠","엄마","민준"], // 참여자 이름 목록 (string[])
+  "options": ["삼겹살","치킨","피자"], // 결과 항목 목록 (string[])
+  "result": {"assignments":[{"participant":"아빠","option":"치킨"}]} // 게임 결과 (Record<string, unknown>)
 }
 ```
 
@@ -35,9 +35,9 @@
   "groupId": "uuid-1234", // 그룹 ID (string)
   "gameType": null, // 게임 타입 (MinigameType)
   "title": "저녁 메뉴 정하기", // 게임 제목 (string)
-  "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
-  "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
-  "result": { "assignments": [{ "participant": "아빠", "option": "치킨" }] }, // 게임 결과 (Record<string, unknown>)
+  "participants": ["아빠","엄마","민준"], // 참여자 이름 목록 (string[])
+  "options": ["삼겹살","치킨","피자"], // 결과 항목 목록 (string[])
+  "result": {"assignments":[{"participant":"아빠","option":"치킨"}]}, // 게임 결과 (Record<string, unknown>)
   "createdBy": "uuid-user", // 생성자 userId (string)
   "createdAt": "2026-03-06T12:00:00.000Z" // 생성 시각 (Date)
 }
@@ -46,7 +46,6 @@
 #### 403 - 그룹 멤버만 저장할 수 있습니다
 
 ---
-
 ### GET `minigames/results`
 
 **요약:** 그룹 게임 이력 조회
@@ -70,11 +69,9 @@
       "groupId": "uuid-1234", // 그룹 ID (string)
       "gameType": null, // 게임 타입 (MinigameType)
       "title": "저녁 메뉴 정하기", // 게임 제목 (string)
-      "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
-      "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
-      "result": {
-        "assignments": [{ "participant": "아빠", "option": "치킨" }]
-      }, // 게임 결과 (Record<string, unknown>)
+      "participants": ["아빠","엄마","민준"], // 참여자 이름 목록 (string[])
+      "options": ["삼겹살","치킨","피자"], // 결과 항목 목록 (string[])
+      "result": {"assignments":[{"participant":"아빠","option":"치킨"}]}, // 게임 결과 (Record<string, unknown>)
       "createdBy": "uuid-user", // 생성자 userId (string)
       "createdAt": "2026-03-06T12:00:00.000Z" // 생성 시각 (Date)
     }
@@ -87,7 +84,6 @@
 #### 403 - 그룹 멤버만 조회할 수 있습니다
 
 ---
-
 ### DELETE `minigames/results/:id`
 
 **요약:** 게임 이력 삭제

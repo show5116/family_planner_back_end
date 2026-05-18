@@ -42,7 +42,6 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
-
 ### GET `childcare/children`
 
 **요약:** 그룹 내 자녀 프로필 목록 조회
@@ -71,7 +70,6 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
-
 ### POST `childcare/children/:id/link-user`
 
 **요약:** 자녀 프로필과 앱 계정 연동 (부모만 가능)
@@ -102,7 +100,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### GET `childcare/accounts`
 
 **요약:** 그룹 내 포인트 계정 목록 조회
@@ -131,7 +128,6 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
-
 ### GET `childcare/accounts/:id`
 
 **요약:** 포인트 계정 상세 조회
@@ -162,7 +158,6 @@
 #### 403 - 해당 계정에 접근할 권한이 없습니다
 
 ---
-
 ### POST `childcare/children/:id/allowance-plan`
 
 **요약:** 월 포인트 할당 설정 (생성 또는 수정, 부모만 가능)
@@ -204,7 +199,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### GET `childcare/children/:id/allowance-plan`
 
 **요약:** 월 포인트 할당 설정 조회
@@ -235,7 +229,6 @@
 #### 403 - 해당 자녀 프로필에 접근할 권한이 없습니다
 
 ---
-
 ### GET `childcare/children/:id/allowance-plan/history`
 
 **요약:** 월 포인트 할당 변경 히스토리 조회
@@ -265,7 +258,6 @@
 #### 403 - 해당 자녀 프로필에 접근할 권한이 없습니다
 
 ---
-
 ### POST `childcare/accounts/:id/transactions`
 
 **요약:** 포인트 거래 추가 (부모만 가능)
@@ -307,7 +299,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### GET `childcare/accounts/:id/transactions`
 
 **요약:** 거래 내역 조회
@@ -338,7 +329,6 @@
 #### 403 - 해당 계정에 접근할 권한이 없습니다
 
 ---
-
 ### GET `childcare/accounts/:id/shop-items`
 
 **요약:** 상점 아이템 목록 조회
@@ -367,7 +357,6 @@
 #### 404 - 육아 계정을 찾을 수 없습니다
 
 ---
-
 ### POST `childcare/accounts/:id/shop-items`
 
 **요약:** 상점 아이템 추가 (부모만 가능)
@@ -408,7 +397,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### PATCH `childcare/accounts/:id/shop-items/reorder`
 
 **요약:** 상점 아이템 순서 변경 (부모만 가능)
@@ -421,7 +409,7 @@
 
 ```json
 {
-  "ids": ["uuid-3", "uuid-1", "uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
+  "ids": ["uuid-3","uuid-1","uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
 }
 ```
 
@@ -440,7 +428,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### PATCH `childcare/accounts/:id/shop-items/:itemId`
 
 **요약:** 상점 아이템 수정 (부모만 가능)
@@ -483,7 +470,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### DELETE `childcare/accounts/:id/shop-items/:itemId`
 
 **요약:** 상점 아이템 삭제 (부모만 가능)
@@ -508,7 +494,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### GET `childcare/accounts/:id/rules`
 
 **요약:** 규칙 목록 조회
@@ -538,7 +523,6 @@
 #### 404 - 육아 계정을 찾을 수 없습니다
 
 ---
-
 ### POST `childcare/accounts/:id/rules`
 
 **요약:** 규칙 추가 (부모만 가능)
@@ -581,7 +565,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### PATCH `childcare/accounts/:id/rules/reorder`
 
 **요약:** 규칙 순서 변경 (부모만 가능)
@@ -594,7 +577,7 @@
 
 ```json
 {
-  "ids": ["uuid-3", "uuid-1", "uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
+  "ids": ["uuid-3","uuid-1","uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
 }
 ```
 
@@ -613,7 +596,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### PATCH `childcare/accounts/:id/rules/:ruleId`
 
 **요약:** 규칙 수정 (부모만 가능)
@@ -658,7 +640,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### DELETE `childcare/accounts/:id/rules/:ruleId`
 
 **요약:** 규칙 삭제 (부모만 가능)
@@ -683,7 +664,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### GET `childcare/accounts/:id/savings/kr3y-rate`
 
 **요약:** 국고채 3년물 금리 조회 (적금 플랜 화면 참고용)
@@ -701,7 +681,6 @@
 #### 404 - 육아 계정을 찾을 수 없습니다
 
 ---
-
 ### POST `childcare/accounts/:id/savings/plan`
 
 **요약:** 적금 플랜 생성 (부모만 가능)
@@ -748,7 +727,6 @@
 #### 403 - 부모만 수행할 수 있는 작업입니다
 
 ---
-
 ### GET `childcare/accounts/:id/savings/plan`
 
 **요약:** 적금 플랜 조회
@@ -783,7 +761,6 @@
 #### 403 - 해당 계정에 접근할 권한이 없습니다
 
 ---
-
 ### DELETE `childcare/accounts/:id/savings/plan`
 
 **요약:** 적금 플랜 중도 해지 (부모만 가능)

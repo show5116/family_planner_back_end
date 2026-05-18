@@ -91,6 +91,7 @@ model Group {
   frequentItems       FrequentItem[]
   shoppingCart        ShoppingCart?
   shoppingHistories   ShoppingHistory[]
+  itemNameHistories   ItemNameHistory[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -1384,4 +1385,16 @@ model ShoppingHistoryItem {
 
   @@index([historyId])
   @@map("shopping_history_items")
+}
+
+model ItemNameHistory {
+  id        String   @id @default(uuid())
+  groupId   String
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, name])
+  @@index([groupId, name])
+  @@map("item_name_histories")
 }

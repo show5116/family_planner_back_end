@@ -15,6 +15,14 @@ import { HistoryQueryDto } from './dto/history-query.dto';
 export class ShoppingService {
   constructor(private prisma: PrismaService) {}
 
+  private async saveItemName(groupId: string, name: string) {
+    await this.prisma.itemNameHistory.upsert({
+      where: { groupId_name: { groupId, name } },
+      create: { groupId, name },
+      update: {},
+    });
+  }
+
   private async assertMember(userId: string, groupId: string) {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
@@ -41,9 +49,12 @@ export class ShoppingService {
   async addCartItem(userId: string, groupId: string, dto: AddCartItemDto) {
     await this.assertMember(userId, groupId);
     const cart = await this.getOrCreateCart(groupId);
-    const frequent = await this.prisma.frequentItem.findUnique({
-      where: { groupId_name: { groupId, name: dto.name } },
-    });
+    const [frequent] = await Promise.all([
+      this.prisma.frequentItem.findUnique({
+        where: { groupId_name: { groupId, name: dto.name } },
+      }),
+      this.saveItemName(groupId, dto.name),
+    ]);
     return this.prisma.shoppingCartItem.create({
       data: {
         cartId: cart.id,
@@ -64,9 +75,12 @@ export class ShoppingService {
     await this.assertMember(userId, groupId);
     const cart = await this.getOrCreateCart(groupId);
     const allNames = dto.items.map((i) => i.name);
-    const frequentItems = await this.prisma.frequentItem.findMany({
-      where: { groupId, name: { in: allNames } },
-    });
+    const [frequentItems] = await Promise.all([
+      this.prisma.frequentItem.findMany({
+        where: { groupId, name: { in: allNames } },
+      }),
+      Promise.all(allNames.map((name) => this.saveItemName(groupId, name))),
+    ]);
     const frequentMap = new Map(frequentItems.map((f) => [f.name, f.id]));
     return this.prisma.$transaction(
       dto.items.map((item) =>

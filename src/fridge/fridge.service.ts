@@ -19,11 +19,34 @@ import { BulkUpdateFridgeItemDto } from './dto/bulk-update-fridge-item.dto';
 export class FridgeService {
   constructor(private prisma: PrismaService) {}
 
+  private async saveItemName(groupId: string, name: string) {
+    await this.prisma.itemNameHistory.upsert({
+      where: { groupId_name: { groupId, name } },
+      create: { groupId, name },
+      update: {},
+    });
+  }
+
   private async assertMember(userId: string, groupId: string) {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });
     if (!member) throw new ForbiddenException('그룹 멤버만 접근할 수 있습니다');
+  }
+
+  // ── ItemNameHistory ──────────────────────────────────────────
+
+  async getItemNameSuggestions(userId: string, groupId: string, q?: string) {
+    await this.assertMember(userId, groupId);
+    const items = await this.prisma.itemNameHistory.findMany({
+      where: {
+        groupId,
+        ...(q ? { name: { contains: q } } : {}),
+      },
+      orderBy: { name: 'asc' },
+      take: 20,
+    });
+    return items.map((i) => i.name);
   }
 
   // ── StorageLocation ──────────────────────────────────────────
@@ -122,9 +145,12 @@ export class FridgeService {
     });
     if (!storage) throw new NotFoundException('보관소를 찾을 수 없습니다');
 
-    const frequent = await this.prisma.frequentItem.findUnique({
-      where: { groupId_name: { groupId, name: dto.name } },
-    });
+    const [frequent] = await Promise.all([
+      this.prisma.frequentItem.findUnique({
+        where: { groupId_name: { groupId, name: dto.name } },
+      }),
+      this.saveItemName(groupId, dto.name),
+    ]);
 
     return this.prisma.fridgeItem.create({
       data: {
@@ -157,9 +183,12 @@ export class FridgeService {
     }
 
     const allNames = dto.items.map((i) => i.name);
-    const frequentItems = await this.prisma.frequentItem.findMany({
-      where: { groupId, name: { in: allNames } },
-    });
+    const [frequentItems] = await Promise.all([
+      this.prisma.frequentItem.findMany({
+        where: { groupId, name: { in: allNames } },
+      }),
+      Promise.all(allNames.map((name) => this.saveItemName(groupId, name))),
+    ]);
     const frequentMap = new Map(frequentItems.map((f) => [f.name, f.id]));
 
     return this.prisma.$transaction(

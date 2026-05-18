@@ -42,7 +42,6 @@
 ```
 
 ---
-
 ### POST `shopping/cart/items`
 
 **요약:** 장바구니 품목 추가
@@ -77,7 +76,6 @@
 ```
 
 ---
-
 ### POST `shopping/cart/items/bulk`
 
 **요약:** 장바구니 품목 일괄 추가
@@ -116,7 +114,6 @@
 ```
 
 ---
-
 ### PATCH `shopping/cart/items/bulk`
 
 **요약:** 장바구니 품목 일괄 수정/삭제
@@ -135,7 +132,7 @@
       "memo": "1+1 행사" // string?
     }
   ], // CartItemUpdateEntryDto[]?
-  "deletes": ["uuid-1", "uuid-2"] // string[]?
+  "deletes": ["uuid-1","uuid-2"] // string[]?
 }
 ```
 
@@ -165,7 +162,6 @@
 ```
 
 ---
-
 ### PATCH `shopping/cart/items/:itemId`
 
 **요약:** 장바구니 품목 수정 (수량, 체크 등)
@@ -209,7 +205,6 @@
 #### 404 - 품목을 찾을 수 없습니다
 
 ---
-
 ### DELETE `shopping/cart/items/:itemId`
 
 **요약:** 장바구니 품목 삭제
@@ -235,7 +230,6 @@
 #### 404 - 품목을 찾을 수 없습니다
 
 ---
-
 ### POST `shopping/cart/complete`
 
 **요약:** 장보기 완료 — 이력 저장 및 냉장고 이관
@@ -261,7 +255,7 @@
     "paymentMethod": "CARD", // 결제 수단 (PaymentMethod?)
     "date": "2026-05-12", // 지출 날짜 (기본: 오늘) (string?)
     "description": "마트 장보기", // 지출 내용 (string?)
-    "category": "FOOD" // 가계부 카테고리 (기본: FOOD) (ExpenseCategory?)
+    "category": "GROCERIES" // 가계부 카테고리 (기본: GROCERIES) (ExpenseCategory?)
   } // 가계부 자동 등록 (생략 시 가계부 미등록) (ShoppingExpenseDto?)
 }
 ```
@@ -302,7 +296,6 @@
 #### 403 - 그룹 멤버만 접근할 수 있습니다
 
 ---
-
 ### GET `shopping/history`
 
 **요약:** 구매 이력 목록 조회 (페이지네이션)
@@ -350,7 +343,6 @@
 ```
 
 ---
-
 ### GET `shopping/history/:historyId`
 
 **요약:** 구매 이력 상세 조회

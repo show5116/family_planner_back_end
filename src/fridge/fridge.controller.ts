@@ -29,6 +29,7 @@ import { UpdateQuantityDto } from './dto/update-quantity.dto';
 import { CreateFrequentItemDto } from './dto/create-frequent-item.dto';
 import { UpdateFrequentItemDto } from './dto/update-frequent-item.dto';
 import { GroupIdQueryDto } from './dto/group-id-query.dto';
+import { ItemNameQueryDto } from './dto/item-name-query.dto';
 import {
   FridgeItemDto,
   FrequentItemDto,
@@ -40,6 +41,19 @@ import {
 @ApiCommonAuthResponses()
 export class FridgeController {
   constructor(private readonly fridgeService: FridgeService) {}
+
+  // ── ItemNameHistory ──────────────────────────────────────────
+
+  @Get('item-names')
+  @ApiOperation({ summary: '품목 이름 자동완성 목록 조회' })
+  @ApiSuccess(String, '조회 성공', { isArray: true })
+  getItemNameSuggestions(@Request() req, @Query() query: ItemNameQueryDto) {
+    return this.fridgeService.getItemNameSuggestions(
+      req.user.userId,
+      query.groupId,
+      query.q,
+    );
+  }
 
   // ── StorageLocation ──────────────────────────────────────────
 

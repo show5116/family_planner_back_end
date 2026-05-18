@@ -47,7 +47,7 @@
         "label": "치킨",
         "count": 3,
         "isSelected": false,
-        "voters": ["홍길동", "김철수"]
+        "voters": ["홍길동","김철수"]
       } // 선택지 목록 (VoteOptionDto[])
     }
   ], // VoteDto[]
@@ -59,7 +59,6 @@
 ```
 
 ---
-
 ### GET `votes/:groupId/:voteId`
 
 **요약:** 투표 상세 조회
@@ -93,7 +92,7 @@
       "label": "치킨", // 선택지 내용 (string)
       "count": 3, // 득표 수 (number)
       "isSelected": false, // 현재 사용자의 선택 여부 (boolean)
-      "voters": ["홍길동", "김철수"] // 투표한 사용자 목록 (익명 투표 시 빈 배열) (string[])
+      "voters": ["홍길동","김철수"] // 투표한 사용자 목록 (익명 투표 시 빈 배열) (string[])
     }
   ] // 선택지 목록 (VoteOptionDto[])
 }
@@ -102,7 +101,6 @@
 #### 404 - 투표를 찾을 수 없습니다
 
 ---
-
 ### POST `votes/:groupId`
 
 **요약:** 투표 생성
@@ -120,7 +118,7 @@
   "isMultiple": false, // 복수 선택 허용 여부 (boolean?)
   "isAnonymous": false, // 익명 투표 여부 (boolean?)
   "endsAt": "2026-03-25T23:59:00.000Z", // 투표 마감 시각 (ISO 8601) (string?)
-  "options": ["치킨", "피자", "삼겹살"] // 투표 선택지 (최소 2개) (string[])
+  "options": ["치킨","피자","삼겹살"] // 투표 선택지 (최소 2개) (string[])
 }
 ```
 
@@ -148,14 +146,13 @@
       "label": "치킨", // 선택지 내용 (string)
       "count": 3, // 득표 수 (number)
       "isSelected": false, // 현재 사용자의 선택 여부 (boolean)
-      "voters": ["홍길동", "김철수"] // 투표한 사용자 목록 (익명 투표 시 빈 배열) (string[])
+      "voters": ["홍길동","김철수"] // 투표한 사용자 목록 (익명 투표 시 빈 배열) (string[])
     }
   ] // 선택지 목록 (VoteOptionDto[])
 }
 ```
 
 ---
-
 ### DELETE `votes/:groupId/:voteId`
 
 **요약:** 투표 삭제 (작성자 또는 그룹 관리자)
@@ -180,7 +177,6 @@
 #### 403 - 투표 작성자 또는 그룹 관리자만 삭제할 수 있습니다
 
 ---
-
 ### POST `votes/:groupId/:voteId/ballots`
 
 **요약:** 투표 참여 (선택지 선택/변경)
@@ -222,7 +218,7 @@
       "label": "치킨", // 선택지 내용 (string)
       "count": 3, // 득표 수 (number)
       "isSelected": false, // 현재 사용자의 선택 여부 (boolean)
-      "voters": ["홍길동", "김철수"] // 투표한 사용자 목록 (익명 투표 시 빈 배열) (string[])
+      "voters": ["홍길동","김철수"] // 투표한 사용자 목록 (익명 투표 시 빈 배열) (string[])
     }
   ] // 선택지 목록 (VoteOptionDto[])
 }
@@ -231,7 +227,6 @@
 #### 404 - 투표를 찾을 수 없습니다
 
 ---
-
 ### DELETE `votes/:groupId/:voteId/ballots`
 
 **요약:** 투표 취소
@@ -265,7 +260,7 @@
       "label": "치킨", // 선택지 내용 (string)
       "count": 3, // 득표 수 (number)
       "isSelected": false, // 현재 사용자의 선택 여부 (boolean)
-      "voters": ["홍길동", "김철수"] // 투표한 사용자 목록 (익명 투표 시 빈 배열) (string[])
+      "voters": ["홍길동","김철수"] // 투표한 사용자 목록 (익명 투표 시 빈 배열) (string[])
     }
   ] // 선택지 목록 (VoteOptionDto[])
 }

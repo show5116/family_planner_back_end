@@ -8,6 +8,20 @@
 
 **Base Path:** `/fridge`
 
+### GET `fridge/item-names`
+
+**요약:** 품목 이름 자동완성 목록 조회
+
+**Query Parameters:**
+
+- `groupId` (`string`)
+- `q` (`string`) (Optional): 검색어 (부분 일치)
+
+**Responses:**
+
+#### 200 - 조회 성공
+
+---
 ### GET `fridge/storages`
 
 **요약:** 보관소 목록 조회
@@ -32,7 +46,6 @@
 ```
 
 ---
-
 ### POST `fridge/storages`
 
 **요약:** 보관소 생성
@@ -63,7 +76,6 @@
 ```
 
 ---
-
 ### PATCH `fridge/storages/reorder`
 
 **요약:** 보관소 순서 변경
@@ -72,7 +84,7 @@
 
 ```json
 {
-  "ids": ["uuid-3", "uuid-1", "uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
+  "ids": ["uuid-3","uuid-1","uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
 }
 ```
 
@@ -92,7 +104,6 @@
 ```
 
 ---
-
 ### PATCH `fridge/storages/:storageId`
 
 **요약:** 보관소 수정
@@ -132,7 +143,6 @@
 #### 404 - 보관소를 찾을 수 없습니다
 
 ---
-
 ### DELETE `fridge/storages/:storageId`
 
 **요약:** 보관소 삭제
@@ -158,7 +168,6 @@
 #### 404 - 보관소를 찾을 수 없습니다
 
 ---
-
 ### GET `fridge/items`
 
 **요약:** 냉장고 전체 품목 조회 (보관소별)
@@ -183,7 +192,6 @@
 ```
 
 ---
-
 ### POST `fridge/items`
 
 **요약:** 냉장고 품목 등록
@@ -227,7 +235,6 @@
 #### 404 - 보관소를 찾을 수 없습니다
 
 ---
-
 ### POST `fridge/items/bulk`
 
 **요약:** 냉장고 품목 일괄 등록
@@ -275,7 +282,6 @@
 #### 404 - 일부 보관소를 찾을 수 없습니다
 
 ---
-
 ### PATCH `fridge/items/bulk`
 
 **요약:** 냉장고 품목 일괄 수정/삭제
@@ -297,7 +303,7 @@
       "memo": "유기농" // string?
     }
   ], // FridgeItemUpdateEntryDto[]?
-  "deletes": ["uuid-1", "uuid-2"] // string[]?
+  "deletes": ["uuid-1","uuid-2"] // string[]?
 }
 ```
 
@@ -317,7 +323,6 @@
 ```
 
 ---
-
 ### PATCH `fridge/items/:itemId`
 
 **요약:** 냉장고 품목 수정
@@ -368,7 +373,6 @@
 #### 404 - 품목을 찾을 수 없습니다
 
 ---
-
 ### DELETE `fridge/items/:itemId`
 
 **요약:** 냉장고 품목 삭제
@@ -394,7 +398,6 @@
 #### 404 - 품목을 찾을 수 없습니다
 
 ---
-
 ### PATCH `fridge/items/:itemId/quantity`
 
 **요약:** 냉장고 품목 수량 변경 (소진 시 자동 카트 등재)
@@ -439,7 +442,6 @@
 #### 404 - 품목을 찾을 수 없습니다
 
 ---
-
 ### GET `fridge/frequent-items`
 
 **요약:** 자주 사는 항목 목록 조회
@@ -466,7 +468,6 @@
 ```
 
 ---
-
 ### POST `fridge/frequent-items`
 
 **요약:** 자주 사는 항목 생성
@@ -500,7 +501,6 @@
 ```
 
 ---
-
 ### PATCH `fridge/frequent-items/reorder`
 
 **요약:** 자주 사는 항목 순서 변경
@@ -509,7 +509,7 @@
 
 ```json
 {
-  "ids": ["uuid-3", "uuid-1", "uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
+  "ids": ["uuid-3","uuid-1","uuid-2"] // 변경할 순서대로 정렬된 ID 목록 (string[])
 }
 ```
 
@@ -531,7 +531,6 @@
 ```
 
 ---
-
 ### PATCH `fridge/frequent-items/:itemId`
 
 **요약:** 자주 사는 항목 수정 (autoAdd 토글 포함)
@@ -574,7 +573,6 @@
 #### 404 - 자주 사는 항목을 찾을 수 없습니다
 
 ---
-
 ### DELETE `fridge/frequent-items/:itemId`
 
 **요약:** 자주 사는 항목 삭제

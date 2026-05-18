@@ -38,32 +38,12 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
       "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
     }
   ], // 전체 권한 목록 (PermissionDto[])
-  "groupedByCategory": {
-    "GROUP": [
-      {
-        "id": "perm_clxxx123",
-        "code": "group:read",
-        "name": "그룹 조회",
-        "description": "그룹 정보를 조회할 수 있는 권한",
-        "category": "GROUP"
-      }
-    ],
-    "SCHEDULE": [
-      {
-        "id": "perm_clxxx456",
-        "code": "schedule:read",
-        "name": "일정 조회",
-        "description": "일정 정보를 조회할 수 있는 권한",
-        "category": "SCHEDULE"
-      }
-    ]
-  }, // 카테고리별로 그룹화된 권한 (Record<string, PermissionDto[]>)
-  "categories": ["GROUP", "SCHEDULE", "TASK", "BUDGET", "PHOTO", "ADMIN"] // 사용 가능한 카테고리 목록 (PermissionCategory[])
+  "groupedByCategory": {"GROUP":[{"id":"perm_clxxx123","code":"group:read","name":"그룹 조회","description":"그룹 정보를 조회할 수 있는 권한","category":"GROUP"}],"SCHEDULE":[{"id":"perm_clxxx456","code":"schedule:read","name":"일정 조회","description":"일정 정보를 조회할 수 있는 권한","category":"SCHEDULE"}]}, // 카테고리별로 그룹화된 권한 (Record<string, PermissionDto[]>)
+  "categories": ["GROUP","SCHEDULE","TASK","BUDGET","PHOTO","ADMIN"] // 사용 가능한 카테고리 목록 (PermissionCategory[])
 }
 ```
 
 ---
-
 ### POST `permissions`
 
 **요약:** 권한 생성
@@ -90,7 +70,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 **Responses:**
 
-#### 201 -
+#### 201 - 
 
 ```json
 {
@@ -110,7 +90,6 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 ```
 
 ---
-
 ### PATCH `permissions/:id`
 
 **요약:** 권한 수정
@@ -161,7 +140,6 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 ```
 
 ---
-
 ### DELETE `permissions/:id`
 
 **요약:** 권한 삭제 (소프트 삭제)
@@ -199,7 +177,6 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 ```
 
 ---
-
 ### DELETE `permissions/:id/hard`
 
 **요약:** 권한 완전 삭제 (하드 삭제)
@@ -237,7 +214,6 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 ```
 
 ---
-
 ### PATCH `permissions/bulk/sort-order`
 
 **요약:** 권한 일괄 정렬 순서 업데이트 (운영자 전용)
@@ -253,11 +229,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 
 ```json
 {
-  "items": [
-    { "id": "perm-1", "sortOrder": 0 },
-    { "id": "perm-2", "sortOrder": 1 },
-    { "id": "perm-3", "sortOrder": 2 }
-  ] // 권한 ID와 정렬 순서 배열 (PermissionSortOrderItem[])
+  "items": [{"id":"perm-1","sortOrder":0},{"id":"perm-2","sortOrder":1},{"id":"perm-3","sortOrder":2}] // 권한 ID와 정렬 순서 배열 (PermissionSortOrderItem[])
 }
 ```
 

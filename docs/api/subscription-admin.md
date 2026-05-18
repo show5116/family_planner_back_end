@@ -44,7 +44,6 @@
 ```
 
 ---
-
 ### GET `subscription/admin/users/:userId`
 
 **요약:** 사용자 상세 조회 (ADMIN 전용)
@@ -73,7 +72,6 @@
 #### 404 - 사용자를 찾을 수 없습니다
 
 ---
-
 ### PATCH `subscription/admin/users/:userId/subscription`
 
 **요약:** 사용자 구독 직접 수정 (ADMIN 전용)

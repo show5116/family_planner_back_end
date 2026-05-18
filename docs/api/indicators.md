@@ -34,7 +34,6 @@
 ```
 
 ---
-
 ### GET `indicators/bookmarks`
 
 **요약:** 즐겨찾기 목록 + 최신 시세
@@ -61,7 +60,6 @@
 ```
 
 ---
-
 ### PATCH `indicators/bookmarks/reorder`
 
 **요약:** 즐겨찾기 순서 변경
@@ -73,7 +71,7 @@
 
 ```json
 {
-  "symbols": ["KOSPI", "BTC", "GOLD_USD"] // 즐겨찾기 symbol 배열 (순서대로) (string[])
+  "symbols": ["KOSPI","BTC","GOLD_USD"] // 즐겨찾기 symbol 배열 (순서대로) (string[])
 }
 ```
 
@@ -82,7 +80,6 @@
 #### 200 - 즐겨찾기 순서 변경 성공
 
 ---
-
 ### GET `indicators/:symbol`
 
 **요약:** 지표 상세 + 최신 시세
@@ -115,7 +112,6 @@
 #### 404 - 지표를 찾을 수 없음
 
 ---
-
 ### GET `indicators/:symbol/history`
 
 **요약:** 지표 시세 히스토리 (시계열)
@@ -154,7 +150,6 @@
 #### 404 - 지표를 찾을 수 없음
 
 ---
-
 ### POST `indicators/:symbol/bookmark`
 
 **요약:** 즐겨찾기 등록
@@ -187,7 +182,6 @@
 #### 404 - 지표를 찾을 수 없음
 
 ---
-
 ### DELETE `indicators/:symbol/bookmark`
 
 **요약:** 즐겨찾기 해제
@@ -220,7 +214,6 @@
 #### 404 - 지표를 찾을 수 없음
 
 ---
-
 ### POST `indicators/admin/init-history`
 
 **요약:** [어드민] 과거 데이터 일괄 초기화
