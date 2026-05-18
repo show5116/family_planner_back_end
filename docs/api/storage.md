@@ -28,6 +28,7 @@
 ```
 
 ---
+
 ### POST `storage/upload`
 
 **요약:** 파일 업로드
@@ -46,6 +47,7 @@ Cloudflare R2에 파일을 업로드합니다.
 #### 400 - 파일이 제공되지 않음
 
 ---
+
 ### GET `storage/download`
 
 **요약:** 파일 다운로드 URL 생성
@@ -63,6 +65,7 @@ Cloudflare R2에 파일을 업로드합니다.
 #### 200 - Presigned URL 생성 성공
 
 ---
+
 ### DELETE `storage`
 
 **요약:** 파일 삭제
@@ -79,6 +82,7 @@ R2에서 파일을 삭제합니다.
 #### 200 - 파일 삭제 성공
 
 ---
+
 ### GET `storage/exists`
 
 **요약:** 파일 존재 여부 확인

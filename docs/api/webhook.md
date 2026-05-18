@@ -23,6 +23,7 @@
 ```
 
 ---
+
 ### POST `webhook/apple`
 
 **요약:** Apple App Store 구독 Webhook (미구현)
@@ -41,6 +42,7 @@
 ```
 
 ---
+
 ### POST `webhook/google`
 
 **요약:** Google Play 구독 Webhook (미구현)

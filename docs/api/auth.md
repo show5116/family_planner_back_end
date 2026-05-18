@@ -48,6 +48,7 @@
 #### 409 - 이미 사용 중인 이메일
 
 ---
+
 ### POST `auth/login`
 
 **요약:** 로그인
@@ -81,6 +82,7 @@
 #### 401 - 인증 실패
 
 ---
+
 ### POST `auth/refresh`
 
 **요약:** Access Token 갱신 (RTR)
@@ -107,6 +109,7 @@
 #### 401 - 유효하지 않거나 만료된 Refresh Token
 
 ---
+
 ### POST `auth/logout`
 
 **요약:** 로그아웃
@@ -132,6 +135,7 @@
 #### 404 - Refresh Token을 찾을 수 없음
 
 ---
+
 ### POST `auth/verify-email`
 
 **요약:** 이메일 인증
@@ -158,6 +162,7 @@
 #### 400 - 유효하지 않거나 만료된 인증 코드
 
 ---
+
 ### POST `auth/resend-verification`
 
 **요약:** 인증 이메일 재전송
@@ -185,6 +190,7 @@
 #### 404 - 사용자를 찾을 수 없음
 
 ---
+
 ### GET `auth/me`
 
 **요약:** 현재 로그인한 사용자 정보 조회
@@ -198,6 +204,7 @@
 ```
 
 ---
+
 ### POST `auth/request-password-reset`
 
 **요약:** 비밀번호 재설정 요청
@@ -225,6 +232,7 @@
 #### 404 - 사용자를 찾을 수 없음
 
 ---
+
 ### POST `auth/reset-password`
 
 **요약:** 비밀번호 재설정
@@ -252,6 +260,7 @@
 #### 400 - 유효하지 않거나 만료된 인증 코드
 
 ---
+
 ### PATCH `auth/update-profile`
 
 **요약:** 프로필 업데이트 (이름, 프로필 이미지, 전화번호, 비밀번호)
@@ -296,6 +305,7 @@
 #### 403 - 현재 비밀번호가 올바르지 않음
 
 ---
+
 ### POST `auth/upload-profile-photo`
 
 **요약:** 프로필 사진 업로드
@@ -310,6 +320,7 @@
 #### 400 - 파일이 제공되지 않았거나 유효하지 않은 이미지
 
 ---
+
 ### POST `auth/google/mobile`
 
 **요약:** Google 모바일 로그인 (ID Token)
@@ -339,6 +350,7 @@
 #### 401 - 유효하지 않은 ID Token
 
 ---
+
 ### GET `auth/google`
 
 **요약:** Google 로그인 시작
@@ -352,6 +364,7 @@
 #### 302 - Google OAuth 페이지로 리다이렉트
 
 ---
+
 ### GET `auth/google/callback`
 
 **요약:** Google 로그인 콜백
@@ -372,6 +385,7 @@
 ```
 
 ---
+
 ### GET `auth/kakao`
 
 **요약:** Kakao 로그인 시작
@@ -385,6 +399,7 @@
 #### 302 - Kakao OAuth 페이지로 리다이렉트
 
 ---
+
 ### GET `auth/kakao/callback`
 
 **요약:** Kakao 로그인 콜백
@@ -405,6 +420,7 @@
 ```
 
 ---
+
 ### PUT `auth/location`
 
 **요약:** 사용자 위치 업데이트

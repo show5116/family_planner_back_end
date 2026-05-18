@@ -26,13 +26,14 @@
       "id": "uuid", // 역할 ID (string)
       "name": "OWNER", // 역할명 (string)
       "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-      "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
     }
   ] // RoleDto[]
 }
 ```
 
 ---
+
 ### POST `roles`
 
 **요약:** 공통 역할 생성 (운영자 전용)
@@ -47,7 +48,7 @@
   "name": "ADMIN", // 역할명 (string)
   "groupId": null, // 그룹 ID (null이면 공통 역할) (string | null?)
   "isDefaultRole": false, // 기본 역할 여부 (초대 시 자동 부여) (boolean?)
-  "permissions": ["VIEW","CREATE","UPDATE"], // 권한 배열 (PermissionCode[])
+  "permissions": ["VIEW", "CREATE", "UPDATE"], // 권한 배열 (PermissionCode[])
   "color": "#6366F1", // 역할 색상 (HEX 형식) (string?)
   "sortOrder": 0 // 정렬 순서 (낮을수록 먼저 표시) (number?)
 }
@@ -55,7 +56,7 @@
 
 **Responses:**
 
-#### 201 - 
+#### 201 -
 
 ```json
 {
@@ -63,12 +64,13 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   } // RoleDto
 }
 ```
 
 ---
+
 ### PATCH `roles/:id`
 
 **요약:** 공통 역할 수정 (운영자 전용)
@@ -86,7 +88,7 @@
 {
   "name": "ADMIN", // 역할명 (string?)
   "isDefaultRole": false, // 기본 역할 여부 (초대 시 자동 부여) (boolean?)
-  "permissions": ["VIEW","CREATE","UPDATE"], // 권한 배열 (PermissionCode[]?)
+  "permissions": ["VIEW", "CREATE", "UPDATE"], // 권한 배열 (PermissionCode[]?)
   "color": "#6366F1", // 역할 색상 (HEX 형식) (string?)
   "sortOrder": 0 // 정렬 순서 (낮을수록 먼저 표시) (number?)
 }
@@ -102,12 +104,13 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   } // RoleDto
 }
 ```
 
 ---
+
 ### DELETE `roles/:id`
 
 **요약:** 공통 역할 삭제 (운영자 전용)
@@ -130,12 +133,13 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   } // RoleDto
 }
 ```
 
 ---
+
 ### PATCH `roles/bulk/sort-order`
 
 **요약:** 공통 역할 일괄 정렬 순서 업데이트 (운영자 전용)
@@ -147,7 +151,11 @@
 
 ```json
 {
-  "items": [{"id":"role-1","sortOrder":0},{"id":"role-2","sortOrder":1},{"id":"role-3","sortOrder":2}] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
+  "items": [
+    { "id": "role-1", "sortOrder": 0 },
+    { "id": "role-2", "sortOrder": 1 },
+    { "id": "role-3", "sortOrder": 2 }
+  ] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
 }
 ```
 

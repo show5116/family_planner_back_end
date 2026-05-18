@@ -42,6 +42,7 @@
 ```
 
 ---
+
 ### GET `tasks/categories`
 
 **요약:** 카테고리 목록 조회
@@ -68,6 +69,7 @@
 ```
 
 ---
+
 ### POST `tasks/categories`
 
 **요약:** 카테고리 생성
@@ -101,6 +103,7 @@
 ```
 
 ---
+
 ### PUT `tasks/categories/:id`
 
 **요약:** 카테고리 수정
@@ -141,6 +144,7 @@
 #### 403 - 본인 작성 카테고리만 수정 가능
 
 ---
+
 ### DELETE `tasks/categories/:id`
 
 **요약:** 카테고리 삭제
@@ -164,6 +168,7 @@
 #### 403 - 연결된 Task가 있으면 삭제 불가
 
 ---
+
 ### GET `tasks`
 
 **요약:** Task 목록 조회 (캘린더/할일 뷰)
@@ -222,7 +227,11 @@
       "recurring": {
         "id": "uuid",
         "ruleType": "WEEKLY",
-        "ruleConfig": {"interval":1,"endType":"NEVER","daysOfWeek":[1,3,5]},
+        "ruleConfig": {
+          "interval": 1,
+          "endType": "NEVER",
+          "daysOfWeek": [1, 3, 5]
+        },
         "generationType": "AUTO_SCHEDULER",
         "isActive": true,
         "lastGeneratedAt": "2025-01-01T00:00:00Z"
@@ -248,6 +257,7 @@
 ```
 
 ---
+
 ### GET `tasks/:id`
 
 **요약:** Task 상세 조회
@@ -287,6 +297,7 @@
 #### 403 - 그룹 Task는 그룹 멤버만 조회 가능
 
 ---
+
 ### POST `tasks`
 
 **요약:** Task 생성
@@ -312,24 +323,24 @@
   "recurring": {
     "ruleType": null, // 반복 타입 (RecurringRuleType)
     "ruleConfig": {
-        "interval": 1,
-        "endType": null,
-        "endDate": "2026-12-31",
-        "count": 10,
-        "daysOfWeek": [1,3,5],
-        "monthlyType": "dayOfMonth",
-        "dayOfMonth": 15,
-        "weekOfMonth": 2,
-        "dayOfWeek": 1,
-        "month": 3,
-        "yearlyType": "dayOfMonth",
-        "lunarMonth": 9,
-        "lunarDay": 9,
-        "isLeapMonth": false,
-        "skipWeekends": false,
-        "skipHolidays": false,
-        "skipBehavior": null
-      }, // 반복 설정 (RuleConfigDto)
+      "interval": 1,
+      "endType": null,
+      "endDate": "2026-12-31",
+      "count": 10,
+      "daysOfWeek": [1, 3, 5],
+      "monthlyType": "dayOfMonth",
+      "dayOfMonth": 15,
+      "weekOfMonth": 2,
+      "dayOfWeek": 1,
+      "month": 3,
+      "yearlyType": "dayOfMonth",
+      "lunarMonth": 9,
+      "lunarDay": 9,
+      "isLeapMonth": false,
+      "skipWeekends": false,
+      "skipHolidays": false,
+      "skipBehavior": null
+    }, // 반복 설정 (RuleConfigDto)
     "generationType": null, // 생성 방식 (RecurringGenerationType)
     "skipWeekends": false, // 주말 제외 여부 (boolean?)
     "skipHolidays": false, // 공휴일 제외 여부 (boolean?)
@@ -341,7 +352,7 @@
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
   ], // 알림 목록 (TaskReminderDto[]?)
-  "participantIds": ["uuid-1","uuid-2"] // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
+  "participantIds": ["uuid-1", "uuid-2"] // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
 }
 ```
 
@@ -382,7 +393,11 @@
   "recurring": {
     "id": "uuid", // ID (string)
     "ruleType": "WEEKLY", // 반복 타입 (string)
-    "ruleConfig": {"interval":1,"endType":"NEVER","daysOfWeek":[1,3,5]}, // 반복 설정 (Record<string, any>)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (Record<string, any>)
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
     "isActive": true, // 활성화 여부 (boolean)
     "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
@@ -406,6 +421,7 @@
 ```
 
 ---
+
 ### PUT `tasks/:id`
 
 **요약:** Task 수정
@@ -435,7 +451,7 @@
   "priority": null, // 우선순위 (TaskPriority?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
-  "participantIds": ["uuid-1","uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
+  "participantIds": ["uuid-1", "uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
   "reminders": [
     {
       "reminderType": null, // 알림 타입 (TaskReminderType)
@@ -482,7 +498,11 @@
   "recurring": {
     "id": "uuid", // ID (string)
     "ruleType": "WEEKLY", // 반복 타입 (string)
-    "ruleConfig": {"interval":1,"endType":"NEVER","daysOfWeek":[1,3,5]}, // 반복 설정 (Record<string, any>)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (Record<string, any>)
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
     "isActive": true, // 활성화 여부 (boolean)
     "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
@@ -510,6 +530,7 @@
 #### 403 - 본인 작성 Task만 수정 가능
 
 ---
+
 ### PATCH `tasks/:id/status`
 
 **요약:** Task 상태 변경
@@ -563,7 +584,11 @@
   "recurring": {
     "id": "uuid", // ID (string)
     "ruleType": "WEEKLY", // 반복 타입 (string)
-    "ruleConfig": {"interval":1,"endType":"NEVER","daysOfWeek":[1,3,5]}, // 반복 설정 (Record<string, any>)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (Record<string, any>)
     "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
     "isActive": true, // 활성화 여부 (boolean)
     "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
@@ -589,6 +614,7 @@
 #### 404 - Task를 찾을 수 없음
 
 ---
+
 ### DELETE `tasks/:id`
 
 **요약:** Task 삭제
@@ -616,6 +642,7 @@
 #### 403 - 본인 작성 Task만 삭제 가능
 
 ---
+
 ### PATCH `tasks/recurrings/:id/pause`
 
 **요약:** 반복 일정 일시정지/재개
@@ -632,7 +659,7 @@
 {
   "id": "uuid", // ID (string)
   "ruleType": "WEEKLY", // 반복 타입 (string)
-  "ruleConfig": {"interval":1,"endType":"NEVER","daysOfWeek":[1,3,5]}, // 반복 설정 (Record<string, any>)
+  "ruleConfig": { "interval": 1, "endType": "NEVER", "daysOfWeek": [1, 3, 5] }, // 반복 설정 (Record<string, any>)
   "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
   "isActive": true, // 활성화 여부 (boolean)
   "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
@@ -644,6 +671,7 @@
 #### 403 - 본인 작성 반복 규칙만 변경 가능
 
 ---
+
 ### POST `tasks/recurrings/:id/skip`
 
 **요약:** 반복 일정 건너뛰기

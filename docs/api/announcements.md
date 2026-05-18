@@ -42,11 +42,12 @@
       "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
     }
   ], // 공지사항 목록 (AnnouncementDto[])
-  "meta": {"total":100,"page":1,"limit":20,"totalPages":5} // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
+  "meta": { "total": 100, "page": 1, "limit": 20, "totalPages": 5 } // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
 }
 ```
 
 ---
+
 ### GET `announcements/:id`
 
 **요약:** 공지사항 상세 조회
@@ -80,6 +81,7 @@
 #### 404 - 공지사항을 찾을 수 없습니다
 
 ---
+
 ### POST `announcements`
 
 **요약:** 공지사항 작성 (ADMIN 전용)
@@ -129,6 +131,7 @@
 ```
 
 ---
+
 ### PUT `announcements/:id`
 
 **요약:** 공지사항 수정 (ADMIN 전용)
@@ -172,6 +175,7 @@
 #### 404 - 공지사항을 찾을 수 없습니다
 
 ---
+
 ### DELETE `announcements/:id`
 
 **요약:** 공지사항 삭제 (ADMIN 전용)
@@ -197,6 +201,7 @@
 #### 404 - 공지사항을 찾을 수 없습니다
 
 ---
+
 ### PATCH `announcements/:id/pin`
 
 **요약:** 공지사항 고정/해제 (ADMIN 전용)

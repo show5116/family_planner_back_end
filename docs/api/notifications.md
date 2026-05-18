@@ -36,6 +36,7 @@
 ```
 
 ---
+
 ### DELETE `notifications/token/:token`
 
 **요약:** FCM 디바이스 토큰 삭제
@@ -57,6 +58,7 @@
 #### 404 - 토큰을 찾을 수 없음
 
 ---
+
 ### GET `notifications/settings`
 
 **요약:** 알림 설정 조회
@@ -75,6 +77,7 @@
 ```
 
 ---
+
 ### PUT `notifications/settings`
 
 **요약:** 알림 설정 업데이트
@@ -103,6 +106,7 @@
 ```
 
 ---
+
 ### GET `notifications`
 
 **요약:** 알림 목록 조회 (페이지네이션)
@@ -126,7 +130,7 @@
       "category": null, // 알림 카테고리 (NotificationCategory)
       "title": "새로운 일정 알림", // 알림 제목 (string)
       "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
-      "data": {"scheduleId":"uuid","action":"view_schedule"}, // 추가 데이터 (JSON) (any)
+      "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
       "isRead": false, // 읽음 여부 (boolean)
       "sentAt": "2025-12-27T00:00:00Z", // 발송 시간 (Date)
       "readAt": "2025-12-27T00:30:00Z" // 읽은 시간 (Date | null)
@@ -142,6 +146,7 @@
 ```
 
 ---
+
 ### GET `notifications/unread-count`
 
 **요약:** 읽지 않은 알림 개수 조회
@@ -157,6 +162,7 @@
 ```
 
 ---
+
 ### PUT `notifications/read-all`
 
 **요약:** 전체 알림 읽음 처리
@@ -172,6 +178,7 @@
 ```
 
 ---
+
 ### PUT `notifications/:id/read`
 
 **요약:** 알림 읽음 처리
@@ -191,7 +198,7 @@
   "category": null, // 알림 카테고리 (NotificationCategory)
   "title": "새로운 일정 알림", // 알림 제목 (string)
   "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
-  "data": {"scheduleId":"uuid","action":"view_schedule"}, // 추가 데이터 (JSON) (any)
+  "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
   "isRead": false, // 읽음 여부 (boolean)
   "sentAt": "2025-12-27T00:00:00Z", // 발송 시간 (Date)
   "readAt": "2025-12-27T00:30:00Z" // 읽은 시간 (Date | null)
@@ -201,6 +208,7 @@
 #### 404 - 알림을 찾을 수 없음
 
 ---
+
 ### DELETE `notifications/:id`
 
 **요약:** 알림 삭제
@@ -222,6 +230,7 @@
 #### 404 - 알림을 찾을 수 없음
 
 ---
+
 ### POST `notifications/test`
 
 **요약:** 테스트 알림 전송 (운영자 전용)
@@ -243,6 +252,7 @@
 #### 403 - 운영자 권한 필요
 
 ---
+
 ### POST `notifications/schedule`
 
 **요약:** 예약 알림 전송 (특정 시간에 발송)
@@ -256,7 +266,7 @@
   "title": "할 일 알림", // 알림 제목 (string)
   "body": "30분 후 회의 시작", // 알림 내용 (string)
   "scheduledTime": "2026-01-11T15:30:00Z", // 발송 예정 시간 (ISO 8601 형식) (string)
-  "data": {"taskId":"123","action":"view_task"} // 추가 데이터 (화면 이동용 payload 등) (Record<string, any>?)
+  "data": { "taskId": "123", "action": "view_task" } // 추가 데이터 (화면 이동용 payload 등) (Record<string, any>?)
 }
 ```
 

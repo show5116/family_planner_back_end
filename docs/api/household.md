@@ -52,6 +52,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### GET `household/expenses`
 
 **요약:** 지출 목록 조회
@@ -89,6 +90,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### GET `household/expenses/:id`
 
 **요약:** 지출 상세 조회
@@ -124,6 +126,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### PATCH `household/expenses/:id`
 
 **요약:** 지출 수정
@@ -173,6 +176,7 @@
 #### 403 - 본인이 등록한 지출만 수정할 수 있습니다
 
 ---
+
 ### DELETE `household/expenses/:id`
 
 **요약:** 지출 삭제
@@ -196,6 +200,7 @@
 #### 403 - 본인이 등록한 지출만 삭제할 수 있습니다
 
 ---
+
 ### GET `household/expenses/:id/receipts/upload-url`
 
 **요약:** 영수증 업로드 Presigned URL 발급
@@ -227,6 +232,7 @@
 #### 403 - 본인이 등록한 지출만 수정할 수 있습니다
 
 ---
+
 ### POST `household/expenses/:id/receipts/confirm`
 
 **요약:** 영수증 업로드 완료 확인 (DB 등록)
@@ -267,6 +273,7 @@
 #### 403 - 본인이 등록한 지출만 수정할 수 있습니다
 
 ---
+
 ### DELETE `household/expenses/:id/receipts/:receiptId`
 
 **요약:** 영수증 삭제
@@ -291,6 +298,7 @@
 #### 403 - 본인이 등록한 지출의 영수증만 삭제할 수 있습니다
 
 ---
+
 ### GET `household/statistics`
 
 **요약:** 월별 지출 통계 조회
@@ -325,6 +333,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### GET `household/statistics/yearly`
 
 **요약:** 연별 지출 통계 조회 (월별 합계)
@@ -359,6 +368,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### POST `household/budgets/bulk`
 
 **요약:** 예산 일괄 설정 (전체 + 카테고리별)
@@ -403,6 +413,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### GET `household/budgets`
 
 **요약:** 예산 목록 조회
@@ -432,6 +443,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### POST `household/budget-templates/bulk`
 
 **요약:** 예산 템플릿 일괄 설정 (전체 + 카테고리별)
@@ -474,6 +486,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### GET `household/budget-templates`
 
 **요약:** 예산 템플릿 목록 조회 (groupId 생략 시 개인 템플릿)
@@ -500,6 +513,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### DELETE `household/budget-templates/:category`
 
 **요약:** 예산 템플릿 삭제 (groupId 생략 시 개인 템플릿)
@@ -527,6 +541,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### GET `household/group-budgets`
 
 **요약:** 전체 예산 조회 (월별, groupId 생략 시 개인)
@@ -554,6 +569,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### GET `household/group-budget-templates`
 
 **요약:** 전체 예산 템플릿 조회 (groupId 생략 시 개인)
@@ -579,6 +595,7 @@
 #### 403 - 해당 그룹의 멤버가 아닙니다
 
 ---
+
 ### DELETE `household/group-budget-templates`
 
 **요약:** 전체 예산 템플릿 삭제 (groupId 생략 시 개인)

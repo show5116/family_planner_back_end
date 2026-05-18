@@ -88,6 +88,7 @@
 ```
 
 ---
+
 ### GET `memos`
 
 **요약:** 메모 목록 조회
@@ -145,11 +146,12 @@
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
     }
   ], // 메모 목록 (MemoDto[])
-  "meta": {"total":100,"page":1,"limit":20,"totalPages":5} // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
+  "meta": { "total": 100, "page": 1, "limit": 20, "totalPages": 5 } // 페이지네이션 메타 정보 ({ total: number; page: number; limit: number; totalPages: number; })
 }
 ```
 
 ---
+
 ### GET `memos/tags`
 
 **요약:** 태그 이름 목록 조회 (중복 제거)
@@ -165,11 +167,12 @@
 
 ```json
 {
-  "tags": ["중요","업무","가족"] // 태그 이름 목록 (string[])
+  "tags": ["중요", "업무", "가족"] // 태그 이름 목록 (string[])
 }
 ```
 
 ---
+
 ### GET `memos/pinned`
 
 **요약:** 핀된 메모 목록 조회 (대시보드 위젯용)
@@ -229,6 +232,7 @@
 ```
 
 ---
+
 ### GET `memos/:id`
 
 **요약:** 메모 상세 조회
@@ -291,6 +295,7 @@
 #### 403 - 메모에 접근할 권한이 없습니다
 
 ---
+
 ### PATCH `memos/:id`
 
 **요약:** 메모 수정
@@ -359,6 +364,7 @@
 #### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---
+
 ### DELETE `memos/:id`
 
 **요약:** 메모 삭제
@@ -382,6 +388,7 @@
 #### 403 - 본인의 메모만 삭제할 수 있습니다
 
 ---
+
 ### POST `memos/:id/pin`
 
 **요약:** 메모 핀 토글 (핀 ↔ 핀 해제)
@@ -444,6 +451,7 @@
 #### 403 - 본인의 메모만 핀 설정할 수 있습니다
 
 ---
+
 ### POST `memos/:id/tags`
 
 **요약:** 메모 태그 추가
@@ -476,6 +484,7 @@
 #### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---
+
 ### DELETE `memos/:id/tags/:tagId`
 
 **요약:** 메모 태그 삭제
@@ -498,6 +507,7 @@
 #### 404 - 태그를 찾을 수 없습니다
 
 ---
+
 ### POST `memos/:id/attachments`
 
 **요약:** 메모 첨부파일 추가
@@ -537,6 +547,7 @@
 #### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---
+
 ### DELETE `memos/:id/attachments/:attachmentId`
 
 **요약:** 메모 첨부파일 삭제
@@ -559,6 +570,7 @@
 #### 404 - 첨부파일을 찾을 수 없습니다
 
 ---
+
 ### POST `memos/:id/checklist`
 
 **요약:** 체크리스트 항목 추가
@@ -596,6 +608,7 @@
 #### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---
+
 ### PATCH `memos/:id/checklist/:itemId`
 
 **요약:** 체크리스트 항목 수정 (내용/순서)
@@ -634,6 +647,7 @@
 #### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---
+
 ### DELETE `memos/:id/checklist/:itemId`
 
 **요약:** 체크리스트 항목 삭제
@@ -658,6 +672,7 @@
 #### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---
+
 ### POST `memos/:id/checklist/:itemId/toggle`
 
 **요약:** 체크리스트 항목 체크/해제 토글
@@ -687,6 +702,7 @@
 #### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---
+
 ### POST `memos/:id/checklist/toggle-all`
 
 **요약:** 체크리스트 전체 선택/해제 (checkAll=true: 전체 선택, 기본값: 전체 해제)

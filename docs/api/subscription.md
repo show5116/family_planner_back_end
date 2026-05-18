@@ -14,7 +14,7 @@
 
 **Responses:**
 
-#### 200 - 
+#### 200 -
 
 ```json
 {
@@ -25,6 +25,7 @@
 ```
 
 ---
+
 ### POST `subscription/verify`
 
 **요약:** 구독 업데이트 (인앱 결제 후 tier/토큰 저장)
@@ -41,7 +42,7 @@
 
 **Responses:**
 
-#### 200 - 
+#### 200 -
 
 ```json
 {
@@ -52,13 +53,14 @@
 ```
 
 ---
+
 ### POST `subscription/restore`
 
 **요약:** 구독 복원 (만료 시 free로 다운그레이드)
 
 **Responses:**
 
-#### 200 - 
+#### 200 -
 
 ```json
 {

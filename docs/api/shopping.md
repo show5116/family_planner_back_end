@@ -42,6 +42,7 @@
 ```
 
 ---
+
 ### POST `shopping/cart/items`
 
 **요약:** 장바구니 품목 추가
@@ -76,6 +77,7 @@
 ```
 
 ---
+
 ### POST `shopping/cart/items/bulk`
 
 **요약:** 장바구니 품목 일괄 추가
@@ -114,6 +116,7 @@
 ```
 
 ---
+
 ### PATCH `shopping/cart/items/bulk`
 
 **요약:** 장바구니 품목 일괄 수정/삭제
@@ -132,7 +135,7 @@
       "memo": "1+1 행사" // string?
     }
   ], // CartItemUpdateEntryDto[]?
-  "deletes": ["uuid-1","uuid-2"] // string[]?
+  "deletes": ["uuid-1", "uuid-2"] // string[]?
 }
 ```
 
@@ -162,6 +165,7 @@
 ```
 
 ---
+
 ### PATCH `shopping/cart/items/:itemId`
 
 **요약:** 장바구니 품목 수정 (수량, 체크 등)
@@ -205,6 +209,7 @@
 #### 404 - 품목을 찾을 수 없습니다
 
 ---
+
 ### DELETE `shopping/cart/items/:itemId`
 
 **요약:** 장바구니 품목 삭제
@@ -230,6 +235,7 @@
 #### 404 - 품목을 찾을 수 없습니다
 
 ---
+
 ### POST `shopping/cart/complete`
 
 **요약:** 장보기 완료 — 이력 저장 및 냉장고 이관
@@ -296,6 +302,7 @@
 #### 403 - 그룹 멤버만 접근할 수 있습니다
 
 ---
+
 ### GET `shopping/history`
 
 **요약:** 구매 이력 목록 조회 (페이지네이션)
@@ -343,6 +350,7 @@
 ```
 
 ---
+
 ### GET `shopping/history/:historyId`
 
 **요약:** 구매 이력 상세 조회

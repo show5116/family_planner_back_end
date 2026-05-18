@@ -34,6 +34,7 @@
 ```
 
 ---
+
 ### POST `groups/join`
 
 **요약:** 초대 코드로 그룹 가입
@@ -62,17 +63,17 @@
     "userId": "uuid", // 사용자 ID (string)
     "roleId": "uuid", // 역할 ID (string)
     "role": {
-        "id": "uuid",
-        "name": "OWNER",
-        "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
-      }, // RoleDto
+      "id": "uuid",
+      "name": "OWNER",
+      "color": "#6366F1",
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
+    }, // RoleDto
     "user": {
-        "id": "uuid",
-        "email": "user@example.com",
-        "name": "홍길동",
-        "profileImageUrl": "https://example.com/profile.jpg"
-      }, // GroupMemberUserDto
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "profileImageUrl": "https://example.com/profile.jpg"
+    }, // GroupMemberUserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   }, // 생성된 멤버 정보 (이메일 초대받은 경우만) (GroupMemberDto?)
@@ -86,15 +87,15 @@
     "createdAt": "2025-12-04T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-04T00:00:00Z", // 수정일 (Date)
     "members": {
-        "id": "uuid",
-        "groupId": "uuid",
-        "userId": "uuid",
-        "roleId": "uuid",
-        "role": "<RoleDto>",
-        "user": "<GroupMemberUserDto>",
-        "customColor": "#FF5733",
-        "joinedAt": "2025-12-04T00:00:00Z"
-      } // GroupMemberDto[]
+      "id": "uuid",
+      "groupId": "uuid",
+      "userId": "uuid",
+      "roleId": "uuid",
+      "role": "<RoleDto>",
+      "user": "<GroupMemberUserDto>",
+      "customColor": "#FF5733",
+      "joinedAt": "2025-12-04T00:00:00Z"
+    } // GroupMemberDto[]
   } // 그룹 정보 (이메일 초대받은 경우만) (GroupDto?)
 }
 ```
@@ -102,6 +103,7 @@
 #### 404 - 유효하지 않은 초대 코드 또는 만료된 초대 코드
 
 ---
+
 ### POST `groups/:id/leave`
 
 **요약:** 그룹 나가기
@@ -123,6 +125,7 @@
 #### 404 - 그룹 멤버를 찾을 수 없음
 
 ---
+
 ### GET `groups/:id/members`
 
 **요약:** 그룹 멤버 목록 조회
@@ -149,7 +152,7 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // RoleDto
   "user": {
     "id": "uuid", // 사용자 ID (string)
@@ -165,6 +168,7 @@
 #### 403 - 접근 권한 없음
 
 ---
+
 ### PATCH `groups/:id/members/:userId/role`
 
 **요약:** 멤버 역할 변경 (MANAGE_MEMBER 권한 필요)
@@ -200,7 +204,7 @@
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // RoleDto
   "user": {
     "id": "uuid", // 사용자 ID (string)
@@ -218,6 +222,7 @@
 #### 404 - 멤버를 찾을 수 없음
 
 ---
+
 ### PATCH `groups/:id/my-color`
 
 **요약:** 개인 그룹 색상 설정
@@ -252,6 +257,7 @@
 #### 403 - 접근 권한 없음
 
 ---
+
 ### DELETE `groups/:id/members/:userId`
 
 **요약:** 멤버 삭제 (MANAGE_MEMBER 권한 필요)
@@ -280,6 +286,7 @@
 #### 404 - 멤버를 찾을 수 없음
 
 ---
+
 ### POST `groups/:id/regenerate-code`
 
 **요약:** 초대 코드 재생성 (INVITE_MEMBER 권한 필요)
@@ -306,6 +313,7 @@
 #### 403 - 권한 없음
 
 ---
+
 ### POST `groups/:id/invite-by-email`
 
 **요약:** 이메일로 그룹 초대 (INVITE_MEMBER 권한 필요)
@@ -349,6 +357,7 @@
 #### 404 - 그룹을 찾을 수 없음
 
 ---
+
 ### POST `groups/:id/transfer-ownership`
 
 **요약:** OWNER 권한 양도 (현재 OWNER만 가능)
@@ -381,17 +390,17 @@
     "userId": "uuid", // 사용자 ID (string)
     "roleId": "uuid", // 역할 ID (string)
     "role": {
-        "id": "uuid",
-        "name": "OWNER",
-        "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
-      }, // RoleDto
+      "id": "uuid",
+      "name": "OWNER",
+      "color": "#6366F1",
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
+    }, // RoleDto
     "user": {
-        "id": "uuid",
-        "email": "user@example.com",
-        "name": "홍길동",
-        "profileImageUrl": "https://example.com/profile.jpg"
-      }, // GroupMemberUserDto
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "profileImageUrl": "https://example.com/profile.jpg"
+    }, // GroupMemberUserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   }, // GroupMemberDto
@@ -401,17 +410,17 @@
     "userId": "uuid", // 사용자 ID (string)
     "roleId": "uuid", // 역할 ID (string)
     "role": {
-        "id": "uuid",
-        "name": "OWNER",
-        "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
-      }, // RoleDto
+      "id": "uuid",
+      "name": "OWNER",
+      "color": "#6366F1",
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
+    }, // RoleDto
     "user": {
-        "id": "uuid",
-        "email": "user@example.com",
-        "name": "홍길동",
-        "profileImageUrl": "https://example.com/profile.jpg"
-      }, // GroupMemberUserDto
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "profileImageUrl": "https://example.com/profile.jpg"
+    }, // GroupMemberUserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   } // GroupMemberDto
@@ -423,6 +432,7 @@
 #### 404 - 새로운 OWNER가 될 사용자를 그룹에서 찾을 수 없음
 
 ---
+
 ### GET `groups/:id/join-requests`
 
 **요약:** 그룹 가입 요청 목록 조회 (INVITE_MEMBER 권한 필요)
@@ -461,6 +471,7 @@ status 쿼리 파라미터로 필터링 가능 (PENDING, ACCEPTED, REJECTED)
 #### 403 - 권한 없음
 
 ---
+
 ### POST `groups/:id/join-requests/:requestId/accept`
 
 **요약:** 가입 요청 승인 (INVITE_MEMBER 권한 필요)
@@ -490,17 +501,17 @@ PENDING 상태의 가입 요청을 승인하고 그룹 멤버로 추가
     "userId": "uuid", // 사용자 ID (string)
     "roleId": "uuid", // 역할 ID (string)
     "role": {
-        "id": "uuid",
-        "name": "OWNER",
-        "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
-      }, // RoleDto
+      "id": "uuid",
+      "name": "OWNER",
+      "color": "#6366F1",
+      "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
+    }, // RoleDto
     "user": {
-        "id": "uuid",
-        "email": "user@example.com",
-        "name": "홍길동",
-        "profileImageUrl": "https://example.com/profile.jpg"
-      }, // GroupMemberUserDto
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "profileImageUrl": "https://example.com/profile.jpg"
+    }, // GroupMemberUserDto
     "customColor": "#FF5733", // 개인 설정 색상 (HEX 형식) (string | null)
     "joinedAt": "2025-12-04T00:00:00Z" // 가입일 (Date)
   } // GroupMemberDto
@@ -512,6 +523,7 @@ PENDING 상태의 가입 요청을 승인하고 그룹 멤버로 추가
 #### 404 - 가입 요청을 찾을 수 없음
 
 ---
+
 ### POST `groups/:id/join-requests/:requestId/reject`
 
 **요약:** 가입 요청 거부 (INVITE_MEMBER 권한 필요)
@@ -543,6 +555,7 @@ PENDING 상태의 가입 요청을 거부
 #### 404 - 가입 요청을 찾을 수 없음
 
 ---
+
 ### DELETE `groups/:id/invites/:requestId`
 
 **요약:** 초대 취소 (INVITE_MEMBER 권한 필요)
@@ -574,6 +587,7 @@ INVITE 타입의 PENDING 상태 초대를 취소합니다
 #### 404 - 초대 요청을 찾을 수 없음
 
 ---
+
 ### POST `groups/:id/invites/:requestId/resend`
 
 **요약:** 초대 재전송 (INVITE_MEMBER 권한 필요)
@@ -637,6 +651,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 403 - 그룹 멤버가 아님
 
 ---
+
 ### POST `groups/:groupId/roles`
 
 **요약:** 그룹별 커스텀 역할 생성 (MANAGE_ROLE 권한 필요)
@@ -656,7 +671,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "name": "ADMIN", // 역할명 (string)
   "groupId": null, // 그룹 ID (null이면 공통 역할) (string | null?)
   "isDefaultRole": false, // 기본 역할 여부 (초대 시 자동 부여) (boolean?)
-  "permissions": ["VIEW","CREATE","UPDATE"], // 권한 배열 (PermissionCode[])
+  "permissions": ["VIEW", "CREATE", "UPDATE"], // 권한 배열 (PermissionCode[])
   "color": "#6366F1", // 역할 색상 (HEX 형식) (string?)
   "sortOrder": 0 // 정렬 순서 (낮을수록 먼저 표시) (number?)
 }
@@ -669,6 +684,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 403 - MANAGE_ROLE 권한 없음
 
 ---
+
 ### PATCH `groups/:groupId/roles/:id`
 
 **요약:** 그룹별 커스텀 역할 수정 (MANAGE_ROLE 권한 필요)
@@ -688,7 +704,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 {
   "name": "ADMIN", // 역할명 (string?)
   "isDefaultRole": false, // 기본 역할 여부 (초대 시 자동 부여) (boolean?)
-  "permissions": ["VIEW","CREATE","UPDATE"], // 권한 배열 (PermissionCode[]?)
+  "permissions": ["VIEW", "CREATE", "UPDATE"], // 권한 배열 (PermissionCode[]?)
   "color": "#6366F1", // 역할 색상 (HEX 형식) (string?)
   "sortOrder": 0 // 정렬 순서 (낮을수록 먼저 표시) (number?)
 }
@@ -703,6 +719,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 404 - 역할을 찾을 수 없음
 
 ---
+
 ### DELETE `groups/:groupId/roles/:id`
 
 **요약:** 그룹별 커스텀 역할 삭제 (MANAGE_ROLE 권한 필요)
@@ -725,6 +742,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 404 - 역할을 찾을 수 없음
 
 ---
+
 ### PATCH `groups/:groupId/roles/bulk/sort-order`
 
 **요약:** 그룹별 역할 일괄 정렬 순서 업데이트 (MANAGE_ROLE 권한 필요)
@@ -744,7 +762,11 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ```json
 {
-  "items": [{"id":"role-1","sortOrder":0},{"id":"role-2","sortOrder":1},{"id":"role-3","sortOrder":2}] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
+  "items": [
+    { "id": "role-1", "sortOrder": 0 },
+    { "id": "role-2", "sortOrder": 1 },
+    { "id": "role-3", "sortOrder": 2 }
+  ] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
 }
 ```
 
@@ -798,7 +820,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "uuid",
@@ -814,6 +836,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```
 
 ---
+
 ### GET `groups`
 
 **요약:** 내가 속한 그룹 목록 조회
@@ -837,13 +860,14 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
     "id": "uuid", // 역할 ID (string)
     "name": "OWNER", // 역할명 (string)
     "color": "#6366F1", // 역할 색상 (HEX 형식) (string)
-    "permissions": ["INVITE_MEMBER","UPDATE_GROUP"] // 권한 배열 (string[])
+    "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"] // 권한 배열 (string[])
   }, // 내 역할 (RoleDto)
   "_count": 5 // 그룹 멤버 수 ({ members: number; })
 }
 ```
 
 ---
+
 ### PATCH `groups/my-order`
 
 **요약:** 내 그룹 목록 순서 변경
@@ -852,7 +876,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ```json
 {
-  "groupIds": ["uuid1","uuid2","uuid3"] // 원하는 순서대로 정렬한 그룹 ID 배열 (본인이 속한 그룹 전체) (string[])
+  "groupIds": ["uuid1", "uuid2", "uuid3"] // 원하는 순서대로 정렬한 그룹 ID 배열 (본인이 속한 그룹 전체) (string[])
 }
 ```
 
@@ -867,6 +891,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 ```
 
 ---
+
 ### GET `groups/:id`
 
 **요약:** 그룹 상세 조회
@@ -903,7 +928,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "uuid",
@@ -923,6 +948,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 404 - 그룹을 찾을 수 없음
 
 ---
+
 ### PATCH `groups/:id`
 
 **요약:** 그룹 정보 수정 (UPDATE_GROUP 권한 필요)
@@ -969,7 +995,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
         "id": "uuid",
         "name": "OWNER",
         "color": "#6366F1",
-        "permissions": ["INVITE_MEMBER","UPDATE_GROUP"]
+        "permissions": ["INVITE_MEMBER", "UPDATE_GROUP"]
       }, // RoleDto
       "user": {
         "id": "uuid",
@@ -989,6 +1015,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 404 - 그룹을 찾을 수 없음
 
 ---
+
 ### DELETE `groups/:id`
 
 **요약:** 그룹 삭제 (DELETE_GROUP 권한 필요)
