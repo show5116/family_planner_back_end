@@ -19,6 +19,7 @@
 |------|------|----------------|
 | [group-permissions.md](./group-permissions.md) | 그룹 권한 체계 — Guards, PermissionCode, 엔드포인트별 권한 현황, 알려진 이슈 | [features/02-groups.md](../features/02-groups.md) |
 | [notification-map.md](./notification-map.md) | 알림 발송 현황 맵 — 카테고리별 트리거, 수신자, 발송 방식, 소스 파일 | [features/10-notifications.md](../features/10-notifications.md) |
+| [test-accounts.md](./test-accounts.md) | 플레이 스토어 심사용 테스트 계정 정보 및 생성 방법 | — |
 
 ---
 
