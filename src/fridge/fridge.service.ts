@@ -1,8 +1,9 @@
-import {
+﻿import {
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateStorageDto } from './dto/create-storage.dto';
 import { UpdateStorageDto } from './dto/update-storage.dto';
@@ -17,7 +18,10 @@ import { BulkUpdateFridgeItemDto } from './dto/bulk-update-fridge-item.dto';
 
 @Injectable()
 export class FridgeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private i18n: I18nService,
+  ) {}
 
   private async saveItemName(groupId: string, name: string) {
     await this.prisma.itemNameHistory.upsert({
@@ -105,7 +109,11 @@ export class FridgeService {
     if (!storage)
       throw new NotFoundException('fridge.errors.storage_not_found');
     await this.prisma.storageLocation.delete({ where: { id: storageId } });
-    return { message: '보관소가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('fridge.success.storage_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   async reorderStorages(userId: string, groupId: string, dto: ReorderDto) {
@@ -294,7 +302,11 @@ export class FridgeService {
       }
     }
 
-    return { message: '품목이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('fridge.success.item_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   async bulkUpdateFridgeItems(
@@ -476,7 +488,11 @@ export class FridgeService {
     if (!item)
       throw new NotFoundException('fridge.errors.frequent_item_not_found');
     await this.prisma.frequentItem.delete({ where: { id: itemId } });
-    return { message: '자주 사는 항목이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('fridge.success.frequent_item_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   async reorderFrequentItems(userId: string, groupId: string, dto: ReorderDto) {

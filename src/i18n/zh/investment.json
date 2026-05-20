@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "indicator_not_found": "指标不存在",
+    "already_favorited": "已添加到收藏",
+    "not_favorited": "不在收藏列表中"
+  },
+  "success": {
+    "favorite_order_changed": "收藏顺序已更改"
+  }
+}

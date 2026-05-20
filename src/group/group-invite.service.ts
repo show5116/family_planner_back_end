@@ -1,9 +1,10 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
 import { EmailService } from '@/email/email.service';
@@ -17,6 +18,7 @@ export class GroupInviteService {
     private storageService: StorageService,
     private emailService: EmailService,
     private notificationService: NotificationService,
+    private i18n: I18nService,
   ) {}
 
   /**
@@ -124,9 +126,7 @@ export class GroupInviteService {
     });
 
     if (!defaultRole) {
-      throw new Error(
-        '기본 역할을 찾을 수 없습니다. 데이터베이스 시드를 실행해주세요.',
-      );
+      throw new Error('group.errors.default_role_not_found');
     }
 
     return defaultRole;
@@ -244,7 +244,9 @@ export class GroupInviteService {
 
       // 프로필 이미지 URL 추가
       return {
-        message: '그룹 가입이 완료되었습니다',
+        message: this.i18n.t('group.success.joined', {
+          lang: I18nContext.current()?.lang ?? 'ko',
+        }),
         member: {
           ...member,
           user: this.transformUserWithImageUrl(member.user),
@@ -299,7 +301,9 @@ export class GroupInviteService {
     }
 
     return {
-      message: '그룹 가입 요청이 전송되었습니다. 관리자 승인을 기다려주세요.',
+      message: this.i18n.t('group.success.join_requested', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       joinRequestId: joinRequest.id,
       groupName: group.name,
       status: joinRequest.status,
@@ -473,7 +477,9 @@ export class GroupInviteService {
     });
 
     return {
-      message: '가입 요청이 승인되었습니다',
+      message: this.i18n.t('group.success.join_approved', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       member: {
         ...member,
         user: this.transformUserWithImageUrl(member.user),
@@ -490,15 +496,15 @@ export class GroupInviteService {
     });
 
     if (!joinRequest) {
-      throw new NotFoundException('가입 요청을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.join_request_not_found');
     }
 
     if (joinRequest.groupId !== groupId) {
-      throw new NotFoundException('해당 그룹의 가입 요청이 아닙니다');
+      throw new NotFoundException('group.errors.join_request_wrong_group');
     }
 
     if (joinRequest.status !== 'PENDING') {
-      throw new ConflictException('이미 처리된 요청입니다');
+      throw new ConflictException('group.errors.request_already_processed');
     }
 
     await this.prisma.groupJoinRequest.update({
@@ -527,7 +533,9 @@ export class GroupInviteService {
     }
 
     return {
-      message: '가입 요청이 거부되었습니다',
+      message: this.i18n.t('group.success.join_rejected', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
     };
   }
 
@@ -609,7 +617,9 @@ export class GroupInviteService {
     });
 
     return {
-      message: '초대 이메일이 발송되었습니다',
+      message: this.i18n.t('group.success.invite_sent', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       email,
       groupName: group.name,
       inviteCode,
@@ -649,7 +659,9 @@ export class GroupInviteService {
     });
 
     return {
-      message: '초대가 취소되었습니다',
+      message: this.i18n.t('group.success.invite_cancelled', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
     };
   }
 
@@ -714,7 +726,9 @@ export class GroupInviteService {
     );
 
     return {
-      message: '초대 이메일이 재전송되었습니다',
+      message: this.i18n.t('group.success.invite_resent', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       email: joinRequest.email,
       groupName: group.name,
       inviteCode,

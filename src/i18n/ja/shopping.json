@@ -5,5 +5,8 @@
     "item_not_found": "品目が見つかりません",
     "cart_empty": "カートが空です",
     "purchase_history_not_found": "購入履歴が見つかりません"
+  },
+  "success": {
+    "item_deleted": "品目を削除しました"
   }
 }

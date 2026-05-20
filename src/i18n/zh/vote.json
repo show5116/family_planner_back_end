@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "vote_not_found": "投票不存在",
+    "vote_closed": "该投票已关闭",
+    "invalid_option": "无效的选项",
+    "single_choice_only": "这是单选投票",
+    "closed_vote_cancel": "无法取消已关闭的投票",
+    "group_member_only": "只有群组成员可以访问",
+    "author_or_admin_only": "只有投票创建者或群组管理员可以删除"
+  },
+  "success": {
+    "vote_deleted": "投票已删除"
+  }
+}

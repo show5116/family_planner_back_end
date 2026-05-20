@@ -4,6 +4,13 @@
     "already_paused": "Already paused",
     "already_active": "Already active",
     "insufficient_balance": "Insufficient balance",
-    "goal_not_found": "Savings goal not found"
+    "goal_not_found": "Savings goal not found",
+    "monthly_amount_required": "monthlyAmount is required when using auto deposit",
+    "not_member": "You are not a member of this group"
+  },
+  "success": {
+    "goal_deleted": "Savings goal deleted",
+    "auto_deposit_paused": "Auto deposit paused",
+    "auto_deposit_resumed": "Auto deposit resumed"
   }
 }

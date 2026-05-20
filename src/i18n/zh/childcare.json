@@ -1,0 +1,23 @@
+{
+  "errors": {
+    "child_not_found": "儿童档案不存在",
+    "app_account_already_linked": "已关联应用账号",
+    "point_account_not_found": "积分账户不存在",
+    "shop_item_not_found": "商品不存在",
+    "rule_not_found": "规则不存在",
+    "insufficient_points": "积分余额不足",
+    "insufficient_savings": "储蓄余额不足",
+    "savings_plan_exists": "已有进行中的储蓄计划",
+    "end_date_after_start": "结束日期必须晚于开始日期",
+    "no_active_savings_plan": "没有活跃的储蓄计划",
+    "no_permission": "没有管理儿童的权限",
+    "rule_no_points": "无积分的规则无法应用",
+    "not_member": "您不是该群组成员"
+  },
+  "success": {
+    "shop_item_deleted": "商品已删除",
+    "order_changed": "顺序已更改",
+    "rule_deleted": "规则已删除",
+    "savings_terminated": "储蓄计划已终止，本金已返还至余额"
+  }
+}

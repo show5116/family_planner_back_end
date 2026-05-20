@@ -9,6 +9,16 @@
     "attachment_not_found": "添付ファイルが見つかりません",
     "item_not_found": "項目が見つかりません",
     "no_access": "このメモへのアクセス権限がありません",
-    "no_group_access": "このグループへのアクセス権限がありません"
+    "no_group_access": "このグループへのアクセス権限がありません",
+    "checklist_min_one_item": "チェックリストメモには最低1つの項目が必要です",
+    "checklist_only": "チェックリストタイプのメモにのみ項目を追加できます"
+  },
+  "success": {
+    "memo_deleted": "メモを削除しました",
+    "tag_deleted": "タグを削除しました",
+    "attachment_deleted": "添付ファイルを削除しました",
+    "item_deleted": "項目を削除しました",
+    "all_checked": "すべてチェックしました",
+    "all_unchecked": "すべてのチェックを解除しました"
   }
 }

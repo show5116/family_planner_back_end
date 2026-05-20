@@ -1,15 +1,19 @@
-import {
+﻿import {
   Injectable,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateMinigameResultDto } from './dto/create-minigame-result.dto';
 import { MinigameQueryDto } from './dto/minigame-query.dto';
 
 @Injectable()
 export class MinigameService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly i18n: I18nService,
+  ) {}
 
   /**
    * 게임 결과 저장
@@ -79,15 +83,17 @@ export class MinigameService {
     if (!isOwner) {
       const isAdmin = await this.isGroupAdmin(userId, result.groupId);
       if (!isAdmin) {
-        throw new ForbiddenException(
-          '본인 또는 그룹 관리자만 삭제할 수 있습니다',
-        );
+        throw new ForbiddenException('minigame.errors.author_or_admin_only');
       }
     }
 
     await this.prisma.minigameResult.delete({ where: { id } });
 
-    return { message: '작업이 완료되었습니다' };
+    return {
+      message: this.i18n.t('minigame.success.deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -99,7 +105,7 @@ export class MinigameService {
     });
 
     if (!member) {
-      throw new ForbiddenException('해당 그룹의 멤버가 아닙니다');
+      throw new ForbiddenException('minigame.errors.not_member');
     }
   }
 

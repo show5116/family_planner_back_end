@@ -4,6 +4,13 @@
     "already_paused": "이미 일시 중지 상태입니다",
     "already_active": "이미 활성 상태입니다",
     "insufficient_balance": "잔액이 부족합니다",
-    "goal_not_found": "적립 목표를 찾을 수 없습니다"
+    "goal_not_found": "적립 목표를 찾을 수 없습니다",
+    "monthly_amount_required": "자동 적립 사용 시 monthlyAmount는 필수입니다",
+    "not_member": "해당 그룹의 멤버가 아닙니다"
+  },
+  "success": {
+    "goal_deleted": "적립 목표가 삭제되었습니다",
+    "auto_deposit_paused": "자동 적립이 일시 중지되었습니다",
+    "auto_deposit_resumed": "자동 적립이 재개되었습니다"
   }
 }

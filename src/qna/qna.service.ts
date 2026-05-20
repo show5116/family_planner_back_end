@@ -1,9 +1,10 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { WebhookService } from '@/webhook/webhook.service';
@@ -22,6 +23,7 @@ export class QnaService {
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
     private readonly webhookService: WebhookService,
+    private readonly i18n: I18nService,
   ) {}
 
   /**
@@ -410,7 +412,11 @@ export class QnaService {
       data: { deletedAt: new Date() },
     });
 
-    return { message: '질문이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('qna.success.question_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -426,16 +432,12 @@ export class QnaService {
     }
 
     if (question.userId !== userId) {
-      throw new ForbiddenException(
-        '본인 작성 질문만 해결완료 처리할 수 있습니다',
-      );
+      throw new ForbiddenException('qna.errors.own_question_only_resolve');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     if (question.status !== QuestionStatus.ANSWERED) {
-      throw new BadRequestException(
-        '답변 완료된 질문만 해결완료 처리할 수 있습니다',
-      );
+      throw new BadRequestException('qna.errors.answered_only_resolve');
     }
 
     await this.prisma.question.update({
@@ -443,7 +445,11 @@ export class QnaService {
       data: { status: QuestionStatus.RESOLVED },
     });
 
-    return { message: '질문이 해결완료 처리되었습니다' };
+    return {
+      message: this.i18n.t('qna.success.question_resolved', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**

@@ -5,6 +5,10 @@
     "invalid_option": "無効な選択肢です",
     "single_choice_only": "単一選択の投票です",
     "closed_vote_cancel": "締め切られた投票はキャンセルできません",
-    "group_member_only": "グループメンバーのみアクセスできます"
+    "group_member_only": "グループメンバーのみアクセスできます",
+    "author_or_admin_only": "投票の作成者またはグループ管理者のみ削除できます"
+  },
+  "success": {
+    "vote_deleted": "投票を削除しました"
   }
 }

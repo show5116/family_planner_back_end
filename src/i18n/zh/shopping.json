@@ -1,0 +1,12 @@
+{
+  "errors": {
+    "group_member_only": "只有群组成员可以访问",
+    "cart_not_found": "购物车不存在",
+    "item_not_found": "商品不存在",
+    "cart_empty": "购物车为空",
+    "purchase_history_not_found": "购买记录不存在"
+  },
+  "success": {
+    "item_deleted": "商品已删除"
+  }
+}

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Body,
   Controller,
   Post,
@@ -74,7 +74,7 @@ export class AuthController {
     type: SignupResponseDto,
   })
   @ApiResponse({ status: 409, description: '이미 사용 중인 이메일' })
-  async signup(@Body() signupDto: SignupDto) {
+  signup(@Body() signupDto: SignupDto) {
     return this.authService.signup(signupDto);
   }
 
@@ -330,7 +330,7 @@ export class AuthController {
     type: VerifyEmailResponseDto,
   })
   @ApiResponse({ status: 400, description: '유효하지 않거나 만료된 인증 코드' })
-  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+  verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
     return this.authService.verifyEmail(
       verifyEmailDto.code,
       verifyEmailDto.email,
@@ -351,7 +351,7 @@ export class AuthController {
     description: '이미 인증된 이메일이거나 요청 실패',
   })
   @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
-  async resendVerification(@Body() resendDto: ResendVerificationDto) {
+  resendVerification(@Body() resendDto: ResendVerificationDto) {
     return this.authService.resendVerificationEmail(resendDto.email);
   }
 
@@ -374,7 +374,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: '요청 실패' })
   @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
-  async requestPasswordReset(@Body() requestDto: RequestPasswordResetDto) {
+  requestPasswordReset(@Body() requestDto: RequestPasswordResetDto) {
     return this.authService.requestPasswordReset(requestDto.email);
   }
 
@@ -387,7 +387,7 @@ export class AuthController {
     type: ResetPasswordResponseDto,
   })
   @ApiResponse({ status: 400, description: '유효하지 않거나 만료된 인증 코드' })
-  async resetPassword(@Body() resetDto: ResetPasswordDto) {
+  resetPassword(@Body() resetDto: ResetPasswordDto) {
     return this.authService.resetPassword(
       resetDto.email,
       resetDto.code,
@@ -406,10 +406,7 @@ export class AuthController {
     description: '업데이트할 정보가 없거나 비밀번호가 설정되지 않음',
   })
   @ApiResponse({ status: 403, description: '현재 비밀번호가 올바르지 않음' })
-  async updateProfile(
-    @Request() req,
-    @Body() updateProfileDto: UpdateProfileDto,
-  ) {
+  updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
     return this.authService.updateProfile(
       req.user.userId,
       updateProfileDto.currentPassword,

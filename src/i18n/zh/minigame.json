@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "history_not_found": "游戏记录不存在",
+    "author_or_admin_only": "只有创建者或群组管理员可以删除",
+    "not_member": "您不是该群组成员"
+  },
+  "success": {
+    "deleted": "操作完成"
+  }
+}

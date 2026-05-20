@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { AccountType } from '@prisma/client';
 
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
@@ -33,6 +34,7 @@ export class AssetsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
+    private readonly i18n: I18nService,
   ) {}
 
   /**
@@ -215,7 +217,11 @@ export class AssetsService {
 
     await this.prisma.account.delete({ where: { id } });
 
-    return { message: '계좌가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('assets.success.account_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -232,9 +238,7 @@ export class AssetsService {
     const validIds = new Set(accounts.map((a) => a.id));
     const invalidIds = dto.accountIds.filter((id) => !validIds.has(id));
     if (invalidIds.length > 0) {
-      throw new BadRequestException(
-        '해당 그룹에 속하지 않은 계좌가 포함되어 있습니다',
-      );
+      throw new BadRequestException('assets.errors.account_wrong_group');
     }
 
     await this.prisma.$transaction(
@@ -246,7 +250,11 @@ export class AssetsService {
       ),
     );
 
-    return { message: '계좌 순서가 변경되었습니다' };
+    return {
+      message: this.i18n.t('assets.success.account_order_changed', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -307,9 +315,7 @@ export class AssetsService {
       });
 
       if (!goldIndicator || goldIndicator.prices.length === 0) {
-        throw new BadRequestException(
-          '현재 금 시세를 조회할 수 없습니다. 잠시 후 다시 시도해 주세요',
-        );
+        throw new BadRequestException('assets.errors.gold_price_unavailable');
       }
 
       const pricePerGram = Number(goldIndicator.prices[0].price);
@@ -400,7 +406,11 @@ export class AssetsService {
 
     await this.prisma.accountRecord.delete({ where: { id: recordId } });
 
-    return { message: '기록이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('assets.success.record_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -650,7 +660,11 @@ export class AssetsService {
 
     await this.prisma.accountHolding.delete({ where: { id: holdingId } });
 
-    return { message: '종목이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('assets.success.stock_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -671,7 +685,7 @@ export class AssetsService {
 
     if (account.userId !== userId) {
       throw new ForbiddenException(
-        '본인의 계좌 종목만 순서 변경할 수 있습니다',
+        'assets.errors.own_account_only_reorder_stock',
       );
     }
 
@@ -683,9 +697,7 @@ export class AssetsService {
     const validIds = new Set(holdings.map((h) => h.id));
     const invalidIds = dto.holdingIds.filter((id) => !validIds.has(id));
     if (invalidIds.length > 0) {
-      throw new BadRequestException(
-        '해당 계좌에 속하지 않은 종목이 포함되어 있습니다',
-      );
+      throw new BadRequestException('assets.errors.stock_wrong_account');
     }
 
     await this.prisma.$transaction(
@@ -697,7 +709,11 @@ export class AssetsService {
       ),
     );
 
-    return { message: '종목 순서가 변경되었습니다' };
+    return {
+      message: this.i18n.t('assets.success.stock_order_changed', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -1135,9 +1151,7 @@ export class AssetsService {
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException(
-        '본인의 계좌에만 출금 기록을 추가할 수 있습니다',
-      );
+      throw new ForbiddenException('assets.errors.own_withdrawal_only_add');
     }
 
     const withdrawalDate = new Date(dto.withdrawalDate);
@@ -1220,9 +1234,7 @@ export class AssetsService {
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException(
-        '본인의 계좌 출금 기록만 삭제할 수 있습니다',
-      );
+      throw new ForbiddenException('assets.errors.own_withdrawal_only_delete');
     }
 
     const withdrawal = await this.prisma.accountWithdrawal.findUnique({
@@ -1259,7 +1271,11 @@ export class AssetsService {
       }),
     );
 
-    return { message: '출금 기록이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('assets.success.withdrawal_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   private formatWithdrawal(withdrawal: {

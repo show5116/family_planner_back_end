@@ -1,10 +1,11 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { SavingsGoalStatus, SavingsType } from '@prisma/client';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
@@ -18,6 +19,7 @@ export class SavingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationQueue: NotificationQueueService,
+    private readonly i18n: I18nService,
   ) {}
 
   /**
@@ -27,9 +29,7 @@ export class SavingsService {
     await this.validateGroupMember(userId, dto.groupId);
 
     if (dto.autoDeposit && !dto.monthlyAmount) {
-      throw new BadRequestException(
-        '자동 적립 사용 시 monthlyAmount는 필수입니다',
-      );
+      throw new BadRequestException('savings.errors.monthly_amount_required');
     }
 
     return await this.prisma.savingsGoal.create({
@@ -85,9 +85,7 @@ export class SavingsService {
 
     const nextAutoDeposit = dto.autoDeposit ?? goal.autoDeposit;
     if (nextAutoDeposit && !dto.monthlyAmount && !goal.monthlyAmount) {
-      throw new BadRequestException(
-        '자동 적립 사용 시 monthlyAmount는 필수입니다',
-      );
+      throw new BadRequestException('savings.errors.monthly_amount_required');
     }
 
     return await this.prisma.savingsGoal.update({
@@ -119,7 +117,11 @@ export class SavingsService {
     await this.validateGroupMember(userId, goal.groupId);
 
     await this.prisma.savingsGoal.delete({ where: { id } });
-    return { message: '적립 목표가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('savings.success.goal_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -140,7 +142,11 @@ export class SavingsService {
       where: { id },
       data: { status: SavingsGoalStatus.PAUSED },
     });
-    return { message: '자동 적립이 일시 중지되었습니다' };
+    return {
+      message: this.i18n.t('savings.success.auto_deposit_paused', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -161,7 +167,11 @@ export class SavingsService {
       where: { id },
       data: { status: SavingsGoalStatus.ACTIVE },
     });
-    return { message: '자동 적립이 재개되었습니다' };
+    return {
+      message: this.i18n.t('savings.success.auto_deposit_resumed', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -272,7 +282,7 @@ export class SavingsService {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });
-    if (!member) throw new ForbiddenException('해당 그룹의 멤버가 아닙니다');
+    if (!member) throw new ForbiddenException('savings.errors.not_member');
   }
 
   private toGoalDto(goal: {

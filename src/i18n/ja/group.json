@@ -21,6 +21,27 @@
     "only_pending_resendable": "保留中の招待のみ再送できます",
     "cannot_change_own_role": "自分のロールは変更できません",
     "role_not_found": "ロールが見つかりません",
-    "cannot_remove_owner": "OWNERは削除できません"
+    "cannot_remove_owner": "OWNERは削除できません",
+    "default_role_not_found": "デフォルトロールが見つかりません。データベースシードを実行してください。",
+    "cannot_remove_self": "自分自身を削除することはできません。グループ退出機能をご利用ください",
+    "cannot_transfer_to_self": "自分自身に権限を譲渡することはできません",
+    "new_owner_not_in_group": "新しいOWNERとなるユーザーがグループに見つかりません",
+    "group_not_in_list": "所属していないグループが含まれています",
+    "owner_required": "グループOWNER権限が必要です"
+  },
+  "success": {
+    "group_deleted": "グループが削除されました",
+    "joined": "グループへの参加が完了しました",
+    "join_requested": "グループ参加申請を送信しました。管理者の承認をお待ちください。",
+    "join_approved": "参加申請が承認されました",
+    "join_rejected": "参加申請が拒否されました",
+    "invite_sent": "招待メールを送信しました",
+    "invite_cancelled": "招待をキャンセルしました",
+    "invite_resent": "招待メールを再送しました",
+    "left": "グループを退出しました",
+    "member_removed": "メンバーを削除しました",
+    "color_set": "グループカラーを設定しました",
+    "ownership_transferred": "グループ管理権限を譲渡しました",
+    "order_changed": "グループの順序を変更しました"
   }
 }

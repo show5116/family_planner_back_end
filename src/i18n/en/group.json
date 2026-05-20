@@ -21,6 +21,27 @@
     "only_pending_resendable": "Only pending invites can be resent",
     "cannot_change_own_role": "You cannot change your own role",
     "role_not_found": "Role not found",
-    "cannot_remove_owner": "OWNER cannot be removed"
+    "cannot_remove_owner": "OWNER cannot be removed",
+    "default_role_not_found": "Default role not found. Please run the database seed.",
+    "cannot_remove_self": "You cannot remove yourself. Please use the leave group feature",
+    "cannot_transfer_to_self": "You cannot transfer ownership to yourself",
+    "new_owner_not_in_group": "The user to become the new OWNER was not found in the group",
+    "group_not_in_list": "A group you do not belong to is included",
+    "owner_required": "Group OWNER privileges required"
+  },
+  "success": {
+    "group_deleted": "Group has been deleted",
+    "joined": "Successfully joined the group",
+    "join_requested": "Join request sent. Please wait for admin approval.",
+    "join_approved": "Join request approved",
+    "join_rejected": "Join request rejected",
+    "invite_sent": "Invite email sent",
+    "invite_cancelled": "Invite cancelled",
+    "invite_resent": "Invite email resent",
+    "left": "Left the group",
+    "member_removed": "Member removed",
+    "color_set": "Group color set",
+    "ownership_transferred": "Ownership transferred",
+    "order_changed": "Group order changed"
   }
 }

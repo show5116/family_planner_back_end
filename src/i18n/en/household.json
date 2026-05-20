@@ -7,6 +7,14 @@
     "receipt_not_found": "Receipt not found",
     "budget_template_not_found": "Budget template not found",
     "total_budget_template_not_found": "Total budget template not found",
-    "not_member": "You are not a member of this group"
+    "not_member": "You are not a member of this group",
+    "unsupported_file_type": "Unsupported file type. (JPEG, PNG, WebP, PDF)",
+    "own_receipt_only_delete": "You can only delete receipts from your own expenses"
+  },
+  "success": {
+    "expense_deleted": "Expense record deleted",
+    "receipt_deleted": "Receipt deleted",
+    "budget_template_deleted": "Budget template deleted",
+    "total_budget_template_deleted": "Total budget template deleted"
   }
 }

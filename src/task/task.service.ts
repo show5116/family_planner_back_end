@@ -1,4 +1,4 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -141,9 +141,7 @@ export class TaskService {
 
     if (dto.participantIds && dto.participantIds.length > 0) {
       if (!dto.groupId) {
-        throw new ForbiddenException(
-          '참여자는 그룹 Task에서만 지정할 수 있습니다',
-        );
+        throw new ForbiddenException('task.errors.participants_group_only');
       }
       await this.validateParticipants(dto.groupId, dto.participantIds);
     }
@@ -290,16 +288,14 @@ export class TaskService {
 
     if (task.recurringId && !updateScope) {
       throw new ForbiddenException(
-        '반복 Task는 updateScope를 지정해야 합니다 (current 또는 future)',
+        'task.errors.recurring_update_scope_required',
       );
     }
 
     // 참여자 검증 (빈 배열 및 null은 그룹 여부 무관하게 허용)
     if (dto.participantIds != null && dto.participantIds.length > 0) {
       if (!task.groupId) {
-        throw new ForbiddenException(
-          '참여자는 그룹 Task에서만 지정할 수 있습니다',
-        );
+        throw new ForbiddenException('task.errors.participants_group_only');
       }
       await this.validateParticipants(task.groupId, dto.participantIds);
     }
@@ -502,7 +498,7 @@ export class TaskService {
 
     if (task.recurringId && !deleteScope) {
       throw new ForbiddenException(
-        '반복 Task는 deleteScope를 지정해야 합니다 (current, future, all)',
+        'task.errors.recurring_delete_scope_required',
       );
     }
 
@@ -714,7 +710,7 @@ export class TaskService {
     );
 
     if (invalidUserIds.length > 0) {
-      throw new ForbiddenException('참여자는 그룹 멤버만 지정할 수 있습니다');
+      throw new ForbiddenException('task.errors.participants_must_be_members');
     }
   }
 

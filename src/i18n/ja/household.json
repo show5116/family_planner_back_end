@@ -7,6 +7,14 @@
     "receipt_not_found": "レシートが見つかりません",
     "budget_template_not_found": "予算テンプレートが見つかりません",
     "total_budget_template_not_found": "全体予算テンプレートが見つかりません",
-    "not_member": "このグループのメンバーではありません"
+    "not_member": "このグループのメンバーではありません",
+    "unsupported_file_type": "サポートされていないファイル形式です。(JPEG、PNG、WebP、PDF)",
+    "own_receipt_only_delete": "自分が登録した支出のレシートのみ削除できます"
+  },
+  "success": {
+    "expense_deleted": "支出履歴を削除しました",
+    "receipt_deleted": "レシートを削除しました",
+    "budget_template_deleted": "予算テンプレートを削除しました",
+    "total_budget_template_deleted": "全体予算テンプレートを削除しました"
   }
 }

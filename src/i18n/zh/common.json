@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "file_too_large": "文件大小不能超过10MB",
+    "invalid_image": "无效的图片文件",
+    "file_required": "请上传文件",
+    "invalid_type": "类型无效",
+    "forbidden": "访问被拒绝"
+  }
+}

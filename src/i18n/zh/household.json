@@ -1,0 +1,20 @@
+{
+  "errors": {
+    "expense_not_found": "支出记录不存在",
+    "own_expense_only_view": "只能查看自己的支出",
+    "own_expense_only_update": "只能修改自己的支出",
+    "own_expense_only_delete": "只能删除自己的支出",
+    "receipt_not_found": "收据不存在",
+    "budget_template_not_found": "预算模板不存在",
+    "total_budget_template_not_found": "总预算模板不存在",
+    "not_member": "您不是该群组成员",
+    "unsupported_file_type": "不支持的文件类型（JPEG、PNG、WebP、PDF）",
+    "own_receipt_only_delete": "只能删除自己支出的收据"
+  },
+  "success": {
+    "expense_deleted": "支出记录已删除",
+    "receipt_deleted": "收据已删除",
+    "budget_template_deleted": "预算模板已删除",
+    "total_budget_template_deleted": "总预算模板已删除"
+  }
+}

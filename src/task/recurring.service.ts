@@ -1,4 +1,4 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -34,9 +34,7 @@ export class RecurringService {
     }
 
     if (recurring.userId !== userId) {
-      throw new ForbiddenException(
-        '본인이 작성한 반복 규칙만 변경할 수 있습니다',
-      );
+      throw new ForbiddenException('task.errors.own_recurring_only_update');
     }
 
     return await this.prisma.recurring.update({
@@ -62,9 +60,7 @@ export class RecurringService {
     }
 
     if (recurring.userId !== userId) {
-      throw new ForbiddenException(
-        '본인이 작성한 반복 규칙만 건너뛸 수 있습니다',
-      );
+      throw new ForbiddenException('task.errors.own_recurring_only_skip');
     }
 
     const skip = await this.prisma.taskSkip.create({

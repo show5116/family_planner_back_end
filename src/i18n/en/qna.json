@@ -7,6 +7,12 @@
     "resolved_question_no_edit": "Resolved questions cannot be edited",
     "own_question_only_delete": "You can only delete your own questions",
     "answer_not_found": "Answer not found",
-    "no_permission": "Access denied"
+    "no_permission": "Access denied",
+    "own_question_only_resolve": "You can only resolve your own questions",
+    "answered_only_resolve": "Only answered questions can be marked as resolved"
+  },
+  "success": {
+    "question_deleted": "Question deleted",
+    "question_resolved": "Question marked as resolved"
   }
 }

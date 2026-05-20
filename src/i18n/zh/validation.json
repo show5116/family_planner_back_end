@@ -1,0 +1,19 @@
+{
+  "email_invalid": "请输入有效的邮箱地址",
+  "email_required": "请输入邮箱",
+  "email_required_short": "邮箱不能为空",
+  "code_length": "验证码必须为6位数字",
+  "code_numeric": "验证码必须是6位数字",
+  "code_required": "请输入验证码",
+  "password_required": "请输入新密码",
+  "password_min_6": "密码至少需要6个字符",
+  "password_min_8": "密码至少需要8个字符",
+  "password_complexity": "密码必须包含字母和数字",
+  "hex_color": "请输入有效的HEX颜色代码（例如：#FF5733）",
+  "hex_color_alt": "请输入有效的HEX颜色代码（例如：#6366F1）",
+  "hex_color_role": "颜色必须为HEX格式（例如：#6366F1）",
+  "group_name_max": "群组名称最多100个字符",
+  "month_format": "月份格式必须为YYYY-MM",
+  "year_format": "年份格式必须为YYYY",
+  "date_format": "日期格式必须为YYYY-MM-DD"
+}

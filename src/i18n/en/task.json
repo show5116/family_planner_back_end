@@ -11,6 +11,17 @@
     "task_update_failed": "Failed to update task",
     "participants_must_be_members": "Participants must be group members",
     "recurring_not_found": "Recurring rule not found",
-    "holiday_fetch_failed": "Failed to fetch holiday information"
+    "holiday_fetch_failed": "Failed to fetch holiday information",
+    "participants_group_only": "Participants can only be specified for group tasks",
+    "recurring_update_scope_required": "Recurring tasks must specify updateScope (current or future)",
+    "recurring_delete_scope_required": "Recurring tasks must specify deleteScope (current, future, or all)",
+    "own_recurring_only_update": "You can only modify your own recurring rules",
+    "own_recurring_only_skip": "You can only skip your own recurring rules",
+    "category_group_member_only": "Only group members can create categories",
+    "category_group_member_only_edit": "Only group members can edit/delete categories",
+    "category_own_only_edit": "You can only edit/delete your own categories"
+  },
+  "success": {
+    "category_deleted": "Category deleted"
   }
 }

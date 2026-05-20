@@ -3,5 +3,8 @@
     "indicator_not_found": "Indicator not found",
     "already_favorited": "Already added to favorites",
     "not_favorited": "Not in favorites"
+  },
+  "success": {
+    "favorite_order_changed": "Favorite order changed"
   }
 }

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Injectable,
   ConflictException,
   UnauthorizedException,
@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import * as bcrypt from 'bcrypt';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EmailService } from '@/email/email.service';
 import { StorageService } from '@/storage/storage.service';
@@ -34,6 +35,7 @@ export class AuthService {
     private configService: ConfigService,
     private storageService: StorageService,
     private redisService: RedisService,
+    private i18n: I18nService,
   ) {}
 
   /**
@@ -118,14 +120,17 @@ export class AuthService {
     } catch (error) {
       // 이메일 전송 실패 시 사용자에게 알림 (하지만 회원가입은 완료)
       return {
-        message:
-          '회원가입이 완료되었지만, 인증 이메일 전송에 실패했습니다. 인증 이메일 재전송을 요청해주세요.',
+        message: this.i18n.t('auth.errors.signup_email_failed', {
+          lang: I18nContext.current()?.lang ?? 'ko',
+        }),
         user,
       };
     }
 
     return {
-      message: '회원가입이 완료되었습니다. 이메일 인증을 진행해주세요.',
+      message: this.i18n.t('auth.success.signup', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       user,
     };
   }
@@ -156,9 +161,7 @@ export class AuthService {
 
     // 이메일 인증 확인 (LOCAL 로그인 사용자만)
     if (user.provider === 'LOCAL' && !user.isEmailVerified) {
-      throw new ForbiddenException(
-        '이메일 인증이 필요합니다. 이메일을 확인해주세요',
-      );
+      throw new ForbiddenException('auth.errors.email_verification_required');
     }
 
     return {
@@ -332,7 +335,11 @@ export class AuthService {
       this.redisService.del(`email-verification:${email}`),
     ]);
 
-    return { message: '이메일 인증이 완료되었습니다' };
+    return {
+      message: this.i18n.t('auth.success.email_verified', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -353,7 +360,7 @@ export class AuthService {
 
     if (user.provider !== 'LOCAL') {
       throw new BadRequestException(
-        '소셜 로그인 사용자는 이메일 인증이 필요하지 않습니다',
+        'auth.errors.social_no_verification_needed',
       );
     }
 
@@ -378,7 +385,11 @@ export class AuthService {
       throw new BadRequestException('auth.errors.email_send_failed');
     }
 
-    return { message: '인증 이메일이 재전송되었습니다' };
+    return {
+      message: this.i18n.t('auth.success.verification_email_resent', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -387,7 +398,11 @@ export class AuthService {
   async logout(refreshToken: string) {
     await this.redisService.del(`refresh-token:${refreshToken}`);
 
-    return { message: '로그아웃되었습니다' };
+    return {
+      message: this.i18n.t('auth.success.logout', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -423,7 +438,11 @@ export class AuthService {
       throw new BadRequestException('auth.errors.email_send_failed');
     }
 
-    return { message: '비밀번호 재설정 인증 코드가 이메일로 전송되었습니다' };
+    return {
+      message: this.i18n.t('auth.success.password_reset_code_sent', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -436,9 +455,7 @@ export class AuthService {
     );
 
     if (!storedCode || storedCode !== code) {
-      throw new BadRequestException(
-        '유효하지 않은 이메일 또는 인증 코드입니다',
-      );
+      throw new BadRequestException('auth.errors.invalid_email_or_code');
     }
 
     // 사용자 조회
@@ -447,7 +464,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('사용자를 찾을 수 없습니다');
+      throw new BadRequestException('auth.errors.user_not_found');
     }
 
     // 새 비밀번호 해싱
@@ -462,7 +479,11 @@ export class AuthService {
       this.redisService.del(`password-reset:${email}`),
     ]);
 
-    return { message: '비밀번호가 성공적으로 재설정되었습니다' };
+    return {
+      message: this.i18n.t('auth.success.password_reset', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -653,14 +674,12 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
+      throw new NotFoundException('auth.errors.user_not_found');
     }
 
     // 소셜 로그인 사용자이고 비밀번호가 설정되지 않은 경우
     if (!user.password && user.provider !== 'LOCAL') {
-      throw new BadRequestException(
-        '소셜 로그인 사용자는 먼저 비밀번호를 설정해야 프로필을 수정할 수 있습니다',
-      );
+      throw new BadRequestException('auth.errors.social_set_password_first');
     }
 
     // 현재 비밀번호 확인
@@ -717,7 +736,9 @@ export class AuthService {
     });
 
     return {
-      message: '프로필이 성공적으로 업데이트되었습니다',
+      message: this.i18n.t('auth.success.profile_updated', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       user: {
         ...updatedUser,
         phoneNumber: this.maskPhoneNumber(updatedUser.phoneNumber),
@@ -767,6 +788,10 @@ export class AuthService {
       where: { id: userId },
       data: { lastLat: lat, lastLon: lon },
     });
-    return { message: '위치 정보가 업데이트되었습니다.' };
+    return {
+      message: this.i18n.t('auth.success.location_updated', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 }

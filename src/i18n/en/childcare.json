@@ -10,6 +10,14 @@
     "savings_plan_exists": "A savings plan is already in progress",
     "end_date_after_start": "End date must be after start date",
     "no_active_savings_plan": "No active savings plan",
-    "no_permission": "No permission to manage children"
+    "no_permission": "No permission to manage children",
+    "rule_no_points": "Rules without points cannot be applied",
+    "not_member": "You are not a member of this group"
+  },
+  "success": {
+    "shop_item_deleted": "Shop item deleted",
+    "order_changed": "Order changed",
+    "rule_deleted": "Rule deleted",
+    "savings_terminated": "Savings plan terminated. Principal has been returned to balance."
   }
 }

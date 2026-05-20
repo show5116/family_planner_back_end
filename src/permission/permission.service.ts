@@ -1,10 +1,11 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ConflictException,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PermissionCategory, PermissionCode } from '@prisma/client';
 import { CreatePermissionDto } from '@/permission/dto/create-permission.dto';
@@ -13,7 +14,10 @@ import { BulkUpdatePermissionSortOrderDto } from '@/permission/dto/bulk-update-s
 
 @Injectable()
 export class PermissionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private i18n: I18nService,
+  ) {}
 
   /**
    * 전체 권한 목록 조회
@@ -117,9 +121,7 @@ export class PermissionService {
       where: { code: createPermissionDto.code },
     });
     if (existingPermission) {
-      throw new ConflictException(
-        `권한 코드 '${createPermissionDto.code}'가 이미 존재합니다.`,
-      );
+      throw new ConflictException('permission.errors.code_already_exists');
     }
 
     const permission = await this.prisma.permission.create({
@@ -134,7 +136,9 @@ export class PermissionService {
     });
 
     return {
-      message: '권한이 생성되었습니다.',
+      message: this.i18n.t('permission.success.created', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       permission,
     };
   }
@@ -170,9 +174,7 @@ export class PermissionService {
       });
 
       if (existingPermission) {
-        throw new ConflictException(
-          `권한 코드 '${updatePermissionDto.code}'가 이미 존재합니다.`,
-        );
+        throw new ConflictException('permission.errors.code_already_exists');
       }
     }
 
@@ -182,7 +184,9 @@ export class PermissionService {
     });
 
     return {
-      message: '권한이 수정되었습니다.',
+      message: this.i18n.t('permission.success.updated', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       permission: updatedPermission,
     };
   }
@@ -210,7 +214,9 @@ export class PermissionService {
     });
 
     return {
-      message: '권한이 비활성화되었습니다.',
+      message: this.i18n.t('permission.success.deactivated', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       permission: deletedPermission,
     };
   }
@@ -258,7 +264,9 @@ export class PermissionService {
     });
 
     return {
-      message: '권한이 완전히 삭제되었습니다.',
+      message: this.i18n.t('permission.success.deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       deletedPermission: permission,
     };
   }
@@ -283,7 +291,9 @@ export class PermissionService {
     await this.prisma.$transaction(updates);
 
     return {
-      message: '권한 정렬 순서가 업데이트되었습니다.',
+      message: this.i18n.t('permission.success.order_updated', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       updatedCount: bulkUpdateDto.items.length,
     };
   }

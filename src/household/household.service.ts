@@ -1,10 +1,11 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { StorageService } from '@/storage/storage.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
@@ -36,6 +37,7 @@ export class HouseholdService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly notificationQueue: NotificationQueueService,
+    private readonly i18n: I18nService,
   ) {}
 
   /**
@@ -199,7 +201,11 @@ export class HouseholdService {
 
     await this.prisma.expense.delete({ where: { id } });
 
-    return { message: '지출 내역이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('household.success.expense_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -387,9 +393,7 @@ export class HouseholdService {
     mimeType: string,
   ) {
     if (!ALLOWED_RECEIPT_TYPES.includes(mimeType)) {
-      throw new BadRequestException(
-        '지원하지 않는 파일 형식입니다. (JPEG, PNG, WebP, PDF)',
-      );
+      throw new BadRequestException('household.errors.unsupported_file_type');
     }
 
     const expense = await this.prisma.expense.findUnique({
@@ -471,15 +475,17 @@ export class HouseholdService {
     if (receipt.expense.groupId) {
       await this.validateGroupMember(userId, receipt.expense.groupId);
     } else if (receipt.expense.userId !== userId) {
-      throw new ForbiddenException(
-        '본인이 등록한 지출의 영수증만 삭제할 수 있습니다',
-      );
+      throw new ForbiddenException('household.errors.own_receipt_only_delete');
     }
 
     await this.storage.deleteFile(receipt.fileKey).catch(() => null);
     await this.prisma.expenseReceipt.delete({ where: { id: receiptId } });
 
-    return { message: '영수증이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('household.success.receipt_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -694,7 +700,11 @@ export class HouseholdService {
 
     await this.prisma.budgetTemplate.delete({ where: { id: template.id } });
 
-    return { message: '예산 템플릿이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('household.success.budget_template_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -956,7 +966,11 @@ export class HouseholdService {
 
     await this.prisma.groupBudgetTemplate.delete({ where: whereKey });
 
-    return { message: '전체 예산 템플릿이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('household.success.total_budget_template_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**

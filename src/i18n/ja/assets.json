@@ -12,6 +12,20 @@
     "own_account_only_update_stock": "自分の口座の銘柄のみ更新できます",
     "stock_not_found": "銘柄が見つかりません",
     "own_account_only_delete_stock": "自分の口座の銘柄のみ削除できます",
-    "withdrawal_not_found": "出金記録が見つかりません"
+    "own_account_only_reorder_stock": "自分の口座の銘柄のみ順序変更できます",
+    "stock_wrong_account": "この口座に属さない銘柄が含まれています",
+    "account_wrong_group": "このグループに属さない口座が含まれています",
+    "withdrawal_not_found": "出金記録が見つかりません",
+    "own_withdrawal_only_add": "自分の口座にのみ出金記録を追加できます",
+    "own_withdrawal_only_delete": "自分の口座の出金記録のみ削除できます",
+    "gold_price_unavailable": "現在の金相場を取得できません。しばらくしてからお試しください"
+  },
+  "success": {
+    "account_deleted": "口座を削除しました",
+    "account_order_changed": "口座の順序を変更しました",
+    "record_deleted": "記録を削除しました",
+    "stock_deleted": "銘柄を削除しました",
+    "stock_order_changed": "銘柄の順序を変更しました",
+    "withdrawal_deleted": "出金記録を削除しました"
   }
 }

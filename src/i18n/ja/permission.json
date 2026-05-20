@@ -1,5 +1,13 @@
 {
   "errors": {
-    "not_found": "権限が見つかりません"
+    "not_found": "権限が見つかりません",
+    "code_already_exists": "権限コード '{code}' はすでに存在します。"
+  },
+  "success": {
+    "created": "権限を作成しました。",
+    "updated": "権限を更新しました。",
+    "deactivated": "権限を無効化しました。",
+    "deleted": "権限を完全に削除しました。",
+    "order_updated": "権限の並び順を更新しました。"
   }
 }

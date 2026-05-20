@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "group_member_only": "只有群组成员可以访问",
+    "storage_not_found": "存储区不存在",
+    "some_storages_not_found": "部分存储区不存在",
+    "item_not_found": "物品不存在",
+    "frequent_item_not_found": "常用物品不存在"
+  },
+  "success": {
+    "storage_deleted": "存储区已删除",
+    "item_deleted": "物品已删除",
+    "frequent_item_deleted": "常用物品已删除"
+  }
+}

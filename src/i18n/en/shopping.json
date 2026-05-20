@@ -5,5 +5,8 @@
     "item_not_found": "Item not found",
     "cart_empty": "Cart is empty",
     "purchase_history_not_found": "Purchase history not found"
+  },
+  "success": {
+    "item_deleted": "Item deleted"
   }
 }

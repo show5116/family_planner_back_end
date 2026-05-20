@@ -4,6 +4,13 @@
     "already_paused": "すでに一時停止中です",
     "already_active": "すでにアクティブ状態です",
     "insufficient_balance": "残高が不足しています",
-    "goal_not_found": "積立目標が見つかりません"
+    "goal_not_found": "積立目標が見つかりません",
+    "monthly_amount_required": "自動積立を使用する場合はmonthlyAmountが必須です",
+    "not_member": "このグループのメンバーではありません"
+  },
+  "success": {
+    "goal_deleted": "積立目標を削除しました",
+    "auto_deposit_paused": "自動積立を一時停止しました",
+    "auto_deposit_resumed": "自動積立を再開しました"
   }
 }

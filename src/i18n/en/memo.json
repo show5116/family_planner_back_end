@@ -9,6 +9,16 @@
     "attachment_not_found": "Attachment not found",
     "item_not_found": "Item not found",
     "no_access": "You do not have access to this memo",
-    "no_group_access": "You do not have access to this group"
+    "no_group_access": "You do not have access to this group",
+    "checklist_min_one_item": "Checklist memos require at least one item",
+    "checklist_only": "Items can only be added to checklist type memos"
+  },
+  "success": {
+    "memo_deleted": "Memo deleted",
+    "tag_deleted": "Tag deleted",
+    "attachment_deleted": "Attachment deleted",
+    "item_deleted": "Item deleted",
+    "all_checked": "All items checked",
+    "all_unchecked": "All items unchecked"
   }
 }

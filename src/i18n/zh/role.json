@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "no_access": "您无权访问该群组",
+    "role_not_found": "角色不存在",
+    "cannot_delete_owner": "OWNER角色无法删除",
+    "role_wrong_group": "该角色不属于此群组",
+    "common_role_only": "只能创建通用角色，群组专属角色请使用 /groups/:groupId/roles 端点",
+    "common_default_role_exists": "通用角色中已存在默认角色，只能设置一个默认角色"
+  }
+}

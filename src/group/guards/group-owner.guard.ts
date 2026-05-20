@@ -1,4 +1,4 @@
-import {
+﻿import {
   Injectable,
   CanActivate,
   ExecutionContext,
@@ -43,9 +43,7 @@ export class GroupOwnerGuard implements CanActivate {
 
     // OWNER 역할인지 확인
     if (member.role.name !== 'OWNER') {
-      throw new ForbiddenException(
-        '그룹 OWNER 권한이 필요합니다. 현재 역할: ' + member.role.name,
-      );
+      throw new ForbiddenException('group.errors.owner_required');
     }
 
     return true;

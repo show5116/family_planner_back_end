@@ -3,6 +3,8 @@
     "no_access": "You do not have access to this group",
     "role_not_found": "Role not found",
     "cannot_delete_owner": "OWNER role cannot be deleted",
-    "role_wrong_group": "This role does not belong to this group"
+    "role_wrong_group": "This role does not belong to this group",
+    "common_role_only": "Only common roles can be created. Use the /groups/:groupId/roles endpoint for group-specific roles.",
+    "common_default_role_exists": "A default role already exists among common roles. Only one default role can be set."
   }
 }

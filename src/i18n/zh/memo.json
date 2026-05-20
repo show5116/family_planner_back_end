@@ -1,0 +1,24 @@
+{
+  "errors": {
+    "body_required": "普通备忘录必须填写正文",
+    "group_id_required": "群组备忘录必须填写群组ID",
+    "memo_not_found": "备忘录不存在",
+    "own_memo_only_update": "只能修改自己的备忘录",
+    "own_memo_only_delete": "只能删除自己的备忘录",
+    "tag_not_found": "标签不存在",
+    "attachment_not_found": "附件不存在",
+    "item_not_found": "条目不存在",
+    "no_access": "您无权访问该备忘录",
+    "no_group_access": "您无权访问该群组",
+    "checklist_min_one_item": "清单备忘录至少需要一个条目",
+    "checklist_only": "只能向清单类型的备忘录添加条目"
+  },
+  "success": {
+    "memo_deleted": "备忘录已删除",
+    "tag_deleted": "标签已删除",
+    "attachment_deleted": "附件已删除",
+    "item_deleted": "条目已删除",
+    "all_checked": "全部条目已选中",
+    "all_unchecked": "全部条目已取消选中"
+  }
+}

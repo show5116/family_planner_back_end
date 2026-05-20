@@ -1,9 +1,10 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateVoteDto } from './dto/create-vote.dto';
 import { CastBallotDto } from './dto/cast-ballot.dto';
@@ -16,7 +17,10 @@ import {
 
 @Injectable()
 export class VoteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly i18n: I18nService,
+  ) {}
 
   /**
    * 그룹 내 투표 목록 조회
@@ -163,14 +167,16 @@ export class VoteService {
       });
       const isOwner = member?.role?.name === 'OWNER';
       if (!isOwner) {
-        throw new ForbiddenException(
-          '투표 작성자 또는 그룹 관리자만 삭제할 수 있습니다',
-        );
+        throw new ForbiddenException('vote.errors.author_or_admin_only');
       }
     }
 
     await this.prisma.vote.delete({ where: { id: voteId } });
-    return { message: '투표가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('vote.success.vote_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**

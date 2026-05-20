@@ -12,6 +12,20 @@
     "own_account_only_update_stock": "You can only update stocks in your own account",
     "stock_not_found": "Stock not found",
     "own_account_only_delete_stock": "You can only delete stocks from your own account",
-    "withdrawal_not_found": "Withdrawal record not found"
+    "own_account_only_reorder_stock": "You can only reorder stocks in your own account",
+    "stock_wrong_account": "Some stocks do not belong to this account",
+    "account_wrong_group": "Some accounts do not belong to this group",
+    "withdrawal_not_found": "Withdrawal record not found",
+    "own_withdrawal_only_add": "You can only add withdrawal records to your own account",
+    "own_withdrawal_only_delete": "You can only delete withdrawal records from your own account",
+    "gold_price_unavailable": "Current gold price is unavailable. Please try again later"
+  },
+  "success": {
+    "account_deleted": "Account deleted",
+    "account_order_changed": "Account order changed",
+    "record_deleted": "Record deleted",
+    "stock_deleted": "Stock deleted",
+    "stock_order_changed": "Stock order changed",
+    "withdrawal_deleted": "Withdrawal record deleted"
   }
 }

@@ -10,6 +10,14 @@
     "savings_plan_exists": "이미 진행 중인 적금 플랜이 있습니다",
     "end_date_after_start": "만기일은 시작일보다 이후여야 합니다",
     "no_active_savings_plan": "진행 중인 적금 플랜이 없습니다",
-    "no_permission": "자녀 관리 권한이 없습니다"
+    "no_permission": "자녀 관리 권한이 없습니다",
+    "rule_no_points": "포인트가 없는 규칙은 적용할 수 없습니다",
+    "not_member": "해당 그룹의 멤버가 아닙니다"
+  },
+  "success": {
+    "shop_item_deleted": "상점 아이템이 삭제되었습니다",
+    "order_changed": "순서가 변경되었습니다",
+    "rule_deleted": "규칙이 삭제되었습니다",
+    "savings_terminated": "적금이 중도 해지되었습니다. 원금이 잔액으로 반환되었습니다."
   }
 }

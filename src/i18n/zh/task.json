@@ -1,0 +1,27 @@
+{
+  "errors": {
+    "group_member_only_view": "只有群组成员可以查看",
+    "group_member_only_create": "只有群组成员可以创建任务",
+    "group_member_only": "只有群组成员可以访问",
+    "task_not_found": "任务不存在",
+    "own_task_only_view": "只能查看自己的任务",
+    "own_task_only_delete": "只能删除自己的任务",
+    "category_not_found": "分类不存在",
+    "task_create_failed": "任务创建失败",
+    "task_update_failed": "任务更新失败",
+    "participants_must_be_members": "参与者必须是群组成员",
+    "recurring_not_found": "重复规则不存在",
+    "holiday_fetch_failed": "节假日信息获取失败",
+    "participants_group_only": "只有群组任务才能指定参与者",
+    "recurring_update_scope_required": "重复任务必须指定updateScope（current或future）",
+    "recurring_delete_scope_required": "重复任务必须指定deleteScope（current、future或all）",
+    "own_recurring_only_update": "只能修改自己的重复规则",
+    "own_recurring_only_skip": "只能跳过自己的重复规则",
+    "category_group_member_only": "只有群组成员可以创建分类",
+    "category_group_member_only_edit": "只有群组成员可以编辑/删除分类",
+    "category_own_only_edit": "只能编辑/删除自己的分类"
+  },
+  "success": {
+    "category_deleted": "分类已删除"
+  }
+}

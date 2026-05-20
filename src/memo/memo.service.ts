@@ -1,9 +1,10 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateMemoDto } from './dto/create-memo.dto';
 import { UpdateMemoDto } from './dto/update-memo.dto';
@@ -17,7 +18,10 @@ import { MemoType } from './enums/memo-type.enum';
 
 @Injectable()
 export class MemoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly i18n: I18nService,
+  ) {}
 
   /**
    * 메모 생성
@@ -27,9 +31,7 @@ export class MemoService {
 
     if (isChecklist) {
       if (!dto.checklistItems?.length) {
-        throw new BadRequestException(
-          '체크리스트 메모는 항목이 최소 1개 이상 필요합니다',
-        );
+        throw new BadRequestException('memo.errors.checklist_min_one_item');
       }
     } else {
       if (!dto.content?.trim()) {
@@ -264,7 +266,11 @@ export class MemoService {
       data: { deletedAt: new Date() },
     });
 
-    return { message: '메모가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('memo.success.memo_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -395,7 +401,11 @@ export class MemoService {
 
     await this.prisma.memoTag.delete({ where: { id: tagId } });
 
-    return { message: '태그가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('memo.success.tag_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -435,7 +445,11 @@ export class MemoService {
 
     await this.prisma.memoAttachment.delete({ where: { id: attachmentId } });
 
-    return { message: '첨부파일이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('memo.success.attachment_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -449,9 +463,7 @@ export class MemoService {
     const memo = await this.findOwnMemo(userId, memoId);
 
     if ((memo.type as MemoType) !== MemoType.CHECKLIST) {
-      throw new BadRequestException(
-        '체크리스트 타입의 메모에만 항목을 추가할 수 있습니다',
-      );
+      throw new BadRequestException('memo.errors.checklist_only');
     }
 
     const order =
@@ -493,7 +505,11 @@ export class MemoService {
 
     await this.prisma.checklistItem.delete({ where: { id: itemId } });
 
-    return { message: '항목이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('memo.success.item_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -522,8 +538,12 @@ export class MemoService {
 
     return {
       message: checkAll
-        ? '전체 체크가 완료되었습니다'
-        : '전체 체크가 해제되었습니다',
+        ? this.i18n.t('memo.success.all_checked', {
+            lang: I18nContext.current()?.lang ?? 'ko',
+          })
+        : this.i18n.t('memo.success.all_unchecked', {
+            lang: I18nContext.current()?.lang ?? 'ko',
+          }),
     };
   }
 

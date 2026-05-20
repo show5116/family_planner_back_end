@@ -1,4 +1,4 @@
-import {
+﻿import {
   ConflictException,
   Injectable,
   Logger,
@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { IndicatorCategory } from '@prisma/client';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { YahooCollector } from './scheduler/collectors/yahoo.collector';
@@ -193,6 +194,7 @@ export class InvestmentService implements OnModuleInit {
     private readonly bok: BokCollector,
     private readonly koreaGold: KoreaGoldCollector,
     private readonly fearGreed: FearGreedCollector,
+    private readonly i18n: I18nService,
   ) {}
 
   /**
@@ -780,7 +782,11 @@ export class InvestmentService implements OnModuleInit {
 
     await this.prisma.$transaction(updates);
 
-    return { message: '즐겨찾기 순서가 변경되었습니다' };
+    return {
+      message: this.i18n.t('investment.success.favorite_order_changed', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**

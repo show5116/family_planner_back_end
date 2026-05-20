@@ -3,6 +3,8 @@
     "no_access": "このグループへのアクセス権限がありません",
     "role_not_found": "ロールが見つかりません",
     "cannot_delete_owner": "OWNERロールは削除できません",
-    "role_wrong_group": "このロールはこのグループに属していません"
+    "role_wrong_group": "このロールはこのグループに属していません",
+    "common_role_only": "共通ロールのみ作成できます。グループ別ロールは /groups/:groupId/roles エンドポイントを使用してください。",
+    "common_default_role_exists": "共通ロールにすでにデフォルトロールが存在します。デフォルトロールは1つのみ設定できます。"
   }
 }

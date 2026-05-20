@@ -1,8 +1,9 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
 import { NotificationService } from '@/notification/notification.service';
@@ -14,6 +15,7 @@ export class GroupMemberService {
     private prisma: PrismaService,
     private storageService: StorageService,
     private notificationService: NotificationService,
+    private i18n: I18nService,
   ) {}
 
   /**
@@ -60,9 +62,7 @@ export class GroupMemberService {
     });
 
     if (!defaultRole) {
-      throw new Error(
-        '기본 역할을 찾을 수 없습니다. 데이터베이스 시드를 실행해주세요.',
-      );
+      throw new Error('group.errors.default_role_not_found');
     }
 
     return defaultRole;
@@ -149,7 +149,11 @@ export class GroupMemberService {
       where: { id: member.id },
     });
 
-    return { message: '그룹에서 나갔습니다' };
+    return {
+      message: this.i18n.t('group.success.left', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -234,9 +238,7 @@ export class GroupMemberService {
   async removeMember(groupId: string, targetUserId: string, userId: string) {
     // 자기 자신은 삭제할 수 없음 (나가기 사용)
     if (userId === targetUserId) {
-      throw new BadRequestException(
-        '자신은 삭제할 수 없습니다. 그룹 나가기를 사용해주세요',
-      );
+      throw new BadRequestException('group.errors.cannot_remove_self');
     }
 
     const targetMember = await this.prisma.groupMember.findUnique({
@@ -264,7 +266,11 @@ export class GroupMemberService {
       where: { id: targetMember.id },
     });
 
-    return { message: '멤버가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('group.success.member_removed', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -287,7 +293,9 @@ export class GroupMemberService {
     });
 
     return {
-      message: '그룹 색상이 설정되었습니다',
+      message: this.i18n.t('group.success.color_set', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       customColor: updatedMember.customColor,
     };
   }
@@ -328,9 +336,7 @@ export class GroupMemberService {
 
     // 2. 자기 자신에게는 양도할 수 없음
     if (currentOwnerId === newOwnerId) {
-      throw new BadRequestException(
-        '자기 자신에게는 권한을 양도할 수 없습니다',
-      );
+      throw new BadRequestException('group.errors.cannot_transfer_to_self');
     }
 
     // 3. 새로운 OWNER가 될 사용자가 그룹 멤버인지 확인
@@ -347,9 +353,7 @@ export class GroupMemberService {
     });
 
     if (!newOwnerMember) {
-      throw new NotFoundException(
-        '새로운 OWNER가 될 사용자를 그룹에서 찾을 수 없습니다',
-      );
+      throw new NotFoundException('group.errors.new_owner_not_in_group');
     }
 
     // 4. OWNER 역할과 기본 역할 조회
@@ -400,7 +404,9 @@ export class GroupMemberService {
       userId: newOwnerId,
       category: NotificationCategory.GROUP,
       title: '그룹장 권한 양도',
-      body: '그룹장 권한이 양도되었습니다',
+      body: this.i18n.t('group.success.ownership_transferred', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       data: { groupId },
     });
 
@@ -425,9 +431,7 @@ export class GroupMemberService {
     const validGroupIds = new Set(memberships.map((m) => m.groupId));
     const invalidIds = groupIds.filter((id) => !validGroupIds.has(id));
     if (invalidIds.length > 0) {
-      throw new BadRequestException(
-        '본인이 속하지 않은 그룹이 포함되어 있습니다',
-      );
+      throw new BadRequestException('group.errors.group_not_in_list');
     }
 
     await this.prisma.$transaction(
@@ -439,6 +443,10 @@ export class GroupMemberService {
       ),
     );
 
-    return { message: '그룹 순서가 변경되었습니다' };
+    return {
+      message: this.i18n.t('group.success.order_changed', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 }

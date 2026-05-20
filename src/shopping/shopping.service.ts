@@ -1,8 +1,9 @@
-import {
+﻿import {
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { BulkAddCartItemDto } from './dto/bulk-add-cart-item.dto';
@@ -13,7 +14,10 @@ import { HistoryQueryDto } from './dto/history-query.dto';
 
 @Injectable()
 export class ShoppingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private i18n: I18nService,
+  ) {}
 
   private async saveItemName(groupId: string, name: string) {
     await this.prisma.itemNameHistory.upsert({
@@ -180,7 +184,11 @@ export class ShoppingService {
     });
     if (!item) throw new NotFoundException('shopping.errors.item_not_found');
     await this.prisma.shoppingCartItem.delete({ where: { id: itemId } });
-    return { message: '품목이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('shopping.success.item_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   async completeShopping(
@@ -256,7 +264,7 @@ export class ShoppingService {
               amount,
               category: dto.expense.category ?? 'GROCERIES',
               date: new Date(dto.expense.date ?? today),
-              description: dto.expense.description ?? '장보기',
+              description: dto.expense.description ?? 'groceries',
               paymentMethod: dto.expense.paymentMethod,
               shoppingHistoryId: history.id,
             },

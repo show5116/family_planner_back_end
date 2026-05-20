@@ -5,5 +5,10 @@
     "some_storages_not_found": "一部の保管場所が見つかりません",
     "item_not_found": "品目が見つかりません",
     "frequent_item_not_found": "よく買う商品が見つかりません"
+  },
+  "success": {
+    "storage_deleted": "保管場所を削除しました",
+    "item_deleted": "品目を削除しました",
+    "frequent_item_deleted": "よく買う商品を削除しました"
   }
 }

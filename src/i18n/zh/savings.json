@@ -1,0 +1,16 @@
+{
+  "errors": {
+    "no_auto_deposit": "该目标未配置自动存款",
+    "already_paused": "已暂停",
+    "already_active": "已激活",
+    "insufficient_balance": "余额不足",
+    "goal_not_found": "储蓄目标不存在",
+    "monthly_amount_required": "使用自动存款时必须填写monthlyAmount",
+    "not_member": "您不是该群组成员"
+  },
+  "success": {
+    "goal_deleted": "储蓄目标已删除",
+    "auto_deposit_paused": "自动存款已暂停",
+    "auto_deposit_resumed": "自动存款已恢复"
+  }
+}

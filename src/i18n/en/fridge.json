@@ -5,5 +5,10 @@
     "some_storages_not_found": "Some storages not found",
     "item_not_found": "Item not found",
     "frequent_item_not_found": "Frequent item not found"
+  },
+  "success": {
+    "storage_deleted": "Storage deleted",
+    "item_deleted": "Item deleted",
+    "frequent_item_deleted": "Frequent item deleted"
   }
 }

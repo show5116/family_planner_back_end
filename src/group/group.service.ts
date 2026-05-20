@@ -1,8 +1,9 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateGroupDto } from '@/group/dto/create-group.dto';
 import { UpdateGroupDto } from '@/group/dto/update-group.dto';
@@ -15,6 +16,7 @@ export class GroupService {
     private prisma: PrismaService,
     private groupInviteService: GroupInviteService,
     private storageService: StorageService,
+    private i18n: I18nService,
   ) {}
 
   /**
@@ -225,6 +227,10 @@ export class GroupService {
       where: { id: groupId },
     });
 
-    return { message: '그룹이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('group.success.group_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 }

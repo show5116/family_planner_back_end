@@ -1,5 +1,13 @@
 {
   "errors": {
-    "not_found": "Permission not found"
+    "not_found": "Permission not found",
+    "code_already_exists": "Permission code '{code}' already exists."
+  },
+  "success": {
+    "created": "Permission created.",
+    "updated": "Permission updated.",
+    "deactivated": "Permission deactivated.",
+    "deleted": "Permission permanently deleted.",
+    "order_updated": "Permission sort order updated."
   }
 }

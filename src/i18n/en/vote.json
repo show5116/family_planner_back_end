@@ -5,6 +5,10 @@
     "invalid_option": "Invalid option",
     "single_choice_only": "This is a single-choice vote",
     "closed_vote_cancel": "Cannot cancel a closed vote",
-    "group_member_only": "Only group members can access"
+    "group_member_only": "Only group members can access",
+    "author_or_admin_only": "Only the vote author or group admin can delete"
+  },
+  "success": {
+    "vote_deleted": "Vote deleted"
   }
 }

@@ -1,5 +1,10 @@
 {
   "errors": {
-    "history_not_found": "ゲーム履歴が見つかりません"
+    "history_not_found": "ゲーム履歴が見つかりません",
+    "author_or_admin_only": "本人またはグループ管理者のみ削除できます",
+    "not_member": "このグループのメンバーではありません"
+  },
+  "success": {
+    "deleted": "操作が完了しました"
   }
 }

@@ -7,6 +7,12 @@
     "resolved_question_no_edit": "解決済みの質問は編集できません",
     "own_question_only_delete": "自分が作成した質問のみ削除できます",
     "answer_not_found": "回答が見つかりません",
-    "no_permission": "アクセス権限がありません"
+    "no_permission": "アクセス権限がありません",
+    "own_question_only_resolve": "自分が作成した質問のみ解決済みにできます",
+    "answered_only_resolve": "回答済みの質問のみ解決済みにできます"
+  },
+  "success": {
+    "question_deleted": "質問を削除しました",
+    "question_resolved": "質問を解決済みにしました"
   }
 }

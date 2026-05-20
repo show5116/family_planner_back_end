@@ -10,6 +10,14 @@
     "savings_plan_exists": "すでに進行中の貯金プランがあります",
     "end_date_after_start": "終了日は開始日より後である必要があります",
     "no_active_savings_plan": "進行中の貯金プランがありません",
-    "no_permission": "子ども管理の権限がありません"
+    "no_permission": "子ども管理の権限がありません",
+    "rule_no_points": "ポイントのないルールは適用できません",
+    "not_member": "このグループのメンバーではありません"
+  },
+  "success": {
+    "shop_item_deleted": "ショップアイテムを削除しました",
+    "order_changed": "順序を変更しました",
+    "rule_deleted": "ルールを削除しました",
+    "savings_terminated": "貯金プランを途中解約しました。元本が残高に返還されました。"
   }
 }

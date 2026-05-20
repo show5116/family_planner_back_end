@@ -1,5 +1,10 @@
 {
   "errors": {
-    "history_not_found": "Game history not found"
+    "history_not_found": "Game history not found",
+    "author_or_admin_only": "Only the author or group admin can delete",
+    "not_member": "You are not a member of this group"
+  },
+  "success": {
+    "deleted": "Operation completed"
   }
 }

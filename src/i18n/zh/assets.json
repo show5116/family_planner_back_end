@@ -1,0 +1,31 @@
+{
+  "errors": {
+    "not_member": "您不是该群组成员",
+    "account_not_found": "账户不存在",
+    "own_account_only_update": "只能修改自己的账户",
+    "own_account_only_delete": "只能删除自己的账户",
+    "own_account_only_record": "只能向自己的账户添加记录",
+    "record_date_conflict": "该日期已存在记录",
+    "own_record_only_delete": "只能删除自己账户的记录",
+    "record_not_found": "记录不存在",
+    "own_account_only_add_stock": "只能向自己的账户添加股票",
+    "own_account_only_update_stock": "只能修改自己账户中的股票",
+    "stock_not_found": "股票不存在",
+    "own_account_only_delete_stock": "只能删除自己账户中的股票",
+    "own_account_only_reorder_stock": "只能对自己账户中的股票重新排序",
+    "stock_wrong_account": "部分股票不属于该账户",
+    "account_wrong_group": "部分账户不属于该群组",
+    "withdrawal_not_found": "出金记录不存在",
+    "own_withdrawal_only_add": "只能向自己的账户添加出金记录",
+    "own_withdrawal_only_delete": "只能删除自己账户的出金记录",
+    "gold_price_unavailable": "当前金价不可用，请稍后再试"
+  },
+  "success": {
+    "account_deleted": "账户已删除",
+    "account_order_changed": "账户顺序已更改",
+    "record_deleted": "记录已删除",
+    "stock_deleted": "股票已删除",
+    "stock_order_changed": "股票顺序已更改",
+    "withdrawal_deleted": "出金记录已删除"
+  }
+}

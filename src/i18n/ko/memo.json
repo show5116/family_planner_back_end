@@ -9,6 +9,16 @@
     "attachment_not_found": "첨부파일을 찾을 수 없습니다",
     "item_not_found": "항목을 찾을 수 없습니다",
     "no_access": "이 메모에 접근할 권한이 없습니다",
-    "no_group_access": "이 그룹에 접근할 권한이 없습니다"
+    "no_group_access": "이 그룹에 접근할 권한이 없습니다",
+    "checklist_min_one_item": "체크리스트 메모는 항목이 최소 1개 이상 필요합니다",
+    "checklist_only": "체크리스트 타입의 메모에만 항목을 추가할 수 있습니다"
+  },
+  "success": {
+    "memo_deleted": "메모가 삭제되었습니다",
+    "tag_deleted": "태그가 삭제되었습니다",
+    "attachment_deleted": "첨부파일이 삭제되었습니다",
+    "item_deleted": "항목이 삭제되었습니다",
+    "all_checked": "전체 체크가 완료되었습니다",
+    "all_unchecked": "전체 체크가 해제되었습니다"
   }
 }

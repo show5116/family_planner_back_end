@@ -1,4 +1,4 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -15,6 +15,7 @@ import {
   ChildcareEarningTypes,
   ChildcareTransactionTypeLabel,
 } from './constants/transaction-type.constant';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
@@ -35,6 +36,7 @@ export class ChildcareService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationQueue: NotificationQueueService,
+    private readonly i18n: I18nService,
   ) {}
 
   // ─── 자녀 프로필 ──────────────────────────────────────────
@@ -286,9 +288,7 @@ export class ChildcareService {
         throw new NotFoundException('childcare.errors.rule_not_found');
       }
       if (rule.type === ChildcareRuleType.INFO || !rule.points) {
-        throw new BadRequestException(
-          '포인트가 없는 규칙은 적용할 수 없습니다',
-        );
+        throw new BadRequestException('childcare.errors.rule_no_points');
       }
       type =
         rule.type === ChildcareRuleType.PLUS
@@ -478,7 +478,11 @@ export class ChildcareService {
 
     await this.prisma.childcareShopItem.delete({ where: { id: itemId } });
 
-    return { message: '상점 아이템이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('childcare.success.shop_item_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -525,7 +529,11 @@ export class ChildcareService {
       ),
     );
 
-    return { message: '순서가 변경되었습니다' };
+    return {
+      message: this.i18n.t('childcare.success.order_changed', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   // ─── 규칙 ─────────────────────────────────────────────────
@@ -605,7 +613,11 @@ export class ChildcareService {
 
     await this.prisma.childcareRule.delete({ where: { id: ruleId } });
 
-    return { message: '규칙이 삭제되었습니다' };
+    return {
+      message: this.i18n.t('childcare.success.rule_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -652,7 +664,11 @@ export class ChildcareService {
       ),
     );
 
-    return { message: '순서가 변경되었습니다' };
+    return {
+      message: this.i18n.t('childcare.success.order_changed', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   // ─── 적금 ─────────────────────────────────────────────────
@@ -690,7 +706,7 @@ export class ChildcareService {
           accountId,
           type: ChildcareTransactionType.SAVINGS_DEPOSIT,
           amount: dto.amount,
-          description: '적금 입금',
+          description: 'savings_deposit',
           createdBy: userId,
         },
       }),
@@ -734,7 +750,7 @@ export class ChildcareService {
           accountId,
           type: ChildcareTransactionType.SAVINGS_WITHDRAW,
           amount: dto.amount,
-          description: '적금 출금',
+          description: 'savings_withdrawal',
           createdBy: userId,
         },
       }),
@@ -861,7 +877,7 @@ export class ChildcareService {
           accountId,
           type: ChildcareTransactionType.SAVINGS_WITHDRAW,
           amount: principal,
-          description: '적금 중도 해지 (원금 반환)',
+          description: 'savings_terminated',
           createdBy: userId,
         },
       }),
@@ -882,7 +898,9 @@ export class ChildcareService {
     ]);
 
     return {
-      message: '적금이 중도 해지되었습니다. 원금이 잔액으로 반환되었습니다.',
+      message: this.i18n.t('childcare.success.savings_terminated', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
     };
   }
 
@@ -934,7 +952,7 @@ export class ChildcareService {
     });
 
     if (!member) {
-      throw new ForbiddenException('해당 그룹의 멤버가 아닙니다');
+      throw new ForbiddenException('childcare.errors.not_member');
     }
   }
 
@@ -948,7 +966,7 @@ export class ChildcareService {
     });
 
     if (!member) {
-      throw new ForbiddenException('해당 그룹의 멤버가 아닙니다');
+      throw new ForbiddenException('childcare.errors.not_member');
     }
 
     const permissions = member.role.permissions as PermissionCode[];

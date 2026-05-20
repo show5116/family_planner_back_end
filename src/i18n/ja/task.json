@@ -11,6 +11,17 @@
     "task_update_failed": "Taskの更新に失敗しました",
     "participants_must_be_members": "参加者はグループメンバーのみ指定できます",
     "recurring_not_found": "繰り返しルールが見つかりません",
-    "holiday_fetch_failed": "祝日情報の取得に失敗しました"
+    "holiday_fetch_failed": "祝日情報の取得に失敗しました",
+    "participants_group_only": "参加者はグループTaskにのみ指定できます",
+    "recurring_update_scope_required": "繰り返しTaskはupdateScopeを指定する必要があります（currentまたはfuture）",
+    "recurring_delete_scope_required": "繰り返しTaskはdeleteScopeを指定する必要があります（current、future、またはall）",
+    "own_recurring_only_update": "自分が作成した繰り返しルールのみ変更できます",
+    "own_recurring_only_skip": "自分が作成した繰り返しルールのみスキップできます",
+    "category_group_member_only": "グループメンバーのみカテゴリを作成できます",
+    "category_group_member_only_edit": "グループメンバーのみカテゴリを編集/削除できます",
+    "category_own_only_edit": "自分が作成したカテゴリのみ編集/削除できます"
+  },
+  "success": {
+    "category_deleted": "カテゴリを削除しました"
   }
 }

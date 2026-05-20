@@ -1,15 +1,19 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   ForbiddenException,
   ConflictException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @Injectable()
 export class CategoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private i18n: I18nService,
+  ) {}
 
   /**
    * 카테고리 목록 조회
@@ -42,9 +46,7 @@ export class CategoryService {
     if (dto.groupId) {
       const isMember = await this.checkGroupMember(userId, dto.groupId);
       if (!isMember) {
-        throw new ForbiddenException(
-          '그룹 멤버만 카테고리를 생성할 수 있습니다',
-        );
+        throw new ForbiddenException('task.errors.category_group_member_only');
       }
     }
 
@@ -133,7 +135,11 @@ export class CategoryService {
       where: { id: categoryId },
     });
 
-    return { message: '카테고리가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('task.success.category_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -157,14 +163,12 @@ export class CategoryService {
         return;
       }
       throw new ForbiddenException(
-        '그룹 멤버만 카테고리를 수정/삭제할 수 있습니다',
+        'task.errors.category_group_member_only_edit',
       );
     }
 
     // 개인 카테고리인데 작성자가 아닌 경우
-    throw new ForbiddenException(
-      '본인이 작성한 카테고리만 수정/삭제할 수 있습니다',
-    );
+    throw new ForbiddenException('task.errors.category_own_only_edit');
   }
 
   /**
