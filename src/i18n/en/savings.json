@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "no_auto_deposit": "Auto deposit is not configured for this goal",
+    "already_paused": "Already paused",
+    "already_active": "Already active",
+    "insufficient_balance": "Insufficient balance",
+    "goal_not_found": "Savings goal not found"
+  }
+}

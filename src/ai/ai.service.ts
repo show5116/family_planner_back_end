@@ -51,7 +51,7 @@ export class AiService {
       this.logger.error(
         `AI 서비스 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
       );
-      throw new BadGatewayException('AI 서비스 호출에 실패했습니다');
+      throw new BadGatewayException('ai.errors.call_failed');
     }
   }
 }

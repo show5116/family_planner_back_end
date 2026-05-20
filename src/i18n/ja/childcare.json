@@ -1,0 +1,15 @@
+{
+  "errors": {
+    "child_not_found": "子どものプロフィールが見つかりません",
+    "app_account_already_linked": "すでに連携済みのアプリアカウントがあります",
+    "point_account_not_found": "ポイントアカウントが見つかりません",
+    "shop_item_not_found": "ショップアイテムが見つかりません",
+    "rule_not_found": "ルールが見つかりません",
+    "insufficient_points": "ポイント残高が不足しています",
+    "insufficient_savings": "貯金残高が不足しています",
+    "savings_plan_exists": "すでに進行中の貯金プランがあります",
+    "end_date_after_start": "終了日は開始日より後である必要があります",
+    "no_active_savings_plan": "進行中の貯金プランがありません",
+    "no_permission": "子ども管理の権限がありません"
+  }
+}

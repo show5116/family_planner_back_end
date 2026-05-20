@@ -1,0 +1,8 @@
+{
+  "errors": {
+    "no_access": "このグループへのアクセス権限がありません",
+    "role_not_found": "ロールが見つかりません",
+    "cannot_delete_owner": "OWNERロールは削除できません",
+    "role_wrong_group": "このロールはこのグループに属していません"
+  }
+}

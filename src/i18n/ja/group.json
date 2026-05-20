@@ -1,0 +1,26 @@
+{
+  "errors": {
+    "group_not_found": "グループが見つかりません",
+    "no_access": "このグループへのアクセス権限がありません",
+    "not_member": "このグループのメンバーではありません",
+    "member_not_found": "グループメンバーが見つかりません",
+    "no_auth_or_group_id": "認証情報またはグループIDがありません",
+    "invalid_invite_code": "無効な招待コードです",
+    "expired_invite_code": "招待コードの有効期限が切れています",
+    "already_member": "すでにこのグループのメンバーです",
+    "already_member_short": "すでにグループメンバーです",
+    "pending_join_request": "参加申請がすでに保留中です",
+    "join_request_not_found": "参加申請が見つかりません",
+    "join_request_wrong_group": "このグループの参加申請ではありません",
+    "request_already_processed": "すでに処理済みの申請です",
+    "user_not_found_by_email": "このメールアドレスで登録されたユーザーが見つかりません",
+    "inviter_not_found": "招待者が見つかりません",
+    "invite_not_found": "招待申請が見つかりません",
+    "only_invite_cancelable": "INVITEタイプの申請のみキャンセルできます",
+    "only_pending_cancelable": "保留中の招待のみキャンセルできます",
+    "only_pending_resendable": "保留中の招待のみ再送できます",
+    "cannot_change_own_role": "自分のロールは変更できません",
+    "role_not_found": "ロールが見つかりません",
+    "cannot_remove_owner": "OWNERは削除できません"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "errors": {
+    "group_member_only_view": "グループメンバーのみ閲覧できます",
+    "group_member_only_create": "グループメンバーのみTaskを作成できます",
+    "group_member_only": "グループメンバーのみアクセスできます",
+    "task_not_found": "Taskが見つかりません",
+    "own_task_only_view": "自分のTaskのみ閲覧できます",
+    "own_task_only_delete": "自分が作成したTaskのみ削除できます",
+    "category_not_found": "カテゴリが見つかりません",
+    "task_create_failed": "Taskの作成に失敗しました",
+    "task_update_failed": "Taskの更新に失敗しました",
+    "participants_must_be_members": "参加者はグループメンバーのみ指定できます",
+    "recurring_not_found": "繰り返しルールが見つかりません",
+    "holiday_fetch_failed": "祝日情報の取得に失敗しました"
+  }
+}

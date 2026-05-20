@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "group_member_only": "Only group members can access",
+    "storage_not_found": "Storage not found",
+    "some_storages_not_found": "Some storages not found",
+    "item_not_found": "Item not found",
+    "frequent_item_not_found": "Frequent item not found"
+  }
+}

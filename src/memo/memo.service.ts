@@ -33,13 +33,13 @@ export class MemoService {
       }
     } else {
       if (!dto.content?.trim()) {
-        throw new BadRequestException('일반 메모는 본문이 필요합니다');
+        throw new BadRequestException('memo.errors.body_required');
       }
     }
 
     if (dto.visibility === MemoVisibility.GROUP) {
       if (!dto.groupId) {
-        throw new BadRequestException('그룹 메모는 그룹 ID가 필요합니다');
+        throw new BadRequestException('memo.errors.group_id_required');
       }
       await this.validateGroupMembership(userId, dto.groupId);
     }
@@ -176,7 +176,7 @@ export class MemoService {
     });
 
     if (!memo) {
-      throw new NotFoundException('메모를 찾을 수 없습니다');
+      throw new NotFoundException('memo.errors.memo_not_found');
     }
 
     await this.validateReadAccess(userId, memo);
@@ -193,17 +193,17 @@ export class MemoService {
     });
 
     if (!memo) {
-      throw new NotFoundException('메모를 찾을 수 없습니다');
+      throw new NotFoundException('memo.errors.memo_not_found');
     }
 
     if (memo.userId !== userId) {
-      throw new ForbiddenException('본인의 메모만 수정할 수 있습니다');
+      throw new ForbiddenException('memo.errors.own_memo_only_update');
     }
 
     if (dto.visibility === MemoVisibility.GROUP) {
       const groupId = dto.groupId || memo.groupId;
       if (!groupId) {
-        throw new BadRequestException('그룹 메모는 그룹 ID가 필요합니다');
+        throw new BadRequestException('memo.errors.group_id_required');
       }
       await this.validateGroupMembership(userId, groupId);
     }
@@ -252,11 +252,11 @@ export class MemoService {
     });
 
     if (!memo) {
-      throw new NotFoundException('메모를 찾을 수 없습니다');
+      throw new NotFoundException('memo.errors.memo_not_found');
     }
 
     if (memo.userId !== userId) {
-      throw new ForbiddenException('본인의 메모만 삭제할 수 있습니다');
+      throw new ForbiddenException('memo.errors.own_memo_only_delete');
     }
 
     await this.prisma.memo.update({
@@ -390,7 +390,7 @@ export class MemoService {
     });
 
     if (!tag) {
-      throw new NotFoundException('태그를 찾을 수 없습니다');
+      throw new NotFoundException('memo.errors.tag_not_found');
     }
 
     await this.prisma.memoTag.delete({ where: { id: tagId } });
@@ -430,7 +430,7 @@ export class MemoService {
     });
 
     if (!attachment) {
-      throw new NotFoundException('첨부파일을 찾을 수 없습니다');
+      throw new NotFoundException('memo.errors.attachment_not_found');
     }
 
     await this.prisma.memoAttachment.delete({ where: { id: attachmentId } });
@@ -536,7 +536,7 @@ export class MemoService {
     });
 
     if (!item) {
-      throw new NotFoundException('항목을 찾을 수 없습니다');
+      throw new NotFoundException('memo.errors.item_not_found');
     }
 
     return item;
@@ -551,11 +551,11 @@ export class MemoService {
     });
 
     if (!memo) {
-      throw new NotFoundException('메모를 찾을 수 없습니다');
+      throw new NotFoundException('memo.errors.memo_not_found');
     }
 
     if (memo.userId !== userId) {
-      throw new ForbiddenException('본인의 메모만 수정할 수 있습니다');
+      throw new ForbiddenException('memo.errors.own_memo_only_update');
     }
 
     return memo;
@@ -566,7 +566,7 @@ export class MemoService {
    */
   private async validateReadAccess(userId: string, memo: any) {
     if (memo.visibility === MemoVisibility.PRIVATE && memo.userId !== userId) {
-      throw new ForbiddenException('이 메모에 접근할 권한이 없습니다');
+      throw new ForbiddenException('memo.errors.no_access');
     }
 
     if (memo.visibility === MemoVisibility.GROUP && memo.groupId) {
@@ -583,7 +583,7 @@ export class MemoService {
     });
 
     if (!member) {
-      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다');
+      throw new ForbiddenException('memo.errors.no_group_access');
     }
   }
 

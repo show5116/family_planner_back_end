@@ -135,7 +135,7 @@ export class GroupMemberService {
     });
 
     if (!member) {
-      throw new NotFoundException('그룹 멤버를 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.member_not_found');
     }
 
     // OWNER는 나갈 수 없음
@@ -163,7 +163,7 @@ export class GroupMemberService {
   ) {
     // 자기 자신의 역할은 변경할 수 없음
     if (userId === targetUserId) {
-      throw new BadRequestException('자신의 역할은 변경할 수 없습니다');
+      throw new BadRequestException('group.errors.cannot_change_own_role');
     }
 
     const member = await this.prisma.groupMember.findUnique({
@@ -179,7 +179,7 @@ export class GroupMemberService {
     });
 
     if (!member) {
-      throw new NotFoundException('그룹 멤버를 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.member_not_found');
     }
 
     // OWNER 역할은 양도만 가능 (변경 불가)
@@ -195,7 +195,7 @@ export class GroupMemberService {
     });
 
     if (!newRole) {
-      throw new NotFoundException('역할을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.role_not_found');
     }
 
     // OWNER 역할로는 변경할 수 없음
@@ -252,12 +252,12 @@ export class GroupMemberService {
     });
 
     if (!targetMember) {
-      throw new NotFoundException('그룹 멤버를 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.member_not_found');
     }
 
     // OWNER는 삭제할 수 없음
     if (targetMember.role.name === 'OWNER') {
-      throw new BadRequestException('OWNER는 삭제할 수 없습니다');
+      throw new BadRequestException('group.errors.cannot_remove_owner');
     }
 
     await this.prisma.groupMember.delete({
@@ -317,7 +317,7 @@ export class GroupMemberService {
     });
 
     if (!currentOwnerMember) {
-      throw new BadRequestException('이 그룹에 접근할 권한이 없습니다');
+      throw new BadRequestException('group.errors.no_access');
     }
 
     if (currentOwnerMember.role.name !== 'OWNER') {

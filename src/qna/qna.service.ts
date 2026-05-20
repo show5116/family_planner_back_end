@@ -35,20 +35,20 @@ export class QnaService {
     // filter='all'은 ADMIN 전용 - DB에서 권한 확인
     if (filter === 'all') {
       if (!userId) {
-        throw new ForbiddenException('관리자만 모든 질문을 조회할 수 있습니다');
+        throw new ForbiddenException('qna.errors.admin_only');
       }
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
         select: { isAdmin: true },
       });
       if (!user?.isAdmin) {
-        throw new ForbiddenException('관리자만 모든 질문을 조회할 수 있습니다');
+        throw new ForbiddenException('qna.errors.admin_only');
       }
     }
 
     // filter='my'일 때 userId 필수
     if (filter === 'my' && !userId) {
-      throw new BadRequestException('내 질문 조회는 로그인이 필요합니다');
+      throw new BadRequestException('qna.errors.login_required');
     }
 
     // WHERE 조건 구성
@@ -300,7 +300,7 @@ export class QnaService {
     });
 
     if (!question) {
-      throw new NotFoundException('질문을 찾을 수 없습니다');
+      throw new NotFoundException('qna.errors.question_not_found');
     }
 
     return question;
@@ -360,16 +360,16 @@ export class QnaService {
     });
 
     if (!question) {
-      throw new NotFoundException('질문을 찾을 수 없습니다');
+      throw new NotFoundException('qna.errors.question_not_found');
     }
 
     if (question.userId !== userId) {
-      throw new ForbiddenException('본인 작성 질문만 수정할 수 있습니다');
+      throw new ForbiddenException('qna.errors.own_question_only_update');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     if (question.status === QuestionStatus.RESOLVED) {
-      throw new BadRequestException('해결 완료된 질문은 수정할 수 없습니다');
+      throw new BadRequestException('qna.errors.resolved_question_no_edit');
     }
 
     // ANSWERED 상태에서 수정 시 PENDING으로 변경 (재질문)
@@ -398,11 +398,11 @@ export class QnaService {
     });
 
     if (!question) {
-      throw new NotFoundException('질문을 찾을 수 없습니다');
+      throw new NotFoundException('qna.errors.question_not_found');
     }
 
     if (question.userId !== userId) {
-      throw new ForbiddenException('본인 작성 질문만 삭제할 수 있습니다');
+      throw new ForbiddenException('qna.errors.own_question_only_delete');
     }
 
     await this.prisma.question.update({
@@ -422,7 +422,7 @@ export class QnaService {
     });
 
     if (!question) {
-      throw new NotFoundException('질문을 찾을 수 없습니다');
+      throw new NotFoundException('qna.errors.question_not_found');
     }
 
     if (question.userId !== userId) {
@@ -464,7 +464,7 @@ export class QnaService {
     });
 
     if (!question) {
-      throw new NotFoundException('질문을 찾을 수 없습니다');
+      throw new NotFoundException('qna.errors.question_not_found');
     }
 
     // 트랜잭션: 답변 생성 + 질문 상태 변경
@@ -505,7 +505,7 @@ export class QnaService {
     });
 
     if (!answer) {
-      throw new NotFoundException('답변을 찾을 수 없습니다');
+      throw new NotFoundException('qna.errors.answer_not_found');
     }
 
     return this.prisma.answer.update({
@@ -526,7 +526,7 @@ export class QnaService {
     });
 
     if (!answer) {
-      throw new NotFoundException('답변을 찾을 수 없습니다');
+      throw new NotFoundException('qna.errors.answer_not_found');
     }
 
     await this.prisma.answer.update({

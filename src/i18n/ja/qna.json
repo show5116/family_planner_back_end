@@ -1,0 +1,12 @@
+{
+  "errors": {
+    "admin_only": "管理者のみすべての質問を閲覧できます",
+    "login_required": "自分の質問を閲覧するにはログインが必要です",
+    "question_not_found": "質問が見つかりません",
+    "own_question_only_update": "自分が作成した質問のみ更新できます",
+    "resolved_question_no_edit": "解決済みの質問は編集できません",
+    "own_question_only_delete": "自分が作成した質問のみ削除できます",
+    "answer_not_found": "回答が見つかりません",
+    "no_permission": "アクセス権限がありません"
+  }
+}

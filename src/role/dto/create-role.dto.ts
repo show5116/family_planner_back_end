@@ -60,7 +60,7 @@ export class CreateRoleDto {
   @IsOptional()
   @IsString()
   @Matches(/^#[0-9A-Fa-f]{6}$/, {
-    message: '색상은 HEX 형식이어야 합니다 (예: #6366F1)',
+    message: 'validation.hex_color_role',
   })
   color?: string;
 

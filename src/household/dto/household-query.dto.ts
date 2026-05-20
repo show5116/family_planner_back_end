@@ -29,7 +29,7 @@ export class YearlyStatisticsQueryDto {
 
   @ApiProperty({ description: '조회 연도 (YYYY)', example: '2026' })
   @IsString()
-  @Matches(/^\d{4}$/, { message: '연도 형식은 YYYY이어야 합니다' })
+  @Matches(/^\d{4}$/, { message: 'validation.year_format' })
   year: string;
 }
 

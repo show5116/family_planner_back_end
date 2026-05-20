@@ -34,9 +34,9 @@ export class UpdateProfileDto {
   })
   @IsOptional()
   @IsString()
-  @MinLength(8, { message: '비밀번호는 최소 8자 이상이어야 합니다' })
+  @MinLength(8, { message: 'validation.password_min_8' })
   @Matches(/^(?=.*[A-Za-z])(?=.*\d)/, {
-    message: '비밀번호는 영문과 숫자를 포함해야 합니다',
+    message: 'validation.password_complexity',
   })
   newPassword?: string;
 
@@ -49,7 +49,7 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   @Matches(/^#[0-9A-Fa-f]{6}$/, {
-    message: '유효한 HEX 색상 코드를 입력해주세요 (예: #FF5733)',
+    message: 'validation.hex_color',
   })
   personalColor?: string;
 }

@@ -88,13 +88,15 @@ export class ChildcareService {
     });
 
     if (!child) {
-      throw new NotFoundException('자녀 프로필을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.child_not_found');
     }
 
     await this.validateChildcarePermission(userId, child.groupId);
 
     if (child.userId) {
-      throw new ConflictException('이미 연동된 앱 계정이 있습니다');
+      throw new ConflictException(
+        'childcare.errors.app_account_already_linked',
+      );
     }
 
     await this.validateGroupMember(targetUserId, child.groupId);
@@ -129,7 +131,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -153,7 +155,7 @@ export class ChildcareService {
     });
 
     if (!child) {
-      throw new NotFoundException('자녀 프로필을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.child_not_found');
     }
 
     await this.validateChildcarePermission(userId, child.groupId);
@@ -205,7 +207,7 @@ export class ChildcareService {
     });
 
     if (!child) {
-      throw new NotFoundException('자녀 프로필을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.child_not_found');
     }
 
     await this.validateGroupMember(userId, child.groupId);
@@ -225,7 +227,7 @@ export class ChildcareService {
     });
 
     if (!child) {
-      throw new NotFoundException('자녀 프로필을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.child_not_found');
     }
 
     await this.validateGroupMember(userId, child.groupId);
@@ -256,7 +258,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermission(userId, account.groupId);
@@ -271,7 +273,7 @@ export class ChildcareService {
         where: { id: dto.shopItemId },
       });
       if (!item || item.accountId !== accountId) {
-        throw new NotFoundException('상점 아이템을 찾을 수 없습니다');
+        throw new NotFoundException('childcare.errors.shop_item_not_found');
       }
       type = ChildcareTransactionType.PURCHASE;
       amount = item.points;
@@ -281,7 +283,7 @@ export class ChildcareService {
         where: { id: dto.ruleId },
       });
       if (!rule || rule.accountId !== accountId) {
-        throw new NotFoundException('규칙을 찾을 수 없습니다');
+        throw new NotFoundException('childcare.errors.rule_not_found');
       }
       if (rule.type === ChildcareRuleType.INFO || !rule.points) {
         throw new BadRequestException(
@@ -305,7 +307,7 @@ export class ChildcareService {
     const delta = this.calculateBalanceDelta(type, amount);
 
     if (account.balance + delta < 0) {
-      throw new BadRequestException('포인트 잔액이 부족합니다');
+      throw new BadRequestException('childcare.errors.insufficient_points');
     }
 
     const [transaction] = await this.prisma.$transaction([
@@ -350,7 +352,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -413,7 +415,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermission(userId, account.groupId);
@@ -443,7 +445,7 @@ export class ChildcareService {
     });
 
     if (!item || item.accountId !== accountId) {
-      throw new NotFoundException('상점 아이템을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.shop_item_not_found');
     }
 
     await this.validateChildcarePermission(userId, item.account.groupId);
@@ -469,7 +471,7 @@ export class ChildcareService {
     });
 
     if (!item || item.accountId !== accountId) {
-      throw new NotFoundException('상점 아이템을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.shop_item_not_found');
     }
 
     await this.validateChildcarePermission(userId, item.account.groupId);
@@ -489,7 +491,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -509,7 +511,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermission(userId, account.groupId);
@@ -537,7 +539,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermission(userId, account.groupId);
@@ -569,7 +571,7 @@ export class ChildcareService {
     });
 
     if (!rule || rule.accountId !== accountId) {
-      throw new NotFoundException('규칙을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.rule_not_found');
     }
 
     await this.validateChildcarePermission(userId, rule.account.groupId);
@@ -596,7 +598,7 @@ export class ChildcareService {
     });
 
     if (!rule || rule.accountId !== accountId) {
-      throw new NotFoundException('규칙을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.rule_not_found');
     }
 
     await this.validateChildcarePermission(userId, rule.account.groupId);
@@ -616,7 +618,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -636,7 +638,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermission(userId, account.groupId);
@@ -669,7 +671,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermissionOrLinkedChild(
@@ -679,7 +681,7 @@ export class ChildcareService {
     );
 
     if (account.balance < dto.amount) {
-      throw new BadRequestException('포인트 잔액이 부족합니다');
+      throw new BadRequestException('childcare.errors.insufficient_points');
     }
 
     const [transaction] = await this.prisma.$transaction([
@@ -717,13 +719,13 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermission(userId, account.groupId);
 
     if (account.savingsBalance < dto.amount) {
-      throw new BadRequestException('적금 잔액이 부족합니다');
+      throw new BadRequestException('childcare.errors.insufficient_savings');
     }
 
     const [transaction] = await this.prisma.$transaction([
@@ -784,20 +786,20 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermission(userId, account.groupId);
 
     if (account.savingsPlan) {
-      throw new ConflictException('이미 진행 중인 적금 플랜이 있습니다');
+      throw new ConflictException('childcare.errors.savings_plan_exists');
     }
 
     const startDate = new Date(dto.startDate);
     const endDate = new Date(dto.endDate);
 
     if (endDate <= startDate) {
-      throw new BadRequestException('만기일은 시작일보다 이후여야 합니다');
+      throw new BadRequestException('childcare.errors.end_date_after_start');
     }
 
     return await this.prisma.childcareSavingsPlan.create({
@@ -822,7 +824,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -840,7 +842,7 @@ export class ChildcareService {
     });
 
     if (!account) {
-      throw new NotFoundException('포인트 계정을 찾을 수 없습니다');
+      throw new NotFoundException('childcare.errors.point_account_not_found');
     }
 
     await this.validateChildcarePermission(userId, account.groupId);
@@ -848,7 +850,7 @@ export class ChildcareService {
     const plan = account.savingsPlan;
 
     if (!plan || plan.status !== SavingsPlanStatus.ACTIVE) {
-      throw new BadRequestException('진행 중인 적금 플랜이 없습니다');
+      throw new BadRequestException('childcare.errors.no_active_savings_plan');
     }
 
     const principal = account.savingsBalance;
@@ -951,7 +953,7 @@ export class ChildcareService {
 
     const permissions = member.role.permissions as PermissionCode[];
     if (!permissions.includes(PermissionCode.MANAGE_CHILDCARE)) {
-      throw new ForbiddenException('자녀 관리 권한이 없습니다');
+      throw new ForbiddenException('childcare.errors.no_permission');
     }
   }
 

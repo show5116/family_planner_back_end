@@ -20,7 +20,7 @@ export class CategoryService {
     if (groupId) {
       const isMember = await this.checkGroupMember(userId, groupId);
       if (!isMember) {
-        throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
+        throw new ForbiddenException('task.errors.group_member_only_view');
       }
 
       return await this.prisma.category.findMany({
@@ -75,7 +75,7 @@ export class CategoryService {
     });
 
     if (!category) {
-      throw new NotFoundException('카테고리를 찾을 수 없습니다');
+      throw new NotFoundException('task.errors.category_not_found');
     }
 
     // 권한 체크: 작성자 본인 또는 그룹 멤버
@@ -116,7 +116,7 @@ export class CategoryService {
     });
 
     if (!category) {
-      throw new NotFoundException('카테고리를 찾을 수 없습니다');
+      throw new NotFoundException('task.errors.category_not_found');
     }
 
     // 권한 체크: 작성자 본인 또는 그룹 멤버

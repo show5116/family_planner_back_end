@@ -69,11 +69,11 @@ export class StorageController {
     @Query('type') type: 'qna' | 'announcements',
   ) {
     if (!file) {
-      throw new BadRequestException('파일이 필요합니다');
+      throw new BadRequestException('common.errors.file_required');
     }
 
     if (!['qna', 'announcements'].includes(type)) {
-      throw new BadRequestException('유효하지 않은 타입입니다');
+      throw new BadRequestException('common.errors.invalid_type');
     }
 
     return this.storageService.uploadEditorImage(file, type);

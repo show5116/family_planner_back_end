@@ -130,10 +130,10 @@ export class SavingsService {
     await this.validateGroupMember(userId, goal.groupId);
 
     if (!goal.autoDeposit) {
-      throw new BadRequestException('자동 적립이 설정되지 않은 목표입니다');
+      throw new BadRequestException('savings.errors.no_auto_deposit');
     }
     if (goal.status === SavingsGoalStatus.PAUSED) {
-      throw new BadRequestException('이미 일시 중지 상태입니다');
+      throw new BadRequestException('savings.errors.already_paused');
     }
 
     await this.prisma.savingsGoal.update({
@@ -151,10 +151,10 @@ export class SavingsService {
     await this.validateGroupMember(userId, goal.groupId);
 
     if (!goal.autoDeposit) {
-      throw new BadRequestException('자동 적립이 설정되지 않은 목표입니다');
+      throw new BadRequestException('savings.errors.no_auto_deposit');
     }
     if (goal.status === SavingsGoalStatus.ACTIVE) {
-      throw new BadRequestException('이미 활성 상태입니다');
+      throw new BadRequestException('savings.errors.already_active');
     }
 
     await this.prisma.savingsGoal.update({
@@ -209,7 +209,7 @@ export class SavingsService {
     await this.validateGroupMember(userId, goal.groupId);
 
     if (Number(goal.currentAmount) < dto.amount) {
-      throw new BadRequestException('잔액이 부족합니다');
+      throw new BadRequestException('savings.errors.insufficient_balance');
     }
 
     const [transaction] = await this.prisma.$transaction([
@@ -264,7 +264,7 @@ export class SavingsService {
 
   private async getGoalOrThrow(id: string) {
     const goal = await this.prisma.savingsGoal.findUnique({ where: { id } });
-    if (!goal) throw new NotFoundException('적립 목표를 찾을 수 없습니다');
+    if (!goal) throw new NotFoundException('savings.errors.goal_not_found');
     return goal;
   }
 

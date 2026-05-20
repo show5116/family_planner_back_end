@@ -1,0 +1,19 @@
+{
+  "email_invalid": "有効なメールアドレスを入力してください",
+  "email_required": "メールアドレスを入力してください",
+  "email_required_short": "メールアドレスは必須です",
+  "code_length": "認証コードは6桁である必要があります",
+  "code_numeric": "認証コードは6桁の数字である必要があります",
+  "code_required": "認証コードを入力してください",
+  "password_required": "新しいパスワードを入力してください",
+  "password_min_6": "パスワードは6文字以上である必要があります",
+  "password_min_8": "パスワードは8文字以上である必要があります",
+  "password_complexity": "パスワードは英字と数字を含む必要があります",
+  "hex_color": "有効なHEXカラーコードを入力してください (例: #FF5733)",
+  "hex_color_alt": "有効なHEXカラーコードを入力してください (例: #6366F1)",
+  "hex_color_role": "カラーはHEX形式である必要があります (例: #6366F1)",
+  "group_name_max": "グループ名は最大100文字までです",
+  "month_format": "月の形式はYYYY-MMである必要があります",
+  "year_format": "年の形式はYYYYである必要があります",
+  "date_format": "日付の形式はYYYY-MM-DDである必要があります"
+}

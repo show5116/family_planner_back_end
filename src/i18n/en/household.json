@@ -1,0 +1,12 @@
+{
+  "errors": {
+    "expense_not_found": "Expense record not found",
+    "own_expense_only_view": "You can only view your own expenses",
+    "own_expense_only_update": "You can only update your own expenses",
+    "own_expense_only_delete": "You can only delete your own expenses",
+    "receipt_not_found": "Receipt not found",
+    "budget_template_not_found": "Budget template not found",
+    "total_budget_template_not_found": "Total budget template not found",
+    "not_member": "You are not a member of this group"
+  }
+}

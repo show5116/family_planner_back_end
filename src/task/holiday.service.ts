@@ -96,7 +96,7 @@ export class HolidayService {
       const header = data.response.header;
       if (header.resultCode !== '00') {
         this.logger.error(`공휴일 API 오류: ${header.resultMsg}`);
-        throw new BadGatewayException('공휴일 정보를 가져오는데 실패했습니다');
+        throw new BadGatewayException('task.errors.holiday_fetch_failed');
       }
 
       const body = data.response.body;
@@ -140,7 +140,7 @@ export class HolidayService {
       this.logger.error(
         `공휴일 API 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
       );
-      throw new BadGatewayException('공휴일 정보를 가져오는데 실패했습니다');
+      throw new BadGatewayException('task.errors.holiday_fetch_failed');
     }
   }
 }

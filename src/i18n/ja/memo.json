@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "body_required": "通常のメモには本文が必要です",
+    "group_id_required": "グループメモにはグループIDが必要です",
+    "memo_not_found": "メモが見つかりません",
+    "own_memo_only_update": "自分のメモのみ更新できます",
+    "own_memo_only_delete": "自分のメモのみ削除できます",
+    "tag_not_found": "タグが見つかりません",
+    "attachment_not_found": "添付ファイルが見つかりません",
+    "item_not_found": "項目が見つかりません",
+    "no_access": "このメモへのアクセス権限がありません",
+    "no_group_access": "このグループへのアクセス権限がありません"
+  }
+}

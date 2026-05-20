@@ -1,0 +1,19 @@
+{
+  "email_invalid": "Please enter a valid email address",
+  "email_required": "Please enter your email",
+  "email_required_short": "Email is required",
+  "code_length": "Verification code must be 6 digits",
+  "code_numeric": "Verification code must be a 6-digit number",
+  "code_required": "Please enter the verification code",
+  "password_required": "Please enter a new password",
+  "password_min_6": "Password must be at least 6 characters",
+  "password_min_8": "Password must be at least 8 characters",
+  "password_complexity": "Password must contain letters and numbers",
+  "hex_color": "Please enter a valid HEX color code (e.g. #FF5733)",
+  "hex_color_alt": "Please enter a valid HEX color code (e.g. #6366F1)",
+  "hex_color_role": "Color must be in HEX format (e.g. #6366F1)",
+  "group_name_max": "Group name can be up to 100 characters",
+  "month_format": "Month format must be YYYY-MM",
+  "year_format": "Year format must be YYYY",
+  "date_format": "Date format must be YYYY-MM-DD"
+}

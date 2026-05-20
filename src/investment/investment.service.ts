@@ -287,7 +287,7 @@ export class InvestmentService implements OnModuleInit {
     });
 
     if (!ind) {
-      throw new NotFoundException('지표를 찾을 수 없습니다');
+      throw new NotFoundException('investment.errors.indicator_not_found');
     }
 
     let spread: string | null = null;
@@ -329,7 +329,7 @@ export class InvestmentService implements OnModuleInit {
     const ind = await this.prisma.indicator.findUnique({ where: { symbol } });
 
     if (!ind) {
-      throw new NotFoundException('지표를 찾을 수 없습니다');
+      throw new NotFoundException('investment.errors.indicator_not_found');
     }
 
     // Yahoo 지원 심볼은 days 무관하게 chart() 우선 사용 (실시간 수집 누락 보완)
@@ -701,7 +701,7 @@ export class InvestmentService implements OnModuleInit {
     const ind = await this.prisma.indicator.findUnique({ where: { symbol } });
 
     if (!ind) {
-      throw new NotFoundException('지표를 찾을 수 없습니다');
+      throw new NotFoundException('investment.errors.indicator_not_found');
     }
 
     const existing = await this.prisma.indicatorBookmark.findUnique({
@@ -709,7 +709,7 @@ export class InvestmentService implements OnModuleInit {
     });
 
     if (existing) {
-      throw new ConflictException('이미 즐겨찾기에 등록된 지표입니다');
+      throw new ConflictException('investment.errors.already_favorited');
     }
 
     const maxOrder = await this.prisma.indicatorBookmark.aggregate({
@@ -732,7 +732,7 @@ export class InvestmentService implements OnModuleInit {
     const ind = await this.prisma.indicator.findUnique({ where: { symbol } });
 
     if (!ind) {
-      throw new NotFoundException('지표를 찾을 수 없습니다');
+      throw new NotFoundException('investment.errors.indicator_not_found');
     }
 
     const existing = await this.prisma.indicatorBookmark.findUnique({
@@ -740,7 +740,7 @@ export class InvestmentService implements OnModuleInit {
     });
 
     if (!existing) {
-      throw new NotFoundException('즐겨찾기에 등록되지 않은 지표입니다');
+      throw new NotFoundException('investment.errors.not_favorited');
     }
 
     await this.prisma.indicatorBookmark.delete({

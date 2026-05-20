@@ -1,0 +1,17 @@
+{
+  "errors": {
+    "not_member": "このグループのメンバーではありません",
+    "account_not_found": "口座が見つかりません",
+    "own_account_only_update": "自分の口座のみ更新できます",
+    "own_account_only_delete": "自分の口座のみ削除できます",
+    "own_account_only_record": "自分の口座にのみ記録を追加できます",
+    "record_date_conflict": "この日付にすでに記録が存在します",
+    "own_record_only_delete": "自分の口座記録のみ削除できます",
+    "record_not_found": "記録が見つかりません",
+    "own_account_only_add_stock": "自分の口座にのみ銘柄を追加できます",
+    "own_account_only_update_stock": "自分の口座の銘柄のみ更新できます",
+    "stock_not_found": "銘柄が見つかりません",
+    "own_account_only_delete_stock": "自分の口座の銘柄のみ削除できます",
+    "withdrawal_not_found": "出金記録が見つかりません"
+  }
+}

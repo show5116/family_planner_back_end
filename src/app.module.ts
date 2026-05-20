@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
+import { I18nModule, HeaderResolver } from 'nestjs-i18n';
+import { join } from 'path';
+import { I18nExceptionFilter } from '@/common/filters/i18n-exception.filter';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -138,6 +141,14 @@ import { ScheduleModule } from '@nestjs/schedule';
         };
       },
     }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'ko',
+      loaderOptions: {
+        path: join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      resolvers: [new HeaderResolver(['accept-language'])],
+    }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
@@ -184,6 +195,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     {
       provide: APP_INTERCEPTOR,
       useClass: TimeoutInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: I18nExceptionFilter,
     },
   ],
 })

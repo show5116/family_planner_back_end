@@ -1,0 +1,26 @@
+{
+  "errors": {
+    "group_not_found": "그룹을 찾을 수 없습니다",
+    "no_access": "이 그룹에 접근할 권한이 없습니다",
+    "not_member": "해당 그룹의 멤버가 아닙니다",
+    "member_not_found": "그룹 멤버를 찾을 수 없습니다",
+    "no_auth_or_group_id": "인증 정보 또는 그룹 ID가 없습니다",
+    "invalid_invite_code": "유효하지 않은 초대 코드입니다",
+    "expired_invite_code": "만료된 초대 코드입니다",
+    "already_member": "이미 이 그룹의 멤버입니다",
+    "already_member_short": "이미 그룹 멤버입니다",
+    "pending_join_request": "이미 가입 요청이 대기 중입니다",
+    "join_request_not_found": "가입 요청을 찾을 수 없습니다",
+    "join_request_wrong_group": "해당 그룹의 가입 요청이 아닙니다",
+    "request_already_processed": "이미 처리된 요청입니다",
+    "user_not_found_by_email": "해당 이메일로 가입된 사용자가 없습니다",
+    "inviter_not_found": "초대자를 찾을 수 없습니다",
+    "invite_not_found": "초대 요청을 찾을 수 없습니다",
+    "only_invite_cancelable": "INVITE 타입의 요청만 취소할 수 있습니다",
+    "only_pending_cancelable": "대기 중인 초대만 취소할 수 있습니다",
+    "only_pending_resendable": "대기 중인 초대만 재전송할 수 있습니다",
+    "cannot_change_own_role": "자신의 역할은 변경할 수 없습니다",
+    "role_not_found": "역할을 찾을 수 없습니다",
+    "cannot_remove_owner": "OWNER는 삭제할 수 없습니다"
+  }
+}

@@ -28,7 +28,7 @@ export class ExpenseQueryDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(/^\d{4}-\d{2}$/, { message: '월 형식은 YYYY-MM이어야 합니다' })
+  @Matches(/^\d{4}-\d{2}$/, { message: 'validation.month_format' })
   month?: string;
 
   @ApiProperty({

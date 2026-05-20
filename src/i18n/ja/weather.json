@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "fetch_failed": "天気情報の取得に失敗しました",
+    "forecast_failed": "天気予報の取得に失敗しました"
+  }
+}

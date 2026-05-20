@@ -95,7 +95,7 @@ export class VoteService {
     });
 
     if (!vote || vote.groupId !== groupId) {
-      throw new NotFoundException('투표를 찾을 수 없습니다');
+      throw new NotFoundException('vote.errors.vote_not_found');
     }
 
     return this.toDto(vote, userId);
@@ -151,7 +151,7 @@ export class VoteService {
 
     const vote = await this.prisma.vote.findUnique({ where: { id: voteId } });
     if (!vote || vote.groupId !== groupId) {
-      throw new NotFoundException('투표를 찾을 수 없습니다');
+      throw new NotFoundException('vote.errors.vote_not_found');
     }
 
     const isCreator = vote.createdBy === userId;
@@ -190,22 +190,22 @@ export class VoteService {
     });
 
     if (!vote || vote.groupId !== groupId) {
-      throw new NotFoundException('투표를 찾을 수 없습니다');
+      throw new NotFoundException('vote.errors.vote_not_found');
     }
 
     if (vote.endsAt && vote.endsAt <= new Date()) {
-      throw new BadRequestException('마감된 투표입니다');
+      throw new BadRequestException('vote.errors.vote_closed');
     }
 
     // 선택지 검증
     const validOptionIds = vote.options.map((o) => o.id);
     const invalid = dto.optionIds.filter((id) => !validOptionIds.includes(id));
     if (invalid.length > 0) {
-      throw new BadRequestException('유효하지 않은 선택지입니다');
+      throw new BadRequestException('vote.errors.invalid_option');
     }
 
     if (!vote.isMultiple && dto.optionIds.length > 1) {
-      throw new BadRequestException('단일 선택 투표입니다');
+      throw new BadRequestException('vote.errors.single_choice_only');
     }
 
     // 기존 투표 삭제 후 새로 등록 (전체 교체)
@@ -243,11 +243,11 @@ export class VoteService {
     });
 
     if (!vote || vote.groupId !== groupId) {
-      throw new NotFoundException('투표를 찾을 수 없습니다');
+      throw new NotFoundException('vote.errors.vote_not_found');
     }
 
     if (vote.endsAt && vote.endsAt <= new Date()) {
-      throw new BadRequestException('마감된 투표는 취소할 수 없습니다');
+      throw new BadRequestException('vote.errors.closed_vote_cancel');
     }
 
     await this.prisma.voteBallot.deleteMany({
@@ -271,7 +271,7 @@ export class VoteService {
       where: { groupId_userId: { groupId, userId } },
     });
     if (!member) {
-      throw new ForbiddenException('그룹 멤버만 접근할 수 있습니다');
+      throw new ForbiddenException('vote.errors.group_member_only');
     }
   }
 

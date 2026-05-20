@@ -1,0 +1,19 @@
+{
+  "email_invalid": "유효한 이메일 주소를 입력해주세요",
+  "email_required": "이메일을 입력해주세요",
+  "email_required_short": "이메일은 필수입니다",
+  "code_length": "인증 코드는 6자리여야 합니다",
+  "code_numeric": "인증 코드는 6자리 숫자여야 합니다",
+  "code_required": "인증 코드를 입력해주세요",
+  "password_required": "새 비밀번호를 입력해주세요",
+  "password_min_6": "비밀번호는 최소 6자 이상이어야 합니다",
+  "password_min_8": "비밀번호는 최소 8자 이상이어야 합니다",
+  "password_complexity": "비밀번호는 영문과 숫자를 포함해야 합니다",
+  "hex_color": "유효한 HEX 색상 코드를 입력해주세요 (예: #FF5733)",
+  "hex_color_alt": "유효한 HEX 색상 코드를 입력해주세요 (예: #6366F1)",
+  "hex_color_role": "색상은 HEX 형식이어야 합니다 (예: #6366F1)",
+  "group_name_max": "그룹명은 최대 100자까지 가능합니다",
+  "month_format": "월 형식은 YYYY-MM이어야 합니다",
+  "year_format": "연도 형식은 YYYY이어야 합니다",
+  "date_format": "날짜 형식은 YYYY-MM-DD이어야 합니다"
+}

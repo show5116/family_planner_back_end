@@ -19,7 +19,7 @@ export class CreateAccountRecordDto {
   @ApiProperty({ description: '기록 날짜 (YYYY-MM-DD)', example: '2026-03-01' })
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: '날짜 형식은 YYYY-MM-DD이어야 합니다',
+    message: 'validation.date_format',
   })
   recordDate: string;
 

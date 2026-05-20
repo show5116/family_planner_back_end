@@ -74,7 +74,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('이미 사용 중인 이메일입니다');
+      throw new ConflictException('auth.errors.email_exists');
     }
 
     // 비밀번호 해싱
@@ -182,7 +182,7 @@ export class AuthService {
     );
 
     if (!userId) {
-      throw new UnauthorizedException('유효하지 않은 Refresh Token입니다');
+      throw new UnauthorizedException('auth.errors.invalid_refresh_token');
     }
 
     // 기존 토큰 무효화 (RTR)
@@ -219,7 +219,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
+      throw new NotFoundException('auth.errors.user_not_found');
     }
 
     const payload: JwtPayload = {
@@ -307,7 +307,7 @@ export class AuthService {
     );
 
     if (!storedCode || storedCode !== code) {
-      throw new BadRequestException('유효하지 않은 인증 코드입니다');
+      throw new BadRequestException('auth.errors.invalid_verification_code');
     }
 
     // 사용자 조회
@@ -316,11 +316,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('사용자를 찾을 수 없습니다');
+      throw new BadRequestException('auth.errors.user_not_found');
     }
 
     if (user.isEmailVerified) {
-      throw new BadRequestException('이미 인증된 이메일입니다');
+      throw new BadRequestException('auth.errors.already_verified');
     }
 
     // 이메일 인증 완료 및 Redis에서 코드 삭제
@@ -344,11 +344,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
+      throw new NotFoundException('auth.errors.user_not_found');
     }
 
     if (user.isEmailVerified) {
-      throw new BadRequestException('이미 인증된 이메일입니다');
+      throw new BadRequestException('auth.errors.already_verified');
     }
 
     if (user.provider !== 'LOCAL') {
@@ -375,7 +375,7 @@ export class AuthService {
         user.name,
       );
     } catch {
-      throw new BadRequestException('이메일 전송에 실패했습니다');
+      throw new BadRequestException('auth.errors.email_send_failed');
     }
 
     return { message: '인증 이메일이 재전송되었습니다' };
@@ -399,7 +399,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
+      throw new NotFoundException('auth.errors.user_not_found');
     }
 
     // 인증 코드 생성
@@ -420,7 +420,7 @@ export class AuthService {
         user.name,
       );
     } catch {
-      throw new BadRequestException('이메일 전송에 실패했습니다');
+      throw new BadRequestException('auth.errors.email_send_failed');
     }
 
     return { message: '비밀번호 재설정 인증 코드가 이메일로 전송되었습니다' };
@@ -483,7 +483,7 @@ export class AuthService {
       });
       payload = ticket.getPayload();
     } catch {
-      throw new UnauthorizedException('유효하지 않은 Google ID Token입니다');
+      throw new UnauthorizedException('auth.errors.invalid_google_token');
     }
 
     return this.validateSocialUser({
@@ -605,7 +605,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
+      throw new NotFoundException('auth.errors.user_not_found');
     }
 
     // lastLoginAt 업데이트 (비동기로 처리하여 응답 속도에 영향 없도록)
@@ -665,7 +665,7 @@ export class AuthService {
 
     // 현재 비밀번호 확인
     if (!user.password) {
-      throw new BadRequestException('비밀번호가 설정되어 있지 않습니다');
+      throw new BadRequestException('auth.errors.password_not_set');
     }
 
     const isPasswordValid = await this.verifyPassword(
@@ -673,7 +673,7 @@ export class AuthService {
       user.password,
     );
     if (!isPasswordValid) {
-      throw new ForbiddenException('현재 비밀번호가 올바르지 않습니다');
+      throw new ForbiddenException('auth.errors.wrong_current_password');
     }
 
     // 업데이트할 데이터 준비
@@ -697,7 +697,7 @@ export class AuthService {
 
     // 업데이트할 내용이 없는 경우
     if (Object.keys(updateData).length === 0) {
-      throw new BadRequestException('업데이트할 정보가 없습니다');
+      throw new BadRequestException('auth.errors.nothing_to_update');
     }
 
     // 프로필 업데이트

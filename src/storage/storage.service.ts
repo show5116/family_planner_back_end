@@ -148,7 +148,7 @@ export class StorageService {
       // 이미지 유효성 검증
       const isValid = await this.imageOptimizer.validateImage(file.buffer);
       if (!isValid) {
-        throw new BadRequestException('유효하지 않은 이미지 파일입니다');
+        throw new BadRequestException('common.errors.invalid_image');
       }
 
       // 에디터용 이미지 최적화

@@ -13,8 +13,8 @@ export class ResetPasswordDto {
     description: '이메일',
     example: 'user@example.com',
   })
-  @IsEmail({}, { message: '유효한 이메일 주소를 입력해주세요' })
-  @IsNotEmpty({ message: '이메일을 입력해주세요' })
+  @IsEmail({}, { message: 'validation.email_invalid' })
+  @IsNotEmpty({ message: 'validation.email_required' })
   email: string;
 
   @ApiProperty({
@@ -22,9 +22,9 @@ export class ResetPasswordDto {
     example: '123456',
   })
   @IsString()
-  @IsNotEmpty({ message: '인증 코드를 입력해주세요' })
-  @Length(6, 6, { message: '인증 코드는 6자리여야 합니다' })
-  @Matches(/^\d{6}$/, { message: '인증 코드는 6자리 숫자여야 합니다' })
+  @IsNotEmpty({ message: 'validation.code_required' })
+  @Length(6, 6, { message: 'validation.code_length' })
+  @Matches(/^\d{6}$/, { message: 'validation.code_numeric' })
   code: string;
 
   @ApiProperty({
@@ -32,7 +32,7 @@ export class ResetPasswordDto {
     example: 'newPassword123',
   })
   @IsString()
-  @IsNotEmpty({ message: '새 비밀번호를 입력해주세요' })
-  @MinLength(6, { message: '비밀번호는 최소 6자 이상이어야 합니다' })
+  @IsNotEmpty({ message: 'validation.password_required' })
+  @MinLength(6, { message: 'validation.password_min_6' })
   newPassword: string;
 }

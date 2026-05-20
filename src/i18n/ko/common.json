@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "file_too_large": "파일 크기는 10MB를 초과할 수 없습니다",
+    "invalid_image": "유효하지 않은 이미지 파일입니다",
+    "file_required": "파일이 필요합니다",
+    "invalid_type": "유효하지 않은 타입입니다",
+    "forbidden": "권한이 없습니다"
+  }
+}

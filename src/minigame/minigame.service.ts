@@ -70,7 +70,7 @@ export class MinigameService {
     });
 
     if (!result) {
-      throw new NotFoundException('게임 이력을 찾을 수 없습니다');
+      throw new NotFoundException('minigame.errors.history_not_found');
     }
 
     await this.validateGroupMembership(userId, result.groupId);

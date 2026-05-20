@@ -155,7 +155,7 @@ export class AnnouncementService {
     });
 
     if (!announcement) {
-      throw new NotFoundException('공지사항을 찾을 수 없습니다');
+      throw new NotFoundException('announcement.errors.not_found');
     }
 
     // 3. Redis에 캐싱 (TTL: 7일)
@@ -287,7 +287,7 @@ export class AnnouncementService {
     });
 
     if (!announcement) {
-      throw new NotFoundException('공지사항을 찾을 수 없습니다');
+      throw new NotFoundException('announcement.errors.not_found');
     }
 
     const updated = await this.prisma.announcement.update({
@@ -317,7 +317,7 @@ export class AnnouncementService {
     });
 
     if (!announcement) {
-      throw new NotFoundException('공지사항을 찾을 수 없습니다');
+      throw new NotFoundException('announcement.errors.not_found');
     }
 
     await this.prisma.announcement.update({
@@ -339,7 +339,7 @@ export class AnnouncementService {
     });
 
     if (!announcement) {
-      throw new NotFoundException('공지사항을 찾을 수 없습니다');
+      throw new NotFoundException('announcement.errors.not_found');
     }
 
     return this.prisma.announcement.update({

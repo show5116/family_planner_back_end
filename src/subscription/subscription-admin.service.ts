@@ -64,7 +64,8 @@ export class SubscriptionAdminService {
       },
     });
 
-    if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    if (!user)
+      throw new NotFoundException('subscription.errors.user_not_found');
 
     return this.toDto(user);
   }
@@ -78,7 +79,8 @@ export class SubscriptionAdminService {
       select: { id: true },
     });
 
-    if (!exists) throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    if (!exists)
+      throw new NotFoundException('subscription.errors.user_not_found');
 
     const expiresAt =
       dto.expiresAt === null

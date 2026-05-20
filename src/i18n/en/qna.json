@@ -1,0 +1,12 @@
+{
+  "errors": {
+    "admin_only": "Only admins can view all questions",
+    "login_required": "Login is required to view your questions",
+    "question_not_found": "Question not found",
+    "own_question_only_update": "You can only update your own questions",
+    "resolved_question_no_edit": "Resolved questions cannot be edited",
+    "own_question_only_delete": "You can only delete your own questions",
+    "answer_not_found": "Answer not found",
+    "no_permission": "Access denied"
+  }
+}

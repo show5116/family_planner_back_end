@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "fetch_failed": "Failed to fetch weather information",
+    "forecast_failed": "Failed to fetch weather forecast"
+  }
+}

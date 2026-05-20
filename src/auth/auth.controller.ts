@@ -155,7 +155,7 @@ export class AuthController {
       : refreshTokenDto.refreshToken;
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh Token이 제공되지 않았습니다');
+      throw new UnauthorizedException('auth.errors.refresh_token_missing');
     }
 
     return refreshToken;

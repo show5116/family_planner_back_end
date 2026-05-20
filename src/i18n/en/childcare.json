@@ -1,0 +1,15 @@
+{
+  "errors": {
+    "child_not_found": "Child profile not found",
+    "app_account_already_linked": "An app account is already linked",
+    "point_account_not_found": "Point account not found",
+    "shop_item_not_found": "Shop item not found",
+    "rule_not_found": "Rule not found",
+    "insufficient_points": "Insufficient point balance",
+    "insufficient_savings": "Insufficient savings balance",
+    "savings_plan_exists": "A savings plan is already in progress",
+    "end_date_after_start": "End date must be after start date",
+    "no_active_savings_plan": "No active savings plan",
+    "no_permission": "No permission to manage children"
+  }
+}

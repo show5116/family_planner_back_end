@@ -1,0 +1,17 @@
+{
+  "errors": {
+    "not_member": "You are not a member of this group",
+    "account_not_found": "Account not found",
+    "own_account_only_update": "You can only update your own account",
+    "own_account_only_delete": "You can only delete your own account",
+    "own_account_only_record": "You can only add records to your own account",
+    "record_date_conflict": "A record already exists for this date",
+    "own_record_only_delete": "You can only delete your own account records",
+    "record_not_found": "Record not found",
+    "own_account_only_add_stock": "You can only add stocks to your own account",
+    "own_account_only_update_stock": "You can only update stocks in your own account",
+    "stock_not_found": "Stock not found",
+    "own_account_only_delete_stock": "You can only delete stocks from your own account",
+    "withdrawal_not_found": "Withdrawal record not found"
+  }
+}

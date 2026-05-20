@@ -23,7 +23,7 @@ export class QuestionVisibilityGuard implements CanActivate {
     const questionId = request.params.id;
 
     if (!userId || !questionId) {
-      throw new ForbiddenException('권한이 없습니다');
+      throw new ForbiddenException('qna.errors.no_permission');
     }
 
     // 질문 조회
@@ -32,7 +32,7 @@ export class QuestionVisibilityGuard implements CanActivate {
     });
 
     if (!question) {
-      throw new NotFoundException('질문을 찾을 수 없습니다');
+      throw new NotFoundException('qna.errors.question_not_found');
     }
 
     // ADMIN은 모든 질문 접근 가능
@@ -56,6 +56,6 @@ export class QuestionVisibilityGuard implements CanActivate {
       return true;
     }
 
-    throw new ForbiddenException('권한이 없습니다');
+    throw new ForbiddenException('qna.errors.no_permission');
   }
 }

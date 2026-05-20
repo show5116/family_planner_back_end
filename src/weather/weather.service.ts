@@ -225,7 +225,7 @@ export class WeatherService {
       const header = data.response.header;
       if (header.resultCode !== '00') {
         this.logger.error(`기상청 API 오류: ${header.resultMsg}`);
-        throw new BadGatewayException('날씨 정보를 가져오는데 실패했습니다');
+        throw new BadGatewayException('weather.errors.fetch_failed');
       }
 
       const items = data.response.body.items.item;
@@ -257,7 +257,7 @@ export class WeatherService {
       this.logger.error(
         `날씨 API 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
       );
-      throw new BadGatewayException('날씨 정보를 가져오는데 실패했습니다');
+      throw new BadGatewayException('weather.errors.fetch_failed');
     }
   }
 
@@ -288,7 +288,7 @@ export class WeatherService {
       const header = data.response.header;
       if (header.resultCode !== '00') {
         this.logger.error(`기상청 단기예보 API 오류: ${header.resultMsg}`);
-        throw new BadGatewayException('날씨 예보를 가져오는데 실패했습니다');
+        throw new BadGatewayException('weather.errors.forecast_failed');
       }
 
       const items = data.response.body.items.item;
@@ -304,7 +304,7 @@ export class WeatherService {
       this.logger.error(
         `단기예보 API 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
       );
-      throw new BadGatewayException('날씨 예보를 가져오는데 실패했습니다');
+      throw new BadGatewayException('weather.errors.forecast_failed');
     }
   }
 

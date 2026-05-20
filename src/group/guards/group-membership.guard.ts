@@ -21,7 +21,7 @@ export class GroupMembershipGuard implements CanActivate {
     const groupId = request.params?.groupId || request.params?.id;
 
     if (!userId || !groupId) {
-      throw new ForbiddenException('인증 정보 또는 그룹 ID가 없습니다.');
+      throw new ForbiddenException('group.errors.no_auth_or_group_id');
     }
 
     // 그룹 멤버십 조회
@@ -38,7 +38,7 @@ export class GroupMembershipGuard implements CanActivate {
     });
 
     if (!member) {
-      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다.');
+      throw new ForbiddenException('group.errors.no_access');
     }
 
     // 멤버 정보를 request에 추가 (추후 사용 가능)

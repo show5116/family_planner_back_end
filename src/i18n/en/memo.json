@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "body_required": "Body is required for regular memos",
+    "group_id_required": "Group ID is required for group memos",
+    "memo_not_found": "Memo not found",
+    "own_memo_only_update": "You can only update your own memos",
+    "own_memo_only_delete": "You can only delete your own memos",
+    "tag_not_found": "Tag not found",
+    "attachment_not_found": "Attachment not found",
+    "item_not_found": "Item not found",
+    "no_access": "You do not have access to this memo",
+    "no_group_access": "You do not have access to this group"
+  }
+}

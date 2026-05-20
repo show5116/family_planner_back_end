@@ -8,7 +8,7 @@ export class CreateGroupDto {
     maxLength: 100,
   })
   @IsString()
-  @MaxLength(100, { message: '그룹명은 최대 100자까지 가능합니다' })
+  @MaxLength(100, { message: 'validation.group_name_max' })
   name: string;
 
   @ApiPropertyOptional({
@@ -27,7 +27,7 @@ export class CreateGroupDto {
   @IsString()
   @IsOptional()
   @Matches(/^#[0-9A-Fa-f]{6}$/, {
-    message: '유효한 HEX 색상 코드를 입력해주세요 (예: #6366F1)',
+    message: 'validation.hex_color_alt',
   })
   defaultColor?: string;
 }

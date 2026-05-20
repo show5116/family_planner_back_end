@@ -1,0 +1,15 @@
+{
+  "errors": {
+    "child_not_found": "자녀 프로필을 찾을 수 없습니다",
+    "app_account_already_linked": "이미 연동된 앱 계정이 있습니다",
+    "point_account_not_found": "포인트 계정을 찾을 수 없습니다",
+    "shop_item_not_found": "상점 아이템을 찾을 수 없습니다",
+    "rule_not_found": "규칙을 찾을 수 없습니다",
+    "insufficient_points": "포인트 잔액이 부족합니다",
+    "insufficient_savings": "적금 잔액이 부족합니다",
+    "savings_plan_exists": "이미 진행 중인 적금 플랜이 있습니다",
+    "end_date_after_start": "만기일은 시작일보다 이후여야 합니다",
+    "no_active_savings_plan": "진행 중인 적금 플랜이 없습니다",
+    "no_permission": "자녀 관리 권한이 없습니다"
+  }
+}

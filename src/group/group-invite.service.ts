@@ -81,7 +81,7 @@ export class GroupInviteService {
     });
 
     if (!group) {
-      throw new NotFoundException('그룹을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.group_not_found');
     }
 
     // 초대 코드가 만료되었으면 재생성
@@ -156,12 +156,12 @@ export class GroupInviteService {
     });
 
     if (!group) {
-      throw new NotFoundException('유효하지 않은 초대 코드입니다');
+      throw new NotFoundException('group.errors.invalid_invite_code');
     }
 
     // 초대 코드 만료 확인
     if (group.inviteCodeExpiresAt <= new Date()) {
-      throw new NotFoundException('만료된 초대 코드입니다');
+      throw new NotFoundException('group.errors.expired_invite_code');
     }
 
     // 이미 멤버인지 확인
@@ -175,7 +175,7 @@ export class GroupInviteService {
     });
 
     if (existingMember) {
-      throw new ConflictException('이미 이 그룹의 멤버입니다');
+      throw new ConflictException('group.errors.already_member');
     }
 
     // 사용자 정보 조회 (이메일 필요)
@@ -184,7 +184,7 @@ export class GroupInviteService {
     });
 
     if (!user || !user.email) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
+      throw new NotFoundException('auth.errors.user_not_found');
     }
 
     // 이메일 초대 여부 확인 (INVITE 타입의 PENDING 요청이 있는지)
@@ -270,7 +270,7 @@ export class GroupInviteService {
     });
 
     if (existingRequest) {
-      throw new ConflictException('이미 가입 요청이 대기 중입니다');
+      throw new ConflictException('group.errors.pending_join_request');
     }
 
     // GroupJoinRequest 생성 (REQUEST 타입, PENDING 상태)
@@ -316,7 +316,7 @@ export class GroupInviteService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
+      throw new NotFoundException('auth.errors.user_not_found');
     }
 
     const where: any = {
@@ -394,15 +394,15 @@ export class GroupInviteService {
     });
 
     if (!joinRequest) {
-      throw new NotFoundException('가입 요청을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.join_request_not_found');
     }
 
     if (joinRequest.groupId !== groupId) {
-      throw new NotFoundException('해당 그룹의 가입 요청이 아닙니다');
+      throw new NotFoundException('group.errors.join_request_wrong_group');
     }
 
     if (joinRequest.status !== 'PENDING') {
-      throw new ConflictException('이미 처리된 요청입니다');
+      throw new ConflictException('group.errors.request_already_processed');
     }
 
     if (joinRequest.type === 'INVITE') {
@@ -417,7 +417,7 @@ export class GroupInviteService {
     });
 
     if (!user) {
-      throw new NotFoundException('해당 이메일로 가입된 사용자가 없습니다');
+      throw new NotFoundException('group.errors.user_not_found_by_email');
     }
 
     // 이미 멤버인지 확인
@@ -431,7 +431,7 @@ export class GroupInviteService {
     });
 
     if (existingMember) {
-      throw new ConflictException('이미 그룹 멤버입니다');
+      throw new ConflictException('group.errors.already_member_short');
     }
 
     // 기본 역할 조회
@@ -542,7 +542,7 @@ export class GroupInviteService {
     });
 
     if (!group) {
-      throw new NotFoundException('그룹을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.group_not_found');
     }
 
     // 초대하는 사용자 정보 조회
@@ -551,7 +551,7 @@ export class GroupInviteService {
     });
 
     if (!inviter) {
-      throw new NotFoundException('초대자를 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.inviter_not_found');
     }
 
     // 초대받을 사용자 조회
@@ -560,7 +560,7 @@ export class GroupInviteService {
     });
 
     if (!invitee) {
-      throw new BadRequestException('해당 이메일로 가입된 사용자가 없습니다');
+      throw new BadRequestException('group.errors.user_not_found_by_email');
     }
 
     // 이미 그룹 멤버인지 확인
@@ -574,7 +574,7 @@ export class GroupInviteService {
     });
 
     if (existingMember) {
-      throw new ConflictException('이미 이 그룹의 멤버입니다');
+      throw new ConflictException('group.errors.already_member');
     }
 
     // 초대 코드 유효성 확인 및 재생성 (만료된 경우)
@@ -628,19 +628,19 @@ export class GroupInviteService {
     });
 
     if (!joinRequest) {
-      throw new NotFoundException('초대 요청을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.invite_not_found');
     }
 
     if (joinRequest.groupId !== groupId) {
-      throw new NotFoundException('해당 그룹의 초대 요청이 아닙니다');
+      throw new NotFoundException('group.errors.join_request_wrong_group');
     }
 
     if (joinRequest.type !== 'INVITE') {
-      throw new BadRequestException('INVITE 타입의 요청만 취소할 수 있습니다');
+      throw new BadRequestException('group.errors.only_invite_cancelable');
     }
 
     if (joinRequest.status !== 'PENDING') {
-      throw new ConflictException('대기 중인 초대만 취소할 수 있습니다');
+      throw new ConflictException('group.errors.only_pending_cancelable');
     }
 
     // 초대 요청 삭제
@@ -667,21 +667,19 @@ export class GroupInviteService {
     });
 
     if (!joinRequest) {
-      throw new NotFoundException('초대 요청을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.invite_not_found');
     }
 
     if (joinRequest.groupId !== groupId) {
-      throw new NotFoundException('해당 그룹의 초대 요청이 아닙니다');
+      throw new NotFoundException('group.errors.join_request_wrong_group');
     }
 
     if (joinRequest.type !== 'INVITE') {
-      throw new BadRequestException(
-        'INVITE 타입의 요청만 재전송할 수 있습니다',
-      );
+      throw new BadRequestException('group.errors.only_invite_cancelable');
     }
 
     if (joinRequest.status !== 'PENDING') {
-      throw new ConflictException('대기 중인 초대만 재전송할 수 있습니다');
+      throw new ConflictException('group.errors.only_pending_resendable');
     }
 
     // 그룹 조회
@@ -691,7 +689,7 @@ export class GroupInviteService {
     });
 
     if (!group) {
-      throw new NotFoundException('그룹을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.group_not_found');
     }
 
     // 초대하는 사용자 정보 조회
@@ -700,7 +698,7 @@ export class GroupInviteService {
     });
 
     if (!inviter) {
-      throw new NotFoundException('초대자를 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.inviter_not_found');
     }
 
     // 초대 코드 유효성 확인 및 재생성 (만료된 경우)

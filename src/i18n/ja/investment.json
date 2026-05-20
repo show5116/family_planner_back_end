@@ -1,0 +1,7 @@
+{
+  "errors": {
+    "indicator_not_found": "指標が見つかりません",
+    "already_favorited": "すでにお気に入りに登録された指標です",
+    "not_favorited": "お気に入りに登録されていない指標です"
+  }
+}

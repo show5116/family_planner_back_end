@@ -19,7 +19,7 @@ export class AdminGuard implements CanActivate {
     const user = request.user;
 
     if (!user || !user.userId) {
-      throw new ForbiddenException('인증이 필요합니다.');
+      throw new ForbiddenException('auth.errors.unauthorized');
     }
 
     // 사용자 정보 조회
@@ -29,7 +29,7 @@ export class AdminGuard implements CanActivate {
     });
 
     if (!dbUser || !dbUser.isAdmin) {
-      throw new ForbiddenException('운영자 권한이 필요합니다.');
+      throw new ForbiddenException('auth.errors.admin_required');
     }
 
     return true;

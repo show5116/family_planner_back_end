@@ -31,7 +31,8 @@ export class FridgeService {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });
-    if (!member) throw new ForbiddenException('그룹 멤버만 접근할 수 있습니다');
+    if (!member)
+      throw new ForbiddenException('fridge.errors.group_member_only');
   }
 
   // ── ItemNameHistory ──────────────────────────────────────────
@@ -85,7 +86,8 @@ export class FridgeService {
     const storage = await this.prisma.storageLocation.findFirst({
       where: { id: storageId, groupId },
     });
-    if (!storage) throw new NotFoundException('보관소를 찾을 수 없습니다');
+    if (!storage)
+      throw new NotFoundException('fridge.errors.storage_not_found');
     return this.prisma.storageLocation.update({
       where: { id: storageId },
       data: {
@@ -100,7 +102,8 @@ export class FridgeService {
     const storage = await this.prisma.storageLocation.findFirst({
       where: { id: storageId, groupId },
     });
-    if (!storage) throw new NotFoundException('보관소를 찾을 수 없습니다');
+    if (!storage)
+      throw new NotFoundException('fridge.errors.storage_not_found');
     await this.prisma.storageLocation.delete({ where: { id: storageId } });
     return { message: '보관소가 삭제되었습니다' };
   }
@@ -143,7 +146,8 @@ export class FridgeService {
     const storage = await this.prisma.storageLocation.findFirst({
       where: { id: dto.storageLocationId, groupId },
     });
-    if (!storage) throw new NotFoundException('보관소를 찾을 수 없습니다');
+    if (!storage)
+      throw new NotFoundException('fridge.errors.storage_not_found');
 
     const [frequent] = await Promise.all([
       this.prisma.frequentItem.findUnique({
@@ -179,7 +183,7 @@ export class FridgeService {
       where: { id: { in: storageIds }, groupId },
     });
     if (storages.length !== storageIds.length) {
-      throw new NotFoundException('일부 보관소를 찾을 수 없습니다');
+      throw new NotFoundException('fridge.errors.some_storages_not_found');
     }
 
     const allNames = dto.items.map((i) => i.name);
@@ -220,13 +224,14 @@ export class FridgeService {
     const item = await this.prisma.fridgeItem.findFirst({
       where: { id: itemId, groupId },
     });
-    if (!item) throw new NotFoundException('품목을 찾을 수 없습니다');
+    if (!item) throw new NotFoundException('fridge.errors.item_not_found');
 
     if (dto.storageLocationId) {
       const storage = await this.prisma.storageLocation.findFirst({
         where: { id: dto.storageLocationId, groupId },
       });
-      if (!storage) throw new NotFoundException('보관소를 찾을 수 없습니다');
+      if (!storage)
+        throw new NotFoundException('fridge.errors.storage_not_found');
     }
 
     let frequentItemId: string | null | undefined = undefined;
@@ -264,7 +269,7 @@ export class FridgeService {
       where: { id: itemId, groupId },
       include: { frequentItem: true },
     });
-    if (!item) throw new NotFoundException('품목을 찾을 수 없습니다');
+    if (!item) throw new NotFoundException('fridge.errors.item_not_found');
     await this.prisma.fridgeItem.delete({ where: { id: itemId } });
 
     if (item.frequentItem?.autoAdd) {
@@ -403,7 +408,7 @@ export class FridgeService {
     const item = await this.prisma.fridgeItem.findFirst({
       where: { id: itemId, groupId },
     });
-    if (!item) throw new NotFoundException('품목을 찾을 수 없습니다');
+    if (!item) throw new NotFoundException('fridge.errors.item_not_found');
     return this.prisma.fridgeItem.update({
       where: { id: itemId },
       data: { quantity: dto.quantity },
@@ -451,7 +456,8 @@ export class FridgeService {
     const item = await this.prisma.frequentItem.findFirst({
       where: { id: itemId, groupId },
     });
-    if (!item) throw new NotFoundException('자주 사는 항목을 찾을 수 없습니다');
+    if (!item)
+      throw new NotFoundException('fridge.errors.frequent_item_not_found');
     return this.prisma.frequentItem.update({
       where: { id: itemId },
       data: {
@@ -467,7 +473,8 @@ export class FridgeService {
     const item = await this.prisma.frequentItem.findFirst({
       where: { id: itemId, groupId },
     });
-    if (!item) throw new NotFoundException('자주 사는 항목을 찾을 수 없습니다');
+    if (!item)
+      throw new NotFoundException('fridge.errors.frequent_item_not_found');
     await this.prisma.frequentItem.delete({ where: { id: itemId } });
     return { message: '자주 사는 항목이 삭제되었습니다' };
   }

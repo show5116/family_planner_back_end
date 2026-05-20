@@ -156,13 +156,13 @@ export class GroupService {
     });
 
     if (!group) {
-      throw new NotFoundException('그룹을 찾을 수 없습니다');
+      throw new NotFoundException('group.errors.group_not_found');
     }
 
     // 멤버인지 확인
     const isMember = group.members.some((member) => member.userId === userId);
     if (!isMember) {
-      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다');
+      throw new ForbiddenException('group.errors.no_access');
     }
 
     // 프로필 이미지 URL 추가

@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "fetch_failed": "날씨 정보를 가져오는데 실패했습니다",
+    "forecast_failed": "날씨 예보를 가져오는데 실패했습니다"
+  }
+}

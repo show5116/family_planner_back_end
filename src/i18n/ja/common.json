@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "file_too_large": "ファイルサイズは10MBを超えることができません",
+    "invalid_image": "無効な画像ファイルです",
+    "file_required": "ファイルが必要です",
+    "invalid_type": "無効なタイプです",
+    "forbidden": "アクセス権限がありません"
+  }
+}

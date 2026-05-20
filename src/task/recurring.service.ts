@@ -30,7 +30,7 @@ export class RecurringService {
     });
 
     if (!recurring) {
-      throw new NotFoundException('반복 규칙을 찾을 수 없습니다');
+      throw new NotFoundException('task.errors.recurring_not_found');
     }
 
     if (recurring.userId !== userId) {
@@ -58,7 +58,7 @@ export class RecurringService {
     });
 
     if (!recurring) {
-      throw new NotFoundException('반복 규칙을 찾을 수 없습니다');
+      throw new NotFoundException('task.errors.recurring_not_found');
     }
 
     if (recurring.userId !== userId) {

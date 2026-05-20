@@ -1,0 +1,26 @@
+{
+  "errors": {
+    "group_not_found": "Group not found",
+    "no_access": "You do not have access to this group",
+    "not_member": "You are not a member of this group",
+    "member_not_found": "Group member not found",
+    "no_auth_or_group_id": "Missing authentication or group ID",
+    "invalid_invite_code": "Invalid invite code",
+    "expired_invite_code": "Invite code has expired",
+    "already_member": "You are already a member of this group",
+    "already_member_short": "Already a group member",
+    "pending_join_request": "A join request is already pending",
+    "join_request_not_found": "Join request not found",
+    "join_request_wrong_group": "This join request does not belong to this group",
+    "request_already_processed": "This request has already been processed",
+    "user_not_found_by_email": "No user found with this email",
+    "inviter_not_found": "Inviter not found",
+    "invite_not_found": "Invite request not found",
+    "only_invite_cancelable": "Only INVITE type requests can be cancelled",
+    "only_pending_cancelable": "Only pending invites can be cancelled",
+    "only_pending_resendable": "Only pending invites can be resent",
+    "cannot_change_own_role": "You cannot change your own role",
+    "role_not_found": "Role not found",
+    "cannot_remove_owner": "OWNER cannot be removed"
+  }
+}

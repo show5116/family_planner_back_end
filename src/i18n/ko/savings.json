@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "no_auto_deposit": "자동 적립이 설정되지 않은 목표입니다",
+    "already_paused": "이미 일시 중지 상태입니다",
+    "already_active": "이미 활성 상태입니다",
+    "insufficient_balance": "잔액이 부족합니다",
+    "goal_not_found": "적립 목표를 찾을 수 없습니다"
+  }
+}

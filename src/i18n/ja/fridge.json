@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "group_member_only": "グループメンバーのみアクセスできます",
+    "storage_not_found": "保管場所が見つかりません",
+    "some_storages_not_found": "一部の保管場所が見つかりません",
+    "item_not_found": "品目が見つかりません",
+    "frequent_item_not_found": "よく買う商品が見つかりません"
+  }
+}

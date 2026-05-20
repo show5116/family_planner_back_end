@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "vote_not_found": "投票が見つかりません",
+    "vote_closed": "締め切られた投票です",
+    "invalid_option": "無効な選択肢です",
+    "single_choice_only": "単一選択の投票です",
+    "closed_vote_cancel": "締め切られた投票はキャンセルできません",
+    "group_member_only": "グループメンバーのみアクセスできます"
+  }
+}

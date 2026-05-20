@@ -1,0 +1,12 @@
+{
+  "errors": {
+    "expense_not_found": "支出履歴が見つかりません",
+    "own_expense_only_view": "自分の支出履歴のみ閲覧できます",
+    "own_expense_only_update": "自分が登録した支出のみ更新できます",
+    "own_expense_only_delete": "自分が登録した支出のみ削除できます",
+    "receipt_not_found": "レシートが見つかりません",
+    "budget_template_not_found": "予算テンプレートが見つかりません",
+    "total_budget_template_not_found": "全体予算テンプレートが見つかりません",
+    "not_member": "このグループのメンバーではありません"
+  }
+}

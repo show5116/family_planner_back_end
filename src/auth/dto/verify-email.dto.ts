@@ -12,7 +12,7 @@ export class VerifyEmailDto {
     description: '이메일',
     example: 'user@example.com',
   })
-  @IsEmail({}, { message: '유효한 이메일 주소를 입력해주세요' })
+  @IsEmail({}, { message: 'validation.email_invalid' })
   @IsNotEmpty()
   email: string;
 
@@ -22,7 +22,7 @@ export class VerifyEmailDto {
   })
   @IsString()
   @IsNotEmpty()
-  @Length(6, 6, { message: '인증 코드는 6자리여야 합니다' })
-  @Matches(/^\d{6}$/, { message: '인증 코드는 6자리 숫자여야 합니다' })
+  @Length(6, 6, { message: 'validation.code_length' })
+  @Matches(/^\d{6}$/, { message: 'validation.code_numeric' })
   code: string;
 }

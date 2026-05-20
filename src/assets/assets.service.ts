@@ -44,7 +44,7 @@ export class AssetsService {
     });
 
     if (!member) {
-      throw new ForbiddenException('해당 그룹의 멤버가 아닙니다');
+      throw new ForbiddenException('assets.errors.not_member');
     }
   }
 
@@ -154,7 +154,7 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -170,11 +170,11 @@ export class AssetsService {
     const account = await this.prisma.account.findUnique({ where: { id } });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException('본인의 계좌만 수정할 수 있습니다');
+      throw new ForbiddenException('assets.errors.own_account_only_update');
     }
 
     const updated = await this.prisma.account.update({
@@ -206,11 +206,11 @@ export class AssetsService {
     const account = await this.prisma.account.findUnique({ where: { id } });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException('본인의 계좌만 삭제할 수 있습니다');
+      throw new ForbiddenException('assets.errors.own_account_only_delete');
     }
 
     await this.prisma.account.delete({ where: { id } });
@@ -262,11 +262,11 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException('본인의 계좌에만 기록을 추가할 수 있습니다');
+      throw new ForbiddenException('assets.errors.own_account_only_record');
     }
 
     const recordDate = new Date(dto.recordDate);
@@ -276,7 +276,7 @@ export class AssetsService {
     });
 
     if (duplicate) {
-      throw new ConflictException('해당 날짜에 이미 기록이 존재합니다');
+      throw new ConflictException('assets.errors.record_date_conflict');
     }
 
     let balance: number;
@@ -357,7 +357,7 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -383,11 +383,11 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException('본인의 계좌 기록만 삭제할 수 있습니다');
+      throw new ForbiddenException('assets.errors.own_record_only_delete');
     }
 
     const record = await this.prisma.accountRecord.findUnique({
@@ -395,7 +395,7 @@ export class AssetsService {
     });
 
     if (!record || record.accountId !== accountId) {
-      throw new NotFoundException('기록을 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.record_not_found');
     }
 
     await this.prisma.accountRecord.delete({ where: { id: recordId } });
@@ -523,7 +523,7 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -549,11 +549,11 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException('본인의 계좌에만 종목을 추가할 수 있습니다');
+      throw new ForbiddenException('assets.errors.own_account_only_add_stock');
     }
 
     await this.validateRatioSum(accountId, dto.ratio);
@@ -589,11 +589,13 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException('본인의 계좌 종목만 수정할 수 있습니다');
+      throw new ForbiddenException(
+        'assets.errors.own_account_only_update_stock',
+      );
     }
 
     const holding = await this.prisma.accountHolding.findUnique({
@@ -601,7 +603,7 @@ export class AssetsService {
     });
 
     if (!holding || holding.accountId !== accountId) {
-      throw new NotFoundException('종목을 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.stock_not_found');
     }
 
     if (dto.ratio !== undefined) {
@@ -629,11 +631,13 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
-      throw new ForbiddenException('본인의 계좌 종목만 삭제할 수 있습니다');
+      throw new ForbiddenException(
+        'assets.errors.own_account_only_delete_stock',
+      );
     }
 
     const holding = await this.prisma.accountHolding.findUnique({
@@ -641,7 +645,7 @@ export class AssetsService {
     });
 
     if (!holding || holding.accountId !== accountId) {
-      throw new NotFoundException('종목을 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.stock_not_found');
     }
 
     await this.prisma.accountHolding.delete({ where: { id: holdingId } });
@@ -662,7 +666,7 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
@@ -895,7 +899,7 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -1127,7 +1131,7 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
@@ -1185,7 +1189,7 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     await this.validateGroupMember(userId, account.groupId);
@@ -1212,7 +1216,7 @@ export class AssetsService {
     });
 
     if (!account) {
-      throw new NotFoundException('계좌를 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.account_not_found');
     }
 
     if (account.userId !== userId) {
@@ -1226,7 +1230,7 @@ export class AssetsService {
     });
 
     if (!withdrawal || withdrawal.accountId !== accountId) {
-      throw new NotFoundException('출금 기록을 찾을 수 없습니다');
+      throw new NotFoundException('assets.errors.withdrawal_not_found');
     }
 
     await this.prisma.accountWithdrawal.delete({ where: { id: withdrawalId } });

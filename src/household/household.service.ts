@@ -129,13 +129,13 @@ export class HouseholdService {
     });
 
     if (!expense) {
-      throw new NotFoundException('지출 내역을 찾을 수 없습니다');
+      throw new NotFoundException('household.errors.expense_not_found');
     }
 
     if (expense.groupId) {
       await this.validateGroupMember(userId, expense.groupId);
     } else if (expense.userId !== userId) {
-      throw new ForbiddenException('본인의 지출 내역만 조회할 수 있습니다');
+      throw new ForbiddenException('household.errors.own_expense_only_view');
     }
 
     return expense;
@@ -148,13 +148,13 @@ export class HouseholdService {
     const expense = await this.prisma.expense.findUnique({ where: { id } });
 
     if (!expense) {
-      throw new NotFoundException('지출 내역을 찾을 수 없습니다');
+      throw new NotFoundException('household.errors.expense_not_found');
     }
 
     if (expense.groupId) {
       await this.validateGroupMember(userId, expense.groupId);
     } else if (expense.userId !== userId) {
-      throw new ForbiddenException('본인이 등록한 지출만 수정할 수 있습니다');
+      throw new ForbiddenException('household.errors.own_expense_only_update');
     }
 
     return await this.prisma.expense.update({
@@ -184,13 +184,13 @@ export class HouseholdService {
     });
 
     if (!expense) {
-      throw new NotFoundException('지출 내역을 찾을 수 없습니다');
+      throw new NotFoundException('household.errors.expense_not_found');
     }
 
     if (expense.groupId) {
       await this.validateGroupMember(userId, expense.groupId);
     } else if (expense.userId !== userId) {
-      throw new ForbiddenException('본인이 등록한 지출만 삭제할 수 있습니다');
+      throw new ForbiddenException('household.errors.own_expense_only_delete');
     }
 
     for (const receipt of expense.receipts) {
@@ -397,13 +397,13 @@ export class HouseholdService {
     });
 
     if (!expense) {
-      throw new NotFoundException('지출 내역을 찾을 수 없습니다');
+      throw new NotFoundException('household.errors.expense_not_found');
     }
 
     if (expense.groupId) {
       await this.validateGroupMember(userId, expense.groupId);
     } else if (expense.userId !== userId) {
-      throw new ForbiddenException('본인이 등록한 지출만 수정할 수 있습니다');
+      throw new ForbiddenException('household.errors.own_expense_only_update');
     }
 
     const ext = mimeType.split('/')[1] || 'bin';
@@ -424,7 +424,7 @@ export class HouseholdService {
     dto: ConfirmReceiptDto,
   ) {
     if (dto.fileSize > MAX_RECEIPT_SIZE) {
-      throw new BadRequestException('파일 크기는 10MB를 초과할 수 없습니다');
+      throw new BadRequestException('common.errors.file_too_large');
     }
 
     const expense = await this.prisma.expense.findUnique({
@@ -432,13 +432,13 @@ export class HouseholdService {
     });
 
     if (!expense) {
-      throw new NotFoundException('지출 내역을 찾을 수 없습니다');
+      throw new NotFoundException('household.errors.expense_not_found');
     }
 
     if (expense.groupId) {
       await this.validateGroupMember(userId, expense.groupId);
     } else if (expense.userId !== userId) {
-      throw new ForbiddenException('본인이 등록한 지출만 수정할 수 있습니다');
+      throw new ForbiddenException('household.errors.own_expense_only_update');
     }
 
     const fileUrl = this.storage.getPublicUrl(dto.fileKey);
@@ -465,7 +465,7 @@ export class HouseholdService {
     });
 
     if (!receipt || receipt.expenseId !== expenseId) {
-      throw new NotFoundException('영수증을 찾을 수 없습니다');
+      throw new NotFoundException('household.errors.receipt_not_found');
     }
 
     if (receipt.expense.groupId) {
@@ -689,7 +689,7 @@ export class HouseholdService {
     });
 
     if (!template) {
-      throw new NotFoundException('예산 템플릿을 찾을 수 없습니다');
+      throw new NotFoundException('household.errors.budget_template_not_found');
     }
 
     await this.prisma.budgetTemplate.delete({ where: { id: template.id } });
@@ -949,7 +949,9 @@ export class HouseholdService {
     });
 
     if (!template) {
-      throw new NotFoundException('전체 예산 템플릿을 찾을 수 없습니다');
+      throw new NotFoundException(
+        'household.errors.total_budget_template_not_found',
+      );
     }
 
     await this.prisma.groupBudgetTemplate.delete({ where: whereKey });
@@ -1162,7 +1164,7 @@ export class HouseholdService {
     });
 
     if (!member) {
-      throw new ForbiddenException('해당 그룹의 멤버가 아닙니다');
+      throw new ForbiddenException('household.errors.not_member');
     }
   }
 }

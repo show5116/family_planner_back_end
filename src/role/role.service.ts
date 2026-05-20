@@ -47,7 +47,7 @@ export class RoleService {
     });
 
     if (!member) {
-      throw new ForbiddenException('이 그룹에 접근할 권한이 없습니다.');
+      throw new ForbiddenException('role.errors.no_access');
     }
 
     // 공통 역할 + 해당 그룹의 커스텀 역할 조회
@@ -131,7 +131,7 @@ export class RoleService {
     });
 
     if (!role) {
-      throw new NotFoundException('역할을 찾을 수 없습니다.');
+      throw new NotFoundException('role.errors.role_not_found');
     }
 
     // 공통 역할만 수정 가능
@@ -212,7 +212,7 @@ export class RoleService {
     });
 
     if (!role) {
-      throw new NotFoundException('역할을 찾을 수 없습니다.');
+      throw new NotFoundException('role.errors.role_not_found');
     }
 
     // 공통 역할만 삭제 가능
@@ -224,7 +224,7 @@ export class RoleService {
 
     // OWNER 역할은 삭제 불가
     if (role.name === 'OWNER') {
-      throw new BadRequestException('OWNER 역할은 삭제할 수 없습니다.');
+      throw new BadRequestException('role.errors.cannot_delete_owner');
     }
 
     // 사용 중인 역할인지 확인
@@ -318,12 +318,12 @@ export class RoleService {
     });
 
     if (!role) {
-      throw new NotFoundException('역할을 찾을 수 없습니다.');
+      throw new NotFoundException('role.errors.role_not_found');
     }
 
     // 해당 그룹의 역할인지 확인
     if (role.groupId !== groupId) {
-      throw new ForbiddenException('이 역할은 해당 그룹에 속하지 않습니다.');
+      throw new ForbiddenException('role.errors.role_wrong_group');
     }
 
     // 역할명 변경 시 중복 체크
@@ -397,12 +397,12 @@ export class RoleService {
     });
 
     if (!role) {
-      throw new NotFoundException('역할을 찾을 수 없습니다.');
+      throw new NotFoundException('role.errors.role_not_found');
     }
 
     // 해당 그룹의 역할인지 확인
     if (role.groupId !== groupId) {
-      throw new ForbiddenException('이 역할은 해당 그룹에 속하지 않습니다.');
+      throw new ForbiddenException('role.errors.role_wrong_group');
     }
 
     // 사용 중인 역할인지 확인

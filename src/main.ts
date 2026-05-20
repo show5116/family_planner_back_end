@@ -17,8 +17,8 @@ if (process.platform === 'win32') {
 }
 
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { I18nValidationPipe } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from '@/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -54,15 +54,15 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
   });
 
   // 전역 ValidationPipe 설정
   app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // DTO에 정의되지 않은 속성 제거
-      forbidNonWhitelisted: true, // 정의되지 않은 속성이 있으면 요청 거부
-      transform: true, // 요청 데이터를 DTO 인스턴스로 자동 변환
+    new I18nValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 

@@ -46,7 +46,7 @@ export class TaskService {
         (gid) => !userGroupIds.includes(gid),
       );
       if (invalidGroupIds.length > 0) {
-        throw new ForbiddenException('그룹 멤버만 조회할 수 있습니다');
+        throw new ForbiddenException('task.errors.group_member_only_view');
       }
     }
 
@@ -97,7 +97,7 @@ export class TaskService {
     });
 
     if (!task) {
-      throw new NotFoundException('Task를 찾을 수 없습니다');
+      throw new NotFoundException('task.errors.task_not_found');
     }
 
     // 권한 확인
@@ -105,12 +105,10 @@ export class TaskService {
       if (task.groupId) {
         const isMember = await this.checkGroupMember(userId, task.groupId);
         if (!isMember) {
-          throw new ForbiddenException(
-            '그룹 Task는 그룹 멤버만 조회할 수 있습니다',
-          );
+          throw new ForbiddenException('task.errors.group_member_only_view');
         }
       } else {
-        throw new ForbiddenException('본인의 Task만 조회할 수 있습니다');
+        throw new ForbiddenException('task.errors.own_task_only_view');
       }
     }
 
@@ -128,7 +126,7 @@ export class TaskService {
     if (dto.groupId) {
       const isMember = await this.checkGroupMember(userId, dto.groupId);
       if (!isMember) {
-        throw new ForbiddenException('그룹 멤버만 Task를 생성할 수 있습니다');
+        throw new ForbiddenException('task.errors.group_member_only_create');
       }
     }
 
@@ -137,7 +135,7 @@ export class TaskService {
         where: { id: dto.categoryId },
       });
       if (!category) {
-        throw new NotFoundException('카테고리를 찾을 수 없습니다');
+        throw new NotFoundException('task.errors.category_not_found');
       }
     }
 
@@ -227,7 +225,7 @@ export class TaskService {
     });
 
     if (!task) {
-      throw new NotFoundException('Task 생성에 실패했습니다');
+      throw new NotFoundException('task.errors.task_create_failed');
     }
 
     // 트랜잭션 밖에서 reminders 조회 (tx 내 createMany 후 findUnique 시 빈 배열 반환 이슈)
@@ -276,7 +274,7 @@ export class TaskService {
     });
 
     if (!task) {
-      throw new NotFoundException('Task를 찾을 수 없습니다');
+      throw new NotFoundException('task.errors.task_not_found');
     }
 
     if (task.userId !== userId) {
@@ -370,7 +368,7 @@ export class TaskService {
       });
 
       if (!updated) {
-        throw new NotFoundException('Task 수정에 실패했습니다');
+        throw new NotFoundException('task.errors.task_update_failed');
       }
 
       // 트랜잭션 밖에서 reminders 조회 (tx 내 createMany 후 findUnique 시 빈 배열 반환 이슈)
@@ -447,7 +445,7 @@ export class TaskService {
     });
 
     if (!task) {
-      throw new NotFoundException('Task를 찾을 수 없습니다');
+      throw new NotFoundException('task.errors.task_not_found');
     }
 
     const isCompleted = status === TaskStatus.COMPLETED;
@@ -495,11 +493,11 @@ export class TaskService {
     });
 
     if (!task) {
-      throw new NotFoundException('Task를 찾을 수 없습니다');
+      throw new NotFoundException('task.errors.task_not_found');
     }
 
     if (task.userId !== userId) {
-      throw new ForbiddenException('본인이 작성한 Task만 삭제할 수 있습니다');
+      throw new ForbiddenException('task.errors.own_task_only_delete');
     }
 
     if (task.recurringId && !deleteScope) {

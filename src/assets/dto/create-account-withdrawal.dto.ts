@@ -5,7 +5,7 @@ export class CreateAccountWithdrawalDto {
   @ApiProperty({ description: '출금 날짜 (YYYY-MM-DD)', example: '2026-04-27' })
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: '날짜 형식은 YYYY-MM-DD이어야 합니다',
+    message: 'validation.date_format',
   })
   withdrawalDate: string;
 

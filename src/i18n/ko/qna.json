@@ -1,0 +1,12 @@
+{
+  "errors": {
+    "admin_only": "관리자만 모든 질문을 조회할 수 있습니다",
+    "login_required": "내 질문 조회는 로그인이 필요합니다",
+    "question_not_found": "질문을 찾을 수 없습니다",
+    "own_question_only_update": "본인 작성 질문만 수정할 수 있습니다",
+    "resolved_question_no_edit": "해결 완료된 질문은 수정할 수 없습니다",
+    "own_question_only_delete": "본인 작성 질문만 삭제할 수 있습니다",
+    "answer_not_found": "답변을 찾을 수 없습니다",
+    "no_permission": "권한이 없습니다"
+  }
+}

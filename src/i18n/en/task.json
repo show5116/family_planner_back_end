@@ -1,0 +1,16 @@
+{
+  "errors": {
+    "group_member_only_view": "Only group members can view",
+    "group_member_only_create": "Only group members can create tasks",
+    "group_member_only": "Only group members can access",
+    "task_not_found": "Task not found",
+    "own_task_only_view": "You can only view your own tasks",
+    "own_task_only_delete": "You can only delete your own tasks",
+    "category_not_found": "Category not found",
+    "task_create_failed": "Failed to create task",
+    "task_update_failed": "Failed to update task",
+    "participants_must_be_members": "Participants must be group members",
+    "recurring_not_found": "Recurring rule not found",
+    "holiday_fetch_failed": "Failed to fetch holiday information"
+  }
+}

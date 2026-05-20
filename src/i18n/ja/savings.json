@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "no_auto_deposit": "自動積立が設定されていない目標です",
+    "already_paused": "すでに一時停止中です",
+    "already_active": "すでにアクティブ状態です",
+    "insufficient_balance": "残高が不足しています",
+    "goal_not_found": "積立目標が見つかりません"
+  }
+}

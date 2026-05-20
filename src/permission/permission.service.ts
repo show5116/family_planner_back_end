@@ -157,7 +157,7 @@ export class PermissionService {
     });
 
     if (!permission) {
-      throw new NotFoundException('권한을 찾을 수 없습니다.');
+      throw new NotFoundException('permission.errors.not_found');
     }
 
     // 권한 코드 변경 시 중복 확인
@@ -200,7 +200,7 @@ export class PermissionService {
     });
 
     if (!permission) {
-      throw new NotFoundException('권한을 찾을 수 없습니다.');
+      throw new NotFoundException('permission.errors.not_found');
     }
 
     // 소프트 삭제 (isActive = false)
@@ -229,7 +229,7 @@ export class PermissionService {
     });
 
     if (!permission) {
-      throw new NotFoundException('권한을 찾을 수 없습니다.');
+      throw new NotFoundException('permission.errors.not_found');
     }
 
     // 이 권한을 사용하는 역할이 있는지 확인

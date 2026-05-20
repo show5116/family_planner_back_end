@@ -1,0 +1,10 @@
+{
+  "errors": {
+    "vote_not_found": "Vote not found",
+    "vote_closed": "This vote is closed",
+    "invalid_option": "Invalid option",
+    "single_choice_only": "This is a single-choice vote",
+    "closed_vote_cancel": "Cannot cancel a closed vote",
+    "group_member_only": "Only group members can access"
+  }
+}

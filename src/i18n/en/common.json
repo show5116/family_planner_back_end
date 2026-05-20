@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "file_too_large": "File size cannot exceed 10MB",
+    "invalid_image": "Invalid image file",
+    "file_required": "File is required",
+    "invalid_type": "Invalid type",
+    "forbidden": "Access denied"
+  }
+}

@@ -27,7 +27,8 @@ export class ShoppingService {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });
-    if (!member) throw new ForbiddenException('그룹 멤버만 접근할 수 있습니다');
+    if (!member)
+      throw new ForbiddenException('shopping.errors.group_member_only');
   }
 
   private async getOrCreateCart(groupId: string) {
@@ -107,7 +108,7 @@ export class ShoppingService {
     const cart = await this.prisma.shoppingCart.findUnique({
       where: { groupId },
     });
-    if (!cart) throw new NotFoundException('장바구니를 찾을 수 없습니다');
+    if (!cart) throw new NotFoundException('shopping.errors.cart_not_found');
 
     const updates = dto.updates ?? [];
     const deletes = dto.deletes ?? [];
@@ -152,11 +153,11 @@ export class ShoppingService {
     const cart = await this.prisma.shoppingCart.findUnique({
       where: { groupId },
     });
-    if (!cart) throw new NotFoundException('장바구니를 찾을 수 없습니다');
+    if (!cart) throw new NotFoundException('shopping.errors.cart_not_found');
     const item = await this.prisma.shoppingCartItem.findFirst({
       where: { id: itemId, cartId: cart.id },
     });
-    if (!item) throw new NotFoundException('품목을 찾을 수 없습니다');
+    if (!item) throw new NotFoundException('shopping.errors.item_not_found');
     return this.prisma.shoppingCartItem.update({
       where: { id: itemId },
       data: {
@@ -173,11 +174,11 @@ export class ShoppingService {
     const cart = await this.prisma.shoppingCart.findUnique({
       where: { groupId },
     });
-    if (!cart) throw new NotFoundException('장바구니를 찾을 수 없습니다');
+    if (!cart) throw new NotFoundException('shopping.errors.cart_not_found');
     const item = await this.prisma.shoppingCartItem.findFirst({
       where: { id: itemId, cartId: cart.id },
     });
-    if (!item) throw new NotFoundException('품목을 찾을 수 없습니다');
+    if (!item) throw new NotFoundException('shopping.errors.item_not_found');
     await this.prisma.shoppingCartItem.delete({ where: { id: itemId } });
     return { message: '품목이 삭제되었습니다' };
   }
@@ -193,7 +194,7 @@ export class ShoppingService {
       include: { items: true },
     });
     if (!cart || cart.items.length === 0) {
-      throw new NotFoundException('장바구니가 비어 있습니다');
+      throw new NotFoundException('shopping.errors.cart_empty');
     }
 
     const transferMap = new Map(dto.transfers.map((t) => [t.cartItemId, t]));
@@ -303,7 +304,8 @@ export class ShoppingService {
       where: { id: historyId, groupId },
       include: { items: true, expense: true },
     });
-    if (!history) throw new NotFoundException('구매 이력을 찾을 수 없습니다');
+    if (!history)
+      throw new NotFoundException('shopping.errors.purchase_history_not_found');
     return history;
   }
 }
