@@ -136,9 +136,7 @@ export class RoleService {
 
     // 공통 역할만 수정 가능
     if (role.groupId !== null) {
-      throw new BadRequestException(
-        '공통 역할만 수정할 수 있습니다. 그룹별 역할은 /groups/:groupId/roles 엔드포인트를 사용하세요.',
-      );
+      throw new BadRequestException('role.errors.common_role_only');
     }
 
     // 역할명 변경 시 중복 체크
@@ -215,9 +213,7 @@ export class RoleService {
 
     // 공통 역할만 삭제 가능
     if (role.groupId !== null) {
-      throw new BadRequestException(
-        '공통 역할만 삭제할 수 있습니다. 그룹별 역할은 /groups/:groupId/roles 엔드포인트를 사용하세요.',
-      );
+      throw new BadRequestException('role.errors.common_role_only');
     }
 
     // OWNER 역할은 삭제 불가
@@ -281,9 +277,7 @@ export class RoleService {
       });
 
       if (existingDefaultRole) {
-        throw new ConflictException(
-          '이 그룹에 이미 기본 역할이 존재합니다. 기본 역할은 하나만 설정할 수 있습니다.',
-        );
+        throw new ConflictException('role.errors.common_default_role_exists');
       }
     }
 
@@ -354,9 +348,7 @@ export class RoleService {
       });
 
       if (existingDefaultRole) {
-        throw new ConflictException(
-          '이 그룹에 이미 기본 역할이 존재합니다. 기본 역할은 하나만 설정할 수 있습니다.',
-        );
+        throw new ConflictException('role.errors.common_default_role_exists');
       }
     }
 
