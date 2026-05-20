@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "not_found": "通知不存在",
+    "not_yours": "该通知不属于您",
+    "token_not_found": "令牌不存在",
+    "token_not_yours": "该令牌不属于您"
+  },
+  "success": {
+    "deleted": "通知已删除",
+    "test_sent": "测试通知已发送",
+    "test_failed_no_token": "测试通知发送失败",
+    "test_failed_disabled": "测试通知发送失败"
+  }
+}

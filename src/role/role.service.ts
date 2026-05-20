@@ -5,6 +5,7 @@
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateRoleDto } from '@/role/dto/create-role.dto';
 import { UpdateRoleDto } from '@/role/dto/update-role.dto';
@@ -12,7 +13,10 @@ import { BulkUpdateRoleSortOrderDto } from '@/role/dto/bulk-update-sort-order.dt
 
 @Injectable()
 export class RoleService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private i18n: I18nService,
+  ) {}
 
   /**
    * 공통 역할 전체 조회 (운영자 전용)
@@ -233,7 +237,9 @@ export class RoleService {
     });
 
     return {
-      message: '역할이 삭제되었습니다.',
+      message: this.i18n.t('role.success.role_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       deletedRole: {
         ...role,
         permissions: JSON.parse(role.permissions as string),
@@ -411,7 +417,9 @@ export class RoleService {
     });
 
     return {
-      message: '역할이 삭제되었습니다.',
+      message: this.i18n.t('role.success.role_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       deletedRole: {
         ...role,
         permissions: JSON.parse(role.permissions as string),
@@ -439,7 +447,9 @@ export class RoleService {
     await this.prisma.$transaction(updates);
 
     return {
-      message: '역할 정렬 순서가 업데이트되었습니다.',
+      message: this.i18n.t('role.success.sort_order_updated', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       updatedCount: bulkUpdateDto.items.length,
     };
   }
@@ -463,7 +473,9 @@ export class RoleService {
     await this.prisma.$transaction(updates);
 
     return {
-      message: '역할 정렬 순서가 업데이트되었습니다.',
+      message: this.i18n.t('role.success.sort_order_updated', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       updatedCount: bulkUpdateDto.items.length,
     };
   }

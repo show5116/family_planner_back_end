@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "not_found": "Notification not found",
+    "not_yours": "This notification does not belong to you",
+    "token_not_found": "Token not found",
+    "token_not_yours": "This token does not belong to you"
+  },
+  "success": {
+    "deleted": "Notification deleted",
+    "test_sent": "Test notification sent",
+    "test_failed_no_token": "Test notification failed",
+    "test_failed_disabled": "Test notification failed"
+  }
+}

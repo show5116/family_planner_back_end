@@ -27,7 +27,11 @@
     "cannot_transfer_to_self": "自分自身に権限を譲渡することはできません",
     "new_owner_not_in_group": "新しいOWNERとなるユーザーがグループに見つかりません",
     "group_not_in_list": "所属していないグループが含まれています",
-    "owner_required": "グループOWNER権限が必要です"
+    "owner_required": "グループOWNER権限が必要です",
+    "owner_cannot_leave": "OWNERはグループを退出できません。他のメンバーにOWNER権限を譲渡するか、グループを削除してください",
+    "owner_role_cannot_change": "OWNERロールは変更できません。グループ管理権限の譲渡機能をご利用ください",
+    "owner_role_cannot_assign": "OWNERロールは割り当てられません。グループ管理権限の譲渡機能をご利用ください",
+    "invite_auto_approved": "INVITEタイプは招待コードからユーザーが参加した際に自動承認されます"
   },
   "success": {
     "group_deleted": "グループが削除されました",

@@ -22,6 +22,7 @@
     "category_own_only_edit": "只能编辑/删除自己的分类"
   },
   "success": {
-    "category_deleted": "分类已删除"
+    "category_deleted": "分类已删除",
+    "task_deleted": "任务已删除"
   }
 }

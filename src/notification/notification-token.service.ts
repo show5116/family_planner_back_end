@@ -129,11 +129,11 @@ export class NotificationTokenService {
     });
 
     if (!deviceToken) {
-      throw new NotFoundException('Token not found');
+      throw new NotFoundException('notification.errors.token_not_found');
     }
 
     if (deviceToken.userId !== userId) {
-      throw new ConflictException('This token does not belong to you');
+      throw new ConflictException('notification.errors.token_not_yours');
     }
 
     // Topic 구독 해제 (비동기 - 실패해도 서비스 정상 동작)

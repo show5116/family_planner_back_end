@@ -6,5 +6,9 @@
     "role_wrong_group": "このロールはこのグループに属していません",
     "common_role_only": "共通ロールのみ作成できます。グループ別ロールは /groups/:groupId/roles エンドポイントを使用してください。",
     "common_default_role_exists": "共通ロールにすでにデフォルトロールが存在します。デフォルトロールは1つのみ設定できます。"
+  },
+  "success": {
+    "role_deleted": "ロールを削除しました。",
+    "sort_order_updated": "ロールの並び順を更新しました。"
   }
 }

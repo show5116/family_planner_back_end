@@ -27,7 +27,11 @@
     "cannot_transfer_to_self": "You cannot transfer ownership to yourself",
     "new_owner_not_in_group": "The user to become the new OWNER was not found in the group",
     "group_not_in_list": "A group you do not belong to is included",
-    "owner_required": "Group OWNER privileges required"
+    "owner_required": "Group OWNER privileges required",
+    "owner_cannot_leave": "OWNER cannot leave the group. Please transfer OWNER privileges to another member or delete the group",
+    "owner_role_cannot_change": "OWNER role cannot be changed. Please use the ownership transfer feature",
+    "owner_role_cannot_assign": "OWNER role cannot be assigned. Please use the ownership transfer feature",
+    "invite_auto_approved": "INVITE type requests are automatically approved when the user joins via invite code"
   },
   "success": {
     "group_deleted": "Group has been deleted",

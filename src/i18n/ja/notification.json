@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "not_found": "通知が見つかりません",
+    "not_yours": "この通知はあなたのものではありません",
+    "token_not_found": "トークンが見つかりません",
+    "token_not_yours": "このトークンはあなたのものではありません"
+  },
+  "success": {
+    "deleted": "通知を削除しました",
+    "test_sent": "テスト通知を送信しました",
+    "test_failed_no_token": "テスト通知の送信に失敗しました",
+    "test_failed_disabled": "テスト通知の送信に失敗しました"
+  }
+}

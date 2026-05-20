@@ -410,9 +410,7 @@ export class GroupInviteService {
     }
 
     if (joinRequest.type === 'INVITE') {
-      throw new BadRequestException(
-        'INVITE 타입은 사용자가 초대 코드로 가입 시 자동 승인됩니다',
-      );
+      throw new BadRequestException('group.errors.invite_auto_approved');
     }
 
     // 초대받은 사용자 조회

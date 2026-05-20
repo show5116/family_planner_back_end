@@ -6,5 +6,9 @@
     "role_wrong_group": "该角色不属于此群组",
     "common_role_only": "只能创建通用角色，群组专属角色请使用 /groups/:groupId/roles 端点",
     "common_default_role_exists": "通用角色中已存在默认角色，只能设置一个默认角色"
+  },
+  "success": {
+    "role_deleted": "角色已删除。",
+    "sort_order_updated": "角色排序已更新。"
   }
 }

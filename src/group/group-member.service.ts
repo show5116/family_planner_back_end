@@ -140,9 +140,7 @@ export class GroupMemberService {
 
     // OWNER는 나갈 수 없음
     if (member.role.name === 'OWNER') {
-      throw new BadRequestException(
-        'OWNER는 그룹을 나갈 수 없습니다. 다른 멤버에게 OWNER 권한을 위임하거나 그룹을 삭제해주세요',
-      );
+      throw new BadRequestException('group.errors.owner_cannot_leave');
     }
 
     await this.prisma.groupMember.delete({
@@ -188,9 +186,7 @@ export class GroupMemberService {
 
     // OWNER 역할은 양도만 가능 (변경 불가)
     if (member.role.name === 'OWNER') {
-      throw new BadRequestException(
-        'OWNER 역할은 변경할 수 없습니다. 그룹장 양도 기능을 사용해주세요',
-      );
+      throw new BadRequestException('group.errors.owner_role_cannot_change');
     }
 
     // 새 역할 확인
@@ -204,9 +200,7 @@ export class GroupMemberService {
 
     // OWNER 역할로는 변경할 수 없음
     if (newRole.name === 'OWNER') {
-      throw new BadRequestException(
-        'OWNER 역할은 할당할 수 없습니다. 그룹장 양도 기능을 사용해주세요',
-      );
+      throw new BadRequestException('group.errors.owner_role_cannot_assign');
     }
 
     const updatedMember = await this.prisma.groupMember.update({
@@ -411,7 +405,9 @@ export class GroupMemberService {
     });
 
     return {
-      message: 'OWNER 권한이 성공적으로 양도되었습니다',
+      message: this.i18n.t('group.success.ownership_transferred', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       previousOwner: membersWithUrls.find((m) => m.userId === currentOwnerId),
       newOwner: membersWithUrls.find((m) => m.userId === newOwnerId),
     };

@@ -22,6 +22,7 @@
     "category_own_only_edit": "You can only edit/delete your own categories"
   },
   "success": {
-    "category_deleted": "Category deleted"
+    "category_deleted": "Category deleted",
+    "task_deleted": "Task deleted"
   }
 }

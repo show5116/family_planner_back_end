@@ -6,5 +6,9 @@
     "role_wrong_group": "이 역할은 해당 그룹에 속하지 않습니다",
     "common_role_only": "공통 역할만 생성할 수 있습니다. 그룹별 역할은 /groups/:groupId/roles 엔드포인트를 사용하세요.",
     "common_default_role_exists": "공통 역할 중 이미 기본 역할이 존재합니다. 기본 역할은 하나만 설정할 수 있습니다."
+  },
+  "success": {
+    "role_deleted": "역할이 삭제되었습니다.",
+    "sort_order_updated": "역할 정렬 순서가 업데이트되었습니다."
   }
 }

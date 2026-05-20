@@ -3,6 +3,7 @@
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -25,6 +26,7 @@ export class TaskService {
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
     private recurringService: RecurringService,
+    private i18n: I18nService,
   ) {}
 
   /**
@@ -553,7 +555,11 @@ export class TaskService {
       new TaskDeletedEvent(deletedTaskIds, userId, reminderIds),
     );
 
-    return { message: 'Task가 삭제되었습니다' };
+    return {
+      message: this.i18n.t('task.success.task_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   // ==================== Private 헬퍼 메서드 ====================

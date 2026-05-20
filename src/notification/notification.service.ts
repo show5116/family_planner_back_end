@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { FirebaseService } from '@/firebase/firebase.service';
 import { RedisService } from '@/redis/redis.service';
@@ -29,6 +30,7 @@ export class NotificationService {
     private redis: RedisService,
     private tokenService: NotificationTokenService,
     private queueService: NotificationQueueService,
+    private i18n: I18nService,
   ) {}
 
   /**
@@ -223,11 +225,11 @@ export class NotificationService {
     });
 
     if (!notification) {
-      throw new NotFoundException('Notification not found');
+      throw new NotFoundException('notification.errors.not_found');
     }
 
     if (notification.userId !== userId) {
-      throw new ConflictException('This notification does not belong to you');
+      throw new ConflictException('notification.errors.not_yours');
     }
 
     return await this.prisma.notification.update({
@@ -266,18 +268,22 @@ export class NotificationService {
     });
 
     if (!notification) {
-      throw new NotFoundException('Notification not found');
+      throw new NotFoundException('notification.errors.not_found');
     }
 
     if (notification.userId !== userId) {
-      throw new ConflictException('This notification does not belong to you');
+      throw new ConflictException('notification.errors.not_yours');
     }
 
     await this.prisma.notification.delete({
       where: { id: notificationId },
     });
 
-    return { message: 'Notification deleted successfully' };
+    return {
+      message: this.i18n.t('notification.success.deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
@@ -304,7 +310,9 @@ export class NotificationService {
 
     if (tokens.length === 0) {
       return {
-        message: '테스트 알림 전송 실패',
+        message: this.i18n.t('notification.success.test_failed_no_token', {
+          lang: I18nContext.current()?.lang ?? 'ko',
+        }),
         error:
           'FCM 디바이스 토큰이 등록되어 있지 않습니다. 먼저 토큰을 등록해주세요.',
         userId,
@@ -323,7 +331,9 @@ export class NotificationService {
 
     if (setting && !setting.enabled) {
       return {
-        message: '테스트 알림 전송 실패',
+        message: this.i18n.t('notification.success.test_failed_disabled', {
+          lang: I18nContext.current()?.lang ?? 'ko',
+        }),
         error: 'SYSTEM 카테고리 알림이 비활성화되어 있습니다.',
         userId,
         setting: {
@@ -346,7 +356,9 @@ export class NotificationService {
     });
 
     return {
-      message: '테스트 알림이 전송되었습니다',
+      message: this.i18n.t('notification.success.test_sent', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
       userId,
       deviceTokenCount: tokens.length,
       result,

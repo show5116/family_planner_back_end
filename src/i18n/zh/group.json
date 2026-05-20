@@ -27,7 +27,11 @@
     "cannot_transfer_to_self": "无法将所有权转让给自己",
     "new_owner_not_in_group": "新OWNER用户不在该群组中",
     "group_not_in_list": "包含您不属于的群组",
-    "owner_required": "需要群组OWNER权限"
+    "owner_required": "需要群组OWNER权限",
+    "owner_cannot_leave": "OWNER无法退出群组。请将OWNER权限转让给其他成员或删除群组",
+    "owner_role_cannot_change": "OWNER角色无法变更，请使用群主转让功能",
+    "owner_role_cannot_assign": "无法分配OWNER角色，请使用群主转让功能",
+    "invite_auto_approved": "INVITE类型在用户通过邀请码加入时自动批准"
   },
   "success": {
     "group_deleted": "群组已删除",

@@ -6,5 +6,9 @@
     "role_wrong_group": "This role does not belong to this group",
     "common_role_only": "Only common roles can be created. Use the /groups/:groupId/roles endpoint for group-specific roles.",
     "common_default_role_exists": "A default role already exists among common roles. Only one default role can be set."
+  },
+  "success": {
+    "role_deleted": "Role deleted.",
+    "sort_order_updated": "Role sort order updated."
   }
 }
