@@ -2,5 +2,34 @@
   "errors": {
     "fetch_failed": "天气信息获取失败",
     "forecast_failed": "天气预报获取失败"
+  },
+  "description": {
+    "rain": "雨",
+    "sleet": "雨夹雪",
+    "snow": "雪",
+    "shower": "阵雨",
+    "clear": "晴",
+    "cloudy": "多云",
+    "overcast": "阴",
+    "unknown": "未知"
+  },
+  "sido": {
+    "seoul": "首尔",
+    "incheon": "仁川",
+    "sejong": "世宗",
+    "daejeon": "大田",
+    "daegu": "大邱",
+    "ulsan": "蔚山",
+    "busan": "釜山",
+    "gwangju": "光州",
+    "gyeonggi": "京畿",
+    "gangwon": "江原",
+    "chungbuk": "忠北",
+    "chungnam": "忠南",
+    "jeonbuk": "全北",
+    "jeonnam": "全南",
+    "gyeongbuk": "庆北",
+    "gyeongnam": "庆南",
+    "jeju": "济州"
   }
 }

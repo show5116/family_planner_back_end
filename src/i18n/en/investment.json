@@ -6,5 +6,28 @@
   },
   "success": {
     "favorite_order_changed": "Favorite order changed"
+  },
+  "indicators": {
+    "KOSPI": "KOSPI",
+    "KOSDAQ": "KOSDAQ",
+    "SP500": "S&P 500",
+    "NASDAQ": "NASDAQ",
+    "NQ100": "Nasdaq 100 Futures",
+    "DJI": "Dow Jones",
+    "NIKKEI225": "Nikkei 225",
+    "TWSE": "TWSE",
+    "USD_KRW": "USD/KRW",
+    "DXY": "Dollar Index",
+    "GOLD_USD": "Gold (International)",
+    "GOLD_KRW_SPOT": "Gold (KRW)",
+    "SILVER": "Silver",
+    "WTI": "WTI Crude Oil",
+    "COPPER": "Copper",
+    "US10Y": "US 10Y Treasury",
+    "KR3Y": "Korea 3Y Treasury",
+    "VIX": "VIX",
+    "BTC_KRW": "Bitcoin (KRW)",
+    "BUFFETT_US": "Buffett Indicator (US)",
+    "FEAR_GREED": "Fear & Greed Index"
   }
 }

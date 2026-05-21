@@ -40,7 +40,10 @@ export class ForecastItemDto {
   })
   precipitationType: number;
 
-  @ApiProperty({ description: '날씨 설명', example: '맑음' })
+  @ApiProperty({
+    description: '날씨 설명 (accept-language 헤더 기준 다국어)',
+    example: '맑음 / Clear / 晴れ / 晴',
+  })
   weatherDescription: string;
 }
 

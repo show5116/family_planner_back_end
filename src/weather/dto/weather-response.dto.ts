@@ -19,7 +19,10 @@ export class WeatherResponseDto {
   })
   precipitationType: number;
 
-  @ApiProperty({ description: '날씨 설명', example: '맑음' })
+  @ApiProperty({
+    description: '날씨 설명 (accept-language 헤더 기준 다국어)',
+    example: '맑음 / Clear / 晴れ / 晴',
+  })
   weatherDescription: string;
 
   @ApiProperty({ description: '기준 날짜 (YYYYMMDD)', example: '20260314' })
@@ -57,8 +60,8 @@ export class WeatherResponseDto {
   pm25Grade: number | null;
 
   @ApiProperty({
-    description: '미세먼지 기준 시도명',
-    example: '서울',
+    description: '미세먼지 기준 시도명 (accept-language 헤더 기준 다국어)',
+    example: '서울 / Seoul / ソウル / 首尔',
     nullable: true,
   })
   sidoName: string | null;

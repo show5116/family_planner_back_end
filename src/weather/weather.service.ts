@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, BadGatewayException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs';
 import { WeatherQueryDto } from '@/weather/dto/weather-query.dto';
@@ -56,45 +57,45 @@ interface AirKoreaResponse<T> {
   };
 }
 
-// 위경도 범위 기반 시도명 매핑 (좁은 범위 광역시를 도(道)보다 먼저 체크)
-function getSidoName(lat: number, lon: number): string {
+// 위경도 범위 기반 시도 키 매핑 (좁은 범위 광역시를 도(道)보다 먼저 체크)
+function getSidoKey(lat: number, lon: number): string {
   // 광역시/특별시/특별자치시 (좁은 범위) 먼저
   if (lat >= 37.43 && lat <= 37.7 && lon >= 126.76 && lon <= 127.18)
-    return '서울';
+    return 'seoul';
   if (lat >= 37.15 && lat <= 37.81 && lon >= 126.2 && lon <= 126.78)
-    return '인천';
+    return 'incheon';
   if (lat >= 36.26 && lat <= 36.65 && lon >= 127.18 && lon <= 127.5)
-    return '세종';
+    return 'sejong';
   if (lat >= 36.2 && lat <= 36.5 && lon >= 127.29 && lon <= 127.51)
-    return '대전';
+    return 'daejeon';
   if (lat >= 35.78 && lat <= 36.03 && lon >= 128.4 && lon <= 128.76)
-    return '대구';
+    return 'daegu';
   if (lat >= 35.46 && lat <= 35.78 && lon >= 128.97 && lon <= 129.46)
-    return '울산';
+    return 'ulsan';
   if (lat >= 34.88 && lat <= 35.4 && lon >= 128.74 && lon <= 129.33)
-    return '부산';
+    return 'busan';
   if (lat >= 35.08 && lat <= 35.25 && lon >= 126.72 && lon <= 126.96)
-    return '광주';
+    return 'gwangju';
   // 도(道) (넓은 범위) 나중에
   if (lat >= 36.93 && lat <= 38.3 && lon >= 126.32 && lon <= 127.86)
-    return '경기';
+    return 'gyeonggi';
   if (lat >= 37.0 && lat <= 38.62 && lon >= 127.19 && lon <= 129.37)
-    return '강원';
+    return 'gangwon';
   if (lat >= 36.06 && lat <= 37.18 && lon >= 127.4 && lon <= 128.52)
-    return '충북';
+    return 'chungbuk';
   if (lat >= 35.9 && lat <= 37.07 && lon >= 125.91 && lon <= 127.55)
-    return '충남';
+    return 'chungnam';
   if (lat >= 35.4 && lat <= 36.15 && lon >= 126.35 && lon <= 127.83)
-    return '전북';
+    return 'jeonbuk';
   if (lat >= 34.06 && lat <= 35.52 && lon >= 125.58 && lon <= 127.62)
-    return '전남';
+    return 'jeonnam';
   if (lat >= 35.57 && lat <= 37.22 && lon >= 127.98 && lon <= 129.57)
-    return '경북';
+    return 'gyeongbuk';
   if (lat >= 34.67 && lat <= 35.81 && lon >= 127.55 && lon <= 129.46)
-    return '경남';
+    return 'gyeongnam';
   if (lat >= 33.11 && lat <= 33.56 && lon >= 126.15 && lon <= 126.96)
-    return '제주';
-  return '서울'; // fallback
+    return 'jeju';
+  return 'seoul'; // fallback
 }
 
 // 위경도 → 기상청 격자좌표 변환 파라미터 (Lambert Conformal Conic)
@@ -190,19 +191,21 @@ export class WeatherService {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    private readonly i18n: I18nService,
   ) {
     this.serviceKey = this.configService.get<string>('weather.kmaServiceKey');
   }
 
   async getWeather(query: WeatherQueryDto): Promise<WeatherResponseDto> {
     const { nx, ny } = toGrid(query.lat, query.lon);
+    const lang = I18nContext.current()?.lang ?? 'ko';
 
     // 기상청 초단기실황: 매시 정각 발표, 약 10분 후 제공 → 안전하게 1시간 전 기준
     const now = dayjs().subtract(1, 'hour');
     const baseDate = now.format('YYYYMMDD');
     const baseTime = now.format('HH00');
 
-    const cacheKey = `weather:${nx}:${ny}:${baseDate}:${baseTime}`;
+    const cacheKey = `weather:${nx}:${ny}:${baseDate}:${baseTime}:${lang}`;
     const cached = await this.redisService.get<WeatherResponseDto>(cacheKey);
     if (cached) return cached;
 
@@ -234,7 +237,7 @@ export class WeatherService {
 
       const pty = parseInt(get('PTY'));
 
-      const airData = await this.getAirQuality(query.lat, query.lon);
+      const airData = await this.getAirQuality(query.lat, query.lon, lang);
 
       const result: WeatherResponseDto = {
         temperature: parseFloat(get('T1H')),
@@ -242,7 +245,7 @@ export class WeatherService {
         windSpeed: parseFloat(get('WSD')),
         precipitation: parseFloat(get('RN1')),
         precipitationType: pty,
-        weatherDescription: this.getPtyDescription(pty),
+        weatherDescription: this.getPtyDescription(pty, lang),
         baseDate,
         baseTime,
         ...airData,
@@ -263,9 +266,10 @@ export class WeatherService {
 
   async getForecast(query: WeatherQueryDto): Promise<ForecastResponseDto> {
     const { nx, ny } = toGrid(query.lat, query.lon);
+    const lang = I18nContext.current()?.lang ?? 'ko';
     const { baseDate, baseTime } = getForecastBaseTime(dayjs());
 
-    const cacheKey = `forecast:${nx}:${ny}:${baseDate}:${baseTime}`;
+    const cacheKey = `forecast:${nx}:${ny}:${baseDate}:${baseTime}:${lang}`;
     const cached = await this.redisService.get<ForecastResponseDto>(cacheKey);
     if (cached) return cached;
 
@@ -292,7 +296,7 @@ export class WeatherService {
       }
 
       const items = data.response.body.items.item;
-      const forecasts = this.parseForecastItems(items);
+      const forecasts = this.parseForecastItems(items, lang);
 
       const result: ForecastResponseDto = { baseDate, baseTime, forecasts };
       await this.redisService.set(cacheKey, result, FORECAST_CACHE_TTL);
@@ -308,7 +312,10 @@ export class WeatherService {
     }
   }
 
-  private parseForecastItems(items: KmaFcstItem[]): ForecastItemDto[] {
+  private parseForecastItems(
+    items: KmaFcstItem[],
+    lang: string,
+  ): ForecastItemDto[] {
     // 날짜+시각 기준으로 그룹화
     const grouped = new Map<string, Map<string, string>>();
 
@@ -353,7 +360,7 @@ export class WeatherService {
         windSpeed: parseFloat(get('WSD')),
         sky,
         precipitationType: pty,
-        weatherDescription: this.getWeatherDescription(sky, pty),
+        weatherDescription: this.getWeatherDescription(sky, pty, lang),
       });
     }
 
@@ -368,6 +375,7 @@ export class WeatherService {
   private async getAirQuality(
     lat: number,
     lon: number,
+    lang: string,
   ): Promise<{
     pm10: number | null;
     pm25: number | null;
@@ -385,7 +393,11 @@ export class WeatherService {
       };
     }
 
-    const cacheKey = `air:${Math.round(lat * 10) / 10}:${Math.round(lon * 10) / 10}`;
+    const sidoKey = getSidoKey(lat, lon);
+    // 에어코리아 API는 한국어 시도명으로 쿼리해야 함
+    const sidoNameKo = this.i18n.t(`weather.sido.${sidoKey}`, { lang: 'ko' });
+
+    const cacheKey = `air:${Math.round(lat * 10) / 10}:${Math.round(lon * 10) / 10}:${lang}`;
     const cached = await this.redisService.get<{
       pm10: number | null;
       pm25: number | null;
@@ -396,7 +408,7 @@ export class WeatherService {
     if (cached) return cached;
 
     try {
-      const sidoName = getSidoName(lat, lon);
+      const sidoName = sidoNameKo;
 
       const { data: measureData } = await firstValueFrom(
         this.httpService.get<AirKoreaResponse<AirMeasureItem>>(
@@ -432,7 +444,7 @@ export class WeatherService {
           measure.pm10Grade !== '-' ? parseInt(measure.pm10Grade) : null,
         pm25Grade:
           measure.pm25Grade !== '-' ? parseInt(measure.pm25Grade) : null,
-        sidoName,
+        sidoName: this.i18n.t(`weather.sido.${sidoKey}`, { lang }),
       };
 
       await this.redisService.set(cacheKey, result, AIR_CACHE_TTL);
@@ -450,23 +462,27 @@ export class WeatherService {
   }
 
   // 초단기실황용 (PTY만 존재)
-  private getPtyDescription(pty: number): string {
-    if (pty === 1) return '비';
-    if (pty === 2) return '진눈깨비';
-    if (pty === 3) return '눈';
-    if (pty === 4) return '소나기';
-    return '맑음';
+  private getPtyDescription(pty: number, lang: string): string {
+    if (pty === 1) return this.i18n.t('weather.description.rain', { lang });
+    if (pty === 2) return this.i18n.t('weather.description.sleet', { lang });
+    if (pty === 3) return this.i18n.t('weather.description.snow', { lang });
+    if (pty === 4) return this.i18n.t('weather.description.shower', { lang });
+    return this.i18n.t('weather.description.clear', { lang });
   }
 
   // 단기예보용 (SKY + PTY 조합)
-  private getWeatherDescription(sky: number, pty: number): string {
-    if (pty === 1) return '비';
-    if (pty === 2) return '진눈깨비';
-    if (pty === 3) return '눈';
-    if (pty === 4) return '소나기';
-    if (sky === 1) return '맑음';
-    if (sky === 3) return '구름많음';
-    if (sky === 4) return '흐림';
-    return '알 수 없음';
+  private getWeatherDescription(
+    sky: number,
+    pty: number,
+    lang: string,
+  ): string {
+    if (pty === 1) return this.i18n.t('weather.description.rain', { lang });
+    if (pty === 2) return this.i18n.t('weather.description.sleet', { lang });
+    if (pty === 3) return this.i18n.t('weather.description.snow', { lang });
+    if (pty === 4) return this.i18n.t('weather.description.shower', { lang });
+    if (sky === 1) return this.i18n.t('weather.description.clear', { lang });
+    if (sky === 3) return this.i18n.t('weather.description.cloudy', { lang });
+    if (sky === 4) return this.i18n.t('weather.description.overcast', { lang });
+    return this.i18n.t('weather.description.unknown', { lang });
   }
 }

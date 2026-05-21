@@ -6,5 +6,28 @@
   },
   "success": {
     "favorite_order_changed": "收藏顺序已更改"
+  },
+  "indicators": {
+    "KOSPI": "韩国综合股价指数",
+    "KOSDAQ": "科斯达克",
+    "SP500": "标普500",
+    "NASDAQ": "纳斯达克",
+    "NQ100": "纳斯达克100期货",
+    "DJI": "道琼斯指数",
+    "NIKKEI225": "日经225",
+    "TWSE": "台湾加权指数",
+    "USD_KRW": "韩元/美元汇率",
+    "DXY": "美元指数",
+    "GOLD_USD": "黄金（国际）",
+    "GOLD_KRW_SPOT": "黄金（韩国）",
+    "SILVER": "白银",
+    "WTI": "WTI原油",
+    "COPPER": "铜",
+    "US10Y": "美国国债10年期",
+    "KR3Y": "韩国国债3年期",
+    "VIX": "VIX恐慌指数",
+    "BTC_KRW": "比特币",
+    "BUFFETT_US": "巴菲特指标（美国）",
+    "FEAR_GREED": "恐惧贪婪指数"
   }
 }

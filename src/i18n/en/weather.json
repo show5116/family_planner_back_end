@@ -2,5 +2,34 @@
   "errors": {
     "fetch_failed": "Failed to fetch weather information",
     "forecast_failed": "Failed to fetch weather forecast"
+  },
+  "description": {
+    "rain": "Rain",
+    "sleet": "Sleet",
+    "snow": "Snow",
+    "shower": "Shower",
+    "clear": "Clear",
+    "cloudy": "Partly Cloudy",
+    "overcast": "Overcast",
+    "unknown": "Unknown"
+  },
+  "sido": {
+    "seoul": "Seoul",
+    "incheon": "Incheon",
+    "sejong": "Sejong",
+    "daejeon": "Daejeon",
+    "daegu": "Daegu",
+    "ulsan": "Ulsan",
+    "busan": "Busan",
+    "gwangju": "Gwangju",
+    "gyeonggi": "Gyeonggi",
+    "gangwon": "Gangwon",
+    "chungbuk": "Chungbuk",
+    "chungnam": "Chungnam",
+    "jeonbuk": "Jeonbuk",
+    "jeonnam": "Jeonnam",
+    "gyeongbuk": "Gyeongbuk",
+    "gyeongnam": "Gyeongnam",
+    "jeju": "Jeju"
   }
 }

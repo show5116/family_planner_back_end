@@ -4563,6 +4563,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -4590,6 +4591,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -4642,6 +4644,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -4678,6 +4681,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 {
   "symbol": "KOSPI", // 심볼 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "history": [
     {
       "price": "2580.34", // 시세 (string)
@@ -4714,6 +4718,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -4747,6 +4752,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -8846,14 +8852,14 @@ GPS 좌표(위도/경도)로 현재 날씨를 조회합니다 (초단기실황)
   "windSpeed": 3, // 풍속 (m/s) (number)
   "precipitation": 0, // 1시간 강수량 (mm) (number)
   "precipitationType": 0, // 강수형태 코드 (0=없음, 1=비, 2=진눈깨비, 3=눈, 4=소나기) (number)
-  "weatherDescription": "맑음", // 날씨 설명 (string)
+  "weatherDescription": "맑음 / Clear / 晴れ / 晴", // 날씨 설명 (accept-language 헤더 기준 다국어) (string)
   "baseDate": "20260314", // 기준 날짜 (YYYYMMDD) (string)
   "baseTime": "1200", // 기준 시각 (HHmm) (string)
   "pm10": 35, // 미세먼지 농도 (㎍/㎥) (number | null)
   "pm25": 18, // 초미세먼지 농도 (㎍/㎥) (number | null)
   "pm10Grade": 2, // 미세먼지 등급 (1=좋음, 2=보통, 3=나쁨, 4=매우나쁨) (number | null)
   "pm25Grade": 2, // 초미세먼지 등급 (1=좋음, 2=보통, 3=나쁨, 4=매우나쁨) (number | null)
-  "sidoName": "서울" // 미세먼지 기준 시도명 (string | null)
+  "sidoName": "서울 / Seoul / ソウル / 首尔" // 미세먼지 기준 시도명 (accept-language 헤더 기준 다국어) (string | null)
 }
 ```
 
@@ -8892,7 +8898,7 @@ GPS 좌표(위도/경도)로 향후 3일간 시간별 날씨 예보를 조회합
       "windSpeed": 3, // 풍속 (m/s) (number)
       "sky": 1, // 하늘상태 코드 (1=맑음, 3=구름많음, 4=흐림) (number)
       "precipitationType": 0, // 강수형태 코드 (0=없음, 1=비, 2=진눈깨비, 3=눈, 4=소나기) (number)
-      "weatherDescription": "맑음" // 날씨 설명 (string)
+      "weatherDescription": "맑음 / Clear / 晴れ / 晴" // 날씨 설명 (accept-language 헤더 기준 다국어) (string)
     }
   ] // 시간별 예보 목록 (ForecastItemDto[])
 }

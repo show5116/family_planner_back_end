@@ -6,5 +6,28 @@
   },
   "success": {
     "favorite_order_changed": "즐겨찾기 순서가 변경되었습니다"
+  },
+  "indicators": {
+    "KOSPI": "코스피",
+    "KOSDAQ": "코스닥",
+    "SP500": "S&P 500",
+    "NASDAQ": "나스닥",
+    "NQ100": "나스닥 100 선물",
+    "DJI": "다우존스",
+    "NIKKEI225": "니케이 225",
+    "TWSE": "대만 가권 지수",
+    "USD_KRW": "원/달러 환율",
+    "DXY": "달러 인덱스",
+    "GOLD_USD": "금 (국제)",
+    "GOLD_KRW_SPOT": "금 (국내)",
+    "SILVER": "은",
+    "WTI": "국제 유가 (WTI)",
+    "COPPER": "구리",
+    "US10Y": "미국채 10년물",
+    "KR3Y": "한국채 3년물",
+    "VIX": "VIX 지수",
+    "BTC_KRW": "비트코인",
+    "BUFFETT_US": "버핏 지수 (미국)",
+    "FEAR_GREED": "공포탐욕지수"
   }
 }
