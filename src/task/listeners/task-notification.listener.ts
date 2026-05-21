@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
+import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
@@ -21,12 +22,21 @@ export class TaskNotificationListener {
     private prisma: PrismaService,
     private notificationService: NotificationService,
     private queueService: NotificationQueueService,
+    private i18n: I18nService,
   ) {}
 
-  /**
-   * task.type에 따라 알림 카테고리 결정
-   * TODO_LINKED / TODO_ONLY → TODO, CALENDAR_ONLY → SCHEDULE
-   */
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
+
+  private t(key: string, lang: string, args?: Record<string, unknown>): string {
+    return this.i18n.t(key, { lang, args });
+  }
+
   private getCategoryByTaskType(taskType: string): NotificationCategory {
     const type = taskType as TaskType;
     return type === TaskType.TODO_LINKED || type === TaskType.TODO_ONLY
@@ -34,12 +44,6 @@ export class TaskNotificationListener {
       : NotificationCategory.SCHEDULE;
   }
 
-  /**
-   * reminder 목록을 Waiting Room(Redis Sorted Set)에 등록
-   * - BEFORE_START: scheduledAt - offsetMinutes
-   * - BEFORE_DUE: dueAt - offsetMinutes
-   * 기준 시각이 없거나 이미 지난 reminder는 스킵
-   */
   private async scheduleReminders(
     task: {
       id: string;
@@ -55,6 +59,7 @@ export class TaskNotificationListener {
     const now = new Date();
     const isTodo = category === NotificationCategory.TODO;
     const taskData = isTodo ? { todoId: task.id } : { scheduleId: task.id };
+    const lang = await this.getUserLang(userId);
 
     await Promise.allSettled(
       reminders.map((reminder) => {
@@ -65,19 +70,29 @@ export class TaskNotificationListener {
 
         if (!baseTime) return Promise.resolve();
 
-        // BEFORE_* 타입은 항상 기준 시각 "이전"으로 계산 (부호 무관하게 강제)
         const offsetMs = Math.abs(reminder.offsetMinutes) * 60 * 1000;
         const scheduledTime = new Date(baseTime.getTime() - offsetMs);
 
         if (scheduledTime <= now) return Promise.resolve();
 
-        const label = isBefore ? '시작' : '마감';
         const absMin = Math.abs(reminder.offsetMinutes);
         const timeText =
-          absMin >= 60 ? `${Math.floor(absMin / 60)}시간 전` : `${absMin}분 전`;
-        const body = `${task.title} ${label} ${timeText}`;
+          absMin >= 60
+            ? this.t('task.notification.reminder_hours_before', lang, {
+                hours: Math.floor(absMin / 60),
+              })
+            : this.t('task.notification.reminder_minutes_before', lang, {
+                minutes: absMin,
+              });
 
-        // reminderId를 중복 방지 키로 사용 — 동일 reminder가 중복 등록되지 않음
+        const bodyKey = isBefore
+          ? 'task.notification.reminder_before_start'
+          : 'task.notification.reminder_before_due';
+        const body = this.t(bodyKey, lang, {
+          title: task.title,
+          time: timeText,
+        });
+
         return this.queueService.enqueueScheduledIfAbsent(
           {
             userId,
@@ -100,26 +115,26 @@ export class TaskNotificationListener {
     const isTodo = category === NotificationCategory.TODO;
     const taskData = isTodo ? { todoId: task.id } : { scheduleId: task.id };
 
-    // 참여자들에게 알림
     if (participantIds.length > 0) {
       await this.sendParticipantNotifications(
         participantIds,
         userId,
         isTodo
-          ? '새 할 일에 참여자로 지정되었습니다'
-          : '새 일정에 참여자로 지정되었습니다',
+          ? 'task.notification.new_todo_participant'
+          : 'task.notification.new_schedule_participant',
         task.title,
         taskData,
         category,
       );
     }
 
-    // 그룹 멤버들에게 알림 (참여자는 이미 위에서 알림 받았으므로 제외)
     if (groupId) {
       await this.sendGroupNotification(
         groupId,
         userId,
-        isTodo ? '새 할 일이 추가되었습니다' : '새 일정이 추가되었습니다',
+        isTodo
+          ? 'task.notification.new_todo_group'
+          : 'task.notification.new_schedule_group',
         task.title,
         taskData,
         category,
@@ -127,7 +142,6 @@ export class TaskNotificationListener {
       );
     }
 
-    // reminder Waiting Room 등록
     if (reminders.length > 0) {
       await this.scheduleReminders(task, userId, reminders, category);
     }
@@ -141,21 +155,19 @@ export class TaskNotificationListener {
     const isTodo = category === NotificationCategory.TODO;
     const taskData = isTodo ? { todoId: task.id } : { scheduleId: task.id };
 
-    // 새로 추가된 참여자들에게만 알림
     if (newParticipantIds.length > 0) {
       await this.sendParticipantNotifications(
         newParticipantIds,
         userId,
         isTodo
-          ? '할 일에 참여자로 지정되었습니다'
-          : '일정에 참여자로 지정되었습니다',
+          ? 'task.notification.added_todo_participant'
+          : 'task.notification.added_schedule_participant',
         task.title,
         taskData,
         category,
       );
     }
 
-    // 기존 reminder Waiting Room에서 제거 후 새 reminder 등록
     if (canceledReminderIds.length > 0) {
       await this.queueService.cancelScheduledReminders(canceledReminderIds);
     }
@@ -176,7 +188,6 @@ export class TaskNotificationListener {
   async handleTaskStatusChanged(event: TaskStatusChangedEvent) {
     const { task, userId, status } = event;
 
-    // TODO 완료 시 참여자들에게 알림
     const taskType = task.type as TaskType;
     if (
       (taskType === TaskType.TODO_LINKED || taskType === TaskType.TODO_ONLY) &&
@@ -190,15 +201,18 @@ export class TaskNotificationListener {
       await Promise.allSettled(
         participants
           .filter((p) => p.userId !== userId)
-          .map((p) =>
-            this.notificationService.sendNotification({
+          .map(async (p) => {
+            const lang = await this.getUserLang(p.userId);
+            return this.notificationService.sendNotification({
               userId: p.userId,
               category: NotificationCategory.TODO,
-              title: '할 일 완료',
-              body: `"${task.title}"이(가) 완료되었습니다`,
+              title: this.t('task.notification.todo_completed', lang),
+              body: this.t('task.notification.todo_completed_body', lang, {
+                title: task.title,
+              }),
               data: { todoId: task.id },
-            }),
-          ),
+            });
+          }),
       );
     }
   }
@@ -211,21 +225,18 @@ export class TaskNotificationListener {
       await this.sendGroupNotification(
         groupId,
         userId,
-        '반복 일정이 건너뛰기 되었습니다',
-        `${skipDate} 일정이 건너뛰기 되었습니다`,
+        'task.notification.recurring_skipped',
+        skipDate,
         { scheduleId: recurringId },
         NotificationCategory.SCHEDULE,
       );
     }
   }
 
-  /**
-   * 그룹 멤버 전체에게 알림 발송
-   */
   private async sendGroupNotification(
     groupId: string,
     excludeUserId: string,
-    title: string,
+    titleKey: string,
     body: string,
     data: object,
     category: NotificationCategory,
@@ -241,25 +252,23 @@ export class TaskNotificationListener {
     await Promise.allSettled(
       members
         .filter((m) => !excluded.has(m.userId))
-        .map((m) =>
-          this.notificationService.sendNotification({
+        .map(async (m) => {
+          const lang = await this.getUserLang(m.userId);
+          return this.notificationService.sendNotification({
             userId: m.userId,
             category,
-            title,
+            title: this.t(titleKey, lang),
             body,
             data,
-          }),
-        ),
+          });
+        }),
     );
   }
 
-  /**
-   * 특정 참여자들에게 알림 발송
-   */
   private async sendParticipantNotifications(
     participantIds: string[],
     excludeUserId: string,
-    title: string,
+    titleKey: string,
     body: string,
     data: object,
     category: NotificationCategory,
@@ -267,15 +276,16 @@ export class TaskNotificationListener {
     await Promise.allSettled(
       participantIds
         .filter((userId) => userId !== excludeUserId)
-        .map((userId) =>
-          this.notificationService.sendNotification({
+        .map(async (userId) => {
+          const lang = await this.getUserLang(userId);
+          return this.notificationService.sendNotification({
             userId,
             category,
-            title,
+            title: this.t(titleKey, lang),
             body,
             data,
-          }),
-        ),
+          });
+        }),
     );
   }
 }

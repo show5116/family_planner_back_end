@@ -2,5 +2,43 @@
   "errors": {
     "fetch_failed": "天気情報の取得に失敗しました",
     "forecast_failed": "天気予報の取得に失敗しました"
+  },
+  "description": {
+    "rain": "雨",
+    "sleet": "みぞれ",
+    "snow": "雪",
+    "shower": "にわか雨",
+    "clear": "晴れ",
+    "cloudy": "曇りがち",
+    "overcast": "曇り",
+    "unknown": "不明"
+  },
+  "notification": {
+    "alert_title": "今日の天気アラート",
+    "precipitation_alert": "今日は{desc}の予報です {icon} 傘をお忘れなく！",
+    "temp_change_alert": "昨日より気温が{sign}{diff}度変わりました 🌡️ ({label} {temp}°C)",
+    "temp_label_max": "最高",
+    "temp_label_min": "最低",
+    "snow_icon": "❄️",
+    "rain_icon": "☂️"
+  },
+  "sido": {
+    "seoul": "ソウル",
+    "incheon": "仁川",
+    "sejong": "世宗",
+    "daejeon": "大田",
+    "daegu": "大邱",
+    "ulsan": "蔚山",
+    "busan": "釜山",
+    "gwangju": "光州",
+    "gyeonggi": "京畿",
+    "gangwon": "江原",
+    "chungbuk": "忠北",
+    "chungnam": "忠南",
+    "jeonbuk": "全北",
+    "jeonnam": "全南",
+    "gyeongbuk": "慶北",
+    "gyeongnam": "慶南",
+    "jeju": "済州"
   }
 }

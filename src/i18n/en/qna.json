@@ -14,5 +14,9 @@
   "success": {
     "question_deleted": "Question deleted",
     "question_resolved": "Question marked as resolved"
+  },
+  "notification": {
+    "new_question_title": "New question submitted",
+    "answer_registered_title": "Your question has been answered"
   }
 }

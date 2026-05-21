@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { InvestmentService } from '@/investment/investment.service';
 import { RedisService } from '@/redis/redis.service';
 import { YahooCollector } from './collectors/yahoo.collector';
@@ -78,6 +79,7 @@ export class InvestmentScheduler {
    */
   @Cron('*/5 * * * *')
   async collectYahoo() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:indicator:yahoo';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(
@@ -116,6 +118,7 @@ export class InvestmentScheduler {
    */
   @Cron('0 * * * *')
   async collectCrypto() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:indicator:crypto';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(
@@ -154,6 +157,7 @@ export class InvestmentScheduler {
    */
   @Cron('0 21 * * *')
   async collectMacro() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:indicator:macro';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(
@@ -200,6 +204,7 @@ export class InvestmentScheduler {
    */
   @Cron('*/15 0-7 * * 1-5')
   async collectGoldSpot() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:indicator:gold-spot';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(
@@ -235,6 +240,7 @@ export class InvestmentScheduler {
    */
   @Cron('0 * * * *')
   async collectFearGreed() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:indicator:fear-greed';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(
@@ -268,6 +274,7 @@ export class InvestmentScheduler {
    */
   @Cron('0 9 * * 1-5')
   async collectBond() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:indicator:bond';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(

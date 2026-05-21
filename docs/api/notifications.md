@@ -17,7 +17,8 @@
 ```json
 {
   "token": "fGw3ZJ0kRZe-Xz9YlK6J7M:APA91bH4...(생략)...k5L8mN9oP0qR1sT2u", // FCM 디바이스 토큰 (string)
-  "platform": null // 디바이스 플랫폼 (DevicePlatform)
+  "platform": null, // 디바이스 플랫폼 (DevicePlatform)
+  "language": "ko" // 앱 언어 설정 (ko, en, ja, zh) (string?)
 }
 ```
 

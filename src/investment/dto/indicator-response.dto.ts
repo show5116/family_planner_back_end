@@ -11,6 +11,12 @@ export class IndicatorDto {
   @ApiProperty({ description: '한글명', example: '코스피' })
   nameKo: string;
 
+  @ApiProperty({
+    description: '요청 언어에 맞는 표시명 (accept-language 헤더 기준)',
+    example: '코스피',
+  })
+  displayName: string;
+
   @ApiProperty({ description: '카테고리', enum: IndicatorCategory })
   category: IndicatorCategory;
 
@@ -70,6 +76,12 @@ export class IndicatorHistoryDto {
 
   @ApiProperty({ description: '한글명', example: '코스피' })
   nameKo: string;
+
+  @ApiProperty({
+    description: '요청 언어에 맞는 표시명 (accept-language 헤더 기준)',
+    example: '코스피',
+  })
+  displayName: string;
 
   @ApiProperty({ description: '시계열 데이터', type: [IndicatorPricePointDto] })
   history: IndicatorPricePointDto[];

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { QuestionStatus } from './enums/question-status.enum';
 
@@ -19,6 +20,7 @@ export class QnaScheduler {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async autoResolveOldAnsweredQuestions() {
+    if (!isSchedulerEnabled('')) return;
     this.logger.log('ANSWERED 상태 자동 해결완료 처리 시작');
 
     try {

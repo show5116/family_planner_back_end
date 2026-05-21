@@ -151,7 +151,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     EventEmitterModule.forRoot(),
-    ScheduleModule.forRoot(),
+    ...(process.env.NODE_ENV === 'production' ||
+    process.env.ENABLE_SCHEDULER === 'true'
+      ? [ScheduleModule.forRoot()]
+      : []),
     SentryModule,
     PrismaModule,
     FirebaseModule,

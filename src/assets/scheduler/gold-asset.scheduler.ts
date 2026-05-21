@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationService } from '@/notification/notification.service';
@@ -24,6 +25,7 @@ export class GoldAssetScheduler {
    */
   @Cron('0 15 28-31 * *')
   async createMonthlyGoldRecords() {
+    if (!isSchedulerEnabled('')) return;
     const now = new Date();
     // KST = UTC+9, UTC 15:00 = KST 다음날 00:00
     const kstDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);

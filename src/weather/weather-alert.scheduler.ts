@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
@@ -130,6 +131,7 @@ export class WeatherAlertScheduler {
    */
   @Cron('0 * * * *', { timeZone: 'Asia/Seoul' })
   async sendWeatherAlerts() {
+    if (!isSchedulerEnabled('')) return;
     const currentHour = dayjs().tz('Asia/Seoul').hour();
     this.logger.log(`[WeatherAlert] ${currentHour}시 크론잡 시작`);
 

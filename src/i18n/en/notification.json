@@ -10,5 +10,10 @@
     "test_sent": "Test notification sent",
     "test_failed_no_token": "Test notification failed",
     "test_failed_disabled": "Test notification failed"
+  },
+  "push": {
+    "test_title": "Test Notification",
+    "test_body": "The notification system is working correctly.",
+    "announcement_title": "New Announcement"
   }
 }

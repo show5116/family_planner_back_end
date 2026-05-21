@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class HouseholdScheduler {
    */
   @Cron('5 0 * * *')
   async autoGenerateRecurringExpenses() {
+    if (!isSchedulerEnabled('')) return;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -107,6 +109,7 @@ export class HouseholdScheduler {
    */
   @Cron('10 0 1 * *')
   async autoGenerateBudgetsFromTemplates() {
+    if (!isSchedulerEnabled('')) return;
     const now = new Date();
     const year = now.getUTCFullYear();
     const month = now.getUTCMonth(); // 0-based

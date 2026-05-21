@@ -19,10 +19,28 @@
     "own_recurring_only_skip": "You can only skip your own recurring rules",
     "category_group_member_only": "Only group members can create categories",
     "category_group_member_only_edit": "Only group members can edit/delete categories",
-    "category_own_only_edit": "You can only edit/delete your own categories"
+    "category_own_only_edit": "You can only edit/delete your own categories",
+    "category_has_tasks": "Cannot delete category because it has {count} task(s) linked",
+    "category_name_duplicate": "A category with the same name already exists: {name}"
   },
   "success": {
     "category_deleted": "Category deleted",
     "task_deleted": "Task deleted"
+  },
+  "notification": {
+    "new_todo_participant": "You have been added as a participant to a new to-do",
+    "new_schedule_participant": "You have been added as a participant to a new schedule",
+    "added_todo_participant": "You have been added as a participant to a to-do",
+    "added_schedule_participant": "You have been added as a participant to a schedule",
+    "new_todo_group": "A new to-do has been added",
+    "new_schedule_group": "A new schedule has been added",
+    "todo_completed": "To-do completed",
+    "todo_completed_body": "\"{title}\" has been completed",
+    "recurring_skipped": "Recurring schedule skipped",
+    "recurring_skipped_body": "Schedule on {date} has been skipped",
+    "reminder_before_start": "{title} starts in {time}",
+    "reminder_before_due": "{title} due in {time}",
+    "reminder_hours_before": "{hours}h",
+    "reminder_minutes_before": "{minutes}m"
   }
 }

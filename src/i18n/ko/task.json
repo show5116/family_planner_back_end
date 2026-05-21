@@ -19,10 +19,28 @@
     "own_recurring_only_skip": "본인이 작성한 반복 규칙만 건너뛸 수 있습니다",
     "category_group_member_only": "그룹 멤버만 카테고리를 생성할 수 있습니다",
     "category_group_member_only_edit": "그룹 멤버만 카테고리를 수정/삭제할 수 있습니다",
-    "category_own_only_edit": "본인이 작성한 카테고리만 수정/삭제할 수 있습니다"
+    "category_own_only_edit": "본인이 작성한 카테고리만 수정/삭제할 수 있습니다",
+    "category_has_tasks": "카테고리에 연결된 Task가 {count}개 있어 삭제할 수 없습니다",
+    "category_name_duplicate": "같은 이름의 카테고리가 이미 존재합니다: {name}"
   },
   "success": {
     "category_deleted": "카테고리가 삭제되었습니다",
     "task_deleted": "Task가 삭제되었습니다"
+  },
+  "notification": {
+    "new_todo_participant": "새 할 일에 참여자로 지정되었습니다",
+    "new_schedule_participant": "새 일정에 참여자로 지정되었습니다",
+    "added_todo_participant": "할 일에 참여자로 지정되었습니다",
+    "added_schedule_participant": "일정에 참여자로 지정되었습니다",
+    "new_todo_group": "새 할 일이 추가되었습니다",
+    "new_schedule_group": "새 일정이 추가되었습니다",
+    "todo_completed": "할 일 완료",
+    "todo_completed_body": "\"{title}\"이(가) 완료되었습니다",
+    "recurring_skipped": "반복 일정이 건너뛰기 되었습니다",
+    "recurring_skipped_body": "{date} 일정이 건너뛰기 되었습니다",
+    "reminder_before_start": "{title} 시작 {time}",
+    "reminder_before_due": "{title} 마감 {time}",
+    "reminder_hours_before": "{hours}시간 전",
+    "reminder_minutes_before": "{minutes}분 전"
   }
 }

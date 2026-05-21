@@ -14,5 +14,9 @@
   "success": {
     "question_deleted": "질문이 삭제되었습니다",
     "question_resolved": "질문이 해결완료 처리되었습니다"
+  },
+  "notification": {
+    "new_question_title": "새 질문 등록",
+    "answer_registered_title": "답변이 등록되었습니다"
   }
 }

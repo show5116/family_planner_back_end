@@ -18,6 +18,14 @@ export class GroupMemberService {
     private i18n: I18nService,
   ) {}
 
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
+
   /**
    * 프로필 이미지 URL 변환 (Helper)
    */
@@ -394,12 +402,15 @@ export class GroupMemberService {
     }));
 
     // 새 OWNER에게 알림 발송
+    const newOwnerLang = await this.getUserLang(newOwnerId);
     await this.notificationService.sendNotification({
       userId: newOwnerId,
       category: NotificationCategory.GROUP,
-      title: '그룹장 권한 양도',
-      body: this.i18n.t('group.success.ownership_transferred', {
-        lang: I18nContext.current()?.lang ?? 'ko',
+      title: this.i18n.t('group.notification.ownership_transferred_title', {
+        lang: newOwnerLang,
+      }),
+      body: this.i18n.t('group.notification.ownership_transferred_body', {
+        lang: newOwnerLang,
       }),
       data: { groupId },
     });

@@ -12,5 +12,9 @@
     "goal_deleted": "적립 목표가 삭제되었습니다",
     "auto_deposit_paused": "자동 적립이 일시 중지되었습니다",
     "auto_deposit_resumed": "자동 적립이 재개되었습니다"
+  },
+  "notification": {
+    "goal_reached_title": "적립 목표 달성!",
+    "goal_reached_body": "\"{name}\" 목표 금액을 달성했습니다."
   }
 }

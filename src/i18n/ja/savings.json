@@ -12,5 +12,9 @@
     "goal_deleted": "積立目標を削除しました",
     "auto_deposit_paused": "自動積立を一時停止しました",
     "auto_deposit_resumed": "自動積立を再開しました"
+  },
+  "notification": {
+    "goal_reached_title": "積立目標達成！",
+    "goal_reached_body": "「{name}」の目標金額を達成しました。"
   }
 }

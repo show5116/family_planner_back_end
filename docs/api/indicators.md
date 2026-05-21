@@ -21,6 +21,7 @@
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -48,6 +49,7 @@
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -100,6 +102,7 @@
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -136,6 +139,7 @@
 {
   "symbol": "KOSPI", // 심볼 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "history": [
     {
       "price": "2580.34", // 시세 (string)
@@ -172,6 +176,7 @@
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)
@@ -205,6 +210,7 @@
   "symbol": "KOSPI", // 심볼 (string)
   "name": "KOSPI", // 영문명 (string)
   "nameKo": "코스피", // 한글명 (string)
+  "displayName": "코스피", // 요청 언어에 맞는 표시명 (accept-language 헤더 기준) (string)
   "category": null, // 카테고리 (IndicatorCategory)
   "unit": "pt", // 단위 (string)
   "price": "2580.34", // 현재 시세 (string | null)

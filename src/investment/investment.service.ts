@@ -368,7 +368,17 @@ export class InvestmentService implements OnModuleInit {
             price: r.close.toString(),
             recordedAt: r.date,
           }));
-          return { symbol: ind.symbol, nameKo: ind.nameKo, history };
+          const lang = I18nContext.current()?.lang ?? 'ko';
+          const displayName = this.i18n.t(
+            `investment.indicators.${ind.symbol}`,
+            { lang },
+          );
+          return {
+            symbol: ind.symbol,
+            nameKo: ind.nameKo,
+            displayName,
+            history,
+          };
         }
       } catch (err) {
         this.logger.warn(
@@ -568,7 +578,17 @@ export class InvestmentService implements OnModuleInit {
             recordedAt: r.date,
           }));
 
-          return { symbol: ind.symbol, nameKo: ind.nameKo, history };
+          const lang = I18nContext.current()?.lang ?? 'ko';
+          const displayName = this.i18n.t(
+            `investment.indicators.${ind.symbol}`,
+            { lang },
+          );
+          return {
+            symbol: ind.symbol,
+            nameKo: ind.nameKo,
+            displayName,
+            history,
+          };
         }
       } catch (err) {
         this.logger.warn(
@@ -1065,10 +1085,16 @@ export class InvestmentService implements OnModuleInit {
     isBookmarked: boolean,
     spread: string | null = null,
   ) {
+    const lang = I18nContext.current()?.lang ?? 'ko';
+    const displayName = this.i18n.t(`investment.indicators.${ind.symbol}`, {
+      lang,
+    });
+
     return {
       symbol: ind.symbol,
       name: ind.name,
       nameKo: ind.nameKo,
+      displayName,
       category: ind.category,
       unit: ind.unit,
       price: latestPrice ? Number(latestPrice.price).toString() : null,

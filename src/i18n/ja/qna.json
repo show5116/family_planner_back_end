@@ -14,5 +14,9 @@
   "success": {
     "question_deleted": "質問を削除しました",
     "question_resolved": "質問を解決済みにしました"
+  },
+  "notification": {
+    "new_question_title": "新しい質問が登録されました",
+    "answer_registered_title": "回答が届きました"
   }
 }

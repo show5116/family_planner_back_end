@@ -33,6 +33,20 @@
     "owner_role_cannot_assign": "OWNERロールは割り当てられません。グループ管理権限の譲渡機能をご利用ください",
     "invite_auto_approved": "INVITEタイプは招待コードからユーザーが参加した際に自動承認されます"
   },
+  "notification": {
+    "new_member_title": "新しいメンバーが参加しました",
+    "new_member_body": "{name}さんが「{group}」グループに参加しました",
+    "join_request_title": "グループ参加申請",
+    "join_request_body": "{name}さんが「{group}」グループへの参加を申請しました",
+    "join_approved_title": "グループ参加承認",
+    "join_approved_body": "参加申請が承認されました",
+    "join_rejected_title": "グループ参加拒否",
+    "join_rejected_body": "「{group}」への参加申請が拒否されました",
+    "invite_title": "グループ招待",
+    "invite_body": "{inviter}さんが「{group}」グループに招待しました",
+    "ownership_transferred_title": "グループ管理権限の譲渡",
+    "ownership_transferred_body": "グループ管理権限が譲渡されました"
+  },
   "success": {
     "group_deleted": "グループが削除されました",
     "joined": "グループへの参加が完了しました",

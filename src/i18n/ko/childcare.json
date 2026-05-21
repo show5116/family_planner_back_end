@@ -19,5 +19,23 @@
     "order_changed": "순서가 변경되었습니다",
     "rule_deleted": "규칙이 삭제되었습니다",
     "savings_terminated": "적금이 중도 해지되었습니다. 원금이 잔액으로 반환되었습니다."
+  },
+  "notification": {
+    "allowance_title_child": "이번 달 용돈이 지급됐어요!",
+    "allowance_body_child_with_savings": "{points} 포인트 지급, {savings} 포인트 자동 적금",
+    "allowance_body_child": "{points} 포인트가 적립되었습니다",
+    "allowance_title_parent": "{name} 용돈 지급 완료",
+    "allowance_body_parent_with_savings": "{points}p 지급, {savings}p 자동 적금",
+    "allowance_body_parent": "{points} 포인트가 지급되었습니다",
+    "negotiation_title_today_parent": "{name} 연봉 협상일이에요!",
+    "negotiation_title_tomorrow_parent": "{name} 연봉 협상일이 내일이에요",
+    "negotiation_title_today_child": "오늘 용돈 협상일이에요!",
+    "negotiation_title_tomorrow_child": "내일 용돈 협상일이에요",
+    "negotiation_body_today": "오늘 포인트 조건을 다시 협상해보세요",
+    "negotiation_body_tomorrow": "내일 포인트 조건 협상을 준비해보세요",
+    "savings_mature_title_child": "적금 만기 축하해요!",
+    "savings_mature_body_child": "원금 {principal}p + 이자 {interest}p = {total}p가 지급됐어요",
+    "savings_mature_title_parent": "{name} 적금 만기 완료",
+    "savings_mature_body_parent": "원금 {principal}p + 이자 {interest}p = {total}p 지급"
   }
 }

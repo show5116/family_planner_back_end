@@ -21,6 +21,18 @@ export class GroupInviteService {
     private i18n: I18nService,
   ) {}
 
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
+
+  private t(key: string, lang: string, args?: Record<string, unknown>): string {
+    return this.i18n.t(key, { lang, args });
+  }
+
   /**
    * 프로필 이미지 URL 변환 (Helper)
    */
@@ -231,15 +243,19 @@ export class GroupInviteService {
       await Promise.allSettled(
         group.members
           .filter((m) => m.userId !== userId)
-          .map((m) =>
-            this.notificationService.sendNotification({
+          .map(async (m) => {
+            const lang = await this.getUserLang(m.userId);
+            return this.notificationService.sendNotification({
               userId: m.userId,
               category: NotificationCategory.GROUP,
-              title: '새 멤버 가입',
-              body: `${user.name}님이 "${group.name}" 그룹에 가입했습니다`,
+              title: this.t('group.notification.new_member_title', lang),
+              body: this.t('group.notification.new_member_body', lang, {
+                name: user.name,
+                group: group.name,
+              }),
               data: { groupId: group.id },
-            }),
-          ),
+            });
+          }),
       );
 
       // 프로필 이미지 URL 추가
@@ -291,11 +307,15 @@ export class GroupInviteService {
     });
 
     if (ownerMember) {
+      const ownerLang = await this.getUserLang(ownerMember.userId);
       await this.notificationService.sendNotification({
         userId: ownerMember.userId,
         category: NotificationCategory.GROUP,
-        title: '그룹 가입 요청',
-        body: `${user.name}님이 "${group.name}" 그룹 가입을 요청했습니다`,
+        title: this.t('group.notification.join_request_title', ownerLang),
+        body: this.t('group.notification.join_request_body', ownerLang, {
+          name: user.name,
+          group: group.name,
+        }),
         data: { groupId: group.id, joinRequestId: joinRequest.id },
       });
     }
@@ -466,11 +486,12 @@ export class GroupInviteService {
     ]);
 
     // 승인된 사용자에게 알림 발송
+    const approvedLang = await this.getUserLang(user.id);
     await this.notificationService.sendNotification({
       userId: user.id,
       category: NotificationCategory.GROUP,
-      title: '그룹 가입 승인',
-      body: `가입 요청이 승인되었습니다`,
+      title: this.t('group.notification.join_approved_title', approvedLang),
+      body: this.t('group.notification.join_approved_body', approvedLang),
       data: { groupId },
     });
 
@@ -521,11 +542,14 @@ export class GroupInviteService {
         select: { name: true },
       });
 
+      const rejectedLang = await this.getUserLang(rejectedUser.id);
       await this.notificationService.sendNotification({
         userId: rejectedUser.id,
         category: NotificationCategory.GROUP,
-        title: '그룹 가입 거부',
-        body: `"${group?.name ?? '그룹'}" 가입 요청이 거부되었습니다`,
+        title: this.t('group.notification.join_rejected_title', rejectedLang),
+        body: this.t('group.notification.join_rejected_body', rejectedLang, {
+          group: group?.name ?? '',
+        }),
         data: { groupId },
       });
     }
@@ -606,11 +630,15 @@ export class GroupInviteService {
     );
 
     // 앱 사용자에게 푸시 알림 발송
+    const inviteeLang = await this.getUserLang(invitee.id);
     await this.notificationService.sendNotification({
       userId: invitee.id,
       category: NotificationCategory.GROUP,
-      title: '그룹 초대',
-      body: `${inviter.name}님이 "${group.name}" 그룹에 초대했습니다`,
+      title: this.t('group.notification.invite_title', inviteeLang),
+      body: this.t('group.notification.invite_body', inviteeLang, {
+        inviter: inviter.name,
+        group: group.name,
+      }),
       data: { groupId: group.id },
     });
 

@@ -6,5 +6,28 @@
   },
   "success": {
     "favorite_order_changed": "お気に入りの順序を変更しました"
+  },
+  "indicators": {
+    "KOSPI": "KOSPI",
+    "KOSDAQ": "KOSDAQ",
+    "SP500": "S&P 500",
+    "NASDAQ": "ナスダック",
+    "NQ100": "ナスダック100先物",
+    "DJI": "ダウ・ジョーンズ",
+    "NIKKEI225": "日経平均株価",
+    "TWSE": "台湾加権指数",
+    "USD_KRW": "ウォン/ドル為替レート",
+    "DXY": "ドル指数",
+    "GOLD_USD": "金（国際）",
+    "GOLD_KRW_SPOT": "金（国内）",
+    "SILVER": "銀",
+    "WTI": "WTI原油",
+    "COPPER": "銅",
+    "US10Y": "米国債10年物",
+    "KR3Y": "韓国債3年物",
+    "VIX": "VIX指数",
+    "BTC_KRW": "ビットコイン",
+    "BUFFETT_US": "バフェット指標（米国）",
+    "FEAR_GREED": "恐怖貪欲指数"
   }
 }

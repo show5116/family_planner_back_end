@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationService } from '@/notification/notification.service';
@@ -80,6 +81,7 @@ export class AnnouncementScheduler implements OnModuleInit {
    */
   @Cron(CronExpression.EVERY_10_MINUTES)
   async syncAnnouncementViewCounts() {
+    if (!isSchedulerEnabled('')) return;
     this.logger.log('공지사항 조회수 동기화 시작');
 
     try {
@@ -153,6 +155,7 @@ export class AnnouncementScheduler implements OnModuleInit {
    */
   @Cron(CronExpression.EVERY_10_MINUTES)
   async syncAnnouncementReads() {
+    if (!isSchedulerEnabled('')) return;
     this.logger.log('공지사항 읽음 처리 동기화 시작');
 
     try {
@@ -210,6 +213,7 @@ export class AnnouncementScheduler implements OnModuleInit {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async sendScheduledNotifications() {
+    if (!isSchedulerEnabled('')) return;
     try {
       const currentTimestamp = Math.floor(Date.now() / 1000);
 
