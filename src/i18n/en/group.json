@@ -33,6 +33,20 @@
     "owner_role_cannot_assign": "OWNER role cannot be assigned. Please use the ownership transfer feature",
     "invite_auto_approved": "INVITE type requests are automatically approved when the user joins via invite code"
   },
+  "notification": {
+    "new_member_title": "New member joined",
+    "new_member_body": "{name} has joined the \"{group}\" group",
+    "join_request_title": "Group join request",
+    "join_request_body": "{name} has requested to join the \"{group}\" group",
+    "join_approved_title": "Group join approved",
+    "join_approved_body": "Your join request has been approved",
+    "join_rejected_title": "Group join rejected",
+    "join_rejected_body": "Your request to join \"{group}\" has been rejected",
+    "invite_title": "Group invitation",
+    "invite_body": "{inviter} has invited you to join the \"{group}\" group",
+    "ownership_transferred_title": "Ownership transferred",
+    "ownership_transferred_body": "Group ownership has been transferred to you"
+  },
   "success": {
     "group_deleted": "Group has been deleted",
     "joined": "Successfully joined the group",

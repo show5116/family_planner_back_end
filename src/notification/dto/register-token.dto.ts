@@ -1,5 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEnum,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { DevicePlatform } from '../enums/device-platform.enum';
 
 /**
@@ -21,4 +27,14 @@ export class RegisterTokenDto {
   })
   @IsEnum(DevicePlatform)
   platform: DevicePlatform;
+
+  @ApiPropertyOptional({
+    description: '앱 언어 설정 (ko, en, ja, zh)',
+    example: 'ko',
+    default: 'ko',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['ko', 'en', 'ja', 'zh'])
+  language?: string;
 }

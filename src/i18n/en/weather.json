@@ -13,6 +13,15 @@
     "overcast": "Overcast",
     "unknown": "Unknown"
   },
+  "notification": {
+    "alert_title": "Today's Weather Alert",
+    "precipitation_alert": "{desc} forecast today {icon} Don't forget your umbrella!",
+    "temp_change_alert": "Temperature changed {sign}{diff}°C from yesterday 🌡️ ({label} {temp}°C)",
+    "temp_label_max": "High",
+    "temp_label_min": "Low",
+    "snow_icon": "❄️",
+    "rain_icon": "☂️"
+  },
   "sido": {
     "seoul": "Seoul",
     "incheon": "Incheon",

@@ -27,5 +27,13 @@
     "stock_deleted": "Stock deleted",
     "stock_order_changed": "Stock order changed",
     "withdrawal_deleted": "Withdrawal record deleted"
+  },
+  "notification": {
+    "account_registered_title": "New asset account registered",
+    "account_registered_body": "Account \"{name}\" has been registered",
+    "balance_updated_title": "Asset balance updated",
+    "balance_updated_body": "\"{name}\" balance recorded as {balance}",
+    "withdrawal_title": "Withdrawal recorded",
+    "withdrawal_body": "{amount} withdrawn from \"{name}\""
   }
 }

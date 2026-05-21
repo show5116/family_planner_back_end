@@ -16,5 +16,29 @@
     "receipt_deleted": "收据已删除",
     "budget_template_deleted": "预算模板已删除",
     "total_budget_template_deleted": "总预算模板已删除"
+  },
+  "category": {
+    "TRANSPORTATION": "交通费",
+    "FOOD": "餐饮费",
+    "GROCERIES": "购物",
+    "LEISURE": "娱乐费",
+    "LIVING": "生活费",
+    "MEDICAL": "医疗费",
+    "EDUCATION": "教育费",
+    "ALLOWANCE": "零花钱",
+    "CELEBRATION": "礼金",
+    "ASSET_TRANSFER": "资产转移",
+    "CHILDCARE": "育儿费",
+    "COMMUNICATION": "通信费",
+    "OTHER": "其他"
+  },
+  "notification": {
+    "expense_title": "家计簿记录登记",
+    "expense_body_with_category": "{category}{type}{amount}元已登记",
+    "expense_body": "{type}{amount}元已登记",
+    "expense_type_income": "入账",
+    "expense_type_expense": "支出",
+    "budget_exceeded_title": "预算超支提醒",
+    "budget_exceeded_body": "{category}预算已超支。(支出{spent}元 / 预算{budget}元)"
   }
 }

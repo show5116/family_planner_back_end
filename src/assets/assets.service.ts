@@ -101,15 +101,25 @@ export class AssetsService {
     await Promise.allSettled(
       members
         .filter((m) => m.userId !== userId)
-        .map((m) =>
-          this.notificationService.sendNotification({
+        .map(async (m) => {
+          const member = await this.prisma.user.findUnique({
+            where: { id: m.userId },
+            select: { language: true },
+          });
+          const lang = member?.language ?? 'ko';
+          return this.notificationService.sendNotification({
             userId: m.userId,
             category: NotificationCategory.ASSET,
-            title: '새 자산 계좌 등록',
-            body: `"${dto.name}" 계좌가 등록되었습니다`,
+            title: this.i18n.t('assets.notification.account_registered_title', {
+              lang,
+            }),
+            body: this.i18n.t('assets.notification.account_registered_body', {
+              lang,
+              args: { name: dto.name },
+            }),
             data: { assetId: account.id },
-          }),
-        ),
+          });
+        }),
     );
 
     return this.formatAccount(account, null);
@@ -342,12 +352,22 @@ export class AssetsService {
     });
 
     // 계좌 소유자에게 잔액 기록 알림
+    const owner = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const ownerLang = owner?.language ?? 'ko';
     const balanceFormatted = balance.toLocaleString('ko-KR');
     await this.notificationService.sendNotification({
       userId,
       category: NotificationCategory.ASSET,
-      title: '자산 잔액 업데이트',
-      body: `"${account.name}" 잔액이 ${balanceFormatted}원으로 기록되었습니다`,
+      title: this.i18n.t('assets.notification.balance_updated_title', {
+        lang: ownerLang,
+      }),
+      body: this.i18n.t('assets.notification.balance_updated_body', {
+        lang: ownerLang,
+        args: { name: account.name, balance: balanceFormatted },
+      }),
       data: { assetId: accountId },
     });
 
@@ -1182,12 +1202,22 @@ export class AssetsService {
       }),
     );
 
+    const withdrawalOwner = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const withdrawalLang = withdrawalOwner?.language ?? 'ko';
     const amountFormatted = dto.amount.toLocaleString('ko-KR');
     await this.notificationService.sendNotification({
       userId,
       category: NotificationCategory.ASSET,
-      title: '출금 기록 추가',
-      body: `"${account.name}"에서 ${amountFormatted}원이 출금되었습니다`,
+      title: this.i18n.t('assets.notification.withdrawal_title', {
+        lang: withdrawalLang,
+      }),
+      body: this.i18n.t('assets.notification.withdrawal_body', {
+        lang: withdrawalLang,
+        args: { name: account.name, amount: amountFormatted },
+      }),
       data: { assetId: accountId },
     });
 

@@ -19,10 +19,7 @@ dayjs.extend(timezone);
  * - 서버 재시작 시 미발송 알림 복구
  */
 @Injectable()
-export class AnnouncementScheduler
- 
-  implements OnModuleInit
-{
+export class AnnouncementScheduler implements OnModuleInit {
   private readonly logger = new Logger(AnnouncementScheduler.name);
   private readonly BATCH_SIZE = 1000; // 한 번에 처리할 최대 건수
   private readonly MAX_RETRY_COUNT = 3; // 최대 재시도 횟수

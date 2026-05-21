@@ -16,5 +16,29 @@
     "receipt_deleted": "영수증이 삭제되었습니다",
     "budget_template_deleted": "예산 템플릿이 삭제되었습니다",
     "total_budget_template_deleted": "전체 예산 템플릿이 삭제되었습니다"
+  },
+  "category": {
+    "TRANSPORTATION": "교통비",
+    "FOOD": "식비",
+    "GROCERIES": "장보기",
+    "LEISURE": "여가비",
+    "LIVING": "생활비",
+    "MEDICAL": "의료비",
+    "EDUCATION": "교육비",
+    "ALLOWANCE": "용돈",
+    "CELEBRATION": "경조사비",
+    "ASSET_TRANSFER": "자산이동",
+    "CHILDCARE": "육아비",
+    "COMMUNICATION": "통신비",
+    "OTHER": "기타"
+  },
+  "notification": {
+    "expense_title": "가계부 내역 등록",
+    "expense_body_with_category": "{category} {type} {amount}원이 등록되었습니다",
+    "expense_body": "{type} {amount}원이 등록되었습니다",
+    "expense_type_income": "입금",
+    "expense_type_expense": "지출",
+    "budget_exceeded_title": "예산 초과 알림",
+    "budget_exceeded_body": "{category} 예산을 초과했습니다. (지출 {spent}원 / 예산 {budget}원)"
   }
 }

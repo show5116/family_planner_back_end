@@ -14,5 +14,9 @@
   "success": {
     "question_deleted": "问题已删除",
     "question_resolved": "问题已标记为已解决"
+  },
+  "notification": {
+    "new_question_title": "新问题已提交",
+    "answer_registered_title": "您的问题已获得回答"
   }
 }

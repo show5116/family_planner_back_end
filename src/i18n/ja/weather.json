@@ -13,6 +13,15 @@
     "overcast": "曇り",
     "unknown": "不明"
   },
+  "notification": {
+    "alert_title": "今日の天気アラート",
+    "precipitation_alert": "今日は{desc}の予報です {icon} 傘をお忘れなく！",
+    "temp_change_alert": "昨日より気温が{sign}{diff}度変わりました 🌡️ ({label} {temp}°C)",
+    "temp_label_max": "最高",
+    "temp_label_min": "最低",
+    "snow_icon": "❄️",
+    "rain_icon": "☂️"
+  },
   "sido": {
     "seoul": "ソウル",
     "incheon": "仁川",

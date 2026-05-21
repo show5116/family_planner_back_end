@@ -16,5 +16,29 @@
     "receipt_deleted": "Receipt deleted",
     "budget_template_deleted": "Budget template deleted",
     "total_budget_template_deleted": "Total budget template deleted"
+  },
+  "category": {
+    "TRANSPORTATION": "Transportation",
+    "FOOD": "Food",
+    "GROCERIES": "Groceries",
+    "LEISURE": "Leisure",
+    "LIVING": "Living",
+    "MEDICAL": "Medical",
+    "EDUCATION": "Education",
+    "ALLOWANCE": "Allowance",
+    "CELEBRATION": "Celebration",
+    "ASSET_TRANSFER": "Asset Transfer",
+    "CHILDCARE": "Childcare",
+    "COMMUNICATION": "Communication",
+    "OTHER": "Other"
+  },
+  "notification": {
+    "expense_title": "Expense recorded",
+    "expense_body_with_category": "{category} {type} of {amount} has been recorded",
+    "expense_body": "{type} of {amount} has been recorded",
+    "expense_type_income": "income",
+    "expense_type_expense": "expense",
+    "budget_exceeded_title": "Budget exceeded",
+    "budget_exceeded_body": "{category} budget exceeded. (Spent {spent} / Budget {budget})"
   }
 }

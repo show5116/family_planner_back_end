@@ -19,5 +19,23 @@
     "order_changed": "Order changed",
     "rule_deleted": "Rule deleted",
     "savings_terminated": "Savings plan terminated. Principal has been returned to balance."
+  },
+  "notification": {
+    "allowance_title_child": "This month's allowance has been paid!",
+    "allowance_body_child_with_savings": "{points} points paid, {savings} points auto-saved",
+    "allowance_body_child": "{points} points have been credited",
+    "allowance_title_parent": "{name}'s allowance paid",
+    "allowance_body_parent_with_savings": "{points}p paid, {savings}p auto-saved",
+    "allowance_body_parent": "{points} points have been paid",
+    "negotiation_title_today_parent": "It's {name}'s salary negotiation day!",
+    "negotiation_title_tomorrow_parent": "{name}'s salary negotiation is tomorrow",
+    "negotiation_title_today_child": "Today is your allowance negotiation day!",
+    "negotiation_title_tomorrow_child": "Tomorrow is your allowance negotiation day",
+    "negotiation_body_today": "Renegotiate the point conditions today",
+    "negotiation_body_tomorrow": "Prepare for tomorrow's point negotiation",
+    "savings_mature_title_child": "Congratulations, savings plan matured!",
+    "savings_mature_body_child": "Principal {principal}p + interest {interest}p = {total}p paid",
+    "savings_mature_title_parent": "{name}'s savings plan matured",
+    "savings_mature_body_parent": "Principal {principal}p + interest {interest}p = {total}p paid"
   }
 }

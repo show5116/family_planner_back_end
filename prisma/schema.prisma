@@ -55,6 +55,7 @@ model User {
   inAppPurchaseToken    String?                     @db.VarChar(500)
   lastLat               Float?
   lastLon               Float?
+  language              String                      @default("ko") @db.VarChar(10)
 
   @@unique([provider, providerId])
   @@index([email])

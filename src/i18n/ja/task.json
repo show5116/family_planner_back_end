@@ -26,5 +26,21 @@
   "success": {
     "category_deleted": "カテゴリを削除しました",
     "task_deleted": "Taskを削除しました"
+  },
+  "notification": {
+    "new_todo_participant": "新しいTodoの参加者に指定されました",
+    "new_schedule_participant": "新しい予定の参加者に指定されました",
+    "added_todo_participant": "Todoの参加者に指定されました",
+    "added_schedule_participant": "予定の参加者に指定されました",
+    "new_todo_group": "新しいTodoが追加されました",
+    "new_schedule_group": "新しい予定が追加されました",
+    "todo_completed": "Todo完了",
+    "todo_completed_body": "「{title}」が完了しました",
+    "recurring_skipped": "繰り返し予定がスキップされました",
+    "recurring_skipped_body": "{date}の予定がスキップされました",
+    "reminder_before_start": "{title} 開始{time}",
+    "reminder_before_due": "{title} 期限{time}",
+    "reminder_hours_before": "{hours}時間前",
+    "reminder_minutes_before": "{minutes}分前"
   }
 }

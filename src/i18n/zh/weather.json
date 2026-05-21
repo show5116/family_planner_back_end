@@ -13,6 +13,15 @@
     "overcast": "阴",
     "unknown": "未知"
   },
+  "notification": {
+    "alert_title": "今日天气提醒",
+    "precipitation_alert": "今日有{desc}预报 {icon} 请记得带伞！",
+    "temp_change_alert": "今日气温比昨日变化了{sign}{diff}度 🌡️ ({label} {temp}°C)",
+    "temp_label_max": "最高",
+    "temp_label_min": "最低",
+    "snow_icon": "❄️",
+    "rain_icon": "☂️"
+  },
   "sido": {
     "seoul": "首尔",
     "incheon": "仁川",

@@ -33,6 +33,20 @@
     "owner_role_cannot_assign": "OWNER 역할은 할당할 수 없습니다. 그룹장 양도 기능을 사용해주세요",
     "invite_auto_approved": "INVITE 타입은 사용자가 초대 코드로 가입 시 자동 승인됩니다"
   },
+  "notification": {
+    "new_member_title": "새 멤버 가입",
+    "new_member_body": "{name}님이 \"{group}\" 그룹에 가입했습니다",
+    "join_request_title": "그룹 가입 요청",
+    "join_request_body": "{name}님이 \"{group}\" 그룹 가입을 요청했습니다",
+    "join_approved_title": "그룹 가입 승인",
+    "join_approved_body": "가입 요청이 승인되었습니다",
+    "join_rejected_title": "그룹 가입 거부",
+    "join_rejected_body": "\"{group}\" 가입 요청이 거부되었습니다",
+    "invite_title": "그룹 초대",
+    "invite_body": "{inviter}님이 \"{group}\" 그룹에 초대했습니다",
+    "ownership_transferred_title": "그룹장 권한 양도",
+    "ownership_transferred_body": "그룹장 권한이 양도되었습니다"
+  },
   "success": {
     "group_deleted": "그룹이 삭제되었습니다",
     "joined": "그룹 가입이 완료되었습니다",

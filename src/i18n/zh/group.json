@@ -33,6 +33,20 @@
     "owner_role_cannot_assign": "无法分配OWNER角色，请使用群主转让功能",
     "invite_auto_approved": "INVITE类型在用户通过邀请码加入时自动批准"
   },
+  "notification": {
+    "new_member_title": "新成员加入",
+    "new_member_body": "{name}已加入\"{group}\"群组",
+    "join_request_title": "群组加入申请",
+    "join_request_body": "{name}申请加入\"{group}\"群组",
+    "join_approved_title": "群组加入已批准",
+    "join_approved_body": "您的加入申请已批准",
+    "join_rejected_title": "群组加入已拒绝",
+    "join_rejected_body": "您加入\"{group}\"的申请已被拒绝",
+    "invite_title": "群组邀请",
+    "invite_body": "{inviter}邀请您加入\"{group}\"群组",
+    "ownership_transferred_title": "群主权限已转让",
+    "ownership_transferred_body": "群主权限已转让给您"
+  },
   "success": {
     "group_deleted": "群组已删除",
     "joined": "成功加入群组",

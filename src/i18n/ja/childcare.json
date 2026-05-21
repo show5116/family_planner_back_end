@@ -19,5 +19,23 @@
     "order_changed": "順序を変更しました",
     "rule_deleted": "ルールを削除しました",
     "savings_terminated": "貯金プランを途中解約しました。元本が残高に返還されました。"
+  },
+  "notification": {
+    "allowance_title_child": "今月のお小遣いが支給されました！",
+    "allowance_body_child_with_savings": "{points}ポイント支給、{savings}ポイント自動貯金",
+    "allowance_body_child": "{points}ポイントが積立されました",
+    "allowance_title_parent": "{name}のお小遣い支給完了",
+    "allowance_body_parent_with_savings": "{points}p支給、{savings}p自動貯金",
+    "allowance_body_parent": "{points}ポイントが支給されました",
+    "negotiation_title_today_parent": "{name}の給与交渉日です！",
+    "negotiation_title_tomorrow_parent": "{name}の給与交渉日は明日です",
+    "negotiation_title_today_child": "今日はお小遣い交渉日です！",
+    "negotiation_title_tomorrow_child": "明日はお小遣い交渉日です",
+    "negotiation_body_today": "今日はポイント条件を再交渉しましょう",
+    "negotiation_body_tomorrow": "明日のポイント交渉を準備しましょう",
+    "savings_mature_title_child": "貯金満期おめでとうございます！",
+    "savings_mature_body_child": "元本{principal}p＋利息{interest}p＝{total}pが支給されました",
+    "savings_mature_title_parent": "{name}の貯金満期完了",
+    "savings_mature_body_parent": "元本{principal}p＋利息{interest}p＝{total}p支給"
   }
 }

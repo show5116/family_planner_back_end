@@ -48,10 +48,18 @@ export class NotificationTokenService {
 
       // 이미 같은 사용자·같은 토큰이면 lastUsed만 갱신 (플랫폼 교체 없음)
       if (existingToken && existingToken.userId === userId) {
-        const deviceToken = await this.prisma.deviceToken.update({
-          where: { token: dto.token },
-          data: { lastUsed: new Date(), platform: dto.platform },
-        });
+        const [deviceToken] = await Promise.all([
+          this.prisma.deviceToken.update({
+            where: { token: dto.token },
+            data: { lastUsed: new Date(), platform: dto.platform },
+          }),
+          dto.language
+            ? this.prisma.user.update({
+                where: { id: userId },
+                data: { language: dto.language },
+              })
+            : Promise.resolve(),
+        ]);
         await this.redis.invalidateUserTokensCache(userId);
         return deviceToken;
       }
@@ -79,6 +87,13 @@ export class NotificationTokenService {
           const created = await tx.deviceToken.create({
             data: { userId, token: dto.token, platform: dto.platform },
           });
+
+          if (dto.language) {
+            await tx.user.update({
+              where: { id: userId },
+              data: { language: dto.language },
+            });
+          }
 
           return {
             deviceToken: created,

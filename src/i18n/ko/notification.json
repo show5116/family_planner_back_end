@@ -10,5 +10,10 @@
     "test_sent": "테스트 알림이 전송되었습니다",
     "test_failed_no_token": "테스트 알림 전송 실패",
     "test_failed_disabled": "테스트 알림 전송 실패"
+  },
+  "push": {
+    "test_title": "테스트 알림",
+    "test_body": "알림 시스템이 정상적으로 작동하고 있습니다.",
+    "announcement_title": "새 공지사항"
   }
 }

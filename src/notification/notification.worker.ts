@@ -16,10 +16,7 @@ import { NotificationQueueService } from './notification-queue.service';
  * 3. Graceful Shutdown 지원 (OnModuleDestroy)
  */
 @Injectable()
-export class NotificationWorker
- 
-  implements OnModuleInit, OnModuleDestroy
-{
+export class NotificationWorker implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(NotificationWorker.name);
   private isRunning = false; // Worker 실행 상태
   private readonly concurrency = 5; // 병렬 워커 개수

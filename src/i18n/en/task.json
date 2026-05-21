@@ -26,5 +26,21 @@
   "success": {
     "category_deleted": "Category deleted",
     "task_deleted": "Task deleted"
+  },
+  "notification": {
+    "new_todo_participant": "You have been added as a participant to a new to-do",
+    "new_schedule_participant": "You have been added as a participant to a new schedule",
+    "added_todo_participant": "You have been added as a participant to a to-do",
+    "added_schedule_participant": "You have been added as a participant to a schedule",
+    "new_todo_group": "A new to-do has been added",
+    "new_schedule_group": "A new schedule has been added",
+    "todo_completed": "To-do completed",
+    "todo_completed_body": "\"{title}\" has been completed",
+    "recurring_skipped": "Recurring schedule skipped",
+    "recurring_skipped_body": "Schedule on {date} has been skipped",
+    "reminder_before_start": "{title} starts in {time}",
+    "reminder_before_due": "{title} due in {time}",
+    "reminder_hours_before": "{hours}h",
+    "reminder_minutes_before": "{minutes}m"
   }
 }

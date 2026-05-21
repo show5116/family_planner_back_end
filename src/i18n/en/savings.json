@@ -12,5 +12,9 @@
     "goal_deleted": "Savings goal deleted",
     "auto_deposit_paused": "Auto deposit paused",
     "auto_deposit_resumed": "Auto deposit resumed"
+  },
+  "notification": {
+    "goal_reached_title": "Savings goal reached!",
+    "goal_reached_body": "You've reached your \"{name}\" savings goal."
   }
 }

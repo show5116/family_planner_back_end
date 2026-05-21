@@ -27,5 +27,13 @@
     "stock_deleted": "銘柄を削除しました",
     "stock_order_changed": "銘柄の順序を変更しました",
     "withdrawal_deleted": "出金記録を削除しました"
+  },
+  "notification": {
+    "account_registered_title": "新しい資産口座を登録しました",
+    "account_registered_body": "「{name}」口座が登録されました",
+    "balance_updated_title": "資産残高を更新しました",
+    "balance_updated_body": "「{name}」の残高が{balance}円として記録されました",
+    "withdrawal_title": "出金記録を追加しました",
+    "withdrawal_body": "「{name}」から{amount}円が出金されました"
   }
 }

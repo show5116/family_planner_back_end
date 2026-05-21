@@ -10,5 +10,10 @@
     "test_sent": "测试通知已发送",
     "test_failed_no_token": "测试通知发送失败",
     "test_failed_disabled": "测试通知发送失败"
+  },
+  "push": {
+    "test_title": "测试通知",
+    "test_body": "通知系统运行正常。",
+    "announcement_title": "新公告"
   }
 }

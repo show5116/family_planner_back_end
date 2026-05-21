@@ -26,5 +26,21 @@
   "success": {
     "category_deleted": "分类已删除",
     "task_deleted": "任务已删除"
+  },
+  "notification": {
+    "new_todo_participant": "您已被指定为新待办事项的参与者",
+    "new_schedule_participant": "您已被指定为新日程的参与者",
+    "added_todo_participant": "您已被指定为待办事项的参与者",
+    "added_schedule_participant": "您已被指定为日程的参与者",
+    "new_todo_group": "添加了新的待办事项",
+    "new_schedule_group": "添加了新的日程",
+    "todo_completed": "待办事项已完成",
+    "todo_completed_body": "「{title}」已完成",
+    "recurring_skipped": "重复日程已跳过",
+    "recurring_skipped_body": "{date}的日程已跳过",
+    "reminder_before_start": "{title} 开始前{time}",
+    "reminder_before_due": "{title} 截止前{time}",
+    "reminder_hours_before": "{hours}小时",
+    "reminder_minutes_before": "{minutes}分钟"
   }
 }

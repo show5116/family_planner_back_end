@@ -16,5 +16,29 @@
     "receipt_deleted": "レシートを削除しました",
     "budget_template_deleted": "予算テンプレートを削除しました",
     "total_budget_template_deleted": "全体予算テンプレートを削除しました"
+  },
+  "category": {
+    "TRANSPORTATION": "交通費",
+    "FOOD": "食費",
+    "GROCERIES": "食料品",
+    "LEISURE": "娯楽費",
+    "LIVING": "生活費",
+    "MEDICAL": "医療費",
+    "EDUCATION": "教育費",
+    "ALLOWANCE": "お小遣い",
+    "CELEBRATION": "慶弔費",
+    "ASSET_TRANSFER": "資産移動",
+    "CHILDCARE": "育児費",
+    "COMMUNICATION": "通信費",
+    "OTHER": "その他"
+  },
+  "notification": {
+    "expense_title": "家計簿に登録されました",
+    "expense_body_with_category": "{category}の{type}{amount}円が登録されました",
+    "expense_body": "{type}{amount}円が登録されました",
+    "expense_type_income": "入金",
+    "expense_type_expense": "支出",
+    "budget_exceeded_title": "予算超過アラート",
+    "budget_exceeded_body": "{category}の予算を超過しました。(支出{spent}円 / 予算{budget}円)"
   }
 }

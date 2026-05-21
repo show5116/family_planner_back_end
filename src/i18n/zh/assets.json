@@ -27,5 +27,13 @@
     "stock_deleted": "股票已删除",
     "stock_order_changed": "股票顺序已更改",
     "withdrawal_deleted": "出金记录已删除"
+  },
+  "notification": {
+    "account_registered_title": "新资产账户已注册",
+    "account_registered_body": "账户\"{name}\"已注册",
+    "balance_updated_title": "资产余额已更新",
+    "balance_updated_body": "「{name}」余额已记录为{balance}元",
+    "withdrawal_title": "出金记录已添加",
+    "withdrawal_body": "从\"{name}\"出金{amount}元"
   }
 }

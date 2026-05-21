@@ -10,5 +10,10 @@
     "test_sent": "テスト通知を送信しました",
     "test_failed_no_token": "テスト通知の送信に失敗しました",
     "test_failed_disabled": "テスト通知の送信に失敗しました"
+  },
+  "push": {
+    "test_title": "テスト通知",
+    "test_body": "通知システムは正常に動作しています。",
+    "announcement_title": "新しいお知らせ"
   }
 }

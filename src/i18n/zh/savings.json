@@ -12,5 +12,9 @@
     "goal_deleted": "储蓄目标已删除",
     "auto_deposit_paused": "自动存款已暂停",
     "auto_deposit_resumed": "自动存款已恢复"
+  },
+  "notification": {
+    "goal_reached_title": "储蓄目标达成！",
+    "goal_reached_body": "「{name}」储蓄目标已达成。"
   }
 }

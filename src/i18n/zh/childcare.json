@@ -19,5 +19,23 @@
     "order_changed": "顺序已更改",
     "rule_deleted": "规则已删除",
     "savings_terminated": "储蓄计划已终止，本金已返还至余额"
+  },
+  "notification": {
+    "allowance_title_child": "本月零花钱已发放！",
+    "allowance_body_child_with_savings": "发放{points}积分，自动储蓄{savings}积分",
+    "allowance_body_child": "已积累{points}积分",
+    "allowance_title_parent": "{name}零花钱发放完成",
+    "allowance_body_parent_with_savings": "发放{points}p，自动储蓄{savings}p",
+    "allowance_body_parent": "已发放{points}积分",
+    "negotiation_title_today_parent": "今天是{name}的薪资谈判日！",
+    "negotiation_title_tomorrow_parent": "{name}的薪资谈判日是明天",
+    "negotiation_title_today_child": "今天是零花钱谈判日！",
+    "negotiation_title_tomorrow_child": "明天是零花钱谈判日",
+    "negotiation_body_today": "今天重新协商积分条件吧",
+    "negotiation_body_tomorrow": "准备好明天的积分谈判吧",
+    "savings_mature_title_child": "恭喜储蓄计划到期！",
+    "savings_mature_body_child": "本金{principal}p + 利息{interest}p = {total}p已发放",
+    "savings_mature_title_parent": "{name}储蓄计划到期完成",
+    "savings_mature_body_parent": "本金{principal}p + 利息{interest}p = {total}p已发放"
   }
 }
