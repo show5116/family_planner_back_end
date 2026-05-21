@@ -19,7 +19,9 @@
     "own_recurring_only_skip": "只能跳过自己的重复规则",
     "category_group_member_only": "只有群组成员可以创建分类",
     "category_group_member_only_edit": "只有群组成员可以编辑/删除分类",
-    "category_own_only_edit": "只能编辑/删除自己的分类"
+    "category_own_only_edit": "只能编辑/删除自己的分类",
+    "category_has_tasks": "分类下有{count}个任务，无法删除",
+    "category_name_duplicate": "已存在同名分类：{name}"
   },
   "success": {
     "category_deleted": "分类已删除",

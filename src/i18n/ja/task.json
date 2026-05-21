@@ -19,7 +19,9 @@
     "own_recurring_only_skip": "自分が作成した繰り返しルールのみスキップできます",
     "category_group_member_only": "グループメンバーのみカテゴリを作成できます",
     "category_group_member_only_edit": "グループメンバーのみカテゴリを編集/削除できます",
-    "category_own_only_edit": "自分が作成したカテゴリのみ編集/削除できます"
+    "category_own_only_edit": "自分が作成したカテゴリのみ編集/削除できます",
+    "category_has_tasks": "カテゴリに{count}件のTaskが紐付いているため削除できません",
+    "category_name_duplicate": "同じ名前のカテゴリがすでに存在します: {name}"
   },
   "success": {
     "category_deleted": "カテゴリを削除しました",

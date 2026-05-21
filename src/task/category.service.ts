@@ -127,7 +127,10 @@ export class CategoryService {
     // Task 개수만 체크 (메모리 효율적)
     if (category._count.tasks > 0) {
       throw new ConflictException(
-        `카테고리에 연결된 Task가 ${category._count.tasks}개 있어 삭제할 수 없습니다`,
+        this.i18n.t('task.errors.category_has_tasks', {
+          lang: I18nContext.current()?.lang ?? 'ko',
+          args: { count: category._count.tasks },
+        }),
       );
     }
 
@@ -194,7 +197,10 @@ export class CategoryService {
 
     if (existing) {
       throw new ConflictException(
-        `같은 이름의 카테고리가 이미 존재합니다: ${name}`,
+        this.i18n.t('task.errors.category_name_duplicate', {
+          lang: I18nContext.current()?.lang ?? 'ko',
+          args: { name },
+        }),
       );
     }
   }
