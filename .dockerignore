@@ -1,0 +1,12 @@
+node_modules
+.env
+.env.*
+coverage
+.nyc_output
+logs
+*.log
+.DS_Store
+.vscode
+.idea
+.temp
+.tmp
