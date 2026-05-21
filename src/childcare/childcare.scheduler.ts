@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
@@ -29,6 +30,7 @@ export class ChildcareScheduler {
    */
   @Cron('0 0 * * *')
   async dispatchAllowance() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:childcare:allowance';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(
@@ -192,6 +194,7 @@ export class ChildcareScheduler {
    */
   @Cron('0 0 * * *')
   async notifyNegotiationDate() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:childcare:negotiation';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(
@@ -283,6 +286,7 @@ export class ChildcareScheduler {
    */
   @Cron('0 0 * * *')
   async matureSavingsPlans() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:childcare:savings';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(

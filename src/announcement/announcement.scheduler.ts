@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationService } from '@/notification/notification.service';
@@ -18,7 +19,10 @@ dayjs.extend(timezone);
  * - 서버 재시작 시 미발송 알림 복구
  */
 @Injectable()
-export class AnnouncementScheduler implements OnModuleInit {
+export class AnnouncementScheduler
+ 
+  implements OnModuleInit
+{
   private readonly logger = new Logger(AnnouncementScheduler.name);
   private readonly BATCH_SIZE = 1000; // 한 번에 처리할 최대 건수
   private readonly MAX_RETRY_COUNT = 3; // 최대 재시도 횟수
@@ -80,6 +84,7 @@ export class AnnouncementScheduler implements OnModuleInit {
    */
   @Cron(CronExpression.EVERY_10_MINUTES)
   async syncAnnouncementViewCounts() {
+    if (!isSchedulerEnabled('')) return;
     this.logger.log('공지사항 조회수 동기화 시작');
 
     try {
@@ -153,6 +158,7 @@ export class AnnouncementScheduler implements OnModuleInit {
    */
   @Cron(CronExpression.EVERY_10_MINUTES)
   async syncAnnouncementReads() {
+    if (!isSchedulerEnabled('')) return;
     this.logger.log('공지사항 읽음 처리 동기화 시작');
 
     try {
@@ -210,6 +216,7 @@ export class AnnouncementScheduler implements OnModuleInit {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async sendScheduledNotifications() {
+    if (!isSchedulerEnabled('')) return;
     try {
       const currentTimestamp = Math.floor(Date.now() / 1000);
 

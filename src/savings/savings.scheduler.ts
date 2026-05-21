@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { SavingsType, SavingsGoalStatus } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
@@ -27,6 +28,7 @@ export class SavingsScheduler {
    */
   @Cron('10 0 * * *')
   async runAutoDeposit() {
+    if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:savings:auto-deposit';
     const lockValue = Date.now().toString();
     const acquired = await this.redis.acquireLock(lockKey, LOCK_TTL, lockValue);

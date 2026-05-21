@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { RecurringService } from './recurring.service';
@@ -36,6 +37,7 @@ export class TaskSchedulerService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async generateRecurringTasks() {
+    if (!isSchedulerEnabled('')) return;
     // 1. 분산 락 획득 시도 (중복 실행 방지)
     const lockValue = `${process.pid}-${Date.now()}`;
     const acquired = await this.redisService.acquireLock(

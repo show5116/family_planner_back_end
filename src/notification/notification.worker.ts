@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationQueueService } from './notification-queue.service';
 
@@ -15,7 +16,10 @@ import { NotificationQueueService } from './notification-queue.service';
  * 3. Graceful Shutdown 지원 (OnModuleDestroy)
  */
 @Injectable()
-export class NotificationWorker implements OnModuleInit, OnModuleDestroy {
+export class NotificationWorker
+ 
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(NotificationWorker.name);
   private isRunning = false; // Worker 실행 상태
   private readonly concurrency = 5; // 병렬 워커 개수
@@ -29,6 +33,7 @@ export class NotificationWorker implements OnModuleInit, OnModuleDestroy {
    * 모듈 초기화 시 Worker 자동 시작
    */
   onModuleInit() {
+    if (!isSchedulerEnabled('')) return;
     this.logger.log('NotificationWorker initialized');
     this.startWorker();
   }
@@ -95,6 +100,7 @@ export class NotificationWorker implements OnModuleInit, OnModuleDestroy {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async moveWaitingToReady() {
+    if (!isSchedulerEnabled('')) return;
     try {
       const currentTime = Math.floor(Date.now() / 1000); // Unix timestamp (초)
       const movedCount =
@@ -117,6 +123,7 @@ export class NotificationWorker implements OnModuleInit, OnModuleDestroy {
    */
   @Cron(CronExpression.EVERY_5_MINUTES)
   async logQueueStatus() {
+    if (!isSchedulerEnabled('')) return;
     try {
       const readySize = await this.redis.getReadyQueueSize();
       const waitingSize = await this.redis.getWaitingRoomSize();

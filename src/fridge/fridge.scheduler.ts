@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
@@ -19,6 +20,7 @@ export class FridgeScheduler {
    */
   @Cron('0 0 * * *', { timeZone: 'Asia/Seoul' })
   async runExpiryAlert() {
+    if (!isSchedulerEnabled('')) return;
     this.logger.log('유통기한 알림 스케줄러 실행');
 
     const today = new Date();
