@@ -5,6 +5,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs';
+import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
@@ -96,7 +97,7 @@ interface ForecastSummary {
   hasPrecipitation: boolean;
   todayMinTemp: number | null;
   todayMaxTemp: number | null;
-  precipDesc: string;
+  precipType: number;
 }
 
 interface GridForecast {
@@ -122,8 +123,17 @@ export class WeatherAlertScheduler {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     private readonly notificationQueue: NotificationQueueService,
+    private readonly i18n: I18nService,
   ) {
     this.serviceKey = this.configService.get<string>('weather.kmaServiceKey');
+  }
+
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
   }
 
   /**
@@ -235,18 +245,18 @@ export class WeatherAlertScheduler {
           continue;
         }
 
-        // 7. 알림 메시지 조합
-        const { title, body } = this.buildAlertMessage(
-          forecast.summary,
-          tempChangedMin,
-          tempChangedMax,
-        );
-
-        // 8. 해당 격자 유저 전체에 FCM 발송
+        // 7. 해당 격자 유저 전체에 FCM 발송 (개인별 언어)
         this.logger.log(
           `[WeatherAlert] 격자 ${gridKey} → ${userIds.length}명 발송`,
         );
         for (const userId of userIds) {
+          const lang = await this.getUserLang(userId);
+          const { title, body } = this.buildAlertMessage(
+            forecast.summary,
+            tempChangedMin,
+            tempChangedMax,
+            lang,
+          );
           await this.notificationQueue.enqueueImmediate({
             userId,
             category: NotificationCategory.WEATHER,
@@ -352,15 +362,14 @@ export class WeatherAlertScheduler {
       }
     }
 
-    const precipDesc = this.getPtyDescription(precipType);
-    return { hasPrecipitation, todayMinTemp, todayMaxTemp, precipDesc };
+    return { hasPrecipitation, todayMinTemp, todayMaxTemp, precipType };
   }
 
-  private getPtyDescription(pty: number): string {
-    if (pty === 1) return '비';
-    if (pty === 2) return '진눈깨비';
-    if (pty === 3) return '눈';
-    if (pty === 4) return '소나기';
+  private getPtyDescription(pty: number, lang: string): string {
+    if (pty === 1) return this.i18n.t('weather.description.rain', { lang });
+    if (pty === 2) return this.i18n.t('weather.description.sleet', { lang });
+    if (pty === 3) return this.i18n.t('weather.description.snow', { lang });
+    if (pty === 4) return this.i18n.t('weather.description.shower', { lang });
     return '';
   }
 
@@ -371,13 +380,21 @@ export class WeatherAlertScheduler {
     summary: ForecastSummary,
     tempChangedMin: number | null,
     tempChangedMax: number | null,
+    lang: string,
   ): { title: string; body: string } {
     const parts: string[] = [];
 
     if (summary.hasPrecipitation) {
-      const icon = summary.precipDesc === '눈' ? '❄️' : '☂️';
+      const desc = this.getPtyDescription(summary.precipType, lang);
+      const icon =
+        summary.precipType === 3
+          ? this.i18n.t('weather.notification.snow_icon', { lang })
+          : this.i18n.t('weather.notification.rain_icon', { lang });
       parts.push(
-        `오늘 ${summary.precipDesc} 예보가 있어요 ${icon} 우산을 챙기세요!`,
+        this.i18n.t('weather.notification.precipitation_alert', {
+          lang,
+          args: { desc, icon },
+        }),
       );
     }
 
@@ -386,14 +403,20 @@ export class WeatherAlertScheduler {
       const sign = tempDiff > 0 ? '+' : '';
       const tempRef =
         tempChangedMax !== null ? summary.todayMaxTemp : summary.todayMinTemp;
-      const label = tempChangedMax !== null ? '최고' : '최저';
+      const label =
+        tempChangedMax !== null
+          ? this.i18n.t('weather.notification.temp_label_max', { lang })
+          : this.i18n.t('weather.notification.temp_label_min', { lang });
       parts.push(
-        `어제보다 기온이 ${sign}${tempDiff}도 달라요 🌡️ (${label} ${tempRef}°C)`,
+        this.i18n.t('weather.notification.temp_change_alert', {
+          lang,
+          args: { sign, diff: Math.abs(tempDiff), label, temp: tempRef },
+        }),
       );
     }
 
     return {
-      title: '오늘의 날씨 알림',
+      title: this.i18n.t('weather.notification.alert_title', { lang }),
       body: parts.join(' · '),
     };
   }

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { SavingsType, SavingsGoalStatus } from '@prisma/client';
+import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
@@ -17,6 +18,7 @@ export class SavingsScheduler {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly notificationQueue: NotificationQueueService,
+    private readonly i18n: I18nService,
   ) {}
 
   /**
@@ -129,6 +131,14 @@ export class SavingsScheduler {
     }
   }
 
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
+
   private async notifyGoalReached(
     groupId: string,
     goalName: string,
@@ -140,11 +150,15 @@ export class SavingsScheduler {
     });
 
     for (const member of members) {
+      const lang = await this.getUserLang(member.userId);
       await this.notificationQueue.enqueueImmediate({
         userId: member.userId,
         category: NotificationCategory.SAVINGS,
-        title: '적립 목표 달성!',
-        body: `"${goalName}" 목표 금액을 달성했습니다.`,
+        title: this.i18n.t('savings.notification.goal_reached_title', { lang }),
+        body: this.i18n.t('savings.notification.goal_reached_body', {
+          lang,
+          args: { name: goalName },
+        }),
         data: { savingsId: goalId },
       });
     }

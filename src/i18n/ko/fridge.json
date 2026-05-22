@@ -10,5 +10,11 @@
     "storage_deleted": "보관소가 삭제되었습니다",
     "item_deleted": "품목이 삭제되었습니다",
     "frequent_item_deleted": "자주 사는 항목이 삭제되었습니다"
+  },
+  "notification": {
+    "expired_title": "유통기한 만료",
+    "expiring_title": "유통기한 임박 알림",
+    "expired_body": "{name} 유통기한이 오늘까지예요!",
+    "expiring_body": "{name} 유통기한이 {days}일 남았어요"
   }
 }

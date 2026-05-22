@@ -343,12 +343,14 @@ export class NotificationService {
       };
     }
 
+    const testLang = I18nContext.current()?.lang ?? 'ko';
+
     // 알림 전송
     const result = await this.sendNotification({
       userId,
       category: NotificationCategory.SYSTEM,
-      title: '테스트 알림',
-      body: '알림 시스템이 정상적으로 작동하고 있습니다.',
+      title: this.i18n.t('notification.push.test_title', { lang: testLang }),
+      body: this.i18n.t('notification.push.test_body', { lang: testLang }),
       data: {
         category: 'SYSTEM',
         test: 'true',
@@ -395,7 +397,9 @@ export class NotificationService {
       const response = await this.firebaseService.sendToTopic(
         FcmTopic.ANNOUNCEMENTS,
         {
-          title: '새 공지사항',
+          title: this.i18n.t('notification.push.announcement_title', {
+            lang: 'ko',
+          }),
           body: announcement.title,
         },
         {

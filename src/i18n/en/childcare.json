@@ -20,6 +20,19 @@
     "rule_deleted": "Rule deleted",
     "savings_terminated": "Savings plan terminated. Principal has been returned to balance."
   },
+  "transaction_type": {
+    "ALLOWANCE": "Monthly allowance",
+    "REWARD": "Rule reward",
+    "BONUS": "Bonus",
+    "PENALTY": "Rule violation deduction",
+    "PURCHASE": "Shop item purchase",
+    "CASHOUT": "Point cashout",
+    "SAVINGS_DEPOSIT": "Savings deposit",
+    "SAVINGS_WITHDRAW": "Savings withdrawal",
+    "INTEREST": "Interest payment",
+    "earned_body": "{amount} points have been credited",
+    "deducted_body": "{amount} points have been deducted"
+  },
   "notification": {
     "allowance_title_child": "This month's allowance has been paid!",
     "allowance_body_child_with_savings": "{points} points paid, {savings} points auto-saved",

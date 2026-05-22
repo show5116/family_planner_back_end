@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
+import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationService } from '@/notification/notification.service';
@@ -17,7 +18,16 @@ export class GoldAssetScheduler {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly notificationService: NotificationService,
+    private readonly i18n: I18nService,
   ) {}
+
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
 
   /**
    * 매달 1일 00:00 KST (= UTC 전날 15:00) 실행
@@ -117,11 +127,20 @@ export class GoldAssetScheduler {
         },
       });
 
+      const lang = await this.getUserLang(account.userId);
       await this.notificationService.sendNotification({
         userId: account.userId,
         category: NotificationCategory.ASSET,
-        title: '실물 금 자산 자동 업데이트',
-        body: `"${account.name}" 잔액이 ${balance.toLocaleString('ko-KR')}원으로 갱신되었습니다`,
+        title: this.i18n.t('assets.notification.balance_updated_title', {
+          lang,
+        }),
+        body: this.i18n.t('assets.notification.balance_updated_body', {
+          lang,
+          args: {
+            name: account.name,
+            balance: balance.toLocaleString(),
+          },
+        }),
         data: { assetId: account.id },
       });
 

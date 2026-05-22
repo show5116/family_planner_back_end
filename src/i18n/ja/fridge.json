@@ -10,5 +10,11 @@
     "storage_deleted": "保管場所を削除しました",
     "item_deleted": "品目を削除しました",
     "frequent_item_deleted": "よく買う商品を削除しました"
+  },
+  "notification": {
+    "expired_title": "賞味期限切れ",
+    "expiring_title": "賞味期限間近のお知らせ",
+    "expired_body": "{name}の賞味期限は今日までです！",
+    "expiring_body": "{name}の賞味期限まであと{days}日です"
   }
 }

@@ -20,6 +20,19 @@
     "rule_deleted": "规则已删除",
     "savings_terminated": "储蓄计划已终止，本金已返还至余额"
   },
+  "transaction_type": {
+    "ALLOWANCE": "月零花钱发放",
+    "REWARD": "规则奖励",
+    "BONUS": "奖金发放",
+    "PENALTY": "违规扣分",
+    "PURCHASE": "商品购买",
+    "CASHOUT": "积分兑现",
+    "SAVINGS_DEPOSIT": "储蓄存款",
+    "SAVINGS_WITHDRAW": "储蓄取款",
+    "INTEREST": "利息发放",
+    "earned_body": "已积累{amount}积分",
+    "deducted_body": "已扣除{amount}积分"
+  },
   "notification": {
     "allowance_title_child": "本月零花钱已发放！",
     "allowance_body_child_with_savings": "发放{points}积分，自动储蓄{savings}积分",
