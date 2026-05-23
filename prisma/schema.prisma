@@ -93,6 +93,7 @@ model Group {
   shoppingCart        ShoppingCart?
   shoppingHistories   ShoppingHistory[]
   itemNameHistories   ItemNameHistory[]
+  groupExpiryPresets  GroupExpiryPreset[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -1398,4 +1399,34 @@ model ItemNameHistory {
   @@unique([groupId, name])
   @@index([groupId, name])
   @@map("item_name_histories")
+}
+
+// 시스템 제공 글로벌 유통기한 기본값
+model GlobalExpiryPreset {
+  id          String      @id @default(uuid())
+  category    String      @db.VarChar(50)
+  keyword     String      @db.VarChar(100)
+  storageType StorageType
+  defaultDays Int
+
+  @@unique([keyword, storageType])
+  @@index([keyword])
+  @@index([category, storageType])
+  @@map("global_expiry_presets")
+}
+
+// 그룹별 유통기한 커스텀 오버라이드
+model GroupExpiryPreset {
+  id          String      @id @default(uuid())
+  groupId     String
+  category    String      @db.VarChar(50)
+  storageType StorageType
+  customDays  Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  group       Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, category, storageType])
+  @@index([groupId])
+  @@map("group_expiry_presets")
 }
