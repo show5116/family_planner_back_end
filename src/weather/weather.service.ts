@@ -199,13 +199,14 @@ export class WeatherService {
   async getWeather(query: WeatherQueryDto): Promise<WeatherResponseDto> {
     const { nx, ny } = toGrid(query.lat, query.lon);
     const lang = I18nContext.current()?.lang ?? 'ko';
+    const sido = getSidoKey(query.lat, query.lon);
 
     // 기상청 초단기실황: 매시 정각 발표, 약 10분 후 제공 → 안전하게 1시간 전 기준
     const now = dayjs().subtract(1, 'hour');
     const baseDate = now.format('YYYYMMDD');
     const baseTime = now.format('HH00');
 
-    const cacheKey = `weather:${nx}:${ny}:${baseDate}:${baseTime}:${lang}`;
+    const cacheKey = `weather:${sido}:${lang}`;
     const cached = await this.redisService.get<WeatherResponseDto>(cacheKey);
     if (cached) return cached;
 
@@ -267,9 +268,10 @@ export class WeatherService {
   async getForecast(query: WeatherQueryDto): Promise<ForecastResponseDto> {
     const { nx, ny } = toGrid(query.lat, query.lon);
     const lang = I18nContext.current()?.lang ?? 'ko';
+    const sido = getSidoKey(query.lat, query.lon);
     const { baseDate, baseTime } = getForecastBaseTime(dayjs());
 
-    const cacheKey = `forecast:${nx}:${ny}:${baseDate}:${baseTime}:${lang}`;
+    const cacheKey = `forecast:${sido}:${lang}`;
     const cached = await this.redisService.get<ForecastResponseDto>(cacheKey);
     if (cached) return cached;
 

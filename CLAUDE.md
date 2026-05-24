@@ -43,3 +43,25 @@ npm run prisma:generate    # Prisma 스키마 수정 후
 - MySQL (Railway 배포)
 - Prisma ORM
 - `.env`에서 `DATABASE_URL` 설정
+- 개발 DB(`family_dev`)와 양산 DB가 분리되어 있음
+
+### ⚠️ 스키마 변경 시 필수 절차
+
+`prisma db push`로 개발 DB에 반영하더라도 **반드시 마이그레이션 파일을 함께 생성**해야 한다.
+마이그레이션 파일이 없으면 양산 DB에 적용 불가.
+
+```bash
+# 1. 개발 DB 반영
+npx prisma db push
+
+# 2. 마이그레이션 파일 수동 생성
+#    prisma/migrations/YYYYMMDD000000_설명/migration.sql 작성
+
+# 3. 히스토리 등록
+npx prisma migrate resolve --applied YYYYMMDD000000_설명
+
+# 4. 확인
+npx prisma migrate status
+```
+
+shadow DB 문제가 없다면 `npx prisma migrate dev --name 설명` 한 번으로 가능.

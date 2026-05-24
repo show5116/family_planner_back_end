@@ -10,5 +10,11 @@
     "storage_deleted": "Storage deleted",
     "item_deleted": "Item deleted",
     "frequent_item_deleted": "Frequent item deleted"
+  },
+  "notification": {
+    "expired_title": "Item expired",
+    "expiring_title": "Expiry alert",
+    "expired_body": "{name} expires today!",
+    "expiring_body": "{name} expires in {days} day(s)"
   }
 }

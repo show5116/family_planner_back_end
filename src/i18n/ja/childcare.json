@@ -20,6 +20,19 @@
     "rule_deleted": "ルールを削除しました",
     "savings_terminated": "貯金プランを途中解約しました。元本が残高に返還されました。"
   },
+  "transaction_type": {
+    "ALLOWANCE": "月額お小遣い支給",
+    "REWARD": "ルール報酬",
+    "BONUS": "ボーナス支給",
+    "PENALTY": "ルール違反差引",
+    "PURCHASE": "ショップアイテム購入",
+    "CASHOUT": "ポイント換金",
+    "SAVINGS_DEPOSIT": "貯金入金",
+    "SAVINGS_WITHDRAW": "貯金出金",
+    "INTEREST": "利息支給",
+    "earned_body": "{amount}ポイントが積立されました",
+    "deducted_body": "{amount}ポイントが差し引かれました"
+  },
   "notification": {
     "allowance_title_child": "今月のお小遣いが支給されました！",
     "allowance_body_child_with_savings": "{points}ポイント支給、{savings}ポイント自動貯金",

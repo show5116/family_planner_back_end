@@ -973,6 +973,14 @@ export class HouseholdService {
     };
   }
 
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
+
   /**
    * 가계 등록 시 그룹 멤버에게 알림 발송 (등록자 제외)
    */
@@ -991,35 +999,36 @@ export class HouseholdService {
       select: { userId: true },
     });
 
-    const typeLabel = expense.type === 'INCOME' ? '입금' : '지출';
-    const categoryLabel: Record<string, string> = {
-      TRANSPORTATION: '교통비',
-      FOOD: '식비',
-      GROCERIES: '장보기',
-      LEISURE: '여가비',
-      LIVING: '생활비',
-      MEDICAL: '의료비',
-      EDUCATION: '교육비',
-      ALLOWANCE: '용돈',
-      CONDOLENCE: '경조사비',
-      ASSET_TRANSFER: '자산이동',
-      CHILDCARE: '육아비',
-      OTHER: '기타',
-    };
-    const catLabel = expense.category
-      ? (categoryLabel[expense.category] ?? expense.category)
-      : '';
     const amountStr = Number(expense.amount).toLocaleString();
-    const body = catLabel
-      ? `${catLabel} ${typeLabel} ${amountStr}원이 등록되었습니다`
-      : `${typeLabel} ${amountStr}원이 등록되었습니다`;
 
     for (const member of members) {
       if (member.userId === userId) continue;
+      const lang = await this.getUserLang(member.userId);
+      const typeLabel = this.i18n.t(
+        expense.type === 'INCOME'
+          ? 'household.notification.expense_type_income'
+          : 'household.notification.expense_type_expense',
+        { lang },
+      );
+      const body = expense.category
+        ? this.i18n.t('household.notification.expense_body_with_category', {
+            lang,
+            args: {
+              category: this.i18n.t(`household.category.${expense.category}`, {
+                lang,
+              }),
+              type: typeLabel,
+              amount: amountStr,
+            },
+          })
+        : this.i18n.t('household.notification.expense_body', {
+            lang,
+            args: { type: typeLabel, amount: amountStr },
+          });
       await this.notificationQueue.enqueueImmediate({
         userId: member.userId,
         category: NotificationCategory.HOUSEHOLD,
-        title: '가계부 내역 등록',
+        title: this.i18n.t('household.notification.expense_title', { lang }),
         body,
         data: { householdId: groupId },
       });
@@ -1068,24 +1077,23 @@ export class HouseholdService {
       select: { userId: true },
     });
 
-    const categoryLabel: Record<string, string> = {
-      TRANSPORTATION: '교통비',
-      FOOD: '식비',
-      GROCERIES: '장보기',
-      LEISURE: '여가비',
-      LIVING: '생활비',
-      MEDICAL: '의료비',
-      EDUCATION: '교육비',
-      OTHER: '기타',
-    };
-    const label = categoryLabel[category] ?? category;
-
     for (const member of members) {
+      const lang = await this.getUserLang(member.userId);
+      const catLabel = this.i18n.t(`household.category.${category}`, { lang });
       await this.notificationQueue.enqueueImmediate({
         userId: member.userId,
         category: NotificationCategory.HOUSEHOLD,
-        title: '예산 초과 알림',
-        body: `${label} 예산을 초과했습니다. (지출 ${totalSpent.toLocaleString()}원 / 예산 ${budgetAmount.toLocaleString()}원)`,
+        title: this.i18n.t('household.notification.budget_exceeded_title', {
+          lang,
+        }),
+        body: this.i18n.t('household.notification.budget_exceeded_body', {
+          lang,
+          args: {
+            category: catLabel,
+            spent: totalSpent.toLocaleString(),
+            budget: budgetAmount.toLocaleString(),
+          },
+        }),
         data: { householdId: groupId },
       });
     }

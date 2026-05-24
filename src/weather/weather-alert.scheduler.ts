@@ -5,6 +5,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs';
+import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
@@ -56,6 +57,44 @@ function toGrid(lat: number, lon: number): { nx: number; ny: number } {
   return { nx, ny };
 }
 
+function getSidoKey(lat: number, lon: number): string {
+  if (lat >= 37.43 && lat <= 37.7 && lon >= 126.76 && lon <= 127.18)
+    return 'seoul';
+  if (lat >= 37.15 && lat <= 37.81 && lon >= 126.2 && lon <= 126.78)
+    return 'incheon';
+  if (lat >= 36.26 && lat <= 36.65 && lon >= 127.18 && lon <= 127.5)
+    return 'sejong';
+  if (lat >= 36.2 && lat <= 36.5 && lon >= 127.29 && lon <= 127.51)
+    return 'daejeon';
+  if (lat >= 35.78 && lat <= 36.03 && lon >= 128.4 && lon <= 128.76)
+    return 'daegu';
+  if (lat >= 35.46 && lat <= 35.78 && lon >= 128.97 && lon <= 129.46)
+    return 'ulsan';
+  if (lat >= 34.88 && lat <= 35.4 && lon >= 128.74 && lon <= 129.33)
+    return 'busan';
+  if (lat >= 35.08 && lat <= 35.25 && lon >= 126.72 && lon <= 126.96)
+    return 'gwangju';
+  if (lat >= 36.93 && lat <= 38.3 && lon >= 126.32 && lon <= 127.86)
+    return 'gyeonggi';
+  if (lat >= 37.0 && lat <= 38.62 && lon >= 127.19 && lon <= 129.37)
+    return 'gangwon';
+  if (lat >= 36.06 && lat <= 37.18 && lon >= 127.4 && lon <= 128.52)
+    return 'chungbuk';
+  if (lat >= 35.9 && lat <= 37.07 && lon >= 125.91 && lon <= 127.55)
+    return 'chungnam';
+  if (lat >= 35.4 && lat <= 36.15 && lon >= 126.35 && lon <= 127.83)
+    return 'jeonbuk';
+  if (lat >= 34.06 && lat <= 35.52 && lon >= 125.58 && lon <= 127.62)
+    return 'jeonnam';
+  if (lat >= 35.57 && lat <= 37.22 && lon >= 127.98 && lon <= 129.57)
+    return 'gyeongbuk';
+  if (lat >= 34.67 && lat <= 35.81 && lon >= 127.55 && lon <= 129.46)
+    return 'gyeongnam';
+  if (lat >= 33.11 && lat <= 33.56 && lon >= 126.15 && lon <= 126.96)
+    return 'jeju';
+  return 'seoul';
+}
+
 // 단기예보 base_time 선택 (weather.service.ts와 동일)
 const FCST_BASE_TIMES = [
   '2300',
@@ -96,7 +135,7 @@ interface ForecastSummary {
   hasPrecipitation: boolean;
   todayMinTemp: number | null;
   todayMaxTemp: number | null;
-  precipDesc: string;
+  precipType: number;
 }
 
 interface GridForecast {
@@ -122,8 +161,17 @@ export class WeatherAlertScheduler {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     private readonly notificationQueue: NotificationQueueService,
+    private readonly i18n: I18nService,
   ) {
     this.serviceKey = this.configService.get<string>('weather.kmaServiceKey');
+  }
+
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
   }
 
   /**
@@ -162,32 +210,33 @@ export class WeatherAlertScheduler {
 
     this.logger.log(`[WeatherAlert] 대상 유저 ${settings.length}명`);
 
-    // 2. 유저를 격자(nx, ny) 단위로 그룹핑
-    const gridMap = new Map<string, string[]>();
+    // 2. 유저를 시도 단위로 그룹핑
+    const sidoMap = new Map<
+      string,
+      { userIds: string[]; nx: number; ny: number }
+    >();
     for (const s of settings) {
       const { lastLat, lastLon } = s.user;
-      const { nx, ny } = toGrid(lastLat, lastLon);
-      const gridKey = `${nx}_${ny}`;
-      if (!gridMap.has(gridKey)) gridMap.set(gridKey, []);
-      gridMap.get(gridKey).push(s.userId);
+      const sido = getSidoKey(lastLat, lastLon);
+      if (!sidoMap.has(sido)) {
+        const { nx, ny } = toGrid(lastLat, lastLon);
+        sidoMap.set(sido, { userIds: [], nx, ny });
+      }
+      sidoMap.get(sido).userIds.push(s.userId);
     }
 
-    this.logger.log(`[WeatherAlert] 격자 ${gridMap.size}개로 그룹핑`);
+    this.logger.log(`[WeatherAlert] 시도 ${sidoMap.size}개로 그룹핑`);
 
     const today = dayjs().tz('Asia/Seoul').format('YYYYMMDD');
 
-    // 3. 격자별 처리
-    for (const [gridKey, userIds] of gridMap) {
+    // 3. 시도별 처리
+    for (const [sido, { userIds, nx, ny }] of sidoMap) {
       try {
-        const [nxStr, nyStr] = gridKey.split('_');
-        const nx = parseInt(nxStr);
-        const ny = parseInt(nyStr);
-
-        const forecast = await this.getForecastForGrid(nx, ny, today);
+        const forecast = await this.getForecastForGrid(sido, nx, ny, today);
         if (!forecast) continue;
 
         // 4. 전날 기온과 비교해 온도 변화 판단
-        const prevTempKey = `weather_temp:${gridKey}:${dayjs().tz('Asia/Seoul').subtract(1, 'day').format('YYYYMMDD')}`;
+        const prevTempKey = `weather_temp:${sido}:${dayjs().tz('Asia/Seoul').subtract(1, 'day').format('YYYYMMDD')}`;
         const prevTemp = await this.redisService.get<{
           min: number;
           max: number;
@@ -212,7 +261,7 @@ export class WeatherAlertScheduler {
           forecast.summary.todayMinTemp !== null &&
           forecast.summary.todayMaxTemp !== null
         ) {
-          const todayTempKey = `weather_temp:${gridKey}:${today}`;
+          const todayTempKey = `weather_temp:${sido}:${today}`;
           await this.redisService.set(
             todayTempKey,
             {
@@ -230,23 +279,23 @@ export class WeatherAlertScheduler {
           tempChangedMax !== null;
         if (!shouldAlert) {
           this.logger.debug(
-            `[WeatherAlert] 격자 ${gridKey} — 알림 조건 미충족, 스킵`,
+            `[WeatherAlert] 시도 ${sido} — 알림 조건 미충족, 스킵`,
           );
           continue;
         }
 
-        // 7. 알림 메시지 조합
-        const { title, body } = this.buildAlertMessage(
-          forecast.summary,
-          tempChangedMin,
-          tempChangedMax,
-        );
-
-        // 8. 해당 격자 유저 전체에 FCM 발송
+        // 7. 해당 시도 유저 전체에 FCM 발송 (개인별 언어)
         this.logger.log(
-          `[WeatherAlert] 격자 ${gridKey} → ${userIds.length}명 발송`,
+          `[WeatherAlert] 시도 ${sido} → ${userIds.length}명 발송`,
         );
         for (const userId of userIds) {
+          const lang = await this.getUserLang(userId);
+          const { title, body } = this.buildAlertMessage(
+            forecast.summary,
+            tempChangedMin,
+            tempChangedMax,
+            lang,
+          );
           await this.notificationQueue.enqueueImmediate({
             userId,
             category: NotificationCategory.WEATHER,
@@ -257,7 +306,7 @@ export class WeatherAlertScheduler {
         }
       } catch (err) {
         this.logger.error(
-          `[WeatherAlert] 격자 ${gridKey} 처리 실패: ${err.message}`,
+          `[WeatherAlert] 시도 ${sido} 처리 실패: ${err.message}`,
         );
       }
     }
@@ -269,12 +318,13 @@ export class WeatherAlertScheduler {
    * 격자별 단기예보 조회 (Redis 캐시 우선, 없으면 API 호출)
    */
   private async getForecastForGrid(
+    sido: string,
     nx: number,
     ny: number,
     today: string,
   ): Promise<GridForecast | null> {
     const { baseDate, baseTime } = getForecastBaseTime(dayjs());
-    const cacheKey = `weather_alert_fcst:${nx}:${ny}:${baseDate}:${baseTime}`;
+    const cacheKey = `weather_alert_fcst:${sido}`;
 
     const cached = await this.redisService.get<GridForecast>(cacheKey);
     if (cached) {
@@ -352,15 +402,14 @@ export class WeatherAlertScheduler {
       }
     }
 
-    const precipDesc = this.getPtyDescription(precipType);
-    return { hasPrecipitation, todayMinTemp, todayMaxTemp, precipDesc };
+    return { hasPrecipitation, todayMinTemp, todayMaxTemp, precipType };
   }
 
-  private getPtyDescription(pty: number): string {
-    if (pty === 1) return '비';
-    if (pty === 2) return '진눈깨비';
-    if (pty === 3) return '눈';
-    if (pty === 4) return '소나기';
+  private getPtyDescription(pty: number, lang: string): string {
+    if (pty === 1) return this.i18n.t('weather.description.rain', { lang });
+    if (pty === 2) return this.i18n.t('weather.description.sleet', { lang });
+    if (pty === 3) return this.i18n.t('weather.description.snow', { lang });
+    if (pty === 4) return this.i18n.t('weather.description.shower', { lang });
     return '';
   }
 
@@ -371,13 +420,21 @@ export class WeatherAlertScheduler {
     summary: ForecastSummary,
     tempChangedMin: number | null,
     tempChangedMax: number | null,
+    lang: string,
   ): { title: string; body: string } {
     const parts: string[] = [];
 
     if (summary.hasPrecipitation) {
-      const icon = summary.precipDesc === '눈' ? '❄️' : '☂️';
+      const desc = this.getPtyDescription(summary.precipType, lang);
+      const icon =
+        summary.precipType === 3
+          ? this.i18n.t('weather.notification.snow_icon', { lang })
+          : this.i18n.t('weather.notification.rain_icon', { lang });
       parts.push(
-        `오늘 ${summary.precipDesc} 예보가 있어요 ${icon} 우산을 챙기세요!`,
+        this.i18n.t('weather.notification.precipitation_alert', {
+          lang,
+          args: { desc, icon },
+        }),
       );
     }
 
@@ -386,14 +443,20 @@ export class WeatherAlertScheduler {
       const sign = tempDiff > 0 ? '+' : '';
       const tempRef =
         tempChangedMax !== null ? summary.todayMaxTemp : summary.todayMinTemp;
-      const label = tempChangedMax !== null ? '최고' : '최저';
+      const label =
+        tempChangedMax !== null
+          ? this.i18n.t('weather.notification.temp_label_max', { lang })
+          : this.i18n.t('weather.notification.temp_label_min', { lang });
       parts.push(
-        `어제보다 기온이 ${sign}${tempDiff}도 달라요 🌡️ (${label} ${tempRef}°C)`,
+        this.i18n.t('weather.notification.temp_change_alert', {
+          lang,
+          args: { sign, diff: Math.abs(tempDiff), label, temp: tempRef },
+        }),
       );
     }
 
     return {
-      title: '오늘의 날씨 알림',
+      title: this.i18n.t('weather.notification.alert_title', { lang }),
       body: parts.join(' · '),
     };
   }

@@ -598,6 +598,14 @@ export class QnaService {
     };
   }
 
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
+
   /**
    * ADMIN에게 새 질문 알림 발송
    */
@@ -618,18 +626,19 @@ export class QnaService {
 
     // 배치로 알림 발송
     await Promise.allSettled(
-      admins.map((admin) =>
-        this.notificationService.sendNotification({
+      admins.map(async (admin) => {
+        const lang = await this.getUserLang(admin.id);
+        return this.notificationService.sendNotification({
           userId: admin.id,
           category: NotificationCategory.SYSTEM,
-          title: '새 질문 등록',
+          title: this.i18n.t('qna.notification.new_question_title', { lang }),
           body: question.title,
           data: {
             category: 'SYSTEM',
             questionId: question.id,
           },
-        }),
-      ),
+        });
+      }),
     );
   }
 
@@ -637,10 +646,11 @@ export class QnaService {
    * 질문 작성자에게 답변 알림 발송
    */
   private async sendAnswerNotificationToUser(question: any) {
+    const lang = await this.getUserLang(question.userId);
     await this.notificationService.sendNotification({
       userId: question.userId,
       category: NotificationCategory.SYSTEM,
-      title: '답변이 등록되었습니다',
+      title: this.i18n.t('qna.notification.answer_registered_title', { lang }),
       body: question.title,
       data: {
         category: 'SYSTEM',

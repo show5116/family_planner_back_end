@@ -318,6 +318,14 @@ export class SavingsService {
     };
   }
 
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
+
   private async notifyGoalReached(
     groupId: string,
     goalName: string,
@@ -329,11 +337,15 @@ export class SavingsService {
     });
 
     for (const member of members) {
+      const lang = await this.getUserLang(member.userId);
       await this.notificationQueue.enqueueImmediate({
         userId: member.userId,
         category: NotificationCategory.SAVINGS,
-        title: '적립 목표 달성!',
-        body: `"${goalName}" 목표 금액을 달성했습니다.`,
+        title: this.i18n.t('savings.notification.goal_reached_title', { lang }),
+        body: this.i18n.t('savings.notification.goal_reached_body', {
+          lang,
+          args: { name: goalName },
+        }),
         data: { savingsId: goalId },
       });
     }

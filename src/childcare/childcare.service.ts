@@ -11,10 +11,7 @@ import {
   PermissionCode,
   SavingsPlanStatus,
 } from '@prisma/client';
-import {
-  ChildcareEarningTypes,
-  ChildcareTransactionTypeLabel,
-} from './constants/transaction-type.constant';
+import { ChildcareEarningTypes } from './constants/transaction-type.constant';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
@@ -927,6 +924,14 @@ export class ChildcareService {
     return ChildcareEarningTypes.includes(type) ? amount : -amount;
   }
 
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
+
   private async notifyChild(
     userId: string,
     type: ChildcareTransactionType,
@@ -934,14 +939,18 @@ export class ChildcareService {
     childId: string,
   ) {
     const isEarning = ChildcareEarningTypes.includes(type);
+    const lang = await this.getUserLang(userId);
 
     await this.notificationQueue.enqueueImmediate({
       userId,
       category: NotificationCategory.CHILDCARE,
-      title: ChildcareTransactionTypeLabel[type],
-      body: isEarning
-        ? `${amount} 포인트가 적립되었습니다`
-        : `${amount} 포인트가 차감되었습니다`,
+      title: this.i18n.t(`childcare.transaction_type.${type}`, { lang }),
+      body: this.i18n.t(
+        isEarning
+          ? 'childcare.transaction_type.earned_body'
+          : 'childcare.transaction_type.deducted_body',
+        { lang, args: { amount } },
+      ),
       data: { childId },
     });
   }

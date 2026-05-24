@@ -10,5 +10,11 @@
     "storage_deleted": "存储区已删除",
     "item_deleted": "物品已删除",
     "frequent_item_deleted": "常用物品已删除"
+  },
+  "notification": {
+    "expired_title": "保质期已过",
+    "expiring_title": "保质期即将到期提醒",
+    "expired_body": "{name}今天到期！",
+    "expiring_body": "{name}还有{days}天到期"
   }
 }

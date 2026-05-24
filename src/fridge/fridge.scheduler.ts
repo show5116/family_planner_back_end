@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
+import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
@@ -12,7 +13,16 @@ export class FridgeScheduler {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationQueue: NotificationQueueService,
+    private readonly i18n: I18nService,
   ) {}
+
+  private async getUserLang(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    return user?.language ?? 'ko';
+  }
 
   /**
    * 매일 09:00 KST — 유통기한 임박/만료 품목 알림
@@ -60,18 +70,25 @@ export class FridgeScheduler {
         const daysLeft = Math.floor(
           (item.expiresAt.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
         );
-        const title = daysLeft === 0 ? '유통기한 만료' : '유통기한 임박 알림';
-        const body =
-          daysLeft === 0
-            ? `${item.name} 유통기한이 오늘까지예요!`
-            : `${item.name} 유통기한이 ${daysLeft}일 남았어요`;
 
         for (const member of members) {
+          const lang = await this.getUserLang(member.userId);
+          const titleKey =
+            daysLeft === 0
+              ? 'fridge.notification.expired_title'
+              : 'fridge.notification.expiring_title';
+          const bodyKey =
+            daysLeft === 0
+              ? 'fridge.notification.expired_body'
+              : 'fridge.notification.expiring_body';
           await this.notificationQueue.enqueueImmediate({
             userId: member.userId,
             category: NotificationCategory.FRIDGE,
-            title,
-            body,
+            title: this.i18n.t(titleKey, { lang }),
+            body: this.i18n.t(bodyKey, {
+              lang,
+              args: { name: item.name, days: daysLeft },
+            }),
             data: { action: 'view_fridge', groupId },
           });
         }
