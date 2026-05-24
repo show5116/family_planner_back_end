@@ -1414,6 +1414,36 @@ period=monthly 시 year 필수.
 
 ---
 
+### POST `auth/kakao/mobile`
+
+**요약:** Kakao 모바일 로그인 (액세스 토큰)
+
+**Responses:**
+
+#### 200 - Kakao 모바일 로그인 성공, 토큰 반환
+
+```json
+{
+  "user": {
+    "id": "user_clxxx123", // 사용자 ID (string)
+    "email": "user@example.com", // 이메일 (string)
+    "name": "홍길동", // 사용자 이름 (string)
+    "isEmailVerified": true, // 이메일 인증 여부 (boolean)
+    "isAdmin": false, // 운영자 여부 (boolean)
+    "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
+    "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
+    "socialProvider": "google", // 소셜 로그인 제공자 (string?)
+    "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
+  } // 사용자 정보 (UserDto)
+}
+```
+
+#### 401 - 유효하지 않은 액세스 토큰
+
+---
+
 ### GET `auth/kakao`
 
 **요약:** Kakao 로그인 시작
@@ -2282,35 +2312,9 @@ period=monthly 시 year 필수.
 
 **Base Path:** `/fridge`
 
-### GET `fridge/expiry-suggestion`
-
-**요약:** 품목명으로 유통기한 추천 (storageType 미지정 시 모든 보관함 추천 목록 반환)
-
-**Query Parameters:**
-
-- `groupId` (`string`): 그룹 ID
-- `name` (`string`): 품목명
-- `storageType` (`StorageType`) (Optional): 보관 유형 (생략 시 가능한 모든 보관함 추천 반환)
-
-**Responses:**
-
-#### 200 - 추천 성공
-
-```json
-{
-  "category": "채소", // 카테고리 (string)
-  "keyword": "시금치", // 매칭된 키워드 (string)
-  "storageType": null, // 추천 보관 유형 (StorageType)
-  "defaultDays": 5, // 추천 유통기한 (일) (number)
-  "suggestedExpiresAt": "2026-05-29T00:00:00.000Z" // 추천 만료일 (ISO8601) (string)
-}
-```
-
----
-
 ### GET `fridge/expiry-presets`
 
-**요약:** 그룹별 유통기한 커스텀 프리셋 목록 조회
+**요약:** 유통기한 프리셋 전체 조회 (글로벌 기본값 + 그룹 커스텀 머지, keywords로 클라이언트 로컬 매칭)
 
 **Query Parameters:**
 
@@ -2322,10 +2326,12 @@ period=monthly 시 year 필수.
 
 ```json
 {
-  "id": "uuid-1234", // 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
-  "storageType": "FRIDGE", // 보관 유형 (string)
-  "customDays": 7 // 커스텀 유통기한 (일) (number)
+  "storageType": null, // 보관 유형 (StorageType)
+  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
+  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "isCustom": false, // 그룹 커스텀 여부 (boolean)
+  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 
@@ -2352,10 +2358,12 @@ period=monthly 시 year 필수.
 
 ```json
 {
-  "id": "uuid-1234", // 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
-  "storageType": "FRIDGE", // 보관 유형 (string)
-  "customDays": 7 // 커스텀 유통기한 (일) (number)
+  "storageType": null, // 보관 유형 (StorageType)
+  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
+  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "isCustom": false, // 그룹 커스텀 여부 (boolean)
+  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 
@@ -2363,7 +2371,7 @@ period=monthly 시 year 필수.
 
 ### DELETE `fridge/expiry-presets/:presetId`
 
-**요약:** 그룹별 유통기한 커스텀 프리셋 삭제
+**요약:** 그룹별 유통기한 커스텀 프리셋 삭제 (글로벌 기본값으로 복원)
 
 **Path Parameters:**
 
@@ -2379,10 +2387,12 @@ period=monthly 시 year 필수.
 
 ```json
 {
-  "id": "uuid-1234", // 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
-  "storageType": "FRIDGE", // 보관 유형 (string)
-  "customDays": 7 // 커스텀 유통기한 (일) (number)
+  "storageType": null, // 보관 유형 (StorageType)
+  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
+  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "isCustom": false, // 그룹 커스텀 여부 (boolean)
+  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 

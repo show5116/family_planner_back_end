@@ -1,40 +1,39 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { StorageType } from '@prisma/client';
 
-export class ExpirySuggestionDto {
+export class ExpiryPresetDto {
   @ApiProperty({ description: '카테고리', example: '채소' })
   category: string;
 
-  @ApiProperty({ description: '매칭된 키워드', example: '시금치' })
-  keyword: string;
-
   @ApiProperty({
-    description: '추천 보관 유형',
+    description: '보관 유형',
     enum: StorageType,
     example: StorageType.FRIDGE,
   })
   storageType: StorageType;
 
-  @ApiProperty({ description: '추천 유통기한 (일)', example: 5 })
-  defaultDays: number;
+  @ApiProperty({
+    description: '적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌',
+    example: 7,
+  })
+  days: number;
 
   @ApiProperty({
-    description: '추천 만료일 (ISO8601)',
-    example: '2026-05-29T00:00:00.000Z',
+    description:
+      '매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재)',
+    example: ['시금치', '열무'],
+    type: [String],
+    nullable: true,
   })
-  suggestedExpiresAt: string;
-}
+  keywords: string[] | null;
 
-export class GroupExpiryPresetDto {
-  @ApiProperty({ description: '프리셋 ID', example: 'uuid-1234' })
-  id: string;
+  @ApiProperty({ description: '그룹 커스텀 여부', example: false })
+  isCustom: boolean;
 
-  @ApiProperty({ description: '카테고리', example: '채소' })
-  category: string;
-
-  @ApiProperty({ description: '보관 유형', example: 'FRIDGE' })
-  storageType: string;
-
-  @ApiProperty({ description: '커스텀 유통기한 (일)', example: 7 })
-  customDays: number;
+  @ApiProperty({
+    description: '그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재)',
+    example: 'uuid-1234',
+    nullable: true,
+  })
+  customPresetId: string | null;
 }
