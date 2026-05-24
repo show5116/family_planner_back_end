@@ -517,6 +517,41 @@ export class AuthService {
   }
 
   /**
+   * 모바일 Kakao 로그인 (액세스 토큰 검증)
+   * Flutter kakao_flutter_sdk에서 발급받은 액세스 토큰을 카카오 API로 검증
+   */
+  async kakaoMobileLogin(accessToken: string) {
+    let data: any;
+    try {
+      const response = await fetch('https://kapi.kakao.com/v2/user/me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Kakao API error: ${response.status}`);
+      }
+      data = await response.json();
+    } catch {
+      throw new UnauthorizedException('auth.errors.invalid_kakao_token');
+    }
+
+    const kakaoAccount = data.kakao_account;
+
+    return this.validateSocialUser({
+      provider: 'KAKAO',
+      providerId: data.id.toString(),
+      email: kakaoAccount?.email ?? null,
+      name:
+        kakaoAccount?.profile?.nickname ??
+        data.properties?.nickname ??
+        '사용자',
+      profileImage: kakaoAccount?.profile?.profile_image_url,
+    });
+  }
+
+  /**
    * 소셜 로그인 처리 (Google, Kakao 등)
    * 사용자가 없으면 자동으로 회원가입 후 로그인
    */

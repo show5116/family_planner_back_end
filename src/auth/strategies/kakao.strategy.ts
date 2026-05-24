@@ -10,14 +10,15 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       clientID: configService.get<string>('oauth.kakao.clientId'),
       clientSecret: configService.get<string>('oauth.kakao.clientSecret'),
       callbackURL: configService.get<string>('oauth.kakao.callbackUrl'),
-    });
+      scope: ['account_email', 'profile_nickname', 'profile_image'],
+    } as any);
   }
 
   validate(
     accessToken: string,
     refreshToken: string,
     profile: any,
-    done: any,
+    done: (error: any, user?: any) => void,
   ): void {
     const { id, username, _json } = profile;
 
