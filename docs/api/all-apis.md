@@ -8093,6 +8093,29 @@ R2에 파일이 존재하는지 확인합니다.
 
 ---
 
+### GET `tasks/categories/all`
+
+**요약:** 전체 카테고리 조회 (개인 + 내가 속한 모든 그룹)
+
+**Responses:**
+
+#### 200 - 전체 카테고리 조회 성공
+
+```json
+{
+  "id": "uuid", // ID (string)
+  "userId": "uuid", // 사용자 ID (string)
+  "groupId": "uuid", // 그룹 ID (string | null)
+  "name": "업무", // 카테고리 이름 (string)
+  "description": "업무 관련 일정", // 설명 (string | null)
+  "emoji": "💼", // 이모지 (string | null)
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
 ### GET `tasks/categories`
 
 **요약:** 카테고리 목록 조회

@@ -40,6 +40,28 @@ export class CategoryService {
   }
 
   /**
+   * 내가 속한 전체 카테고리 조회 (개인 + 모든 그룹)
+   */
+  async getAllMyCategories(userId: string) {
+    const groupIds = await this.prisma.groupMember
+      .findMany({
+        where: { userId },
+        select: { groupId: true },
+      })
+      .then((members) => members.map((m) => m.groupId));
+
+    return await this.prisma.category.findMany({
+      where: {
+        OR: [
+          { userId, groupId: null },
+          ...(groupIds.length > 0 ? [{ groupId: { in: groupIds } }] : []),
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
    * 카테고리 생성
    */
   async createCategory(userId: string, dto: CreateCategoryDto) {
