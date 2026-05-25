@@ -56,9 +56,11 @@ model User {
   lastLat               Float?
   lastLon               Float?
   language              String                      @default("ko") @db.VarChar(10)
+  deletedAt             DateTime?
 
   @@unique([provider, providerId])
   @@index([email])
+  @@index([deletedAt])
   @@map("users")
 }
 

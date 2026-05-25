@@ -6,6 +6,7 @@ import {
   AdminUserQueryDto,
   AdminUserDto,
   AdminUserPageDto,
+  UserDeleteStatus,
 } from './dto/admin-subscription.dto';
 
 @Injectable()
@@ -13,15 +14,27 @@ export class SubscriptionAdminService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getUsers(query: AdminUserQueryDto): Promise<AdminUserPageDto> {
-    const { page = 1, limit = 20, search, tier } = query;
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      tier,
+      deleteStatus = UserDeleteStatus.ALL,
+    } = query;
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: any = {
       ...(tier && { subscriptionTier: tier }),
       ...(search && {
         OR: [{ name: { contains: search } }, { email: { contains: search } }],
       }),
     };
+
+    if (deleteStatus === UserDeleteStatus.ACTIVE) {
+      where.deletedAt = null;
+    } else if (deleteStatus === UserDeleteStatus.PENDING_DELETE) {
+      where.deletedAt = { not: null };
+    }
 
     const [users, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
@@ -33,10 +46,13 @@ export class SubscriptionAdminService {
           id: true,
           name: true,
           email: true,
+          isAdmin: true,
+          provider: true,
           subscriptionTier: true,
           subscriptionExpiresAt: true,
           createdAt: true,
           lastLoginAt: true,
+          deletedAt: true,
         },
       }),
       this.prisma.user.count({ where }),
@@ -57,10 +73,13 @@ export class SubscriptionAdminService {
         id: true,
         name: true,
         email: true,
+        isAdmin: true,
+        provider: true,
         subscriptionTier: true,
         subscriptionExpiresAt: true,
         createdAt: true,
         lastLoginAt: true,
+        deletedAt: true,
       },
     });
 
@@ -99,10 +118,13 @@ export class SubscriptionAdminService {
         id: true,
         name: true,
         email: true,
+        isAdmin: true,
+        provider: true,
         subscriptionTier: true,
         subscriptionExpiresAt: true,
         createdAt: true,
         lastLoginAt: true,
+        deletedAt: true,
       },
     });
 
@@ -113,10 +135,13 @@ export class SubscriptionAdminService {
     id: string;
     name: string;
     email: string | null;
+    isAdmin: boolean;
+    provider: string;
     subscriptionTier: SubscriptionTier;
     subscriptionExpiresAt: Date | null;
     createdAt: Date;
     lastLoginAt: Date | null;
+    deletedAt: Date | null;
   }): AdminUserDto {
     const isActive =
       user.subscriptionTier !== SubscriptionTier.free &&
@@ -127,11 +152,14 @@ export class SubscriptionAdminService {
       id: user.id,
       name: user.name,
       email: user.email,
+      isAdmin: user.isAdmin,
+      provider: user.provider,
       subscriptionTier: user.subscriptionTier,
       subscriptionExpiresAt: user.subscriptionExpiresAt,
       isSubscriptionActive: isActive,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
+      deletedAt: user.deletedAt,
     };
   }
 }

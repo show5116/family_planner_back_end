@@ -1005,6 +1005,47 @@ export class RedisService implements OnModuleInit {
     return await this.has(lockKey);
   }
 
+  /**
+   * 특정 사용자의 모든 Refresh Token 삭제
+   * SCAN으로 refresh-token:* 패턴을 순회하며 value가 userId인 키 삭제
+   *
+   * @param userId - 사용자 ID
+   */
+  async deleteAllRefreshTokensByUserId(userId: string): Promise<void> {
+    const pattern = 'refresh-token:*';
+    let cursor = '0';
+    const keysToDelete: string[] = [];
+
+    do {
+      const [nextCursor, keys] = await this.redisClient.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+
+      if (keys.length > 0) {
+        const values = await this.redisClient.mget(...keys);
+        keys.forEach((key, index) => {
+          const raw = values[index];
+          if (!raw) return;
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed === userId) keysToDelete.push(key);
+          } catch {
+            if (raw === userId) keysToDelete.push(key);
+          }
+        });
+      }
+    } while (cursor !== '0');
+
+    if (keysToDelete.length > 0) {
+      await this.redisClient.del(...keysToDelete);
+    }
+  }
+
   /* ─────────────────────────────────────────────────────────────────────────
    * 8. Indicator History (지표 시계열 — Python AI 에이전트용)
    * ───────────────────────────────────────────────────────────────────────── */

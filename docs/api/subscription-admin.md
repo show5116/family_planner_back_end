@@ -18,6 +18,7 @@
 - `limit` (`number`) (Optional)
 - `search` (`string`) (Optional): 이름 또는 이메일 검색
 - `tier` (`SubscriptionTier`) (Optional): 구독 tier 필터
+- `deleteStatus` (`UserDeleteStatus`) (Optional): 삭제 상태 필터 (all: 전체, active: 정상, pending_delete: 삭제 유예 중)
 
 **Responses:**
 
@@ -30,11 +31,14 @@
       "id": "uuid-1234", // string
       "name": "홍길동", // string
       "email": "user@example.com", // string | null
+      "isAdmin": false, // 운영자 여부 (boolean)
+      "provider": "LOCAL", // 소셜 로그인 제공자 (string)
       "subscriptionTier": null, // SubscriptionTier
       "subscriptionExpiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
       "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
       "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
-      "lastLoginAt": "2025-01-01T00:00:00Z" // 마지막 로그인 (Date | null)
+      "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
+      "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
     }
   ], // AdminUserDto[]
   "total": 120, // number
@@ -62,11 +66,14 @@
   "id": "uuid-1234", // string
   "name": "홍길동", // string
   "email": "user@example.com", // string | null
+  "isAdmin": false, // 운영자 여부 (boolean)
+  "provider": "LOCAL", // 소셜 로그인 제공자 (string)
   "subscriptionTier": null, // SubscriptionTier
   "subscriptionExpiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
-  "lastLoginAt": "2025-01-01T00:00:00Z" // 마지막 로그인 (Date | null)
+  "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
+  "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
 }
 ```
 
@@ -100,11 +107,14 @@
   "id": "uuid-1234", // string
   "name": "홍길동", // string
   "email": "user@example.com", // string | null
+  "isAdmin": false, // 운영자 여부 (boolean)
+  "provider": "LOCAL", // 소셜 로그인 제공자 (string)
   "subscriptionTier": null, // SubscriptionTier
   "subscriptionExpiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
-  "lastLoginAt": "2025-01-01T00:00:00Z" // 마지막 로그인 (Date | null)
+  "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
+  "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
 }
 ```
 

@@ -829,4 +829,137 @@ export class AuthService {
       }),
     };
   }
+
+  private readonly ACCOUNT_DELETION_GRACE_DAYS = 7;
+
+  /**
+   * 계정 삭제 예약 (운영자 전용, 7일 유예)
+   * deletedAt을 설정하여 소프트 삭제 — 실제 제거는 크론잡이 처리
+   */
+  async deleteAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (user.deletedAt) {
+      throw new BadRequestException('이미 삭제 예약된 계정입니다');
+    }
+
+    const scheduledAt = new Date();
+    scheduledAt.setDate(
+      scheduledAt.getDate() + this.ACCOUNT_DELETION_GRACE_DAYS,
+    );
+
+    await Promise.all([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { deletedAt: scheduledAt },
+      }),
+      this.redisService.deleteAllRefreshTokensByUserId(userId),
+    ]);
+
+    return {
+      message: `계정 삭제가 예약되었습니다. ${this.ACCOUNT_DELETION_GRACE_DAYS}일 후 완전히 삭제됩니다`,
+      scheduledDeleteAt: scheduledAt,
+    };
+  }
+
+  /**
+   * 삭제 예약 계정 즉시 완전 삭제 (운영자 전용)
+   * deletedAt이 설정된 계정만 대상 — R2 → Redis → DB 순서로 제거
+   */
+  async forceDeleteAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, profileImageKey: true, deletedAt: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (!user.deletedAt) {
+      throw new BadRequestException('삭제 예약된 계정이 아닙니다');
+    }
+
+    if (user.profileImageKey) {
+      try {
+        await this.storageService.deleteFile(user.profileImageKey);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to delete profile image for user ${userId}: ${error.message}`,
+        );
+      }
+    }
+
+    await this.redisService.deleteAllRefreshTokensByUserId(userId);
+    await this.prisma.user.delete({ where: { id: userId } });
+
+    return { message: '계정이 즉시 삭제되었습니다' };
+  }
+
+  /**
+   * 계정 삭제 예약 취소 (운영자 전용)
+   */
+  async cancelDeleteAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (!user.deletedAt) {
+      throw new BadRequestException('삭제 예약된 계정이 아닙니다');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { deletedAt: null },
+    });
+
+    return { message: '계정 삭제 예약이 취소되었습니다' };
+  }
+
+  /**
+   * 유예 기간 만료 계정 하드 삭제 (크론잡 전용)
+   * deletedAt <= 현재 시간인 계정을 R2 → Redis → DB 순서로 완전 제거
+   */
+  async purgeExpiredAccounts() {
+    const users = await this.prisma.user.findMany({
+      where: { deletedAt: { lte: new Date() } },
+      select: { id: true, profileImageKey: true },
+    });
+
+    if (users.length === 0) return { purged: 0 };
+
+    await Promise.all(
+      users.map(async (user) => {
+        if (user.profileImageKey) {
+          try {
+            await this.storageService.deleteFile(user.profileImageKey);
+          } catch (error) {
+            this.logger.warn(
+              `Failed to delete profile image for user ${user.id}: ${error.message}`,
+            );
+          }
+        }
+        await this.redisService.deleteAllRefreshTokensByUserId(user.id);
+      }),
+    );
+
+    await this.prisma.user.deleteMany({
+      where: { id: { in: users.map((u) => u.id) } },
+    });
+
+    this.logger.log(`Purged ${users.length} expired accounts`);
+    return { purged: users.length };
+  }
 }

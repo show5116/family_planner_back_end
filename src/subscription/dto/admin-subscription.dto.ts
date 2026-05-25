@@ -10,6 +10,12 @@ import {
 import { Type } from 'class-transformer';
 import { SubscriptionTier } from '@prisma/client';
 
+export enum UserDeleteStatus {
+  ALL = 'all',
+  ACTIVE = 'active',
+  PENDING_DELETE = 'pending_delete',
+}
+
 export class AdminUpdateSubscriptionDto {
   @ApiProperty({ enum: SubscriptionTier, example: SubscriptionTier.premium })
   @IsEnum(SubscriptionTier)
@@ -58,6 +64,17 @@ export class AdminUserQueryDto {
   @IsOptional()
   @IsEnum(SubscriptionTier)
   tier?: SubscriptionTier;
+
+  @ApiProperty({
+    required: false,
+    enum: UserDeleteStatus,
+    description:
+      '삭제 상태 필터 (all: 전체, active: 정상, pending_delete: 삭제 유예 중)',
+    default: UserDeleteStatus.ALL,
+  })
+  @IsOptional()
+  @IsEnum(UserDeleteStatus)
+  deleteStatus?: UserDeleteStatus = UserDeleteStatus.ALL;
 }
 
 export class AdminUserDto {
@@ -69,6 +86,12 @@ export class AdminUserDto {
 
   @ApiProperty({ example: 'user@example.com', nullable: true })
   email: string | null;
+
+  @ApiProperty({ description: '운영자 여부', example: false })
+  isAdmin: boolean;
+
+  @ApiProperty({ description: '소셜 로그인 제공자', example: 'LOCAL' })
+  provider: string;
 
   @ApiProperty({ enum: SubscriptionTier, example: SubscriptionTier.free })
   subscriptionTier: SubscriptionTier;
@@ -84,6 +107,13 @@ export class AdminUserDto {
 
   @ApiProperty({ description: '마지막 로그인', nullable: true })
   lastLoginAt: Date | null;
+
+  @ApiProperty({
+    description: '삭제 예약 일시 (null이면 정상 계정)',
+    nullable: true,
+    example: '2024-01-08T00:00:00.000Z',
+  })
+  deletedAt: Date | null;
 }
 
 export class AdminUserPageDto {
