@@ -546,6 +546,28 @@ export class AuthController {
   }
 
   @Public()
+  @Post('kakao/mobile')
+  @ApiOperation({ summary: 'Kakao 모바일 로그인 (액세스 토큰)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string', description: 'Kakao 액세스 토큰' },
+      },
+      required: ['accessToken'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Kakao 모바일 로그인 성공, 토큰 반환',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({ status: 401, description: '유효하지 않은 액세스 토큰' })
+  kakaoMobileLogin(@Body('accessToken') accessToken: string) {
+    return this.authService.kakaoMobileLogin(accessToken);
+  }
+
+  @Public()
   @Get('kakao')
   @UseGuards(KakaoAuthGuard)
   @ApiOperation({ summary: 'Kakao 로그인 시작' })

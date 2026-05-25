@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { StorageType } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpsertGroupExpiryPresetDto } from './dto/upsert-group-expiry-preset.dto';
 
@@ -14,104 +13,68 @@ export class ExpiryPresetService {
     if (!member) throw new NotFoundException('fridge.errors.group_member_only');
   }
 
-  private buildSuggestion(
-    preset: {
-      category: string;
-      keyword: string;
-      storageType: StorageType;
-      defaultDays: number;
-    },
-    overrideDays?: number,
-  ) {
-    const defaultDays = overrideDays ?? preset.defaultDays;
-    const suggestedExpiresAt = new Date();
-    suggestedExpiresAt.setDate(suggestedExpiresAt.getDate() + defaultDays);
-    return {
-      category: preset.category,
-      keyword: preset.keyword,
-      storageType: preset.storageType,
-      defaultDays,
-      suggestedExpiresAt: suggestedExpiresAt.toISOString(),
-    };
-  }
-
   /**
-   * 품목명으로 유통기한 추천
-   * - storageType 지정 시: 해당 보관 유형 단일 추천 반환
-   * - storageType 미지정 시: 가능한 모든 보관 유형 추천 목록 반환 (추천 보관함 포함)
-   * 우선순위: 그룹 커스텀 > 글로벌 프리셋 키워드 매칭 (가장 긴 키워드 우선)
+   * 유통기한 프리셋 전체 조회 (글로벌 기본값 + 그룹 커스텀 오버라이드 머지)
+   * 카테고리+보관유형 조합별로 커스텀이 있으면 커스텀값, 없으면 글로벌 기본값 반환
+   * keywords는 클라이언트 로컬 매칭용 (글로벌 항목에만 존재, 커스텀 전용 항목은 null)
    */
-  async getSuggestions(
-    userId: string,
-    groupId: string,
-    name: string,
-    storageType?: StorageType,
-  ) {
+  async getPresets(userId: string, groupId: string) {
     await this.assertMember(userId, groupId);
 
-    // 글로벌 프리셋 전체 조회 후 품목명에 키워드가 포함된 것만 필터
-    const allPresets = await this.prisma.globalExpiryPreset.findMany({
-      where: storageType ? { storageType } : undefined,
-    });
-    const matched = allPresets.filter((p) => name.includes(p.keyword));
+    const [globalPresets, groupPresets] = await Promise.all([
+      this.prisma.globalExpiryPreset.findMany({
+        orderBy: [{ category: 'asc' }, { storageType: 'asc' }],
+      }),
+      this.prisma.groupExpiryPreset.findMany({ where: { groupId } }),
+    ]);
 
-    if (matched.length === 0) return [];
-
-    // storageType별로 가장 긴 키워드 매칭 하나만 선택
-    const bestByStorageType = new Map<StorageType, (typeof matched)[number]>();
-    for (const preset of matched) {
-      const existing = bestByStorageType.get(preset.storageType);
-      if (!existing || preset.keyword.length > existing.keyword.length) {
-        bestByStorageType.set(preset.storageType, preset);
-      }
-    }
-
-    // 그룹 커스텀 오버라이드 일괄 조회
-    const categories = [
-      ...new Set([...bestByStorageType.values()].map((p) => p.category)),
-    ];
-    const groupPresets = await this.prisma.groupExpiryPreset.findMany({
-      where: {
-        groupId,
-        category: { in: categories },
-        ...(storageType ? { storageType } : {}),
-      },
-    });
     const groupPresetMap = new Map(
-      groupPresets.map((gp) => [
-        `${gp.category}_${gp.storageType}`,
-        gp.customDays,
-      ]),
+      groupPresets.map((gp) => [`${gp.category}_${gp.storageType}`, gp]),
     );
 
-    const results = [...bestByStorageType.values()].map((preset) => {
-      const overrideDays = groupPresetMap.get(
-        `${preset.category}_${preset.storageType}`,
-      );
-      return this.buildSuggestion(preset, overrideDays);
-    });
+    // 카테고리+보관유형 조합 기준으로 글로벌 키워드 목록 집계
+    const globalKeywordsByKey = new Map<string, string[]>();
+    for (const gp of globalPresets) {
+      const key = `${gp.category}_${gp.storageType}`;
+      const existing = globalKeywordsByKey.get(key) ?? [];
+      existing.push(gp.keyword);
+      globalKeywordsByKey.set(key, existing);
+    }
 
-    // storageType 지정 시 단일 객체 반환, 미지정 시 목록 반환
-    return storageType ? (results[0] ?? null) : results;
-  }
+    // 카테고리+보관유형 조합 기준으로 글로벌 대표값(defaultDays) 추출
+    const globalByKey = new Map<string, (typeof globalPresets)[number]>();
+    for (const gp of globalPresets) {
+      const key = `${gp.category}_${gp.storageType}`;
+      if (!globalByKey.has(key)) globalByKey.set(key, gp);
+    }
 
-  /**
-   * 그룹별 카테고리 커스텀 프리셋 목록 조회
-   */
-  async getGroupPresets(userId: string, groupId: string) {
-    await this.assertMember(userId, groupId);
-    return this.prisma.groupExpiryPreset.findMany({
-      where: { groupId },
-      orderBy: [{ category: 'asc' }, { storageType: 'asc' }],
+    // 글로벌 + 그룹 커스텀 합집합 키
+    const allKeys = new Set([...globalByKey.keys(), ...groupPresetMap.keys()]);
+
+    return [...allKeys].map((key) => {
+      const global = globalByKey.get(key);
+      const custom = groupPresetMap.get(key);
+      const [category, storageType] = custom
+        ? [custom.category, custom.storageType]
+        : [global.category, global.storageType];
+      return {
+        category,
+        storageType,
+        days: custom?.customDays ?? global.defaultDays,
+        keywords: globalKeywordsByKey.get(key) ?? null,
+        isCustom: !!custom,
+        customPresetId: custom?.id ?? null,
+      };
     });
   }
 
   /**
    * 그룹별 카테고리 커스텀 프리셋 upsert
+   * 저장 후 머지된 프리셋 형태로 반환
    */
   async upsertGroupPreset(userId: string, dto: UpsertGroupExpiryPresetDto) {
     await this.assertMember(userId, dto.groupId);
-    return this.prisma.groupExpiryPreset.upsert({
+    const saved = await this.prisma.groupExpiryPreset.upsert({
       where: {
         groupId_category_storageType: {
           groupId: dto.groupId,
@@ -127,6 +90,14 @@ export class ExpiryPresetService {
         customDays: dto.customDays,
       },
     });
+    return {
+      category: saved.category,
+      storageType: saved.storageType,
+      days: saved.customDays,
+      keywords: null,
+      isCustom: true,
+      customPresetId: saved.id,
+    };
   }
 
   /**

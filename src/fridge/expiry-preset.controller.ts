@@ -15,13 +15,9 @@ import {
   ApiSuccess,
 } from '@/common/decorators/api-responses.decorator';
 import { ExpiryPresetService } from './expiry-preset.service';
-import { ExpirySuggestionQueryDto } from './dto/expiry-suggestion-query.dto';
 import { UpsertGroupExpiryPresetDto } from './dto/upsert-group-expiry-preset.dto';
 import { GroupIdQueryDto } from './dto/group-id-query.dto';
-import {
-  ExpirySuggestionDto,
-  GroupExpiryPresetDto,
-} from './dto/expiry-preset-response.dto';
+import { ExpiryPresetDto } from './dto/expiry-preset-response.dto';
 
 @ApiTags('냉장고 관리')
 @Controller('fridge')
@@ -29,44 +25,28 @@ import {
 export class ExpiryPresetController {
   constructor(private readonly expiryPresetService: ExpiryPresetService) {}
 
-  @Get('expiry-suggestion')
+  @Get('expiry-presets')
   @ApiOperation({
     summary:
-      '품목명으로 유통기한 추천 (storageType 미지정 시 모든 보관함 추천 목록 반환)',
+      '유통기한 프리셋 전체 조회 (글로벌 기본값 + 그룹 커스텀 머지, keywords로 클라이언트 로컬 매칭)',
   })
-  @ApiSuccess(ExpirySuggestionDto, '추천 성공', { isArray: true })
-  getExpirySuggestion(
-    @Request() req,
-    @Query() query: ExpirySuggestionQueryDto,
-  ) {
-    return this.expiryPresetService.getSuggestions(
-      req.user.userId,
-      query.groupId,
-      query.name,
-      query.storageType,
-    );
-  }
-
-  @Get('expiry-presets')
-  @ApiOperation({ summary: '그룹별 유통기한 커스텀 프리셋 목록 조회' })
-  @ApiSuccess(GroupExpiryPresetDto, '조회 성공', { isArray: true })
-  getGroupPresets(@Request() req, @Query() query: GroupIdQueryDto) {
-    return this.expiryPresetService.getGroupPresets(
-      req.user.userId,
-      query.groupId,
-    );
+  @ApiSuccess(ExpiryPresetDto, '조회 성공', { isArray: true })
+  getPresets(@Request() req, @Query() query: GroupIdQueryDto) {
+    return this.expiryPresetService.getPresets(req.user.userId, query.groupId);
   }
 
   @Put('expiry-presets')
   @ApiOperation({ summary: '그룹별 유통기한 커스텀 프리셋 등록/수정' })
-  @ApiSuccess(GroupExpiryPresetDto, '저장 성공')
+  @ApiSuccess(ExpiryPresetDto, '저장 성공')
   upsertGroupPreset(@Request() req, @Body() dto: UpsertGroupExpiryPresetDto) {
     return this.expiryPresetService.upsertGroupPreset(req.user.userId, dto);
   }
 
   @Delete('expiry-presets/:presetId')
-  @ApiOperation({ summary: '그룹별 유통기한 커스텀 프리셋 삭제' })
-  @ApiSuccess(GroupExpiryPresetDto, '삭제 성공')
+  @ApiOperation({
+    summary: '그룹별 유통기한 커스텀 프리셋 삭제 (글로벌 기본값으로 복원)',
+  })
+  @ApiSuccess(ExpiryPresetDto, '삭제 성공')
   @ApiNotFound('프리셋을 찾을 수 없습니다')
   deleteGroupPreset(
     @Request() req,
