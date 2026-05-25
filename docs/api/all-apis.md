@@ -1501,6 +1501,79 @@ period=monthly 시 year 필수.
 
 ---
 
+### DELETE `auth/admin/users/:userId`
+
+**요약:** 계정 삭제 예약 (운영자 전용, 7일 유예)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 계정 삭제 예약 성공
+
+```json
+{
+  "message": "계정 삭제가 예약되었습니다. 7일 후 완전히 삭제됩니다", // 응답 메시지 (string)
+  "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 실제 삭제 예정 일시 (Date)
+}
+```
+
+---
+
+### POST `auth/admin/users/:userId/cancel-delete`
+
+**요약:** 계정 삭제 예약 취소 (운영자 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 계정 삭제 예약 취소 성공
+
+```json
+{
+  "message": "계정 삭제 예약이 취소되었습니다" // 응답 메시지 (string)
+}
+```
+
+---
+
+### DELETE `auth/admin/users/:userId/force`
+
+**요약:** 삭제 예약 계정 즉시 완전 삭제 (운영자 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 계정 즉시 삭제 성공
+
+```json
+{
+  "message": "계정이 즉시 삭제되었습니다" // 응답 메시지 (string)
+}
+```
+
+---
+
 ## 육아 포인트
 
 **Base Path:** `/childcare`
@@ -7809,6 +7882,7 @@ R2에 파일이 존재하는지 확인합니다.
 - `limit` (`number`) (Optional)
 - `search` (`string`) (Optional): 이름 또는 이메일 검색
 - `tier` (`SubscriptionTier`) (Optional): 구독 tier 필터
+- `deleteStatus` (`UserDeleteStatus`) (Optional): 삭제 상태 필터 (all: 전체, active: 정상, pending_delete: 삭제 유예 중)
 
 **Responses:**
 
@@ -7821,11 +7895,14 @@ R2에 파일이 존재하는지 확인합니다.
       "id": "uuid-1234", // string
       "name": "홍길동", // string
       "email": "user@example.com", // string | null
+      "isAdmin": false, // 운영자 여부 (boolean)
+      "provider": "LOCAL", // 소셜 로그인 제공자 (string)
       "subscriptionTier": null, // SubscriptionTier
       "subscriptionExpiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
       "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
       "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
-      "lastLoginAt": "2025-01-01T00:00:00Z" // 마지막 로그인 (Date | null)
+      "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
+      "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
     }
   ], // AdminUserDto[]
   "total": 120, // number
@@ -7853,11 +7930,14 @@ R2에 파일이 존재하는지 확인합니다.
   "id": "uuid-1234", // string
   "name": "홍길동", // string
   "email": "user@example.com", // string | null
+  "isAdmin": false, // 운영자 여부 (boolean)
+  "provider": "LOCAL", // 소셜 로그인 제공자 (string)
   "subscriptionTier": null, // SubscriptionTier
   "subscriptionExpiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
-  "lastLoginAt": "2025-01-01T00:00:00Z" // 마지막 로그인 (Date | null)
+  "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
+  "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
 }
 ```
 
@@ -7891,11 +7971,14 @@ R2에 파일이 존재하는지 확인합니다.
   "id": "uuid-1234", // string
   "name": "홍길동", // string
   "email": "user@example.com", // string | null
+  "isAdmin": false, // 운영자 여부 (boolean)
+  "provider": "LOCAL", // 소셜 로그인 제공자 (string)
   "subscriptionTier": null, // SubscriptionTier
   "subscriptionExpiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
-  "lastLoginAt": "2025-01-01T00:00:00Z" // 마지막 로그인 (Date | null)
+  "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
+  "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
 }
 ```
 

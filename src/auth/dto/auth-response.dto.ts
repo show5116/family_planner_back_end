@@ -198,3 +198,42 @@ export class UpdateProfileResponseDto {
   })
   user: UserDto;
 }
+
+/**
+ * 계정 삭제 예약 응답 DTO
+ */
+export class DeleteAccountResponseDto {
+  @ApiProperty({
+    description: '응답 메시지',
+    example: '계정 삭제가 예약되었습니다. 7일 후 완전히 삭제됩니다',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: '실제 삭제 예정 일시',
+    example: '2024-01-08T00:00:00.000Z',
+  })
+  scheduledDeleteAt: Date;
+}
+
+/**
+ * 계정 삭제 예약 취소 응답 DTO
+ */
+export class CancelDeleteAccountResponseDto {
+  @ApiProperty({
+    description: '응답 메시지',
+    example: '계정 삭제 예약이 취소되었습니다',
+  })
+  message: string;
+}
+
+/**
+ * 계정 즉시 삭제 응답 DTO
+ */
+export class ForceDeleteAccountResponseDto {
+  @ApiProperty({
+    description: '응답 메시지',
+    example: '계정이 즉시 삭제되었습니다',
+  })
+  message: string;
+}

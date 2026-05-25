@@ -8,6 +8,8 @@
   Request,
   Res,
   Patch,
+  Delete,
+  Param,
   UnauthorizedException,
   UseInterceptors,
   UploadedFile,
@@ -46,12 +48,17 @@ import {
   RequestPasswordResetResponseDto,
   ResetPasswordResponseDto,
   UpdateProfileResponseDto,
+  DeleteAccountResponseDto,
+  CancelDeleteAccountResponseDto,
+  ForceDeleteAccountResponseDto,
 } from '@/auth/dto/auth-response.dto';
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
 import { LocalAuthGuard } from '@/auth/guards/local-auth.guard';
+import { AdminGuard } from '@/auth/admin.guard';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiSuccess } from '@/common/decorators/api-responses.decorator';
+import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import { StorageService } from '@/storage/storage.service';
 
 @ApiTags('인증')
@@ -598,5 +605,34 @@ export class AuthController {
   @ApiSuccess(Object, '위치 정보 업데이트 성공')
   updateLocation(@Request() req, @Body() dto: UpdateLocationDto) {
     return this.authService.updateLocation(req.user.userId, dto.lat, dto.lon);
+  }
+
+  // ===== 운영자 전용 =====
+
+  @Delete('admin/users/:userId')
+  @UseGuards(AdminGuard)
+  @ApiCommonAuthResponses()
+  @ApiOperation({ summary: '계정 삭제 예약 (운영자 전용, 7일 유예)' })
+  @ApiSuccess(DeleteAccountResponseDto, '계정 삭제 예약 성공')
+  deleteAccount(@Param('userId') userId: string) {
+    return this.authService.deleteAccount(userId);
+  }
+
+  @Post('admin/users/:userId/cancel-delete')
+  @UseGuards(AdminGuard)
+  @ApiCommonAuthResponses()
+  @ApiOperation({ summary: '계정 삭제 예약 취소 (운영자 전용)' })
+  @ApiSuccess(CancelDeleteAccountResponseDto, '계정 삭제 예약 취소 성공')
+  cancelDeleteAccount(@Param('userId') userId: string) {
+    return this.authService.cancelDeleteAccount(userId);
+  }
+
+  @Delete('admin/users/:userId/force')
+  @UseGuards(AdminGuard)
+  @ApiCommonAuthResponses()
+  @ApiOperation({ summary: '삭제 예약 계정 즉시 완전 삭제 (운영자 전용)' })
+  @ApiSuccess(ForceDeleteAccountResponseDto, '계정 즉시 삭제 성공')
+  forceDeleteAccount(@Param('userId') userId: string) {
+    return this.authService.forceDeleteAccount(userId);
   }
 }

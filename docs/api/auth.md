@@ -472,3 +472,76 @@
 #### 200 - 위치 정보 업데이트 성공
 
 ---
+
+### DELETE `auth/admin/users/:userId`
+
+**요약:** 계정 삭제 예약 (운영자 전용, 7일 유예)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 계정 삭제 예약 성공
+
+```json
+{
+  "message": "계정 삭제가 예약되었습니다. 7일 후 완전히 삭제됩니다", // 응답 메시지 (string)
+  "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 실제 삭제 예정 일시 (Date)
+}
+```
+
+---
+
+### POST `auth/admin/users/:userId/cancel-delete`
+
+**요약:** 계정 삭제 예약 취소 (운영자 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 계정 삭제 예약 취소 성공
+
+```json
+{
+  "message": "계정 삭제 예약이 취소되었습니다" // 응답 메시지 (string)
+}
+```
+
+---
+
+### DELETE `auth/admin/users/:userId/force`
+
+**요약:** 삭제 예약 계정 즉시 완전 삭제 (운영자 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 계정 즉시 삭제 성공
+
+```json
+{
+  "message": "계정이 즉시 삭제되었습니다" // 응답 메시지 (string)
+}
+```
+
+---
