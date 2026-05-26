@@ -5,6 +5,36 @@ import {
   TransactionType,
 } from '@prisma/client';
 
+export class MerchantDto {
+  @ApiProperty({ description: '소비처 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234', nullable: true })
+  groupId: string | null;
+
+  @ApiProperty({
+    description: '작성자 ID',
+    example: 'uuid-1234',
+    nullable: true,
+  })
+  userId: string | null;
+
+  @ApiProperty({ description: '소비처 이름', example: '쿠팡' })
+  name: string;
+
+  @ApiProperty({
+    description: '생성 일시',
+    example: '2026-02-27T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: '수정 일시',
+    example: '2026-02-27T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
 export class ExpenseReceiptDto {
   @ApiProperty({ description: '영수증 ID', example: 'uuid-1234' })
   id: string;
@@ -94,6 +124,14 @@ export class ExpenseDto {
 
   @ApiProperty({ description: '고정 지출 여부', example: false })
   isRecurring: boolean;
+
+  @ApiProperty({
+    description: '소비처',
+    type: () => MerchantDto,
+    nullable: true,
+    required: false,
+  })
+  merchant: MerchantDto | null;
 
   @ApiProperty({
     description:

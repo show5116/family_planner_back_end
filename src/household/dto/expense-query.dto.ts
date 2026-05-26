@@ -57,4 +57,13 @@ export class ExpenseQueryDto {
   @IsOptional()
   @IsEnum(TransactionType)
   type?: TransactionType;
+
+  @ApiProperty({
+    description: '소비처 ID 필터',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  merchantId?: string;
 }

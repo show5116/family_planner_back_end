@@ -14,9 +14,14 @@
 ## 주요 기능
 
 ### 가계부 작성
-- 일일 거래 내역 입력 (날짜, 유형, 금액, 카테고리, 메모, 결제 수단)
+- 일일 거래 내역 입력 (날짜, 유형, 금액, 카테고리, 메모, 결제 수단, 소비처)
 - 거래 유형: 입금(INCOME), 지출(EXPENSE)
 - 카테고리: 교통비, 식비, 장보기, 여가비, 생활비, 의료비, 교육비, 용돈, 경조사비, 자산이동, 육아비, 통신비, 기타
+
+### 소비처 관리
+- 쿠팡, 컬리, 배달의민족 등 소비처를 그룹/개인 단위로 등록
+- 지출 등록 시 소비처를 연결 (선택)
+- 소비처 기준 지출 필터링 지원
 
 ### 고정비용 관리
 - 매달/매년 고정 금액 등록 (월세, 관리비, 보험료, 구독 서비스)
@@ -32,6 +37,23 @@
 ## 데이터베이스
 
 ```prisma
+model Merchant {
+  id        String    @id @default(uuid())
+  groupId   String?
+  userId    String?
+  name      String    @db.VarChar(100)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  group    Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+
+  @@index([groupId])
+  @@index([userId])
+  @@map("merchants")
+}
+
 model Expense {
   id                String           @id @default(uuid())
   groupId           String?
@@ -42,6 +64,7 @@ model Expense {
   date              DateTime         @db.Date
   description       String?          @db.VarChar(200)
   paymentMethod     PaymentMethod?
+  merchantId        String?
   isRecurring       Boolean          @default(false)
   shoppingHistoryId String?          @unique
   createdAt         DateTime         @default(now())
@@ -49,6 +72,7 @@ model Expense {
 
   group           Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant        Merchant?        @relation(fields: [merchantId], references: [id], onDelete: SetNull)
   receipts        ExpenseReceipt[]
   shoppingHistory ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
 
@@ -57,6 +81,7 @@ model Expense {
   @@index([category])
   @@index([date(sort: Desc)])
   @@index([type])
+  @@index([merchantId])
   @@map("expenses")
 }
 
@@ -185,6 +210,8 @@ enum PaymentMethod {
 - [x] 지출 CRUD (등록, 조회, 수정, 삭제)
 - [x] 카테고리별 지출 분류 (교통비, 식비, 통신비 등)
 - [x] 결제 수단 관리 (카드, 현금, 계좌이체)
+- [x] 소비처(Merchant) CRUD (쿠팡, 컬리 등 그룹/개인 단위 관리)
+- [x] 지출-소비처 연결 (merchantId FK, 소비처 기준 필터링)
 - [x] 고정비용 플래그 (`isRecurring`)
 - [x] 고정비용 자동 복사 스케줄러 (매일 00:05, 날짜 clamp + 중복 방지)
 - [x] 월별 지출 통계 (카테고리별 합계, 건수)
@@ -203,14 +230,22 @@ enum PaymentMethod {
 
 ## API 엔드포인트
 
+### 소비처
+| Method | Endpoint                      | 설명                             | 권한              |
+| ------ | ----------------------------- | -------------------------------- | ----------------- |
+| POST   | `/household/merchants`        | 소비처 등록                      | JWT, Group Member |
+| GET    | `/household/merchants`        | 소비처 목록 (groupId 생략 시 개인) | JWT, Group Member |
+| PATCH  | `/household/merchants/:id`    | 소비처 수정                      | JWT, Owner        |
+| DELETE | `/household/merchants/:id`    | 소비처 삭제                      | JWT, Owner        |
+
 ### 지출
-| Method | Endpoint                                        | 설명                                  | 권한              |
-| ------ | ----------------------------------------------- | ------------------------------------- | ----------------- |
-| POST   | `/household/expenses`                           | 지출 등록                             | JWT, Group Member |
-| GET    | `/household/expenses`                           | 지출 목록 (월/카테고리/결제수단 필터) | JWT, Group Member |
-| GET    | `/household/expenses/:id`                       | 지출 상세                             | JWT, Group Member |
-| PATCH  | `/household/expenses/:id`                       | 지출 수정                             | JWT, Owner        |
-| DELETE | `/household/expenses/:id`                       | 지출 삭제                             | JWT, Owner        |
+| Method | Endpoint                                        | 설명                                          | 권한              |
+| ------ | ----------------------------------------------- | --------------------------------------------- | ----------------- |
+| POST   | `/household/expenses`                           | 지출 등록 (merchantId 선택)                   | JWT, Group Member |
+| GET    | `/household/expenses`                           | 지출 목록 (월/카테고리/결제수단/소비처 필터)  | JWT, Group Member |
+| GET    | `/household/expenses/:id`                       | 지출 상세                                     | JWT, Group Member |
+| PATCH  | `/household/expenses/:id`                       | 지출 수정                                     | JWT, Owner        |
+| DELETE | `/household/expenses/:id`                       | 지출 삭제                                     | JWT, Owner        |
 
 ### 고정비용
 > 매일 00:05 스케줄러가 자동 실행 — 별도 API 없음
@@ -312,4 +347,4 @@ src/household/
   household.module.ts
 ```
 
-**Last Updated**: 2026-05-26
+**Last Updated**: 2026-05-27
