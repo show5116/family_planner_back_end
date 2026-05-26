@@ -1,6 +1,6 @@
 # 09. 육아 포인트 (Childcare Points)
 
-> **상태**: 🟡 구현 중
+> **상태**: ✅ 완료
 > **Phase**: Phase 5
 
 ---
@@ -102,8 +102,14 @@ model Child {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  group         Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  parentUser    User                @relation("ChildParent", fields: [parentUserId], references: [id], onDelete: Cascade)
   account       ChildcareAccount?
   allowancePlan ChildAllowancePlan?
+
+  @@index([groupId])
+  @@index([parentUserId])
+  @@map("children")
 }
 
 model ChildcareAccount {
@@ -116,11 +122,17 @@ model ChildcareAccount {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  child        Child
+  group        Group                  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  child        Child                  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  parentUser   User                   @relation("ChildcareParent", fields: [parentUserId], references: [id], onDelete: Cascade)
   transactions ChildcareTransaction[]
   shopItems    ChildcareShopItem[]
   rules        ChildcareRule[]
   savingsPlan  ChildcareSavingsPlan?
+
+  @@index([groupId])
+  @@index([parentUserId])
+  @@map("childcare_accounts")
 }
 
 model ChildAllowancePlan {
@@ -133,7 +145,10 @@ model ChildAllowancePlan {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
+  child     Child                      @relation(fields: [childId], references: [id], onDelete: Cascade)
   histories ChildAllowancePlanHistory[]
+
+  @@map("child_allowance_plans")
 }
 
 model ChildAllowancePlanHistory {
@@ -144,6 +159,11 @@ model ChildAllowancePlanHistory {
   pointToMoneyRatio   Int
   nextNegotiationDate DateTime? @db.Date
   changedAt           DateTime  @default(now())
+
+  plan ChildAllowancePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, changedAt(sort: Desc)])
+  @@map("child_allowance_plan_histories")
 }
 
 model ChildcareTransaction {
@@ -154,18 +174,25 @@ model ChildcareTransaction {
   description String                   @db.VarChar(200)
   createdBy   String
   createdAt   DateTime                 @default(now())
+
+  account          User             @relation("ChildcareTransactionCreator", fields: [createdBy], references: [id])
+  childcareAccount ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, createdAt(sort: Desc)])
+  @@index([type])
+  @@map("childcare_transactions")
 }
 
 enum ChildcareTransactionType {
-  ALLOWANCE        // 월 용돈 지급 (스케줄러 자동)
-  REWARD           // PLUS 규칙 보상
-  BONUS            // 규칙 외 부모 직접 보너스 지급
-  PENALTY          // MINUS 규칙 위반 차감
-  PURCHASE         // 상점 아이템 구매
-  CASHOUT          // 포인트 현금화
-  SAVINGS_DEPOSIT  // 적금 입금
-  SAVINGS_WITHDRAW // 적금 만기/해지 수령
-  INTEREST         // 적금 이자 지급
+  ALLOWANCE        // 월 용돈 자동 지급 (스케줄러)
+  REWARD           // 규칙 PLUS 적용 — 잘한 행동 포인트 지급
+  BONUS            // 부모가 자유롭게 주는 특별 보너스
+  PENALTY          // 규칙 MINUS 적용 — 못한 행동 포인트 차감
+  PURCHASE         // 상점 아이템 구매 — 포인트 소비
+  CASHOUT          // 포인트 현금화 — 부모가 실제 돈으로 지급
+  SAVINGS_DEPOSIT  // 적금 입금 — 잔액 → 적금
+  SAVINGS_WITHDRAW // 적금 출금 — 적금 → 잔액
+  INTEREST         // 이자 지급 (스케줄러)
 }
 
 model ChildcareShopItem {
@@ -174,10 +201,15 @@ model ChildcareShopItem {
   name        String   @db.VarChar(100)
   description String?  @db.VarChar(200)
   points      Int      // 구매에 필요한 포인트
+  order       Int      @default(0)
   isActive    Boolean  @default(true)
-  order       Int      @default(0)  // 수동 정렬 순서
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("childcare_shop_items")
 }
 
 model ChildcareRule {
@@ -187,10 +219,15 @@ model ChildcareRule {
   description String?           @db.VarChar(200)
   type        ChildcareRuleType // PLUS: 지급, MINUS: 차감, INFO: 메모
   points      Int?              // INFO 타입일 경우 null
+  order       Int               @default(0)
   isActive    Boolean           @default(true)
-  order       Int               @default(0)  // 수동 정렬 순서
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+
+  account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("childcare_rules")
 }
 
 enum ChildcareRuleType {
@@ -200,18 +237,22 @@ enum ChildcareRuleType {
 }
 
 model ChildcareSavingsPlan {
-  id            String               @id @default(uuid())
-  accountId     String               @unique  // 자녀당 1개
-  monthlyAmount Int                  // 월 자동 적금액 (포인트)
-  interestRate  Decimal              @db.Decimal(5, 2)  // 연 이자율 (%)
-  interestType  SavingsInterestType  // SIMPLE: 단리, COMPOUND: 복리
-  startDate     DateTime             @db.Date
-  endDate       DateTime             @db.Date
-  status        SavingsPlanStatus    @default(ACTIVE)
-  maturedAt     DateTime?
-  cancelledAt   DateTime?
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  id            String              @id @default(uuid())
+  accountId     String              @unique  // 자녀당 1개
+  monthlyAmount Int                 // 월 자동 적금액 (포인트)
+  interestRate  Decimal             @db.Decimal(5, 2)  // 연 이자율 (%)
+  interestType  SavingsInterestType // SIMPLE: 단리, COMPOUND: 복리
+  startDate     DateTime
+  endDate       DateTime            // 만기일
+  status        SavingsPlanStatus   @default(ACTIVE)
+  maturedAt     DateTime?           // 만기 처리 일시
+  cancelledAt   DateTime?           // 해지 일시
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("childcare_savings_plans")
 }
 
 enum SavingsInterestType {
@@ -221,7 +262,7 @@ enum SavingsInterestType {
 
 enum SavingsPlanStatus {
   ACTIVE    // 진행 중
-  MATURED   // 만기 처리 완료
+  MATURED   // 만기 완료
   CANCELLED // 중도 해지
 }
 ```
@@ -310,13 +351,41 @@ enum SavingsPlanStatus {
 
 ### 적금 플랜
 
-| Method | Endpoint                                          | 설명                              | 권한                 |
-| ------ | ------------------------------------------------- | --------------------------------- | -------------------- |
-| POST   | `/childcare/accounts/:id/savings/plan/preview`    | 예상 이자 미리보기                | JWT, Parent          |
-| POST   | `/childcare/accounts/:id/savings/plan`            | 적금 플랜 생성                    | JWT, Parent          |
-| GET    | `/childcare/accounts/:id/savings/plan`            | 적금 플랜 조회                    | JWT, Parent or Child |
-| DELETE | `/childcare/accounts/:id/savings/plan`            | 중도 해지 (원금만 반환)           | JWT, Parent          |
+| Method | Endpoint                                       | 설명                              | 권한                 |
+| ------ | ---------------------------------------------- | --------------------------------- | -------------------- |
+| GET    | `/childcare/accounts/:id/savings/kr3y-rate`    | 국고채 3년물 금리 조회 (참고용)   | JWT                  |
+| POST   | `/childcare/accounts/:id/savings/plan`         | 적금 플랜 생성                    | JWT, Parent          |
+| GET    | `/childcare/accounts/:id/savings/plan`         | 적금 플랜 조회                    | JWT, Parent or Child |
+| DELETE | `/childcare/accounts/:id/savings/plan`         | 중도 해지 (원금만 반환)           | JWT, Parent          |
 
 ---
 
-**Last Updated**: 2026-03-29
+## 구현 파일
+
+```
+src/childcare/
+  dto/
+    create-child.dto.ts
+    create-allowance-plan.dto.ts
+    create-transaction.dto.ts
+    transaction-query.dto.ts
+    create-shop-item.dto.ts
+    update-shop-item.dto.ts
+    create-rule.dto.ts
+    update-rule.dto.ts
+    create-savings-plan.dto.ts
+    create-reward.dto.ts
+    update-reward.dto.ts
+    reorder.dto.ts
+    savings.dto.ts
+    childcare-response.dto.ts    — ChildDto, ChildcareAccountDto, AllowancePlanDto, AllowancePlanHistoryDto, ChildcareTransactionDto, ChildcareTransactionListDto, ChildcareShopItemDto, ChildcareRuleDto, SavingsPlanDto, Kr3yRateDto
+  constants/
+    transaction-type.constant.ts
+    savings.constant.ts
+  childcare.controller.ts
+  childcare.service.ts
+  childcare.scheduler.ts
+  childcare.module.ts
+```
+
+**Last Updated**: 2026-05-26

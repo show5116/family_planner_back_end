@@ -84,10 +84,15 @@ model VoteBallot {
   option   VoteOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
   user     User       @relation("VoteBallots", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([optionId, userId])  // 선택지당 1표
+  @@unique([optionId, userId])
   @@index([optionId])
   @@index([userId])
   @@map("vote_ballots")
+}
+
+enum VoteStatus {
+  ONGOING
+  CLOSED
 }
 ```
 
@@ -178,4 +183,18 @@ model VoteBallot {
 
 ---
 
-**Last Updated**: 2026-03-18
+## 구현 파일
+
+```
+src/vote/
+  dto/
+    create-vote.dto.ts
+    cast-ballot.dto.ts
+    vote-query.dto.ts
+    vote-response.dto.ts    — VoteDto, PaginatedVoteDto
+  vote.controller.ts
+  vote.service.ts
+  vote.module.ts
+```
+
+**Last Updated**: 2026-05-26

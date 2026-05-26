@@ -11,11 +11,19 @@
 - 자산 관리: `docs/features/04-assets.md`
 - 가계부: `docs/features/05-household.md`
 - 일정/할일: `docs/features/06-tasks.md`
+- 투자 지표: `docs/features/07-investment-indicators.md`
 - 메모: `docs/features/08-memo.md`
 - 육아 포인트: `docs/features/09-childcare.md`
 - 알림: `docs/features/10-notifications.md`
 - 공지사항: `docs/features/11-announcements.md`
 - Q&A: `docs/features/12-qna.md`
+- 미니게임: `docs/features/13-minigame.md`
+- 날씨: `docs/features/14-weather.md`
+- 그룹 투표: `docs/features/15-vote.md`
+- 적립금 관리: `docs/features/16-savings.md`
+- 구독 관리: `docs/features/17-subscription.md`
+- 냉장고 관리: `docs/features/18-fridge.md`
+- 스마트 장보기: `docs/features/19-shopping.md`
 
 ## 전체 로드맵
 
@@ -23,4 +31,4 @@
 
 ---
 
-**Last Updated**: 2026-01-06
+**Last Updated**: 2026-05-26

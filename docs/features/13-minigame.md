@@ -117,4 +117,17 @@ enum MinigameType {
 
 ---
 
-**Last Updated**: 2026-03-06
+## 구현 파일
+
+```
+src/minigame/
+  dto/
+    create-minigame-result.dto.ts
+    minigame-query.dto.ts
+    minigame-response.dto.ts    — MinigameResultDto, PaginatedMinigameResultDto, MessageResponseDto
+  minigame.controller.ts
+  minigame.service.ts
+  minigame.module.ts
+```
+
+**Last Updated**: 2026-05-26
