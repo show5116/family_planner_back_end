@@ -489,6 +489,25 @@ export class HouseholdService {
   }
 
   /**
+   * 고정 지출 목록 조회
+   */
+  async findRecurringExpenses(userId: string, groupId?: string) {
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
+
+    const where = groupId
+      ? { groupId, isRecurring: true }
+      : { groupId: null, userId, isRecurring: true };
+
+    return await this.prisma.expense.findMany({
+      where,
+      include: { receipts: true },
+      orderBy: { date: 'desc' },
+    });
+  }
+
+  /**
    * 고정비용 다음 달 복사
    */
   async copyRecurringExpenses(

@@ -74,6 +74,17 @@ export class HouseholdController {
     return this.householdService.findAllExpenses(req.user.userId, query);
   }
 
+  @Get('expenses/recurring')
+  @ApiOperation({ summary: '고정 지출 목록 조회' })
+  @ApiSuccess(ExpenseDto, '고정 지출 목록 조회 성공', { isArray: true })
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findRecurringExpenses(@Request() req, @Query('groupId') groupId?: string) {
+    return this.householdService.findRecurringExpenses(
+      req.user.userId,
+      groupId,
+    );
+  }
+
   @Get('expenses/:id')
   @ApiOperation({ summary: '지출 상세 조회' })
   @ApiSuccess(ExpenseDto, '지출 상세 조회 성공')

@@ -4212,6 +4212,40 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ---
 
+### GET `household/expenses/recurring`
+
+**요약:** 고정 지출 목록 조회
+
+**Query Parameters:**
+
+- `groupId` (`string`) - Optional
+
+**Responses:**
+
+#### 200 - 고정 지출 목록 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 지출 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string)
+  "userId": "uuid-1234", // 작성자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
+  "amount": 15000, // 금액 (string)
+  "category": null, // 카테고리 (ExpenseCategory)
+  "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
+  "description": "점심 식사", // 내용 (string | null)
+  "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
+  "isRecurring": false, // 고정 지출 여부 (boolean)
+  "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
+  "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
 ### GET `household/expenses/:id`
 
 **요약:** 지출 상세 조회
