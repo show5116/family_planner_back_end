@@ -119,37 +119,53 @@
 ### Announcement
 ```prisma
 model Announcement {
-  id          String                @id @default(uuid())
-  authorId    String
-  title       String                @db.VarChar(200)
-  content     String                @db.Text
-  category    AnnouncementCategory
-  isPinned    Boolean               @default(false)
-  viewCount   Int                   @default(0)
-  attachments Json?
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  deletedAt   DateTime?
+  id                      String               @id @default(uuid())
+  authorId                String
+  title                   String               @db.VarChar(200)
+  content                 String               @db.Text
+  category                AnnouncementCategory
+  isPinned                Boolean              @default(false)
+  viewCount               Int                  @default(0)
+  attachments             Json?
+  scheduledNotificationAt DateTime?            // 알림 예약 발송 시각 (null이면 즉시)
+  notificationSentAt      DateTime?            // 알림 실제 발송 완료 시각
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  deletedAt               DateTime?
+
+  author Author @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  reads  AnnouncementRead[]
 
   @@index([isPinned, createdAt(sort: Desc)])
   @@index([category])
+  @@index([createdAt(sort: Desc)])
+  @@index([authorId])
+  @@index([scheduledNotificationAt])
+  @@map("announcements")
 }
 
 enum AnnouncementCategory {
-  ANNOUNCEMENT, EVENT, UPDATE
+  ANNOUNCEMENT
+  EVENT
+  UPDATE
 }
 ```
 
 ### AnnouncementRead
 ```prisma
 model AnnouncementRead {
-  id             String    @id @default(uuid())
+  id             String       @id @default(uuid())
   announcementId String
   userId         String
-  readAt         DateTime  @default(now())
+  readAt         DateTime     @default(now())
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user         User         @relation("AnnouncementReads", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([announcementId, userId])
-  @@index([announcementId, userId])
+  @@index([announcementId])
+  @@index([userId])
+  @@map("announcement_reads")
 }
 ```
 
@@ -201,9 +217,23 @@ model AnnouncementRead {
 
 ---
 
-## 구현 히스토리
+## 구현 파일
 
-- **2025-12-29**: 공지사항 기본 기능 구현
-- **2026-01-02**: 카테고리 시스템 및 Redis 캐싱 추가
-- **2026-01-13**: 알림 예약 발송 및 복구 시스템 구현 완료
-- **전체 상태**: ✅ 완료 (Phase 3 협업 기능)
+```
+src/announcement/
+  dto/
+    create-announcement.dto.ts
+    update-announcement.dto.ts
+    pin-announcement.dto.ts
+    announcement-query.dto.ts
+    announcement-response.dto.ts   — AnnouncementDto, PaginatedAnnouncementDto
+  enums/
+    announcement-category.enum.ts
+  announcement.controller.ts
+  announcement.service.ts
+  announcement.scheduler.ts        — 10분마다 조회수·읽음 DB 동기화, 예약 알림 발송
+  announcement.service.spec.ts
+  announcement.module.ts
+```
+
+**Last Updated**: 2026-05-26

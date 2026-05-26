@@ -11,6 +11,11 @@ import { NotificationQueueService } from '@/notification/notification-queue.serv
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
+import {
+  CreateMerchantDto,
+  UpdateMerchantDto,
+  MerchantQueryDto,
+} from './dto/merchant.dto';
 import { CreateBudgetDto, BulkUpsertBudgetDto } from './dto/create-budget.dto';
 import {
   UpsertBudgetTemplateDto,
@@ -58,8 +63,10 @@ export class HouseholdService {
         date: new Date(dto.date),
         description: dto.description,
         paymentMethod: dto.paymentMethod,
+        merchantId: dto.merchantId ?? null,
         isRecurring: dto.isRecurring ?? false,
       },
+      include: { receipts: true, merchant: true },
     });
 
     // 그룹 지출 등록 알림 (등록자 제외 그룹 멤버 전체)
@@ -114,9 +121,13 @@ export class HouseholdService {
       where.type = query.type;
     }
 
+    if (query.merchantId) {
+      where.merchantId = query.merchantId;
+    }
+
     return await this.prisma.expense.findMany({
       where,
-      include: { receipts: true },
+      include: { receipts: true, merchant: true },
       orderBy: { date: 'desc' },
     });
   }
@@ -127,7 +138,7 @@ export class HouseholdService {
   async findOneExpense(userId: string, id: string) {
     const expense = await this.prisma.expense.findUnique({
       where: { id },
-      include: { receipts: true },
+      include: { receipts: true, merchant: true },
     });
 
     if (!expense) {
@@ -170,9 +181,10 @@ export class HouseholdService {
         ...(dto.paymentMethod !== undefined && {
           paymentMethod: dto.paymentMethod,
         }),
+        ...(dto.merchantId !== undefined && { merchantId: dto.merchantId }),
         ...(dto.isRecurring !== undefined && { isRecurring: dto.isRecurring }),
       },
-      include: { receipts: true },
+      include: { receipts: true, merchant: true },
     });
   }
 
@@ -489,6 +501,25 @@ export class HouseholdService {
   }
 
   /**
+   * 고정 지출 목록 조회
+   */
+  async findRecurringExpenses(userId: string, groupId?: string) {
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+    }
+
+    const where = groupId
+      ? { groupId, isRecurring: true }
+      : { groupId: null, userId, isRecurring: true };
+
+    return await this.prisma.expense.findMany({
+      where,
+      include: { receipts: true, merchant: true },
+      orderBy: { date: 'desc' },
+    });
+  }
+
+  /**
    * 고정비용 다음 달 복사
    */
   async copyRecurringExpenses(
@@ -536,6 +567,7 @@ export class HouseholdService {
             date: targetDate,
             description: e.description,
             paymentMethod: e.paymentMethod,
+            merchantId: e.merchantId,
             isRecurring: true,
           },
         }),
@@ -968,6 +1000,80 @@ export class HouseholdService {
 
     return {
       message: this.i18n.t('household.success.total_budget_template_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
+  }
+
+  // ─────────────────────────────────────────────
+  // 소비처 CRUD
+  // ─────────────────────────────────────────────
+
+  async createMerchant(userId: string, dto: CreateMerchantDto) {
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
+    }
+
+    return this.prisma.merchant.create({
+      data: {
+        groupId: dto.groupId ?? null,
+        userId: dto.groupId ? null : userId,
+        name: dto.name,
+      },
+    });
+  }
+
+  async findAllMerchants(userId: string, query: MerchantQueryDto) {
+    if (query.groupId) {
+      await this.validateGroupMember(userId, query.groupId);
+    }
+
+    const where = query.groupId
+      ? { groupId: query.groupId }
+      : { groupId: null, userId };
+
+    return this.prisma.merchant.findMany({
+      where,
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async updateMerchant(userId: string, id: string, dto: UpdateMerchantDto) {
+    const merchant = await this.prisma.merchant.findUnique({ where: { id } });
+
+    if (!merchant) {
+      throw new NotFoundException('household.errors.merchant_not_found');
+    }
+
+    if (merchant.groupId) {
+      await this.validateGroupMember(userId, merchant.groupId);
+    } else if (merchant.userId !== userId) {
+      throw new ForbiddenException('household.errors.own_merchant_only');
+    }
+
+    return this.prisma.merchant.update({
+      where: { id },
+      data: { ...(dto.name !== undefined && { name: dto.name }) },
+    });
+  }
+
+  async removeMerchant(userId: string, id: string) {
+    const merchant = await this.prisma.merchant.findUnique({ where: { id } });
+
+    if (!merchant) {
+      throw new NotFoundException('household.errors.merchant_not_found');
+    }
+
+    if (merchant.groupId) {
+      await this.validateGroupMember(userId, merchant.groupId);
+    } else if (merchant.userId !== userId) {
+      throw new ForbiddenException('household.errors.own_merchant_only');
+    }
+
+    await this.prisma.merchant.delete({ where: { id } });
+
+    return {
+      message: this.i18n.t('household.success.merchant_deleted', {
         lang: I18nContext.current()?.lang ?? 'ko',
       }),
     };

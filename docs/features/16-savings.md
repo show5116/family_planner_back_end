@@ -49,48 +49,47 @@
 
 ```prisma
 model SavingsGoal {
-  id               String               @id @default(uuid())
-  groupId          String
-  name             String               @db.VarChar(100)
-  description      String?              @db.VarChar(300)
-  targetAmount     Decimal?             @db.Decimal(12, 2)   // null = 무기한 적립
-  currentAmount    Decimal              @default(0) @db.Decimal(12, 2)
-  autoDeposit      Boolean              @default(false)       // 자동 적립 여부
-  monthlyAmount    Decimal?             @db.Decimal(12, 2)   // autoDeposit=true일 때 필수
-  depositDay       Int                  @default(1)           // 매달 적립일 (1~31), 해당 월 말일 초과 시 말일 처리
-  includeInAssets  Boolean              @default(false)       // 자산 통계 포함 여부
-  status           SavingsGoalStatus    @default(ACTIVE)
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  id              String            @id @default(uuid())
+  groupId         String
+  name            String            @db.VarChar(100)
+  description     String?           @db.VarChar(300)
+  targetAmount    Decimal?          @db.Decimal(12, 2)
+  currentAmount   Decimal           @default(0) @db.Decimal(12, 2)
+  autoDeposit     Boolean           @default(false)
+  monthlyAmount   Decimal?          @db.Decimal(12, 2)
+  depositDay      Int               @default(1)
+  includeInAssets Boolean           @default(false)
+  status          SavingsGoalStatus @default(ACTIVE)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
-  transactions  SavingsTransaction[]
+  transactions SavingsTransaction[]
 
   @@index([groupId])
 }
 
 model SavingsTransaction {
-  id          String              @id @default(uuid())
+  id          String      @id @default(uuid())
   goalId      String
   type        SavingsType
-  amount      Decimal             @db.Decimal(12, 2)
-  description String?             @db.VarChar(200)
-  createdAt   DateTime            @default(now())
+  amount      Decimal     @db.Decimal(12, 2)
+  description String?     @db.VarChar(200)
+  createdAt   DateTime    @default(now())
 
-  goal        SavingsGoal         @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goal SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
   @@index([goalId, createdAt])
 }
 
 enum SavingsGoalStatus {
-  ACTIVE      // 적립 중 (자동/수동 모두 가능)
-  PAUSED      // 자동 적립 일시 중지 (수동 입금은 가능)
-  COMPLETED   // 목표 달성 또는 수동 완료 (입출금 불가)
+  ACTIVE   // 적립 중 (자동/수동 모두 가능)
+  PAUSED   // 자동 적립 일시 중지 (수동 입금은 가능)
 }
 
 enum SavingsType {
-  DEPOSIT       // 수동 입금
-  WITHDRAW      // 출금 (이벤트 사용)
-  AUTO_DEPOSIT  // 스케줄러 자동 적립
+  DEPOSIT      // 수동 입금
+  WITHDRAW     // 출금 (이벤트 사용)
+  AUTO_DEPOSIT // 스케줄러 자동 적립
 }
 ```
 
@@ -107,10 +106,7 @@ enum SavingsType {
 - [x] 스케줄러 중복 방지 (Redis 분산 락 + 이번 달 AUTO_DEPOSIT 트랜잭션 체크)
 - [x] 수동 입금 / 출금 API
 - [x] 잔액 초과 출금 방지
-- [x] 목표 달성 시 자동 `COMPLETED` 전환 + 그룹 멤버 FCM 알림
-- [x] 적립 내역 조회 (페이지네이션)
 - [x] 목표 달성률 계산 (`currentAmount / targetAmount * 100`, 최대 100%)
-- [x] 목표 완료 처리 (수동 종료)
 - [x] 자동 적립 일시 중지 / 재개 (`autoDeposit = true`인 목표만)
 - [x] 자산 연동 (`includeInAssets`): 자산 통계에 적립금 잔액 포함
 
@@ -127,7 +123,6 @@ enum SavingsType {
 | GET    | `/savings/:id`          | 적립 목표 상세 + 잔액           | JWT, Group Member |
 | PATCH  | `/savings/:id`          | 적립 목표 수정                  | JWT, Group Member |
 | DELETE | `/savings/:id`          | 적립 목표 삭제                  | JWT, Group Member |
-| POST   | `/savings/:id/complete` | 목표 완료 처리 (수동 종료)      | JWT, Group Member |
 | POST   | `/savings/:id/pause`    | 자동 적립 일시 중지             | JWT, Group Member |
 | POST   | `/savings/:id/resume`   | 자동 적립 재개                  | JWT, Group Member |
 
@@ -157,7 +152,7 @@ enum SavingsType {
 4. 이번 달 이미 `AUTO_DEPOSIT` 트랜잭션이 있는 목표는 skip (중복 방지)
 5. 각 목표에 `monthlyAmount`만큼 `AUTO_DEPOSIT` 트랜잭션 생성
 6. `currentAmount += monthlyAmount` 업데이트
-7. `targetAmount`가 있고 `currentAmount >= targetAmount`이면 `status = COMPLETED` + 달성 알림 발송
+7. `targetAmount`가 있고 `currentAmount >= targetAmount`이면 달성 알림 발송
 
 ### 출금 플로우
 1. `POST /savings/:id/withdraw` 호출 (`amount`, `description` 필수)
@@ -170,6 +165,8 @@ enum SavingsType {
 - `resume`: `status = ACTIVE` 전환 → 다음 달부터 자동 적립 재개
 - `autoDeposit = false`인 목표에 pause/resume 호출 시 `400 Bad Request`
 
+> **참고**: `COMPLETED` 상태는 스키마에 없음. 출금 시 완료된 목표 여부는 별도 비즈니스 로직으로 처리.
+
 ### 자산 연동 (`includeInAssets`)
 - `includeInAssets = true`인 목표의 `currentAmount`를 `GET /assets/statistics` 응답에 포함
 - 기존 계좌 잔액(`totalBalance`)과 **별도 항목**(`savingsTotal`)으로 표시 (이중 계산 방지)
@@ -177,4 +174,20 @@ enum SavingsType {
 
 ---
 
-**Last Updated**: 2026-04-01 (depositDay 구현 완료, 자산 연동 완료)
+## 구현 파일
+
+```
+src/savings/
+  dto/
+    create-savings-goal.dto.ts
+    update-savings-goal.dto.ts
+    savings-transaction.dto.ts   — DepositDto, WithdrawDto
+    savings-query.dto.ts         — SavingsGoalQueryDto, TransactionQueryDto
+    savings-response.dto.ts      — SavingsGoalDto, SavingsGoalDetailDto, SavingsTransactionDto, TransactionPageDto
+  savings.controller.ts
+  savings.service.ts
+  savings.scheduler.ts           — 매일 00:10 자동 적립 (Redis 분산 락)
+  savings.module.ts
+```
+
+**Last Updated**: 2026-05-26

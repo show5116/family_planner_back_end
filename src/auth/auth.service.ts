@@ -116,6 +116,7 @@ export class AuthService {
         email,
         verificationCode,
         name,
+        I18nContext.current()?.lang ?? 'ko',
       );
     } catch (error) {
       // 이메일 전송 실패 시 사용자에게 알림 (하지만 회원가입은 완료)
@@ -380,6 +381,7 @@ export class AuthService {
         email,
         verificationCode,
         user.name,
+        I18nContext.current()?.lang ?? 'ko',
       );
     } catch {
       throw new BadRequestException('auth.errors.email_send_failed');
@@ -433,6 +435,7 @@ export class AuthService {
         email,
         resetCode,
         user.name,
+        I18nContext.current()?.lang ?? 'ko',
       );
     } catch {
       throw new BadRequestException('auth.errors.email_send_failed');

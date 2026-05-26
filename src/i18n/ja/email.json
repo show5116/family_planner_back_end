@@ -1,0 +1,48 @@
+{
+  "subject": {
+    "verification": "メール認証コードのお知らせ",
+    "password_reset": "パスワード再設定認証コードのお知らせ",
+    "group_invite": "[Family Planner] {groupName} グループへのご招待"
+  },
+  "verification": {
+    "header_subtitle": "Family Plannerへようこそ！",
+    "greeting": "{userName}さん、こんにちは！",
+    "body1": "Family Plannerの会員登録を完了するには、メール認証が必要です。",
+    "body2": "以下の6桁の認証コードを入力して、メール認証を完了してください。",
+    "code_label": "認証コード",
+    "body3": "上記のコードをアプリまたはウェブサイトに入力してください。",
+    "warning_label": "注意",
+    "warning_text": "この認証コードは24時間のみ有効です。",
+    "footer1": "このメールは会員登録時に自動的に送信されました。",
+    "footer2": "登録をされていない場合は、このメールを無視してください。"
+  },
+  "password_reset": {
+    "header_subtitle": "パスワード再設定",
+    "greeting": "{userName}さん、こんにちは！",
+    "body1": "パスワードの再設定が申請されました。",
+    "body2": "以下の6桁の認証コードを入力してパスワードを再設定してください。",
+    "code_label": "認証コード",
+    "body3": "上記のコードをアプリまたはウェブサイトに入力してください。",
+    "warning_label": "注意",
+    "warning_text": "この認証コードは1時間のみ有効です。",
+    "security_label": "セキュリティに関するお知らせ",
+    "security_text": "パスワード再設定を申請していない場合は、このメールを無視し、アカウントのセキュリティをすぐにご確認ください。",
+    "footer1": "このメールはパスワード再設定のリクエスト時に自動的に送信されました。",
+    "footer2": "パスワード再設定を申請していない場合は、このメールを無視してください。"
+  },
+  "group_invite": {
+    "header_subtitle": "グループ招待",
+    "title": "グループへのご招待が届きました！",
+    "body1": "{inviterName}さんがグループへご招待しました。",
+    "invited_group_label": "招待されたグループ",
+    "body2": "以下の招待コードを使用してグループに参加できます。",
+    "code_label": "招待コード",
+    "how_to_join_label": "参加方法",
+    "step1": "Family PlannerアプリまたはウェブサイトにログイN",
+    "step2": "グループ参加メニューを選択",
+    "step3": "上記の招待コードを入力",
+    "expiry_text": "招待コードは7日間有効です。",
+    "footer1": "このメールはグループ招待時に自動的に送信されました。",
+    "footer2": "グループへの参加をご希望でない場合は、このメールを無視してください。"
+  }
+}

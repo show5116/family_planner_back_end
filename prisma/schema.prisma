@@ -43,6 +43,7 @@ model User {
   budgetTemplates      BudgetTemplate[]
   groupBudgets         GroupBudget[]
   groupBudgetTemplates GroupBudgetTemplate[]
+  merchants            Merchant[]
   accounts             Account[]
   indicatorBookmarks   IndicatorBookmark[]
   childcareAsParent    ChildcareAccount[]          @relation("ChildcareParent")
@@ -85,6 +86,7 @@ model Group {
   budgetTemplates     BudgetTemplate[]
   groupBudgets        GroupBudget[]
   groupBudgetTemplate GroupBudgetTemplate?
+  merchants           Merchant[]
   accounts            Account[]
   childcareAccounts   ChildcareAccount[]
   children            Child[]
@@ -676,6 +678,23 @@ model ChecklistItem {
   @@map("checklist_items")
 }
 
+model Merchant {
+  id        String    @id @default(uuid())
+  groupId   String?
+  userId    String?
+  name      String    @db.VarChar(100)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  group    Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+
+  @@index([groupId])
+  @@index([userId])
+  @@map("merchants")
+}
+
 model Expense {
   id                String           @id @default(uuid())
   groupId           String?
@@ -686,6 +705,7 @@ model Expense {
   date              DateTime         @db.Date
   description       String?          @db.VarChar(200)
   paymentMethod     PaymentMethod?
+  merchantId        String?
   isRecurring       Boolean          @default(false)
   shoppingHistoryId String?          @unique
   createdAt         DateTime         @default(now())
@@ -693,6 +713,7 @@ model Expense {
 
   group           Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant        Merchant?        @relation(fields: [merchantId], references: [id], onDelete: SetNull)
   receipts        ExpenseReceipt[]
   shoppingHistory ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
 
@@ -701,6 +722,7 @@ model Expense {
   @@index([category])
   @@index([date(sort: Desc)])
   @@index([type])
+  @@index([merchantId])
   @@map("expenses")
 }
 

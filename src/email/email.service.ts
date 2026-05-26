@@ -1,15 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { I18nService } from 'nestjs-i18n';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
 import hbs from 'nodemailer-express-handlebars';
 import { NodemailerExpressHandlebarsOptions } from 'nodemailer-express-handlebars';
 import * as path from 'path';
-import {
-  EmailTemplate,
-  EMAIL_THEME_COLORS,
-  EMAIL_MESSAGES,
-} from './email.constants';
+import { EmailTemplate, EMAIL_THEME_COLORS } from './email.constants';
 import {
   SendEmailOptions,
   VerificationEmailContext,
@@ -23,11 +20,14 @@ export class EmailService {
   private transporter: Transporter;
   private readonly smtpFrom: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly i18n: I18nService,
+  ) {
     const smtpConfig = {
       host: this.configService.get<string>('smtp.host'),
       port: this.configService.get<number>('smtp.port'),
-      secure: false, // true for 465, false for other ports
+      secure: false,
       auth: {
         user: this.configService.get<string>('smtp.user'),
         pass: this.configService.get<string>('smtp.password'),
@@ -37,7 +37,6 @@ export class EmailService {
     this.transporter = nodemailer.createTransport(smtpConfig);
     this.smtpFrom = this.configService.get<string>('smtp.from');
 
-    // Handlebars 템플릿 엔진 설정
     const templatesDir = path.join(__dirname, 'templates');
     const handlebarOptions: NodemailerExpressHandlebarsOptions = {
       viewEngine: {
@@ -53,9 +52,10 @@ export class EmailService {
     this.transporter.use('compile', hbs(handlebarOptions));
   }
 
-  /**
-   * 공통 이메일 발송 메서드
-   */
+  private t(key: string, lang: string, args?: Record<string, unknown>): string {
+    return this.i18n.t(key, { lang, args });
+  }
+
   private async sendEmail(options: SendEmailOptions): Promise<void> {
     try {
       await this.transporter.sendMail({
@@ -78,62 +78,76 @@ export class EmailService {
     }
   }
 
-  /**
-   * 이메일 인증 메일 발송
-   */
   async sendVerificationEmail(
     to: string,
     code: string,
     userName: string,
+    lang = 'ko',
   ): Promise<void> {
     const template = EmailTemplate.VERIFICATION;
     const context: VerificationEmailContext = {
       userName,
       code,
       ...EMAIL_THEME_COLORS[template],
-      ...EMAIL_MESSAGES[template],
+      headerSubtitle: this.t('email.verification.header_subtitle', lang),
+      footerText1: this.t('email.verification.footer1', lang),
+      footerText2: this.t('email.verification.footer2', lang),
+      greeting: this.t('email.verification.greeting', lang, { userName }),
+      body1: this.t('email.verification.body1', lang),
+      body2: this.t('email.verification.body2', lang),
+      codeLabel: this.t('email.verification.code_label', lang),
+      body3: this.t('email.verification.body3', lang),
+      warningLabel: this.t('email.verification.warning_label', lang),
+      warningText: this.t('email.verification.warning_text', lang),
     };
 
     await this.sendEmail({
       to,
-      subject: '이메일 인증 코드입니다',
+      subject: this.t('email.subject.verification', lang),
       template,
       context,
     });
   }
 
-  /**
-   * 비밀번호 재설정 이메일 발송
-   */
   async sendPasswordResetEmail(
     to: string,
     code: string,
     userName: string,
+    lang = 'ko',
   ): Promise<void> {
     const template = EmailTemplate.PASSWORD_RESET;
     const context: PasswordResetEmailContext = {
       userName,
       code,
       ...EMAIL_THEME_COLORS[template],
-      ...EMAIL_MESSAGES[template],
+      headerSubtitle: this.t('email.password_reset.header_subtitle', lang),
+      footerText1: this.t('email.password_reset.footer1', lang),
+      footerText2: this.t('email.password_reset.footer2', lang),
+      greeting: this.t('email.password_reset.greeting', lang, { userName }),
+      body1: this.t('email.password_reset.body1', lang),
+      body2: this.t('email.password_reset.body2', lang),
+      codeLabel: this.t('email.password_reset.code_label', lang),
+      body3: this.t('email.password_reset.body3', lang),
+      warningLabel: this.t('email.password_reset.warning_label', lang),
+      warningText: this.t('email.password_reset.warning_text', lang),
+      securityLabel: this.t('email.password_reset.security_label', lang),
+      securityText: this.t('email.password_reset.security_text', lang),
     };
 
     await this.sendEmail({
       to,
-      subject: '비밀번호 재설정 인증 코드입니다',
+      subject: this.t('email.subject.password_reset', lang),
       template,
       context,
     });
   }
 
-  /**
-   * 그룹 초대 이메일 발송
-   */
   async sendGroupInviteEmail(
     to: string,
     groupName: string,
     inviterName: string,
     inviteCode: string,
+    lang = 'ko',
   ): Promise<void> {
     const template = EmailTemplate.GROUP_INVITE;
     const context: GroupInviteEmailContext = {
@@ -141,12 +155,24 @@ export class EmailService {
       inviterName,
       inviteCode,
       ...EMAIL_THEME_COLORS[template],
-      ...EMAIL_MESSAGES[template],
+      headerSubtitle: this.t('email.group_invite.header_subtitle', lang),
+      footerText1: this.t('email.group_invite.footer1', lang),
+      footerText2: this.t('email.group_invite.footer2', lang),
+      title: this.t('email.group_invite.title', lang),
+      body1: this.t('email.group_invite.body1', lang, { inviterName }),
+      invitedGroupLabel: this.t('email.group_invite.invited_group_label', lang),
+      body2: this.t('email.group_invite.body2', lang),
+      codeLabel: this.t('email.group_invite.code_label', lang),
+      howToJoinLabel: this.t('email.group_invite.how_to_join_label', lang),
+      step1: this.t('email.group_invite.step1', lang),
+      step2: this.t('email.group_invite.step2', lang),
+      step3: this.t('email.group_invite.step3', lang),
+      expiryText: this.t('email.group_invite.expiry_text', lang),
     };
 
     await this.sendEmail({
       to,
-      subject: `[Family Planner] ${groupName} 그룹에 초대되었습니다`,
+      subject: this.t('email.subject.group_invite', lang, { groupName }),
       template,
       context,
     });

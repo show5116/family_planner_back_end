@@ -621,12 +621,14 @@ export class GroupInviteService {
       },
     });
 
-    // 초대 이메일 발송
+    // 초대 이메일 발송 (수신자 언어 기준)
+    const inviteeLangForEmail = await this.getUserLang(invitee.id);
     await this.emailService.sendGroupInviteEmail(
       email,
       group.name,
       inviter.name,
       inviteCode,
+      inviteeLangForEmail,
     );
 
     // 앱 사용자에게 푸시 알림 발송
@@ -743,12 +745,20 @@ export class GroupInviteService {
     const { inviteCode, inviteCodeExpiresAt } =
       await this.ensureValidInviteCode(groupId);
 
-    // 초대 이메일 재발송
+    // 초대 이메일 재발송 (수신자 언어 기준)
+    const resendInvitee = await this.prisma.user.findUnique({
+      where: { email: joinRequest.email },
+      select: { id: true },
+    });
+    const resendLang = resendInvitee
+      ? await this.getUserLang(resendInvitee.id)
+      : 'ko';
     await this.emailService.sendGroupInviteEmail(
       joinRequest.email,
       group.name,
       inviter.name,
       inviteCode,
+      resendLang,
     );
 
     return {

@@ -39,25 +39,35 @@
 
 ---
 
-## 데이터베이스 (예상)
+## 데이터베이스
 
 ```prisma
 model Memo {
   id             String         @id @default(uuid())
-  groupId        String?
   userId         String
+  groupId        String?
   title          String         @db.VarChar(200)
   content        String         @db.Text
   format         MemoFormat     @default(MARKDOWN)
-  type           MemoType       @default(NOTE)      // NOTE | CHECKLIST
+  type           MemoType       @default(NOTE)
   visibility     MemoVisibility @default(PRIVATE)
+  isPinned       Boolean        @default(false)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
 
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group          Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
   tags           MemoTag[]
   attachments    MemoAttachment[]
   checklistItems ChecklistItem[]
+
+  @@index([userId, isPinned])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([groupId, createdAt(sort: Desc)])
+  @@index([visibility])
+  @@index([deletedAt])
+  @@map("memos")
 }
 
 enum MemoFormat {
@@ -81,6 +91,11 @@ model MemoTag {
   memoId String
   name   String  @db.VarChar(50)
   memo   Memo    @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@unique([memoId, name])
+  @@index([memoId])
+  @@index([name])
+  @@map("memo_tags")
 }
 
 model MemoAttachment {
@@ -92,20 +107,23 @@ model MemoAttachment {
   mimeType  String   @db.VarChar(100)
   createdAt DateTime @default(now())
   memo      Memo     @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@index([memoId])
+  @@map("memo_attachments")
 }
 
-// 체크리스트 항목
 model ChecklistItem {
   id        String   @id @default(uuid())
   memoId    String
-  content   String   @db.VarChar(300)  // 항목 내용
-  isChecked Boolean  @default(false)   // 체크 여부
-  order     Int      @default(0)       // 정렬 순서
+  content   String   @db.VarChar(300)
+  isChecked Boolean  @default(false)
+  order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   memo      Memo     @relation(fields: [memoId], references: [id], onDelete: Cascade)
 
   @@index([memoId, order])
+  @@map("checklist_items")
 }
 ```
 
@@ -130,8 +148,8 @@ model ChecklistItem {
   - [x] 전체 선택/해제 (`POST /memos/:id/checklist/toggle-all?checkAll=true|false`)
 - [x] XSS 방어 (sanitize-html, HTML content 입력 시 화이트리스트 기반 sanitize)
 
-### ⬜ TODO / 향후 고려
-- [ ] 이미지 첨부 (Cloudflare R2)
+### ⬜ 향후 고려
+- [ ] 이미지/파일 첨부 R2 Presigned URL 방식 전환 (현재는 URL 직접 입력)
 - [ ] 메모 버전 관리
 - [ ] 메모 템플릿
 
@@ -173,4 +191,26 @@ model ChecklistItem {
 
 ---
 
-**Last Updated**: 2026-03-22
+## 구현 파일
+
+```
+src/memo/
+  dto/
+    create-memo.dto.ts
+    update-memo.dto.ts
+    memo-query.dto.ts          — MemoQueryDto, MemoTagListQueryDto
+    create-memo-tag.dto.ts
+    create-memo-attachment.dto.ts
+    create-checklist-item.dto.ts
+    update-checklist-item.dto.ts
+    memo-response.dto.ts       — MemoDto, PaginatedMemoDto, MemoTagDto, MemoTagNamesDto, MemoAttachmentDto, ChecklistItemDto
+  enums/
+    memo-format.enum.ts
+    memo-type.enum.ts
+    memo-visibility.enum.ts
+  memo.controller.ts
+  memo.service.ts
+  memo.module.ts
+```
+
+**Last Updated**: 2026-05-26

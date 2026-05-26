@@ -29,7 +29,7 @@ KOSPI, NASDAQ, 환율, 원자재, 채권, 변동성 지수, 암호화폐 등 주
 
 ---
 
-## 지원 지표 목록 (19개)
+## 지원 지표 목록 (24개)
 
 | 카테고리 | 지표명 | 심볼 | 단위 | 데이터 소스 |
 | -------- | ------ | ---- | ---- | ----------- |
@@ -37,7 +37,9 @@ KOSPI, NASDAQ, 환율, 원자재, 채권, 변동성 지수, 암호화폐 등 주
 | INDEX    | 코스닥 | KOSDAQ | pt | Yahoo Finance `^KQ11` |
 | INDEX    | S&P 500 | SP500 | pt | Yahoo Finance `^GSPC` |
 | INDEX    | 나스닥 | NASDAQ | pt | Yahoo Finance `^IXIC` |
+| INDEX    | 나스닥 100 선물 | NQ100 | pt | Yahoo Finance `NQ=F` |
 | INDEX    | 다우존스 | DJI | pt | Yahoo Finance `^DJI` |
+| INDEX    | 러셀 2000 | RUSSELL2000 | pt | Yahoo Finance `RTY=F` |
 | INDEX    | 니케이 225 | NIKKEI225 | pt | Yahoo Finance `^N225` |
 | INDEX    | 대만 가권 지수 | TWSE | pt | Yahoo Finance `^TWII` |
 | CURRENCY | 원/달러 환율 | USD_KRW | 원 | Yahoo Finance `KRW=X` |
@@ -47,11 +49,14 @@ KOSPI, NASDAQ, 환율, 원자재, 채권, 변동성 지수, 암호화폐 등 주
 | COMMODITY | 은 | SILVER | USD/oz | Yahoo Finance `SI=F` |
 | COMMODITY | 국제 유가 (WTI) | WTI | USD/bbl | Yahoo Finance `CL=F` |
 | COMMODITY | 구리 | COPPER | USD/lb | Yahoo Finance `HG=F` |
+| COMMODITY | 천연가스 | NAT_GAS | USD/MMBtu | Yahoo Finance `NG=F` |
+| COMMODITY | 밀 | WHEAT | USD/bu | Yahoo Finance `ZW=F` |
 | BOND     | 미국채 10년물 | US10Y | % | Yahoo Finance `^TNX` |
 | BOND     | 한국채 3년물 | KR3Y | % | 한국은행 경제통계시스템 (BOK Open API) |
 | VOLATILITY | VIX 지수 | VIX | pt | Yahoo Finance `^VIX` |
 | CRYPTO   | 비트코인 | BTC_KRW | 원 | CoinGecko `bitcoin` (vs KRW) |
 | MACRO    | 버핏 지수 (미국) | BUFFETT_US | % | 계산값 — Wilshire 5000 / 미국 GDP × 100 |
+| MACRO    | 공포탐욕지수 | FEAR_GREED | pt | CNN Fear & Greed Index |
 
 > **국내 금값 수집 방식**: `GOLD_KRW_SPOT` — 한국금거래소(koreagoldx.co.kr) 순금 매수가(원/g) 스크래핑.
 > KST 09:00~16:00 평일에만 15분 주기로 수집.
@@ -138,12 +143,14 @@ model IndicatorBookmark {
   - [x] FRED API (미국 GDP — 버핏 지수 계산용)
   - [x] BOK Open API (한국채 3년물)
   - [x] 한국금거래소 스크래핑 (국내 금 현물가 GOLD_KRW_SPOT)
+  - [x] CNN Fear & Greed Index (공포탐욕지수 FEAR_GREED)
 - [x] 스케줄러 구현 (Redis 분산 락 적용)
   - [x] Yahoo Finance 전체 수집 (5분마다)
   - [x] 비트코인 수집 (1시간마다)
   - [x] 버핏 지수 수집 (매일 06:00 KST)
   - [x] 국내 금 현물가 수집 (15분마다, 평일 장중)
   - [x] 한국채 3년물 수집 (매일 18:00 KST 장 마감 후)
+  - [x] 공포탐욕지수 수집 (1시간마다)
 - [x] 지표 목록 조회 API
 - [x] 지표 상세 + 최신 시세 조회 API
 - [x] 지표 시세 히스토리 조회 API (시계열)
@@ -214,6 +221,7 @@ model IndicatorBookmark {
 | `collectMacro` | BUFFETT_US | 매일 06:00 KST (`0 21 * * *` UTC) | Yahoo Wilshire + FRED GDP, Redis 분산 락 |
 | `collectGoldSpot` | GOLD_KRW_SPOT | 15분마다, 평일 장중 (`*/15 0-7 * * 1-5` UTC) | 한국금거래소 스크래핑, Redis 분산 락 |
 | `collectBond` | KR3Y | 매일 18:00 KST 장 마감 후 (`0 9 * * 1-5` UTC) | BOK Open API, Redis 분산 락 |
+| `collectFearGreed` | FEAR_GREED | 1시간마다 (`0 * * * *`) | CNN Fear & Greed Index, Redis 분산 락 |
 
 ### 캐싱 전략
 - 최신 시세: Redis 캐시 (TTL 5분)
@@ -223,11 +231,12 @@ model IndicatorBookmark {
 ### 스케줄러 구조 (실제 구현)
 ```
 InvestmentScheduler (Redis 분산 락으로 중복 실행 방지)
-  ├ collectYahoo()     — Yahoo Finance 전체 (5분마다) — 지수, 환율, 원자재, 미국채, VIX
-  ├ collectCrypto()    — CoinGecko BTC/KRW (1시간마다)
-  ├ collectMacro()     — 버핏 지수 (매일 06:00 KST) — Yahoo Wilshire + FRED GDP 계산
-  ├ collectGoldSpot()  — 국내 금 현물가 (15분마다, 평일 장중) — 한국금거래소 스크래핑
-  └ collectBond()      — 한국채 3년물 (매일 18:00 KST) — BOK Open API
+  ├ collectYahoo()      — Yahoo Finance 전체 (5분마다) — 지수, 환율, 원자재, 미국채, VIX
+  ├ collectCrypto()     — CoinGecko BTC/KRW (1시간마다)
+  ├ collectMacro()      — 버핏 지수 (매일 06:00 KST) — Yahoo Wilshire + FRED GDP 계산
+  ├ collectGoldSpot()   — 국내 금 현물가 (15분마다, 평일 장중) — 한국금거래소 스크래핑
+  ├ collectBond()       — 한국채 3년물 (매일 18:00 KST) — BOK Open API
+  └ collectFearGreed()  — 공포탐욕지수 (1시간마다) — CNN Fear & Greed Index
 ```
 
 ---
@@ -297,6 +306,7 @@ src/investment/
       fred.collector.ts       — 미국 GDP (FRED API — 버핏 지수 계산용)
       bok.collector.ts        — 한국채 3년물 KR3Y (BOK Open API)
       korea-gold.collector.ts — 국내 금 현물가 GOLD_KRW_SPOT (한국금거래소 스크래핑)
+      fear-greed.collector.ts — 공포탐욕지수 FEAR_GREED (CNN Fear & Greed Index)
   investment.controller.ts
   investment.service.ts
   investment.module.ts
@@ -304,4 +314,4 @@ src/investment/
 
 ---
 
-**Last Updated**: 2026-03-22
+**Last Updated**: 2026-05-26

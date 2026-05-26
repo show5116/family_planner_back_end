@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { I18nService, I18nValidationException, I18nContext } from 'nestjs-i18n';
+import * as Sentry from '@sentry/nestjs';
 
 @Catch()
 export class I18nExceptionFilter implements ExceptionFilter {
@@ -32,6 +33,7 @@ export class I18nExceptionFilter implements ExceptionFilter {
     }
 
     if (!(exception instanceof HttpException)) {
+      Sentry.captureException(exception);
       return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Internal server error',
@@ -52,11 +54,16 @@ export class I18nExceptionFilter implements ExceptionFilter {
   }
 
   private translateKey(key: string, lang: string): string {
+    if (!this.i18n) return key;
     try {
       const translated = this.i18n.t(key as any, { lang });
-      if (!translated || translated === key) return key;
-      return translated as string;
+      const result = translated as string;
+      if (!result || result === key) return key;
+      return result;
     } catch {
+      if (lang !== 'ko') {
+        return this.translateKey(key, 'ko');
+      }
       return key;
     }
   }

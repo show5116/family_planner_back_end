@@ -70,6 +70,16 @@ export class UpdateExpenseDto {
   paymentMethod?: PaymentMethod;
 
   @ApiProperty({
+    description: '소비처 ID (null 전달 시 소비처 연결 해제)',
+    example: 'uuid-1234',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  merchantId?: string | null;
+
+  @ApiProperty({
     description: '고정 지출 여부',
     example: false,
     required: false,

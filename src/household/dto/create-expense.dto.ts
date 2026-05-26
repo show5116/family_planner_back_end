@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -72,6 +71,15 @@ export class CreateExpenseDto {
   @IsOptional()
   @IsEnum(PaymentMethod)
   paymentMethod?: PaymentMethod;
+
+  @ApiProperty({
+    description: '소비처 ID',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  merchantId?: string;
 
   @ApiProperty({
     description: '고정 지출 여부',

@@ -18,6 +18,7 @@
   - `CALENDAR_ONLY`: 오직 일정 (캘린더 전용, 생일/기념일 등)
   - `TODO_LINKED`: 일정 + 할일 연동 (캘린더 + 할일 모두 표시)
   - `TODO_ONLY`: 오직 할일 (캘린더 미표시, 완료 체크 가능)
+- **Status 구분**: `PENDING` / `IN_PROGRESS` / `COMPLETED` / `HOLD` / `DROP` / `FAILED`
 - **이중 날짜 관리**:
   - `scheduled_at`: 수행 시작 날짜 (할일 목록 표시 시작)
   - `due_at`: 마감 날짜 (D-Day 계산 기준)
@@ -70,8 +71,8 @@
 - 새로 추가된 참여자에게만 알림 발송
 - TaskHistory 자동 생성 (action=UPDATE)
 
-### 완료/미완료 (`PATCH /tasks/:id/complete`)
-- `isCompleted` true 설정 시 `completedAt` 기록
+### 상태 변경 (`PATCH /tasks/:id/status`)
+- `status` 필드로 상태 전환: `PENDING` / `IN_PROGRESS` / `COMPLETED` / `HOLD` / `DROP` / `FAILED`
 - TaskHistory 자동 생성 (action=COMPLETE)
 
 ### 삭제 (`DELETE /tasks/:id`)
@@ -100,9 +101,9 @@
 - userId, groupId, categoryId, recurringId
 - title, description, location
 - type (CALENDAR_ONLY, TODO_LINKED, TODO_ONLY)
+- status (PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED)
 - priority (LOW, MEDIUM, HIGH, URGENT)
 - scheduledAt, dueAt
-- isCompleted, completedAt
 - deletedAt (Soft Delete)
 - participants (TaskParticipant 관계)
 
@@ -154,7 +155,7 @@
 - [x] 이중 날짜 관리 (scheduledAt, dueAt)
 - [x] D-Day 계산 (daysUntilDue)
 - [x] 우선순위 설정 (LOW, MEDIUM, HIGH, URGENT)
-- [x] 완료/미완료 처리
+- [x] 상태 변경 (PENDING / IN_PROGRESS / COMPLETED / HOLD / DROP / FAILED)
 - [x] 캘린더 뷰 vs 할일 뷰 필터링
 - [x] 그룹/카테고리/타입/우선순위 필터
 - [x] 날짜 범위 필터
@@ -165,6 +166,7 @@
 - [x] 변경 이력 추적 (TaskHistory)
 - [x] Soft Delete (deletedAt)
 - [x] 스케줄러 (매일 0시 자동 실행)
+- [x] 공휴일 조회 (`GET /tasks/holidays`, year/month 파라미터)
 - [x] 휴면 사용자 필터링
 - [x] 참여자 기능 (그룹 Task에서 멤버 지정)
 - [x] 참여자 지정/변경 시 알림 발송
@@ -190,6 +192,7 @@
 
 | Method | Endpoint                           | 설명                    | Guard |
 | ------ | ---------------------------------- | ----------------------- | ----- |
+| GET    | `/tasks/holidays`                  | 공휴일 목록 조회        | JWT   |
 | GET    | `/tasks/categories`                | 카테고리 목록 조회      | JWT   |
 | POST   | `/tasks/categories`                | 카테고리 생성           | JWT   |
 | PUT    | `/tasks/categories/:id`            | 카테고리 수정           | JWT   |
@@ -198,52 +201,68 @@
 | GET    | `/tasks/:id`                       | Task 상세 조회          | JWT   |
 | POST   | `/tasks`                           | Task 생성               | JWT   |
 | PUT    | `/tasks/:id`                       | Task 수정               | JWT   |
-| PATCH  | `/tasks/:id/complete`              | Task 완료/미완료        | JWT   |
+| PATCH  | `/tasks/:id/status`                | Task 상태 변경          | JWT   |
 | DELETE | `/tasks/:id`                       | Task 삭제               | JWT   |
 | PATCH  | `/tasks/recurrings/:id/pause`      | 반복 일정 일시정지/재개 | JWT   |
 | POST   | `/tasks/recurrings/:id/skip`       | 반복 일정 건너뛰기      | JWT   |
 
----
-
-## 구현 완료 요약
-
-### 2025-12-30
-- 데이터베이스: 6개 Enum + 6개 테이블 설계 및 마이그레이션
-- 카테고리 관리: 개인/그룹 카테고리 CRUD
-- Task 관리: 캘린더/할일 뷰, D-Day 계산, 권한 관리, 변경 이력
-- 반복 일정: 일시정지, 건너뛰기
-- 스케줄러: 매일 0시 자동 실행, 휴면 사용자 필터링
-- 알림 연동: 그룹 Task 생성/건너뛰기 시 자동 알림
-
-### 2026-01-27
-- 참여자 기능 추가 (TaskParticipant 테이블)
-- 그룹 Task에서 그룹 멤버를 참여자로 지정 가능
-- Task 생성/수정 시 `participantIds` 배열로 참여자 지정
-- 참여자 지정 시 알림 발송 (새로 추가된 참여자에게만)
-- Task 목록/상세 조회 시 참여자 정보 포함
-
-### 2026-01-28
-- 반복 일정 자동 생성 로직 완성 (`generateRecurringTasks`)
-- AFTER_COMPLETION 타입 구현 (Task 완료 시 다음 Task 자동 생성)
-- 반복 간격 설정 (interval: 1=매번, 2=격주/격월, 3=3주마다 등)
-- 반복 종료 조건 3가지 지원:
-  - `NEVER`: 계속 반복 (종료일 없음)
-  - `DATE`: 특정 날짜까지 반복
-  - `COUNT`: 지정 횟수만큼 반복
-- WEEKLY: 특정 요일들 선택 가능 (예: 월/수/금)
-- MONTHLY: 날짜 기준(15일마다) 또는 요일 기준(둘째 주 월요일) 선택 가능
-- YEARLY: 특정 월/일에 반복
-
-### 2026-04-24
-- TODO_ONLY 타입 추가 (오직 할일, 캘린더 미표시)
-- view=calendar 조회 시 TODO_ONLY 자동 제외
-- view=todo 조회 시 CALENDAR_ONLY 자동 제외
-- 완료 알림 TODO_ONLY 타입에도 적용
-
-### TODO
-- 단위 테스트 및 E2E 테스트
+### 공휴일 쿼리 파라미터
+| 파라미터 | 필수 | 설명              |
+| -------- | ---- | ----------------- |
+| `year`   | ✅   | 연도 (2000~2100)  |
+| `month`  | ✅   | 월 (1~12)         |
 
 ---
 
-**작성일**: 2025-12-29
-**최종 업데이트**: 2026-04-24
+## 구현 파일
+
+```
+src/task/
+  dto/
+    create-category.dto.ts
+    update-category.dto.ts
+    category-response.dto.ts
+    create-task.dto.ts
+    update-task.dto.ts
+    query-tasks.dto.ts
+    complete-task.dto.ts
+    skip-recurring.dto.ts
+    participant-response.dto.ts
+    task-response.dto.ts
+    holiday-query.dto.ts
+    holiday-response.dto.ts
+    common-response.dto.ts
+    index.ts
+  enums/
+    task-type.enum.ts
+    task-status.enum.ts        — PENDING / IN_PROGRESS / COMPLETED / HOLD / DROP / FAILED
+    task-priority.enum.ts
+    task-reminder-type.enum.ts
+    task-history-action.enum.ts
+    recurring-rule-type.enum.ts
+    recurring-generation-type.enum.ts
+    index.ts
+  interfaces/
+    recurring-rule-config.interface.ts
+    index.ts
+  builders/
+    task-query.builder.ts
+    index.ts
+  events/
+    task.events.ts
+    index.ts
+  listeners/
+    task-history.listener.ts
+    task-notification.listener.ts
+    index.ts
+  task.controller.ts
+  task.service.ts
+  category.service.ts
+  recurring.service.ts
+  holiday.service.ts
+  task-scheduler.service.ts
+  recurring-date.util.ts
+  task.module.ts
+```
+
+**Last Updated**: 2026-05-26

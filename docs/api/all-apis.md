@@ -4144,6 +4144,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "date": "2026-02-27", // 지출 날짜 (YYYY-MM-DD) (string)
   "description": "점심 식사", // 내용 (string?)
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
+  "merchantId": "uuid-1234", // 소비처 ID (string?)
   "isRecurring": false // 고정 지출 여부 (boolean?)
 }
 ```
@@ -4164,6 +4165,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4185,6 +4187,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 - `category` (`ExpenseCategoryFilter`) (Optional): 카테고리 필터 (NONE: 카테고리 없는 항목 조회)
 - `paymentMethod` (`PaymentMethod`) (Optional): 결제 수단 필터
 - `type` (`TransactionType`) (Optional): 거래 유형 필터 (생략 시 전체 조회)
+- `merchantId` (`string`) (Optional): 소비처 ID 필터
 
 **Responses:**
 
@@ -4202,6 +4205,42 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "merchant": null, // 소비처 (MerchantDto | null)
+  "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
+  "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### GET `household/expenses/recurring`
+
+**요약:** 고정 지출 목록 조회
+
+**Query Parameters:**
+
+- `groupId` (`string`) - Optional
+
+**Responses:**
+
+#### 200 - 고정 지출 목록 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 지출 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string)
+  "userId": "uuid-1234", // 작성자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
+  "amount": 15000, // 금액 (string)
+  "category": null, // 카테고리 (ExpenseCategory)
+  "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
+  "description": "점심 식사", // 내용 (string | null)
+  "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
+  "isRecurring": false, // 고정 지출 여부 (boolean)
+  "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4236,6 +4275,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4266,6 +4306,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "date": "2026-02-27", // 지출 날짜 (YYYY-MM-DD) (string?)
   "description": "점심 식사", // 내용 (string?)
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
+  "merchantId": "uuid-1234", // 소비처 ID (null 전달 시 소비처 연결 해제) (string | null?)
   "isRecurring": false // 고정 지출 여부 (boolean?)
 }
 ```
@@ -4286,6 +4327,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4738,6 +4780,126 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 404 - 전체 예산 템플릿을 찾을 수 없습니다
 
 #### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### POST `household/merchants`
+
+**요약:** 소비처 등록
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid-1234", // 그룹 ID (개인 소비처 시 생략) (string?)
+  "name": "쿠팡" // 소비처 이름 (string)
+}
+```
+
+**Responses:**
+
+#### 201 - 소비처 등록 성공
+
+```json
+{
+  "id": "uuid-1234", // 소비처 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string | null)
+  "userId": "uuid-1234", // 작성자 ID (string | null)
+  "name": "쿠팡", // 소비처 이름 (string)
+  "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### GET `household/merchants`
+
+**요약:** 소비처 목록 조회 (groupId 생략 시 개인)
+
+**Query Parameters:**
+
+- `groupId` (`string`) (Optional): 그룹 ID (개인 소비처 조회 시 생략)
+
+**Responses:**
+
+#### 200 - 소비처 목록 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 소비처 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string | null)
+  "userId": "uuid-1234", // 작성자 ID (string | null)
+  "name": "쿠팡", // 소비처 이름 (string)
+  "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### PATCH `household/merchants/:id`
+
+**요약:** 소비처 수정
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "name": "쿠팡" // 소비처 이름 (string?)
+}
+```
+
+**Responses:**
+
+#### 200 - 소비처 수정 성공
+
+```json
+{
+  "id": "uuid-1234", // 소비처 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string | null)
+  "userId": "uuid-1234", // 작성자 ID (string | null)
+  "name": "쿠팡", // 소비처 이름 (string)
+  "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 404 - 소비처를 찾을 수 없습니다
+
+#### 403 - 본인이 등록한 소비처만 수정할 수 있습니다
+
+---
+
+### DELETE `household/merchants/:id`
+
+**요약:** 소비처 삭제
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 소비처 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 소비처를 찾을 수 없습니다
+
+#### 403 - 본인이 등록한 소비처만 삭제할 수 있습니다
 
 ---
 
@@ -8088,6 +8250,29 @@ R2에 파일이 존재하는지 확인합니다.
       "name": "어버이날" // 특별한 날 명칭 (string)
     }
   ] // 특별한 날 목록 (휴일 X — 기념일/이벤트성 날) (SpecialDayDto[])
+}
+```
+
+---
+
+### GET `tasks/categories/all`
+
+**요약:** 전체 카테고리 조회 (개인 + 내가 속한 모든 그룹)
+
+**Responses:**
+
+#### 200 - 전체 카테고리 조회 성공
+
+```json
+{
+  "id": "uuid", // ID (string)
+  "userId": "uuid", // 사용자 ID (string)
+  "groupId": "uuid", // 그룹 ID (string | null)
+  "name": "업무", // 카테고리 이름 (string)
+  "description": "업무 관련 일정", // 설명 (string | null)
+  "emoji": "💼", // 이모지 (string | null)
+  "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
 }
 ```
 

@@ -67,6 +67,13 @@ export class TaskController {
 
   // ==================== 카테고리 API ====================
 
+  @Get('categories/all')
+  @ApiOperation({ summary: '전체 카테고리 조회 (개인 + 내가 속한 모든 그룹)' })
+  @ApiSuccess(CategoryDto, '전체 카테고리 조회 성공', { isArray: true })
+  getAllMyCategories(@Request() req) {
+    return this.categoryService.getAllMyCategories(req.user.userId);
+  }
+
   @Get('categories')
   @ApiOperation({ summary: '카테고리 목록 조회' })
   @ApiSuccess(CategoryDto, '카테고리 목록 조회 성공', { isArray: true })

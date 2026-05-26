@@ -159,20 +159,22 @@ POST /shopping/cart/complete
 
 ### A. 장바구니 (Shopping Cart)
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| `GET` | `/shopping/cart?groupId=` | 활성 장바구니 조회 |
-| `POST` | `/shopping/cart/items` | 품목 추가 |
-| `PATCH` | `/shopping/cart/items/:id?groupId=` | 품목 수정 (수량, 체크 등) |
-| `DELETE` | `/shopping/cart/items/:id?groupId=` | 품목 삭제 |
-| `POST` | `/shopping/cart/complete` | 장보기 완료 (냉장고 이관 + 가계부 연동) |
+| Method   | Endpoint                                | 설명                              |
+| -------- | --------------------------------------- | --------------------------------- |
+| `GET`    | `/shopping/cart?groupId=`               | 활성 장바구니 조회                |
+| `POST`   | `/shopping/cart/items`                  | 품목 추가                         |
+| `POST`   | `/shopping/cart/items/bulk`             | 품목 일괄 추가                    |
+| `PATCH`  | `/shopping/cart/items/bulk`             | 품목 일괄 수정/삭제               |
+| `PATCH`  | `/shopping/cart/items/:itemId?groupId=` | 품목 수정 (수량, 체크 등)         |
+| `DELETE` | `/shopping/cart/items/:itemId?groupId=` | 품목 삭제                         |
+| `POST`   | `/shopping/cart/complete`               | 장보기 완료 (냉장고 이관 + 가계부 연동) |
 
 ### B. 구매 이력 (Shopping History)
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| `GET` | `/shopping/history?groupId=` | 이력 목록 (페이지네이션) |
-| `GET` | `/shopping/history/:id?groupId=` | 이력 상세 |
+| Method | Endpoint                                  | 설명                   |
+| ------ | ----------------------------------------- | ---------------------- |
+| `GET`  | `/shopping/history?groupId=`              | 이력 목록 (페이지네이션) |
+| `GET`  | `/shopping/history/:historyId?groupId=`   | 이력 상세              |
 
 ---
 
@@ -193,13 +195,31 @@ POST /shopping/cart/complete
 ## 구현 상태
 
 ### ✅ 완료
-- [x] Prisma 스키마 추가 (ShoppingCart, ShoppingCartItem, ShoppingHistory, ShoppingHistoryItem)
-- [x] `Expense.shoppingHistoryId` 역방향 참조 추가
 - [x] ShoppingCart API (조회/추가/수정/삭제)
+- [x] 품목 일괄 추가 (`POST /shopping/cart/items/bulk`)
+- [x] 품목 일괄 수정/삭제 (`PATCH /shopping/cart/items/bulk`)
 - [x] 장보기 완료 + 냉장고 이관 트랜잭션
 - [x] 가계부 자동 등록 연동 (`expense` 옵션)
 - [x] ShoppingHistory 조회 (목록/상세, 페이지네이션, expense 포함)
 
 ---
 
-**Last Updated**: 2026-05-15
+## 구현 파일
+
+```
+src/shopping/
+  dto/
+    add-cart-item.dto.ts
+    bulk-add-cart-item.dto.ts
+    bulk-update-cart-item.dto.ts
+    update-cart-item.dto.ts
+    complete-shopping.dto.ts
+    history-query.dto.ts
+    group-id-query.dto.ts
+    shopping-response.dto.ts    — ShoppingCartDto, CartItemDto, ShoppingHistoryDto, PaginatedHistoryDto
+  shopping.controller.ts
+  shopping.service.ts
+  shopping.module.ts
+```
+
+**Last Updated**: 2026-05-26

@@ -1,0 +1,48 @@
+{
+  "subject": {
+    "verification": "您的邮箱验证码",
+    "password_reset": "您的密码重置验证码",
+    "group_invite": "[Family Planner] 您已被邀请加入 {groupName} 群组"
+  },
+  "verification": {
+    "header_subtitle": "欢迎使用 Family Planner！",
+    "greeting": "{userName}，您好！",
+    "body1": "完成 Family Planner 注册需要进行邮箱验证。",
+    "body2": "请输入以下6位验证码以完成邮箱验证。",
+    "code_label": "验证码",
+    "body3": "请在应用程序或网站中输入上述验证码。",
+    "warning_label": "注意",
+    "warning_text": "此验证码仅在24小时内有效。",
+    "footer1": "此邮件在注册时自动发送。",
+    "footer2": "如果您未进行注册，请忽略此邮件。"
+  },
+  "password_reset": {
+    "header_subtitle": "重置密码",
+    "greeting": "{userName}，您好！",
+    "body1": "您已申请重置密码。",
+    "body2": "请输入以下6位验证码以重置您的密码。",
+    "code_label": "验证码",
+    "body3": "请在应用程序或网站中输入上述验证码。",
+    "warning_label": "注意",
+    "warning_text": "此验证码仅在1小时内有效。",
+    "security_label": "安全提示",
+    "security_text": "如果您未申请重置密码，请立即忽略此邮件并检查您的账户安全。",
+    "footer1": "此邮件在密码重置请求时自动发送。",
+    "footer2": "如果您未申请重置密码，请忽略此邮件。"
+  },
+  "group_invite": {
+    "header_subtitle": "群组邀请",
+    "title": "您收到了群组邀请！",
+    "body1": "{inviterName} 邀请您加入群组。",
+    "invited_group_label": "受邀群组",
+    "body2": "您可以使用以下邀请码加入群组。",
+    "code_label": "邀请码",
+    "how_to_join_label": "加入方式",
+    "step1": "登录 Family Planner 应用程序或网站",
+    "step2": "选择加入群组菜单",
+    "step3": "输入上述邀请码",
+    "expiry_text": "邀请码有效期为7天。",
+    "footer1": "此邮件在发送群组邀请时自动发送。",
+    "footer2": "如果您不希望加入群组，请忽略此邮件。"
+  }
+}

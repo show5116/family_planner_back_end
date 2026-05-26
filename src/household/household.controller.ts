@@ -19,6 +19,11 @@ import { BulkUpsertBudgetTemplateDto } from './dto/budget-template.dto';
 import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { ConfirmReceiptDto } from './dto/confirm-receipt.dto';
 import {
+  CreateMerchantDto,
+  UpdateMerchantDto,
+  MerchantQueryDto,
+} from './dto/merchant.dto';
+import {
   StatisticsQueryDto,
   YearlyStatisticsQueryDto,
   BudgetQueryDto,
@@ -36,6 +41,7 @@ import {
   ReceiptUploadUrlDto,
   BulkBudgetResultDto,
   BulkBudgetTemplateResultDto,
+  MerchantDto,
 } from './dto/household-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -72,6 +78,17 @@ export class HouseholdController {
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
   findAllExpenses(@Request() req, @Query() query: ExpenseQueryDto) {
     return this.householdService.findAllExpenses(req.user.userId, query);
+  }
+
+  @Get('expenses/recurring')
+  @ApiOperation({ summary: '고정 지출 목록 조회' })
+  @ApiSuccess(ExpenseDto, '고정 지출 목록 조회 성공', { isArray: true })
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findRecurringExpenses(@Request() req, @Query('groupId') groupId?: string) {
+    return this.householdService.findRecurringExpenses(
+      req.user.userId,
+      groupId,
+    );
   }
 
   @Get('expenses/:id')
@@ -294,5 +311,45 @@ export class HouseholdController {
       req.user.userId,
       groupId,
     );
+  }
+
+  // ─── 소비처 ──────────────────────────────────────────────
+
+  @Post('merchants')
+  @ApiOperation({ summary: '소비처 등록' })
+  @ApiCreated(MerchantDto, '소비처 등록 성공')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  createMerchant(@Request() req, @Body() dto: CreateMerchantDto) {
+    return this.householdService.createMerchant(req.user.userId, dto);
+  }
+
+  @Get('merchants')
+  @ApiOperation({ summary: '소비처 목록 조회 (groupId 생략 시 개인)' })
+  @ApiSuccess(MerchantDto, '소비처 목록 조회 성공', { isArray: true })
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findAllMerchants(@Request() req, @Query() query: MerchantQueryDto) {
+    return this.householdService.findAllMerchants(req.user.userId, query);
+  }
+
+  @Patch('merchants/:id')
+  @ApiOperation({ summary: '소비처 수정' })
+  @ApiSuccess(MerchantDto, '소비처 수정 성공')
+  @ApiNotFound('소비처를 찾을 수 없습니다')
+  @ApiForbidden('본인이 등록한 소비처만 수정할 수 있습니다')
+  updateMerchant(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateMerchantDto,
+  ) {
+    return this.householdService.updateMerchant(req.user.userId, id, dto);
+  }
+
+  @Delete('merchants/:id')
+  @ApiOperation({ summary: '소비처 삭제' })
+  @ApiSuccess(MessageResponseDto, '소비처 삭제 성공')
+  @ApiNotFound('소비처를 찾을 수 없습니다')
+  @ApiForbidden('본인이 등록한 소비처만 삭제할 수 있습니다')
+  removeMerchant(@Request() req, @Param('id') id: string) {
+    return this.householdService.removeMerchant(req.user.userId, id);
   }
 }

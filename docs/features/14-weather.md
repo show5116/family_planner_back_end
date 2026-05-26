@@ -1,9 +1,14 @@
-# 날씨 기능
+# 14. 날씨 (Weather)
+
+> **상태**: ✅ 완료
+> **Phase**: Phase 4
+
+---
 
 ## 개요
 
 기상청 Open API를 활용해 GPS 좌표(위경도) 기반 현재 날씨를 조회하는 기능입니다.
-추후 AI 서비스 연동을 통해 날씨 기반 옷차림 추천 등 부가 기능을 제공할 예정입니다.
+날씨 알림 스케줄러를 통해 강수/기온 변화 발생 시 FCM 푸시 알림을 발송합니다.
 
 ---
 
@@ -152,24 +157,58 @@ Lambert Conformal Conic Projection 알고리즘으로 변환합니다.
 
 ---
 
+## 날씨 알림 스케줄러
+
+### 개요
+매 정시(`0 * * * *`)에 실행되며, `weatherAlertHour`가 설정된 유저를 대상으로 강수/기온 변화 조건 충족 시 FCM 알림을 발송합니다.
+
+### 동작 방식
+1. `NotificationSetting.category = WEATHER, enabled = true, weatherAlertHour = 현재시각`인 유저 조회 (`lastLat`/`lastLon` 및 디바이스 토큰 보유 필수)
+2. 유저를 **시도 단위**로 그룹핑 (좌표 기반 sido 매핑 — 서울/인천/대전/대구/울산/부산/광주/세종/경기/강원/충북/충남/전북/전남/경북/경남/제주)
+3. 시도별로 기상청 단기예보 조회 (Redis 캐시 1시간 TTL 우선)
+4. **알림 조건** (하나라도 충족 시 발송):
+   - 당일 강수 예보 있음 (PTY > 0)
+   - 전일 대비 최저/최고 기온 변화 ≥ 5°C
+5. 오늘 기온을 Redis에 저장 (TTL 48시간, 내일 비교용)
+6. 유저별 언어(`user.language`)로 i18n 메시지 조합 후 `NotificationQueueService.enqueueImmediate()` 호출
+
+### Redis 키
+- `weather_alert_fcst:{sido}` — 시도별 예보 캐시 (TTL 1시간)
+- `weather_temp:{sido}:{YYYYMMDD}` — 시도별 기온 (TTL 48시간)
+
+---
+
+## 구현 상태
+
+### ✅ 완료
+- [x] 현재 날씨 조회 (`GET /weather`)
+- [x] 단기예보 조회 (`GET /weather/forecast`)
+- [x] GPS 좌표 → 기상청 격자 변환 (LCC 투영법)
+- [x] 미세먼지/초미세먼지 조회 (에어코리아)
+- [x] 날씨 알림 스케줄러 (매 정시, 강수/기온 변화 시 FCM 발송)
+- [x] 시도별 그룹핑으로 API 호출 최소화
+- [x] Redis 캐시 (예보: 1시간, 기온 이력: 48시간)
+- [x] 다국어 알림 메시지 (i18n)
+
+### ⬜ 향후 고려
+- [ ] `GET /weather/advice` — 날씨 기반 AI 조언 (옷차림, 우산 여부 등)
+
+---
+
 ## 구현 파일
 
 ```
 src/weather/
-  weather.module.ts
-  weather.controller.ts
-  weather.service.ts
   dto/
     weather-query.dto.ts
     weather-response.dto.ts
     forecast-response.dto.ts
+  weather.controller.ts
+  weather.service.ts
+  weather-alert.scheduler.ts   — 매 정시 날씨 알림 (강수/기온 변화 FCM 발송)
+  weather.module.ts
 src/config/
   weather.config.ts
 ```
 
----
-
-## 향후 계획
-
-- ⬜ `GET /weather/advice` — 날씨 기반 AI 조언 (옷차림, 우산 여부 등)
-- ⬜ 날씨 알림 연동 (특보/경보 시 FCM 발송)
+**Last Updated**: 2026-05-26
