@@ -58,6 +58,7 @@ model User {
   lastLon               Float?
   language              String                      @default("ko") @db.VarChar(10)
   deletedAt             DateTime?
+  termsAgreedAt         DateTime?
 
   @@unique([provider, providerId])
   @@index([email])

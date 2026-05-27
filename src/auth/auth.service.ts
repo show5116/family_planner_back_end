@@ -556,7 +556,8 @@ export class AuthService {
 
   /**
    * 소셜 로그인 처리 (Google, Kakao 등)
-   * 사용자가 없으면 자동으로 회원가입 후 로그인
+   * - 기존 사용자: 즉시 토큰 발급
+   * - 신규 사용자: 약관 동의를 위한 tempToken 반환 (계정 미생성)
    */
   async validateSocialUser(socialUser: {
     provider: string;
@@ -564,9 +565,11 @@ export class AuthService {
     email: string | null;
     name: string;
     profileImage?: string;
-  }) {
-    // 기존 사용자 확인 (provider + providerId 조합으로)
-    let user = await this.prisma.user.findUnique({
+  }): Promise<
+    | { isNewUser: false; accessToken: string; refreshToken: string }
+    | { isNewUser: true; tempToken: string }
+  > {
+    const user = await this.prisma.user.findUnique({
       where: {
         provider_providerId: {
           provider: socialUser.provider as any,
@@ -575,65 +578,132 @@ export class AuthService {
       },
     });
 
-    // 사용자가 없으면 자동 회원가입
     if (!user) {
-      let profileImageKey: string | undefined;
-
-      // 소셜 로그인 프로필 이미지가 있으면 R2에 저장
-      if (socialUser.profileImage) {
-        try {
-          const result = await this.storageService.uploadImageFromUrl(
-            socialUser.profileImage,
-            'profiles',
-            `${socialUser.provider}-${socialUser.providerId}`, // provider-providerId를 파일명으로 사용
-          );
-          profileImageKey = result.key;
-          this.logger.log(
-            `Social profile image uploaded to R2: ${profileImageKey}`,
-          );
-        } catch (error) {
-          // 프로필 이미지 업로드 실패해도 회원가입은 진행
-          this.logger.warn(
-            `Failed to upload social profile image: ${error.message}`,
-          );
-        }
-      }
-
-      user = await this.prisma.user.create({
-        data: {
+      // 신규 유저: 계정 생성 없이 tempToken 발급 (TTL 10분)
+      const tempToken = this.jwtService.sign(
+        {
+          provider: socialUser.provider,
+          providerId: socialUser.providerId,
           email: socialUser.email,
           name: socialUser.name,
-          profileImageKey, // R2에 저장된 이미지 키
-          provider: socialUser.provider as any,
-          providerId: socialUser.providerId,
-          isEmailVerified: true, // 소셜 로그인은 이메일 인증 불필요
-          password: null, // 소셜 로그인은 비밀번호 없음
+          profileImage: socialUser.profileImage ?? null,
         },
-      });
-    } else if (!user.profileImageKey && socialUser.profileImage) {
-      // 기존 사용자인데 profileImageKey가 없는 경우 (첫 로그인 시 자동 저장)
-      try {
-        const result = await this.storageService.uploadImageFromUrl(
+        {
+          expiresIn: '10m',
+          secret: this.configService.get('jwt.accessSecret'),
+        },
+      );
+      return { isNewUser: true, tempToken };
+    }
+
+    // 기존 사용자: 프로필 이미지 없으면 백그라운드로 저장
+    if (!user.profileImageKey && socialUser.profileImage) {
+      this.storageService
+        .uploadImageFromUrl(
           socialUser.profileImage,
           'profiles',
           `${socialUser.provider}-${socialUser.providerId}`,
+        )
+        .then(({ key }) =>
+          this.prisma.user.update({
+            where: { id: user.id },
+            data: { profileImageKey: key },
+          }),
+        )
+        .catch((err) =>
+          this.logger.warn(`Failed to save profile image: ${err.message}`),
         );
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: { profileImageKey: result.key },
-        });
-        user.profileImageKey = result.key;
-        this.logger.log(
-          `Profile image saved to R2 on first login: ${result.key}`,
+    }
+
+    const tokens = await this.handleLoginSuccess({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profileImageKey: user.profileImageKey,
+      isAdmin: user.isAdmin,
+      hasPassword: user.password !== null,
+      personalColor: user.personalColor,
+    });
+    return { isNewUser: false, ...tokens };
+  }
+
+  /**
+   * 소셜 신규 회원가입 완료 (약관 동의 후 호출)
+   * tempToken 검증 → 계정 생성 → 토큰 발급
+   */
+  async socialSignup(
+    tempToken: string,
+    agreedTerms: boolean,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    if (!agreedTerms) {
+      throw new BadRequestException('auth.errors.terms_required');
+    }
+
+    let payload: {
+      provider: string;
+      providerId: string;
+      email: string | null;
+      name: string;
+      profileImage: string | null;
+    };
+    try {
+      payload = this.jwtService.verify(tempToken, {
+        secret: this.configService.get('jwt.accessSecret'),
+      });
+    } catch {
+      throw new UnauthorizedException('auth.errors.invalid_temp_token');
+    }
+
+    // 중복 가입 방지 (약관 동의 화면에서 두 번 제출하는 경우)
+    const existing = await this.prisma.user.findUnique({
+      where: {
+        provider_providerId: {
+          provider: payload.provider as any,
+          providerId: payload.providerId,
+        },
+      },
+    });
+    if (existing) {
+      return this.handleLoginSuccess({
+        id: existing.id,
+        email: existing.email,
+        name: existing.name,
+        profileImageKey: existing.profileImageKey,
+        isAdmin: existing.isAdmin,
+        hasPassword: existing.password !== null,
+        personalColor: existing.personalColor,
+      });
+    }
+
+    let profileImageKey: string | undefined;
+    if (payload.profileImage) {
+      try {
+        const result = await this.storageService.uploadImageFromUrl(
+          payload.profileImage,
+          'profiles',
+          `${payload.provider}-${payload.providerId}`,
         );
-      } catch (error) {
+        profileImageKey = result.key;
+      } catch (err) {
         this.logger.warn(
-          `Failed to save profile image to R2: ${error.message}`,
+          `Failed to upload social profile image: ${err.message}`,
         );
       }
     }
 
-    // 공통 로그인 처리 함수 호출
+    const user = await this.prisma.user.create({
+      data: {
+        email: payload.email,
+        name: payload.name,
+        profileImageKey,
+        provider: payload.provider as any,
+        providerId: payload.providerId,
+        isEmailVerified: true,
+        password: null,
+        termsAgreedAt: new Date(),
+      },
+    });
+
     return this.handleLoginSuccess({
       id: user.id,
       email: user.email,

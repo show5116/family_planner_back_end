@@ -188,30 +188,37 @@ export class AuthController {
   }
 
   /**
-   * 소셜 로그인 콜백 처리 (웹: Cookie + 리다이렉트, 모바일: 토큰을 쿼리 파라미터로 전달)
+   * 소셜 로그인 콜백 처리 (웹: Cookie + 리다이렉트, 모바일: 쿼리 파라미터로 전달)
+   * - 신규 유저: tempToken을 전달하여 프론트에서 약관 동의 화면으로 이동
+   * - 기존 유저: 즉시 토큰 발급
    */
   private handleSocialLoginCallback(
     req: any,
     res: Response,
-    tokens: { accessToken: string; refreshToken: string },
+    result:
+      | { isNewUser: false; accessToken: string; refreshToken: string }
+      | { isNewUser: true; tempToken: string },
   ): void {
     const frontendUrl = this.configService.get<string>('app.frontendUrl');
     const isWeb = this.isWebClient(req);
 
-    if (isWeb) {
-      // 웹 브라우저: HttpOnly Cookie로 Refresh Token 설정
-      this.setRefreshTokenCookie(res, tokens.refreshToken);
+    if (result.isNewUser) {
+      res.redirect(`${frontendUrl}/auth/terms?tempToken=${result.tempToken}`);
+      return;
+    }
 
-      // Access Token만 쿼리 파라미터로 전달
-      res.redirect(
-        `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}`,
-      );
+    const { accessToken, refreshToken } = result as {
+      isNewUser: false;
+      accessToken: string;
+      refreshToken: string;
+    };
+
+    if (isWeb) {
+      this.setRefreshTokenCookie(res, refreshToken);
+      res.redirect(`${frontendUrl}/auth/callback?accessToken=${accessToken}`);
     } else {
-      // 모바일 앱: Universal Links/App Links를 통해 모든 토큰을 쿼리 파라미터로 전달
-      // - iOS: apple-app-site-association 설정 시 앱에서 인터셉트
-      // - Android: assetlinks.json 설정 시 앱에서 인터셉트
       res.redirect(
-        `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
+        `${frontendUrl}/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}`,
       );
     }
   }
@@ -548,8 +555,8 @@ export class AuthController {
     type: TokenResponseDto,
   })
   async googleCallback(@Request() req, @Res() res: Response) {
-    const tokens = await this.authService.validateSocialUser(req.user);
-    this.handleSocialLoginCallback(req, res, tokens);
+    const result = await this.authService.validateSocialUser(req.user);
+    this.handleSocialLoginCallback(req, res, result);
   }
 
   @Public()
@@ -593,8 +600,43 @@ export class AuthController {
     type: TokenResponseDto,
   })
   async kakaoCallback(@Request() req, @Res() res: Response) {
-    const tokens = await this.authService.validateSocialUser(req.user);
-    this.handleSocialLoginCallback(req, res, tokens);
+    const result = await this.authService.validateSocialUser(req.user);
+    this.handleSocialLoginCallback(req, res, result);
+  }
+
+  @Public()
+  @Post('social-signup')
+  @ApiOperation({
+    summary: '소셜 신규 회원가입 완료 (약관 동의)',
+    description:
+      '소셜 로그인 후 신규 유저가 약관에 동의하면 계정을 생성하고 토큰을 발급합니다.\n' +
+      'tempToken은 소셜 로그인 응답의 isNewUser: true일 때 함께 반환되며 10분간 유효합니다.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        tempToken: { type: 'string', description: '소셜 로그인 임시 토큰' },
+        agreedTerms: {
+          type: 'boolean',
+          description: '개인정보처리방침 동의 여부',
+        },
+      },
+      required: ['tempToken', 'agreedTerms'],
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: '회원가입 완료, 토큰 반환',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({ status: 400, description: '약관 미동의 또는 요청 오류' })
+  @ApiResponse({ status: 401, description: '유효하지 않거나 만료된 tempToken' })
+  socialSignup(
+    @Body('tempToken') tempToken: string,
+    @Body('agreedTerms') agreedTerms: boolean,
+  ) {
+    return this.authService.socialSignup(tempToken, agreedTerms);
   }
 
   @Put('location')
