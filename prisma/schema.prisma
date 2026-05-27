@@ -231,7 +231,7 @@ model Notification {
 
 model Announcement {
   id                      String               @id @default(uuid())
-  authorId                String
+  authorId                String?
   title                   String               @db.VarChar(200)
   content                 String               @db.Text
   isPinned                Boolean              @default(false)
@@ -244,7 +244,7 @@ model Announcement {
   scheduledNotificationAt DateTime?
   notificationSentAt      DateTime?
   reads                   AnnouncementRead[]
-  author                  User                 @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  author                  User?                @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([isPinned, createdAt(sort: Desc)])
   @@index([category])
@@ -270,7 +270,7 @@ model AnnouncementRead {
 
 model Question {
   id          String             @id @default(uuid())
-  userId      String
+  userId      String?
   title       String             @db.VarChar(200)
   content     String             @db.Text
   category    QuestionCategory
@@ -281,7 +281,7 @@ model Question {
   updatedAt   DateTime           @updatedAt
   deletedAt   DateTime?
   answers     Answer[]
-  user        User               @relation(fields: [userId], references: [id])
+  user        User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status])
@@ -293,13 +293,13 @@ model Question {
 model Answer {
   id          String    @id @default(uuid())
   questionId  String
-  adminId     String
+  adminId     String?
   content     String    @db.Text
   attachments Json?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  admin       User      @relation("AdminAnswers", fields: [adminId], references: [id])
+  admin       User?     @relation("AdminAnswers", fields: [adminId], references: [id], onDelete: SetNull)
   question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([questionId, createdAt(sort: Desc)])
@@ -419,9 +419,9 @@ model TaskSkip {
   recurringId String
   skipDate    DateTime  @db.Date
   reason      String?   @db.Text
-  createdBy   String
+  createdBy   String?
   createdAt   DateTime  @default(now())
-  creator     User      @relation(fields: [createdBy], references: [id])
+  creator     User?     @relation(fields: [createdBy], references: [id], onDelete: SetNull)
   recurring   Recurring @relation(fields: [recurringId], references: [id], onDelete: Cascade)
 
   @@index([recurringId])
@@ -433,12 +433,12 @@ model TaskSkip {
 model TaskHistory {
   id        String            @id @default(uuid())
   taskId    String
-  userId    String
+  userId    String?
   action    TaskHistoryAction
   changes   Json?
   createdAt DateTime          @default(now())
   task      Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user      User              @relation(fields: [userId], references: [id])
+  user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([taskId, createdAt(sort: Desc)])
   @@index([userId])
@@ -1101,10 +1101,10 @@ model ChildcareTransaction {
   type        ChildcareTransactionType
   amount      Int
   description String                   @db.VarChar(200)
-  createdBy   String
+  createdBy   String?
   createdAt   DateTime                 @default(now())
 
-  account User @relation("ChildcareTransactionCreator", fields: [createdBy], references: [id])
+  account User? @relation("ChildcareTransactionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   childcareAccount ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId, createdAt(sort: Desc)])
