@@ -87,4 +87,24 @@ export class UpdateExpenseDto {
   @IsOptional()
   @IsBoolean()
   isRecurring?: boolean;
+
+  @ApiProperty({
+    description: '예상 금액 (null 전달 시 해제)',
+    example: 150000,
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  estimatedAmount?: number | null;
+
+  @ApiProperty({
+    description: '실제 금액 확인 여부',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isConfirmed?: boolean;
 }

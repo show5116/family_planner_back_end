@@ -61,48 +61,141 @@ export class WebhookService {
 
   /**
    * Discord Embed 생성
+   * - triggered: Alert Rule 발동 (data.event 구조)
+   * - issue.*: 이슈 생성/해결/할당 등 (data.issue 구조)
    */
   private createDiscordEmbed(sentryEvent: any) {
     const { action, data } = sentryEvent;
 
-    // 이벤트 타입별 색상
-    const colorMap = {
-      'issue.created': 0xff4949, // 빨강
-      error: 0xff4949,
-      'issue.resolved': 0x43a047, // 초록
-      'issue.assigned': 0x3b82f6, // 파랑
-      'issue.ignored': 0x9ca3af, // 회색
+    if (action === 'triggered') {
+      return this.createTriggeredEmbed(data);
+    }
+
+    return this.createIssueEmbed(action, data);
+  }
+
+  private createTriggeredEmbed(data: any) {
+    const event = data?.event ?? {};
+    const rule = data?.triggered_rule ?? '';
+
+    const exceptionValues: any[] = event.exception?.values ?? [];
+    const topException = exceptionValues[exceptionValues.length - 1];
+    const errorType = topException?.type ?? event.type ?? '';
+    const errorMessage = topException?.value ?? '';
+
+    const rawTitle = errorType
+      ? `🚨 [${errorType}] ${errorMessage}`
+      : '🚨 Sentry Alert';
+    const title =
+      rawTitle.length > 256 ? rawTitle.substring(0, 253) + '...' : rawTitle;
+
+    const embed: any = {
+      title,
+      url: event.web_url ?? event.url,
+      color: 0xff4949,
+      timestamp: new Date().toISOString(),
+      fields: [],
     };
 
-    const color = colorMap[action] || 0xffa500; // 기본 주황
+    if (rule) {
+      embed.fields.push({ name: '알림 규칙', value: rule, inline: false });
+    }
+
+    if (event.transaction) {
+      embed.fields.push({
+        name: '트랜잭션',
+        value: `\`${event.transaction}\``,
+        inline: false,
+      });
+    }
+
+    if (event.culprit) {
+      embed.fields.push({
+        name: '발생 위치',
+        value: `\`${event.culprit}\``,
+        inline: false,
+      });
+    }
+
+    // 스택트레이스 최상단 프레임
+    const frames: any[] = topException?.stacktrace?.frames ?? [];
+    const topFrame = frames[frames.length - 1];
+    if (topFrame) {
+      const location = [
+        topFrame.filename,
+        topFrame.lineno ? `:${topFrame.lineno}` : '',
+        topFrame.function ? ` (${topFrame.function})` : '',
+      ].join('');
+      embed.fields.push({
+        name: '스택트레이스 (최상단)',
+        value: `\`${location}\``,
+        inline: false,
+      });
+    }
+
+    if (event.tags?.length) {
+      const tagText = event.tags
+        .slice(0, 5)
+        .map(([k, v]: [string, string]) => `${k}: ${v}`)
+        .join('\n');
+      embed.fields.push({ name: '태그', value: tagText, inline: false });
+    }
+
+    if (event.platform) {
+      embed.fields.push({
+        name: '플랫폼',
+        value: event.platform,
+        inline: true,
+      });
+    }
+
+    if (event.environment) {
+      embed.fields.push({
+        name: '환경',
+        value: event.environment,
+        inline: true,
+      });
+    }
+
+    return embed;
+  }
+
+  private createIssueEmbed(action: string, data: any) {
+    const colorMap: Record<string, number> = {
+      'issue.created': 0xff4949,
+      error: 0xff4949,
+      'issue.resolved': 0x43a047,
+      'issue.assigned': 0x3b82f6,
+      'issue.ignored': 0x9ca3af,
+    };
+    const color = colorMap[action] ?? 0xffa500;
 
     const issue = data?.issue;
     const metadata = issue?.metadata;
 
-    // 에러 타입 + 메시지를 title로
     const errorType = metadata?.type || issue?.type || '';
     const errorMessage = metadata?.value || '';
-    const title =
+    const rawTitle =
       errorType && errorMessage
         ? `[${errorType}] ${errorMessage}`
         : issue?.title || 'Sentry 알림';
+    const title =
+      rawTitle.length > 256 ? rawTitle.substring(0, 253) + '...' : rawTitle;
 
     const embed: any = {
-      title: title.length > 256 ? title.substring(0, 253) + '...' : title,
+      title,
       url: issue?.web_url,
       color,
       timestamp: new Date().toISOString(),
       fields: [],
     };
 
-    // 이벤트 타입
     embed.fields.push({
       name: '이벤트 타입',
       value: action || 'unknown',
       inline: true,
     });
 
-    // 프로젝트 정보
     if (issue?.project) {
       embed.fields.push({
         name: '프로젝트',
@@ -111,7 +204,6 @@ export class WebhookService {
       });
     }
 
-    // 에러 위치 (culprit)
     if (issue?.culprit) {
       embed.fields.push({
         name: '위치',
@@ -120,7 +212,6 @@ export class WebhookService {
       });
     }
 
-    // 에러 메시지 (metadata.value가 title과 별도로 길 경우 표시)
     if (errorMessage && errorMessage.length > 80) {
       embed.fields.push({
         name: '에러 메시지',
@@ -132,7 +223,6 @@ export class WebhookService {
       });
     }
 
-    // 발생 횟수 / 영향받은 사용자
     if (issue?.count) {
       embed.fields.push({
         name: '발생 횟수',
@@ -235,6 +325,45 @@ export class WebhookService {
   handleGoogleWebhook(body: any) {
     this.logger.log('Google webhook received (미구현)', JSON.stringify(body));
     return { message: 'Google webhook 수신 완료 (미구현)' };
+  }
+
+  /**
+   * 계정 삭제 결과 Discord 알림 (백그라운드 처리 완료/실패 시 호출)
+   */
+  async sendAccountDeletionResult(
+    userId: string,
+    success: boolean,
+    errorMessage?: string,
+  ): Promise<void> {
+    if (!this.discordWebhookUrl) return;
+
+    const embed = {
+      title: success ? '🗑️ 계정 삭제 완료' : '🚨 계정 삭제 실패',
+      color: success ? 0x43a047 : 0xff4949,
+      fields: [
+        { name: 'userId', value: `\`${userId}\``, inline: false },
+        ...(errorMessage
+          ? [{ name: '오류 내용', value: errorMessage, inline: false }]
+          : []),
+      ],
+      timestamp: new Date().toISOString(),
+      footer: { text: 'Family Planner Auth' },
+    };
+
+    try {
+      const response = await fetch(this.discordWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embeds: [embed] }),
+      });
+      if (!response.ok) {
+        this.logger.error(
+          `Discord 계정 삭제 알림 전송 실패: ${response.status}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Discord 계정 삭제 알림 전송 중 에러', error);
+    }
   }
 
   /**

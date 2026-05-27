@@ -1006,43 +1006,50 @@ export class RedisService implements OnModuleInit {
   }
 
   /**
+   * Refresh Token 저장 + 역방향 인덱스(user-tokens:{userId}) 동시 등록
+   * user-tokens Set의 TTL은 토큰 TTL과 동일하게 갱신
+   */
+  async setRefreshToken(
+    token: string,
+    userId: string,
+    ttlSeconds: number,
+  ): Promise<void> {
+    const tokenKey = `refresh-token:${token}`;
+    const indexKey = `user-tokens:${userId}`;
+
+    await Promise.all([
+      this.redisClient.setex(tokenKey, ttlSeconds, JSON.stringify(userId)),
+      this.redisClient.sadd(indexKey, token),
+      this.redisClient.expire(indexKey, ttlSeconds),
+    ]);
+  }
+
+  /**
+   * Refresh Token 삭제 + 역방향 인덱스에서도 제거
+   */
+  async deleteRefreshToken(token: string, userId: string): Promise<void> {
+    const tokenKey = `refresh-token:${token}`;
+    const indexKey = `user-tokens:${userId}`;
+
+    await Promise.all([
+      this.redisClient.del(tokenKey),
+      this.redisClient.srem(indexKey, token),
+    ]);
+  }
+
+  /**
    * 특정 사용자의 모든 Refresh Token 삭제
-   * SCAN으로 refresh-token:* 패턴을 순회하며 value가 userId인 키 삭제
-   *
-   * @param userId - 사용자 ID
+   * user-tokens:{userId} Set을 조회해 O(1)로 처리 (SCAN 불필요)
    */
   async deleteAllRefreshTokensByUserId(userId: string): Promise<void> {
-    const pattern = 'refresh-token:*';
-    let cursor = '0';
-    const keysToDelete: string[] = [];
+    const indexKey = `user-tokens:${userId}`;
+    const tokens = await this.redisClient.smembers(indexKey);
 
-    do {
-      const [nextCursor, keys] = await this.redisClient.scan(
-        cursor,
-        'MATCH',
-        pattern,
-        'COUNT',
-        100,
-      );
-      cursor = nextCursor;
-
-      if (keys.length > 0) {
-        const values = await this.redisClient.mget(...keys);
-        keys.forEach((key, index) => {
-          const raw = values[index];
-          if (!raw) return;
-          try {
-            const parsed = JSON.parse(raw);
-            if (parsed === userId) keysToDelete.push(key);
-          } catch {
-            if (raw === userId) keysToDelete.push(key);
-          }
-        });
-      }
-    } while (cursor !== '0');
-
-    if (keysToDelete.length > 0) {
-      await this.redisClient.del(...keysToDelete);
+    if (tokens.length > 0) {
+      const tokenKeys = tokens.map((t) => `refresh-token:${t}`);
+      await this.redisClient.del(...tokenKeys, indexKey);
+    } else {
+      await this.redisClient.del(indexKey);
     }
   }
 

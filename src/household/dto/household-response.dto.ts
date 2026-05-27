@@ -126,6 +126,19 @@ export class ExpenseDto {
   isRecurring: boolean;
 
   @ApiProperty({
+    description: '예상 금액 (가변 고정 지출용)',
+    example: '150000.00',
+    nullable: true,
+  })
+  estimatedAmount: string | null;
+
+  @ApiProperty({
+    description: '실제 금액 확인 여부 (false = 아직 예상 금액 상태)',
+    example: true,
+  })
+  isConfirmed: boolean;
+
+  @ApiProperty({
     description: '소비처',
     type: () => MerchantDto,
     nullable: true,

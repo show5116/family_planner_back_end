@@ -65,6 +65,8 @@ export class HouseholdService {
         paymentMethod: dto.paymentMethod,
         merchantId: dto.merchantId ?? null,
         isRecurring: dto.isRecurring ?? false,
+        estimatedAmount: dto.estimatedAmount ?? null,
+        isConfirmed: true,
       },
       include: { receipts: true, merchant: true },
     });
@@ -183,6 +185,10 @@ export class HouseholdService {
         }),
         ...(dto.merchantId !== undefined && { merchantId: dto.merchantId }),
         ...(dto.isRecurring !== undefined && { isRecurring: dto.isRecurring }),
+        ...(dto.estimatedAmount !== undefined && {
+          estimatedAmount: dto.estimatedAmount,
+        }),
+        ...(dto.isConfirmed !== undefined && { isConfirmed: dto.isConfirmed }),
       },
       include: { receipts: true, merchant: true },
     });
@@ -557,21 +563,24 @@ export class HouseholdService {
 
     const targetDate = new Date(year, monthNum - 1, 1);
     const created = await this.prisma.$transaction(
-      recurringExpenses.map((e) =>
-        this.prisma.expense.create({
+      recurringExpenses.map((e) => {
+        const isVariable = e.estimatedAmount !== null;
+        return this.prisma.expense.create({
           data: {
             groupId: e.groupId,
             userId: e.userId,
-            amount: e.amount,
+            amount: isVariable ? e.estimatedAmount : e.amount,
             category: e.category,
             date: targetDate,
             description: e.description,
             paymentMethod: e.paymentMethod,
             merchantId: e.merchantId,
             isRecurring: true,
+            estimatedAmount: e.estimatedAmount,
+            isConfirmed: !isVariable,
           },
-        }),
-      ),
+        });
+      }),
     );
 
     return { count: created.length, expenses: created };
