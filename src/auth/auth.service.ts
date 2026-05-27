@@ -16,6 +16,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { EmailService } from '@/email/email.service';
 import { StorageService } from '@/storage/storage.service';
 import { RedisService } from '@/redis/redis.service';
+import { WebhookService } from '@/webhook/webhook.service';
 import { SignupDto } from '@/auth/dto/signup.dto';
 import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
 
@@ -36,6 +37,7 @@ export class AuthService {
     private storageService: StorageService,
     private redisService: RedisService,
     private i18n: I18nService,
+    private webhookService: WebhookService,
   ) {}
 
   /**
@@ -190,16 +192,16 @@ export class AuthService {
     }
 
     // 기존 토큰 무효화 (RTR)
-    await this.redisService.del(`refresh-token:${refreshToken}`);
+    await this.redisService.deleteRefreshToken(refreshToken, userId);
 
     // 새로운 토큰 생성
     const tokens = await this.generateTokens(userId);
 
     // 새로운 Refresh Token을 Redis에 저장 (7일 TTL)
-    await this.redisService.set(
-      `refresh-token:${tokens.refreshToken}`,
+    await this.redisService.setRefreshToken(
+      tokens.refreshToken,
       userId,
-      this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60, // 초 단위
+      this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60,
     );
 
     return {
@@ -273,10 +275,10 @@ export class AuthService {
 
     // Refresh Token을 Redis에 저장 (RTR, 7일 TTL) 및 마지막 로그인 시간 업데이트
     await Promise.all([
-      this.redisService.set(
-        `refresh-token:${tokens.refreshToken}`,
+      this.redisService.setRefreshToken(
+        tokens.refreshToken,
         user.id,
-        this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60, // 초 단위
+        this.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60,
       ),
       this.prisma.user.update({
         where: { id: user.id },
@@ -398,7 +400,14 @@ export class AuthService {
    * 로그아웃 (Refresh Token 무효화)
    */
   async logout(refreshToken: string) {
-    await this.redisService.del(`refresh-token:${refreshToken}`);
+    const userId = await this.redisService.get<string>(
+      `refresh-token:${refreshToken}`,
+    );
+    if (userId) {
+      await this.redisService.deleteRefreshToken(refreshToken, userId);
+    } else {
+      await this.redisService.del(`refresh-token:${refreshToken}`);
+    }
 
     return {
       message: this.i18n.t('auth.success.logout', {
@@ -944,7 +953,8 @@ export class AuthService {
 
   /**
    * 삭제 예약 계정 즉시 완전 삭제 (운영자 전용)
-   * deletedAt이 설정된 계정만 대상 — R2 → Redis → DB 순서로 제거
+   * 검증 후 즉시 202 응답 — R2/Redis/DB 삭제는 백그라운드 처리
+   * 결과는 Discord로 알림
    */
   async forceDeleteAccount(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -960,20 +970,42 @@ export class AuthService {
       throw new BadRequestException('삭제 예약된 계정이 아닙니다');
     }
 
-    if (user.profileImageKey) {
-      try {
-        await this.storageService.deleteFile(user.profileImageKey);
-      } catch (error) {
-        this.logger.warn(
-          `Failed to delete profile image for user ${userId}: ${error.message}`,
-        );
+    // 백그라운드에서 실제 삭제 처리
+    this.executeHardDelete(userId, user.profileImageKey).catch(() => {});
+
+    return {
+      message:
+        '계정 삭제가 시작되었습니다. 완료 시 Discord로 알림이 전송됩니다.',
+    };
+  }
+
+  private async executeHardDelete(
+    userId: string,
+    profileImageKey: string | null,
+  ): Promise<void> {
+    try {
+      if (profileImageKey) {
+        try {
+          await this.storageService.deleteFile(profileImageKey);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to delete profile image for user ${userId}: ${error.message}`,
+          );
+        }
       }
+
+      await this.redisService.deleteAllRefreshTokensByUserId(userId);
+      await this.prisma.user.delete({ where: { id: userId } });
+
+      await this.webhookService.sendAccountDeletionResult(userId, true);
+    } catch (error) {
+      this.logger.error(`계정 삭제 실패 userId=${userId}`, error);
+      await this.webhookService.sendAccountDeletionResult(
+        userId,
+        false,
+        error.message,
+      );
     }
-
-    await this.redisService.deleteAllRefreshTokensByUserId(userId);
-    await this.prisma.user.delete({ where: { id: userId } });
-
-    return { message: '계정이 즉시 삭제되었습니다' };
   }
 
   /**
@@ -1004,6 +1036,7 @@ export class AuthService {
   /**
    * 유예 기간 만료 계정 하드 삭제 (크론잡 전용)
    * deletedAt <= 현재 시간인 계정을 R2 → Redis → DB 순서로 완전 제거
+   * 실패한 계정은 개별 Discord 알림
    */
   async purgeExpiredAccounts() {
     const users = await this.prisma.user.findMany({
@@ -1013,7 +1046,7 @@ export class AuthService {
 
     if (users.length === 0) return { purged: 0 };
 
-    await Promise.all(
+    const results = await Promise.allSettled(
       users.map(async (user) => {
         if (user.profileImageKey) {
           try {
@@ -1025,14 +1058,37 @@ export class AuthService {
           }
         }
         await this.redisService.deleteAllRefreshTokensByUserId(user.id);
+        return user.id;
       }),
     );
 
-    await this.prisma.user.deleteMany({
-      where: { id: { in: users.map((u) => u.id) } },
+    const succeededIds: string[] = [];
+    const failedEntries: { reason: string; user: { id: string } }[] = [];
+
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        succeededIds.push(r.value);
+      } else {
+        failedEntries.push({ reason: r.reason?.message, user: users[i] });
+      }
     });
 
-    this.logger.log(`Purged ${users.length} expired accounts`);
-    return { purged: users.length };
+    if (succeededIds.length > 0) {
+      await this.prisma.user.deleteMany({
+        where: { id: { in: succeededIds } },
+      });
+    }
+
+    await Promise.all(
+      failedEntries.map(({ reason, user }) =>
+        this.webhookService.sendAccountDeletionResult(user.id, false, reason),
+      ),
+    );
+
+    this.logger.log(
+      `Purged ${succeededIds.length} expired accounts` +
+        (failedEntries.length > 0 ? `, ${failedEntries.length} failed` : ''),
+    );
+    return { purged: succeededIds.length, failed: failedEntries.length };
   }
 }
