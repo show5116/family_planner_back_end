@@ -708,6 +708,8 @@ model Expense {
   paymentMethod     PaymentMethod?
   merchantId        String?
   isRecurring       Boolean          @default(false)
+  estimatedAmount   Decimal?         @db.Decimal(10, 2)
+  isConfirmed       Boolean          @default(true)
   shoppingHistoryId String?          @unique
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt

@@ -89,4 +89,15 @@ export class CreateExpenseDto {
   @IsOptional()
   @IsBoolean()
   isRecurring?: boolean;
+
+  @ApiProperty({
+    description:
+      '예상 금액 (가변 고정 지출에 사용, 설정 시 매달 복사본은 미확인 상태로 생성)',
+    example: 150000,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  estimatedAmount?: number;
 }

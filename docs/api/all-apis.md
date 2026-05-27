@@ -4177,7 +4177,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string?)
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
   "merchantId": "uuid-1234", // 소비처 ID (string?)
-  "isRecurring": false // 고정 지출 여부 (boolean?)
+  "isRecurring": false, // 고정 지출 여부 (boolean?)
+  "estimatedAmount": 150000 // 예상 금액 (가변 고정 지출에 사용, 설정 시 매달 복사본은 미확인 상태로 생성) (number?)
 }
 ```
 
@@ -4197,6 +4198,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
@@ -4237,6 +4240,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
@@ -4272,6 +4277,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
@@ -4307,6 +4314,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
@@ -4339,7 +4348,9 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string?)
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
   "merchantId": "uuid-1234", // 소비처 ID (null 전달 시 소비처 연결 해제) (string | null?)
-  "isRecurring": false // 고정 지출 여부 (boolean?)
+  "isRecurring": false, // 고정 지출 여부 (boolean?)
+  "estimatedAmount": 150000, // 예상 금액 (null 전달 시 해제) (number | null?)
+  "isConfirmed": true // 실제 금액 확인 여부 (boolean?)
 }
 ```
 
@@ -4359,6 +4370,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
