@@ -23,7 +23,7 @@ import { UpdateAccountHoldingDto } from './dto/update-account-holding.dto';
 import { ReorderAccountHoldingsDto } from './dto/reorder-account-holdings.dto';
 import {
   AccountTrendQueryDto,
-  StatisticsQueryDto,
+  AssetsStatisticsQueryDto,
   TrendQueryDto,
 } from './dto/assets-query.dto';
 import {
@@ -288,7 +288,7 @@ export class AssetsController {
   @ApiOperation({ summary: '그룹 자산 통계 조회' })
   @ApiSuccess(AccountStatisticsDto, '자산 통계 조회 성공')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  getStatistics(@Request() req, @Query() query: StatisticsQueryDto) {
+  getStatistics(@Request() req, @Query() query: AssetsStatisticsQueryDto) {
     return this.assetsService.getStatistics(req.user.userId, query.groupId);
   }
 

@@ -4178,7 +4178,9 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
   "merchantId": "uuid-1234", // 소비처 ID (string?)
   "isRecurring": false, // 고정 지출 여부 (boolean?)
-  "estimatedAmount": 150000 // 예상 금액 (가변 고정 지출에 사용, 설정 시 매달 복사본은 미확인 상태로 생성) (number?)
+  "estimatedAmount": 150000, // 예상 금액 (가변 고정 지출에 사용, 설정 시 매달 복사본은 미확인 상태로 생성) (number?)
+  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때 사용) (IncomeCategory?)
+  "refundedExpenseId": "uuid-1234" // 환불 대상 지출 ID (반품/환불 시 원본 지출과 연결) (string?)
 }
 ```
 
@@ -4198,9 +4200,12 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
   "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
   "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
+  "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
+  "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4223,6 +4228,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 - `paymentMethod` (`PaymentMethod`) (Optional): 결제 수단 필터
 - `type` (`TransactionType`) (Optional): 거래 유형 필터 (생략 시 전체 조회)
 - `merchantId` (`string`) (Optional): 소비처 ID 필터
+- `incomeCategory` (`IncomeCategory`) (Optional): 입금 카테고리 필터 (type=INCOME 조회 시 사용)
 
 **Responses:**
 
@@ -4240,9 +4246,12 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
   "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
   "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
+  "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
+  "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4277,9 +4286,12 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
   "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
   "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
+  "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
+  "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4314,9 +4326,12 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
   "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
   "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
+  "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
+  "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4350,7 +4365,9 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "merchantId": "uuid-1234", // 소비처 ID (null 전달 시 소비처 연결 해제) (string | null?)
   "isRecurring": false, // 고정 지출 여부 (boolean?)
   "estimatedAmount": 150000, // 예상 금액 (null 전달 시 해제) (number | null?)
-  "isConfirmed": true // 실제 금액 확인 여부 (boolean?)
+  "isConfirmed": true, // 실제 금액 확인 여부 (boolean?)
+  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때 사용, null 전달 시 해제) (IncomeCategory | null?)
+  "refundedExpenseId": "uuid-1234" // 환불 대상 지출 ID (null 전달 시 연결 해제) (string | null?)
 }
 ```
 
@@ -4370,9 +4387,12 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
   "isRecurring": false, // 고정 지출 여부 (boolean)
+  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
   "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
   "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
+  "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
+  "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4513,7 +4533,10 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `groupId` (`string`): 그룹 ID
+- `groupId` (`string`) (Optional): 그룹 ID (개인 조회 시 생략)
+- `month` (`string`): 조회 월 (YYYY-MM)
+- `excludeRefunds` (`boolean`) (Optional): 환불 입금 제외 여부 (환불로 연결된 INCOME 항목 제외)
+- `excludeCarryover` (`boolean`) (Optional): 이월 입금 제외 여부 (incomeCategory=CARRYOVER 항목 제외)
 
 **Responses:**
 
@@ -4550,6 +4573,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 - `groupId` (`string`) (Optional): 그룹 ID (개인 조회 시 생략)
 - `year` (`string`): 조회 연도 (YYYY)
+- `excludeRefunds` (`boolean`) (Optional): 환불 입금 제외 여부 (환불로 연결된 INCOME 항목 제외)
+- `excludeCarryover` (`boolean`) (Optional): 이월 입금 제외 여부 (incomeCategory=CARRYOVER 항목 제외)
 
 **Responses:**
 

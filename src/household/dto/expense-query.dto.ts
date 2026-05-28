@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
 import {
   ExpenseCategory,
+  IncomeCategory,
   PaymentMethod,
   TransactionType,
 } from '@prisma/client';
@@ -66,4 +67,13 @@ export class ExpenseQueryDto {
   @IsOptional()
   @IsString()
   merchantId?: string;
+
+  @ApiProperty({
+    description: '입금 카테고리 필터 (type=INCOME 조회 시 사용)',
+    enum: IncomeCategory,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(IncomeCategory)
+  incomeCategory?: IncomeCategory;
 }

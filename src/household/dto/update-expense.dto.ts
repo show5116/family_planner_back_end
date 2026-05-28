@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import {
   ExpenseCategory,
+  IncomeCategory,
   PaymentMethod,
   TransactionType,
 } from '@prisma/client';
@@ -107,4 +108,25 @@ export class UpdateExpenseDto {
   @IsOptional()
   @IsBoolean()
   isConfirmed?: boolean;
+
+  @ApiProperty({
+    description: '입금 카테고리 (type=INCOME 일 때 사용, null 전달 시 해제)',
+    enum: IncomeCategory,
+    example: IncomeCategory.SALARY,
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsEnum(IncomeCategory)
+  incomeCategory?: IncomeCategory | null;
+
+  @ApiProperty({
+    description: '환불 대상 지출 ID (null 전달 시 연결 해제)',
+    example: 'uuid-1234',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  refundedExpenseId?: string | null;
 }
