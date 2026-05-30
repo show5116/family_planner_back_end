@@ -295,7 +295,7 @@ export class HouseholdService {
       }
     }
 
-    // 입금/지출 분리 (옵션에 따라 환불·이월 입금 제외)
+    // 입금/지출 분리 (옵션에 따라 환불·이월 입금+이월 지출 제외)
     let incomes = transactions.filter((t) => t.type === 'INCOME');
     if (excludeRefunds) {
       incomes = incomes.filter((t) => !excludedIds.has(t.id));
@@ -306,6 +306,9 @@ export class HouseholdService {
     let expenses = transactions.filter((t) => t.type === 'EXPENSE');
     if (excludeRefunds) {
       expenses = expenses.filter((t) => !excludedIds.has(t.id));
+    }
+    if (excludeCarryover) {
+      expenses = expenses.filter((t) => t.category !== 'CARRYOVER');
     }
 
     // 카테고리별 집계 (지출만)
@@ -411,6 +414,12 @@ export class HouseholdService {
         tx.incomeCategory === 'CARRYOVER'
       )
         continue;
+      if (
+        tx.type === 'EXPENSE' &&
+        excludeCarryover &&
+        tx.category === 'CARRYOVER'
+      )
+        continue;
       const d = new Date(tx.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const current = monthMap.get(key) ?? { income: 0, expense: 0, count: 0 };
@@ -457,6 +466,7 @@ export class HouseholdService {
     const totalExpense = transactions
       .filter((t) => {
         if (excludeRefunds && excludedIds.has(t.id)) return false;
+        if (excludeCarryover && t.category === 'CARRYOVER') return false;
         return t.type === 'EXPENSE';
       })
       .reduce((sum, e) => sum + Number(e.amount), 0);

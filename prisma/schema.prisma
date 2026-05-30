@@ -840,6 +840,7 @@ enum ExpenseCategory {
   ASSET_TRANSFER
   CHILDCARE
   COMMUNICATION
+  CARRYOVER
   OTHER
 }
 

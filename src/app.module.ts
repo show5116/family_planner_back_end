@@ -149,7 +149,11 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
       resolvers: [AcceptLanguageResolver],
     }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
+    ThrottlerModule.forRoot(
+      process.env.NODE_ENV === 'production'
+        ? [{ ttl: 60000, limit: 10 }]
+        : [{ ttl: 60000, limit: 10000 }],
+    ),
     EventEmitterModule.forRoot(),
     ...(process.env.NODE_ENV === 'production' ||
     process.env.ENABLE_SCHEDULER === 'true'
