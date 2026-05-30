@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   ExpenseCategory,
+  IncomeCategory,
   PaymentMethod,
   TransactionType,
 } from '@prisma/client';
@@ -126,6 +127,14 @@ export class ExpenseDto {
   isRecurring: boolean;
 
   @ApiProperty({
+    description: '입금 카테고리 (type=INCOME 일 때)',
+    enum: IncomeCategory,
+    example: IncomeCategory.SALARY,
+    nullable: true,
+  })
+  incomeCategory: IncomeCategory | null;
+
+  @ApiProperty({
     description: '예상 금액 (가변 고정 지출용)',
     example: '150000.00',
     nullable: true,
@@ -145,6 +154,21 @@ export class ExpenseDto {
     required: false,
   })
   merchant: MerchantDto | null;
+
+  @ApiProperty({
+    description: '환불 대상 지출 ID (반품/환불 시 원본 지출 ID)',
+    example: 'uuid-1234',
+    nullable: true,
+    required: false,
+  })
+  refundedExpenseId: string | null;
+
+  @ApiProperty({
+    description: '이 지출에 연결된 환불 목록',
+    type: () => [ExpenseDto],
+    required: false,
+  })
+  refunds: ExpenseDto[];
 
   @ApiProperty({
     description:

@@ -710,22 +710,28 @@ model Expense {
   isRecurring       Boolean          @default(false)
   estimatedAmount   Decimal?         @db.Decimal(10, 2)
   isConfirmed       Boolean          @default(true)
+  incomeCategory    IncomeCategory?
+  refundedExpenseId String?
   shoppingHistoryId String?          @unique
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
-  group           Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  merchant        Merchant?        @relation(fields: [merchantId], references: [id], onDelete: SetNull)
-  receipts        ExpenseReceipt[]
-  shoppingHistory ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
+  group            Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant         Merchant?        @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+  refundedExpense  Expense?         @relation("ExpenseRefund", fields: [refundedExpenseId], references: [id], onDelete: Cascade)
+  refunds          Expense[]        @relation("ExpenseRefund")
+  receipts         ExpenseReceipt[]
+  shoppingHistory  ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
 
   @@index([groupId, date(sort: Desc)])
   @@index([userId, date(sort: Desc)])
   @@index([category])
+  @@index([incomeCategory])
   @@index([date(sort: Desc)])
   @@index([type])
   @@index([merchantId])
+  @@index([refundedExpenseId])
   @@map("expenses")
 }
 
@@ -834,7 +840,20 @@ enum ExpenseCategory {
   ASSET_TRANSFER
   CHILDCARE
   COMMUNICATION
+  CARRYOVER
   OTHER
+}
+
+enum IncomeCategory {
+  SALARY
+  ALLOWANCE
+  CARRYOVER
+  BONUS
+  INTEREST
+  RENTAL
+  SIDE_INCOME
+  TRANSFER_IN
+  OTHER_INCOME
 }
 
 enum PaymentMethod {

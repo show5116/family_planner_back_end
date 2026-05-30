@@ -16,7 +16,9 @@
 ### 가계부 작성
 - 일일 거래 내역 입력 (날짜, 유형, 금액, 카테고리, 메모, 결제 수단, 소비처)
 - 거래 유형: 입금(INCOME), 지출(EXPENSE)
-- 카테고리: 교통비, 식비, 장보기, 여가비, 생활비, 의료비, 교육비, 용돈, 경조사비, 자산이동, 육아비, 통신비, 기타
+- 지출 카테고리: 교통비, 식비, 장보기, 여가비, 생활비, 의료비, 교육비, 용돈, 경조사비, 자산이동, 육아비, 통신비, 기타
+- 입금 카테고리: 월급, 용돈, 이월, 상여금, 이자수익, 임대수익, 부업, 계좌이체입금, 기타수입
+- **반품/환불**: `refundedExpenseId`로 원본 지출과 연결. 지출 목록에서 환불 여부 표시 가능
 
 ### 소비처 관리
 - 쿠팡, 컬리, 배달의민족 등 소비처를 그룹/개인 단위로 등록
@@ -26,6 +28,9 @@
 ### 고정비용 관리
 - 매달/매년 고정 금액 등록 (월세, 관리비, 보험료, 구독 서비스)
 - 자동 반복 설정
+- **가변 고정 지출**: `estimatedAmount` 설정 시 매달 복사본은 `isConfirmed = false`(미확인)로 생성
+  - 실제 금액 확인 후 `PATCH`로 `amount` 수정 + `isConfirmed: true` 전송
+  - `estimatedAmount` 없는 항목(고정 구독료 등)은 복사 시 `isConfirmed = true`로 자동 확정
 
 ### 데이터 분석
 - 카테고리별 지출 통계 (표/차트)
@@ -66,22 +71,30 @@ model Expense {
   paymentMethod     PaymentMethod?
   merchantId        String?
   isRecurring       Boolean          @default(false)
+  estimatedAmount   Decimal?         @db.Decimal(10, 2)
+  isConfirmed       Boolean          @default(true)
+  incomeCategory    IncomeCategory?
+  refundedExpenseId String?
   shoppingHistoryId String?          @unique
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
-  group           Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  merchant        Merchant?        @relation(fields: [merchantId], references: [id], onDelete: SetNull)
-  receipts        ExpenseReceipt[]
-  shoppingHistory ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
+  group            Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant         Merchant?        @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+  refundedExpense  Expense?         @relation("ExpenseRefund", fields: [refundedExpenseId], references: [id], onDelete: SetNull)
+  refunds          Expense[]        @relation("ExpenseRefund")
+  receipts         ExpenseReceipt[]
+  shoppingHistory  ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
 
   @@index([groupId, date(sort: Desc)])
   @@index([userId, date(sort: Desc)])
   @@index([category])
+  @@index([incomeCategory])
   @@index([date(sort: Desc)])
   @@index([type])
   @@index([merchantId])
+  @@index([refundedExpenseId])
   @@map("expenses")
 }
 
@@ -195,6 +208,18 @@ enum ExpenseCategory {
   OTHER
 }
 
+enum IncomeCategory {
+  SALARY        // 월급
+  ALLOWANCE     // 용돈
+  CARRYOVER     // 이월
+  BONUS         // 상여금
+  INTEREST      // 이자 수익
+  RENTAL        // 임대 수익
+  SIDE_INCOME   // 부업
+  TRANSFER_IN   // 계좌이체 입금
+  OTHER_INCOME  // 기타 수입
+}
+
 enum PaymentMethod {
   CARD
   CASH
@@ -213,6 +238,7 @@ enum PaymentMethod {
 - [x] 소비처(Merchant) CRUD (쿠팡, 컬리 등 그룹/개인 단위 관리)
 - [x] 지출-소비처 연결 (merchantId FK, 소비처 기준 필터링)
 - [x] 고정비용 플래그 (`isRecurring`)
+- [x] 가변 고정 지출 (`estimatedAmount` + `isConfirmed`) — 예상 금액으로 복사 후 실제 금액 확인 처리
 - [x] 고정비용 자동 복사 스케줄러 (매일 00:05, 날짜 clamp + 중복 방지)
 - [x] 월별 지출 통계 (카테고리별 합계, 건수)
 - [x] 연별 지출 통계 (월별 합계, `GET /household/statistics/yearly`)
@@ -222,7 +248,9 @@ enum PaymentMethod {
 - [x] 예산 템플릿 관리 (카테고리별, 그룹/개인 공용, bulk upsert)
 - [x] 전체 예산(GroupBudget) 관리 (카테고리 구분 없는 월별 총예산)
 - [x] 전체 예산 템플릿(GroupBudgetTemplate) 관리
-- [x] 지출 필터링 (월, 카테고리, 결제수단)
+- [x] 입금 카테고리(`IncomeCategory`) — 월급, 용돈, 이월, 상여금, 이자수익, 임대수익, 부업, 계좌이체입금, 기타수입
+- [x] 반품/환불 연결 (`refundedExpenseId` FK — 원본 지출과 자기참조, `refunds` 역방향 포함)
+- [x] 지출 필터링 (월, 카테고리, 결제수단, 소비처, 입금카테고리)
 - [x] 영수증 첨부 기능 (R2 Presigned PUT URL → DB 등록 → 삭제)
 - [x] 장보기 연동: `shoppingHistoryId`로 `ShoppingHistory`와 1:1 연결
 
@@ -252,6 +280,8 @@ enum PaymentMethod {
 > - 이전 달 `isRecurring=true` 지출을 이번 달로 복사
 > - 날짜 clamp: 이번 달에 없는 날짜(31일 등)는 말일로 자동 조정
 > - 중복 방지: 동일 `(groupId, userId, amount, category, date)` 존재 시 skip
+> - `estimatedAmount` 있음 → `amount = estimatedAmount`, `isConfirmed = false` 로 복사
+> - `estimatedAmount` 없음 → `amount` 그대로, `isConfirmed = true` 로 복사
 
 ### 영수증
 | Method | Endpoint                                             | 설명                              | 권한       |
@@ -340,11 +370,12 @@ src/household/
     group-budget.dto.ts           — UpsertGroupBudgetDto, UpsertGroupBudgetTemplateDto
     confirm-receipt.dto.ts
     household-query.dto.ts        — StatisticsQueryDto, YearlyStatisticsQueryDto, BudgetQueryDto, ReceiptUploadQueryDto
-    household-response.dto.ts     — ExpenseDto, BudgetDto, BudgetTemplateDto, GroupBudgetDto, GroupBudgetTemplateDto, StatisticsDto, YearlyStatisticsDto, ExpenseReceiptDto, ReceiptUploadUrlDto, BulkBudgetResultDto, BulkBudgetTemplateResultDto
+    merchant.dto.ts               — CreateMerchantDto, UpdateMerchantDto, MerchantQueryDto
+    household-response.dto.ts     — ExpenseDto, MerchantDto, BudgetDto, BudgetTemplateDto, GroupBudgetDto, GroupBudgetTemplateDto, StatisticsDto, YearlyStatisticsDto, ExpenseReceiptDto, ReceiptUploadUrlDto, BulkBudgetResultDto, BulkBudgetTemplateResultDto
   household.controller.ts
   household.service.ts
   household.scheduler.ts
   household.module.ts
 ```
 
-**Last Updated**: 2026-05-27
+**Last Updated**: 2026-05-28 (입금 카테고리, 반품/환불 연결 추가)

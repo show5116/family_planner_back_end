@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export class StatisticsQueryDto {
+export class AssetsStatisticsQueryDto {
   @ApiProperty({ description: '그룹 ID', example: 'uuid-1234' })
   @IsString()
   groupId: string;

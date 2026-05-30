@@ -182,6 +182,8 @@ export class HouseholdController {
       req.user.userId,
       query.groupId,
       query.month,
+      query.excludeRefunds,
+      query.excludeCarryover,
     );
   }
 
@@ -197,6 +199,8 @@ export class HouseholdController {
       req.user.userId,
       query.groupId,
       query.year,
+      query.excludeRefunds,
+      query.excludeCarryover,
     );
   }
 

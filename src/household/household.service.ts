@@ -67,8 +67,10 @@ export class HouseholdService {
         isRecurring: dto.isRecurring ?? false,
         estimatedAmount: dto.estimatedAmount ?? null,
         isConfirmed: true,
+        incomeCategory: dto.incomeCategory ?? null,
+        refundedExpenseId: dto.refundedExpenseId ?? null,
       },
-      include: { receipts: true, merchant: true },
+      include: { receipts: true, merchant: true, refunds: true },
     });
 
     // 그룹 지출 등록 알림 (등록자 제외 그룹 멤버 전체)
@@ -127,9 +129,13 @@ export class HouseholdService {
       where.merchantId = query.merchantId;
     }
 
+    if (query.incomeCategory) {
+      where.incomeCategory = query.incomeCategory;
+    }
+
     return await this.prisma.expense.findMany({
       where,
-      include: { receipts: true, merchant: true },
+      include: { receipts: true, merchant: true, refunds: true },
       orderBy: { date: 'desc' },
     });
   }
@@ -140,7 +146,7 @@ export class HouseholdService {
   async findOneExpense(userId: string, id: string) {
     const expense = await this.prisma.expense.findUnique({
       where: { id },
-      include: { receipts: true, merchant: true },
+      include: { receipts: true, merchant: true, refunds: true },
     });
 
     if (!expense) {
@@ -189,8 +195,14 @@ export class HouseholdService {
           estimatedAmount: dto.estimatedAmount,
         }),
         ...(dto.isConfirmed !== undefined && { isConfirmed: dto.isConfirmed }),
+        ...(dto.incomeCategory !== undefined && {
+          incomeCategory: dto.incomeCategory,
+        }),
+        ...(dto.refundedExpenseId !== undefined && {
+          refundedExpenseId: dto.refundedExpenseId,
+        }),
       },
-      include: { receipts: true, merchant: true },
+      include: { receipts: true, merchant: true, refunds: true },
     });
   }
 
@@ -233,6 +245,8 @@ export class HouseholdService {
     userId: string,
     groupId: string | undefined,
     month: string,
+    excludeRefunds?: boolean,
+    excludeCarryover?: boolean,
   ) {
     if (groupId) {
       await this.validateGroupMember(userId, groupId);
@@ -268,9 +282,34 @@ export class HouseholdService {
 
     const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));
 
-    // 입금/지출 분리
-    const incomes = transactions.filter((t) => t.type === 'INCOME');
-    const expenses = transactions.filter((t) => t.type === 'EXPENSE');
+    // 환불 제외 시 제외할 ID 집합 계산
+    // - 환불 입금(INCOME with refundedExpenseId): 해당 입금 제외
+    // - 환불 입금이 가리키는 원래 구매 EXPENSE: 같은 달 내에 있으면 함께 제외
+    const excludedIds = new Set<string>();
+    if (excludeRefunds) {
+      for (const t of transactions) {
+        if (t.type === 'INCOME' && t.refundedExpenseId !== null) {
+          excludedIds.add(t.id);
+          excludedIds.add(t.refundedExpenseId);
+        }
+      }
+    }
+
+    // 입금/지출 분리 (옵션에 따라 환불·이월 입금+이월 지출 제외)
+    let incomes = transactions.filter((t) => t.type === 'INCOME');
+    if (excludeRefunds) {
+      incomes = incomes.filter((t) => !excludedIds.has(t.id));
+    }
+    if (excludeCarryover) {
+      incomes = incomes.filter((t) => t.incomeCategory !== 'CARRYOVER');
+    }
+    let expenses = transactions.filter((t) => t.type === 'EXPENSE');
+    if (excludeRefunds) {
+      expenses = expenses.filter((t) => !excludedIds.has(t.id));
+    }
+    if (excludeCarryover) {
+      expenses = expenses.filter((t) => t.category !== 'CARRYOVER');
+    }
 
     // 카테고리별 집계 (지출만)
     const categoryMap = new Map<string, { total: number; count: number }>();
@@ -327,6 +366,8 @@ export class HouseholdService {
     userId: string,
     groupId: string | undefined,
     year: string,
+    excludeRefunds?: boolean,
+    excludeCarryover?: boolean,
   ) {
     if (groupId) {
       await this.validateGroupMember(userId, groupId);
@@ -348,13 +389,37 @@ export class HouseholdService {
       where: expenseWhere,
     });
 
-    // 월별 집계 (입금/지출 분리)
+    // 환불 제외 시 제외할 ID 집합 계산
+    const excludedIds = new Set<string>();
+    if (excludeRefunds) {
+      for (const t of transactions) {
+        if (t.type === 'INCOME' && t.refundedExpenseId !== null) {
+          excludedIds.add(t.id);
+          excludedIds.add(t.refundedExpenseId);
+        }
+      }
+    }
+
+    // 월별 집계 (입금/지출 분리, 옵션에 따라 환불·이월 입금+원래 지출 제외)
     const monthMap = new Map<
       string,
       { income: number; expense: number; count: number }
     >();
 
     for (const tx of transactions) {
+      if (excludeRefunds && excludedIds.has(tx.id)) continue;
+      if (
+        tx.type === 'INCOME' &&
+        excludeCarryover &&
+        tx.incomeCategory === 'CARRYOVER'
+      )
+        continue;
+      if (
+        tx.type === 'EXPENSE' &&
+        excludeCarryover &&
+        tx.category === 'CARRYOVER'
+      )
+        continue;
       const d = new Date(tx.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const current = monthMap.get(key) ?? { income: 0, expense: 0, count: 0 };
@@ -387,10 +452,23 @@ export class HouseholdService {
     });
 
     const totalIncome = transactions
-      .filter((t) => t.type === 'INCOME')
+      .filter((t) => {
+        if (excludeRefunds && excludedIds.has(t.id)) return false;
+        if (
+          t.type === 'INCOME' &&
+          excludeCarryover &&
+          t.incomeCategory === 'CARRYOVER'
+        )
+          return false;
+        return t.type === 'INCOME';
+      })
       .reduce((sum, e) => sum + Number(e.amount), 0);
     const totalExpense = transactions
-      .filter((t) => t.type === 'EXPENSE')
+      .filter((t) => {
+        if (excludeRefunds && excludedIds.has(t.id)) return false;
+        if (excludeCarryover && t.category === 'CARRYOVER') return false;
+        return t.type === 'EXPENSE';
+      })
       .reduce((sum, e) => sum + Number(e.amount), 0);
 
     return {
@@ -520,7 +598,7 @@ export class HouseholdService {
 
     return await this.prisma.expense.findMany({
       where,
-      include: { receipts: true, merchant: true },
+      include: { receipts: true, merchant: true, refunds: true },
       orderBy: { date: 'desc' },
     });
   }
@@ -578,6 +656,7 @@ export class HouseholdService {
             isRecurring: true,
             estimatedAmount: e.estimatedAmount,
             isConfirmed: !isVariable,
+            incomeCategory: e.incomeCategory,
           },
         });
       }),
