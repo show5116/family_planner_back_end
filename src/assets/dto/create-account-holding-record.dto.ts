@@ -1,14 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsDateString,
   IsNumber,
   IsOptional,
   IsString,
-  Max,
   MaxLength,
   Min,
 } from 'class-validator';
 
-export class CreateAccountHoldingDto {
+export class CreateAccountHoldingRecordDto {
+  @ApiProperty({
+    description: '기록 날짜 (AccountRecord와 동일한 날짜여야 함)',
+    example: '2026-05-01',
+  })
+  @IsDateString()
+  recordDate: string;
+
   @ApiProperty({ description: '종목/자산명', example: '나스닥 ETF' })
   @IsString()
   @MaxLength(100)
@@ -25,13 +32,11 @@ export class CreateAccountHoldingDto {
   ticker?: string;
 
   @ApiProperty({
-    description: '비율 (%, 0.01~100)',
-    example: 40.5,
-    minimum: 0.01,
-    maximum: 100,
+    description: '해당 종목 금액',
+    example: 2000000,
+    minimum: 0,
   })
   @IsNumber()
-  @Min(0.01)
-  @Max(100)
-  ratio: number;
+  @Min(0)
+  amount: number;
 }

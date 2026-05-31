@@ -3,12 +3,11 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  Max,
   MaxLength,
   Min,
 } from 'class-validator';
 
-export class UpdateAccountHoldingDto {
+export class UpdateAccountHoldingRecordDto {
   @ApiProperty({
     description: '종목/자산명',
     example: '나스닥 ETF',
@@ -31,13 +30,13 @@ export class UpdateAccountHoldingDto {
   ticker?: string;
 
   @ApiProperty({
-    description: '비율 (%, 0.01~100)',
-    example: 40.5,
+    description: '해당 종목 금액',
+    example: 2000000,
+    minimum: 0,
     required: false,
   })
   @IsOptional()
   @IsNumber()
-  @Min(0.01)
-  @Max(100)
-  ratio?: number;
+  @Min(0)
+  amount?: number;
 }

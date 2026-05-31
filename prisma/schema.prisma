@@ -876,9 +876,9 @@ model Account {
 
   group         Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  records       AccountRecord[]
-  withdrawals   AccountWithdrawal[]
-  holdings      AccountHolding[]
+  records         AccountRecord[]
+  withdrawals     AccountWithdrawal[]
+  holdingRecords  AccountHoldingRecord[]
 
   @@index([groupId, sortOrder])
   @@index([userId])
@@ -927,20 +927,22 @@ model AccountWithdrawal {
   @@map("account_withdrawals")
 }
 
-model AccountHolding {
-  id        String   @id @default(uuid())
-  accountId String
-  name      String   @db.VarChar(100)
-  ticker    String?  @db.VarChar(20)
-  ratio     Decimal  @db.Decimal(5, 2)   // 비율 (%), 합계 100 이하
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model AccountHoldingRecord {
+  id         String   @id @default(uuid())
+  accountId  String
+  recordDate DateTime @db.Date
+  name       String   @db.VarChar(100)
+  ticker     String?  @db.VarChar(20)
+  amount     Decimal  @db.Decimal(15, 2)
+  ratio      Decimal  @db.Decimal(5, 2)   // amount / 해당 날짜 AccountRecord.balance × 100
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@index([accountId, sortOrder])
-  @@map("account_holdings")
+  @@unique([accountId, recordDate, name])
+  @@index([accountId, recordDate(sort: Desc)])
+  @@map("account_holding_records")
 }
 
 // ============================================================
