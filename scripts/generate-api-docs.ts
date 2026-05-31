@@ -53,11 +53,11 @@ class ApiDocGenerator {
       ts.sys.fileExists,
       'tsconfig.json',
     );
-    const configFile = ts.readConfigFile(configPath!, ts.sys.readFile);
+    const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
     const compilerOptions = ts.parseJsonConfigFileContent(
       configFile.config,
       ts.sys,
-      path.dirname(configPath!),
+      path.dirname(configPath),
     );
 
     this.program = ts.createProgram(
@@ -168,7 +168,7 @@ class ApiDocGenerator {
   private parseDtoFile(dtoName: string): DtoInfo | null {
     // 캐시 확인
     if (this.dtoCache.has(dtoName)) {
-      return this.dtoCache.get(dtoName)!;
+      return this.dtoCache.get(dtoName);
     }
 
     // DTO 파일 찾기
@@ -380,6 +380,8 @@ class ApiDocGenerator {
                 'ApiResponse',
                 'ApiSuccess',
                 'ApiCreated',
+                'ApiOkResponse',
+                'ApiCreatedResponse',
                 'ApiNotFound',
                 'ApiForbidden',
               ].includes(decoratorName)
@@ -388,6 +390,7 @@ class ApiDocGenerator {
               let dtoName: string | undefined;
               let status: number;
               let desc: string | undefined;
+              const extraDtoNames: string[] = [];
 
               // 기본 status 설정
               status = this.getDefaultStatus(decoratorName);
@@ -411,7 +414,7 @@ class ApiDocGenerator {
                 else if (ts.isStringLiteral(firstArg)) {
                   desc = firstArg.text;
                 }
-                // 첫 번째 인자가 객체인 경우 (ApiResponse 스타일)
+                // 첫 번째 인자가 객체인 경우 (ApiResponse / ApiOkResponse 스타일)
                 else if (ts.isObjectLiteralExpression(firstArg)) {
                   const statusValue = this.extractDecoratorValue(
                     modifier,
@@ -425,13 +428,82 @@ class ApiDocGenerator {
                     modifier,
                     'type',
                   );
-                  if (typeValue) {
+                  if (typeValue && typeValue !== 'Object') {
                     dtoName = typeValue;
+                  }
+
+                  // schema.oneOf 처리: { schema: { oneOf: [...] } }
+                  const schemaProp = firstArg.properties.find(
+                    (p) =>
+                      ts.isPropertyAssignment(p) &&
+                      ts.isIdentifier(p.name) &&
+                      p.name.text === 'schema',
+                  );
+                  if (schemaProp && ts.isPropertyAssignment(schemaProp)) {
+                    const schemaObj = schemaProp.initializer;
+                    if (ts.isObjectLiteralExpression(schemaObj)) {
+                      const oneOfProp = schemaObj.properties.find(
+                        (p) =>
+                          ts.isPropertyAssignment(p) &&
+                          ts.isIdentifier(p.name) &&
+                          p.name.text === 'items',
+                      );
+                      if (oneOfProp && ts.isPropertyAssignment(oneOfProp)) {
+                        const itemsObj = oneOfProp.initializer;
+                        if (ts.isObjectLiteralExpression(itemsObj)) {
+                          const innerOneOf = itemsObj.properties.find(
+                            (p) =>
+                              ts.isPropertyAssignment(p) &&
+                              ts.isIdentifier(p.name) &&
+                              p.name.text === 'oneOf',
+                          );
+                          if (
+                            innerOneOf &&
+                            ts.isPropertyAssignment(innerOneOf)
+                          ) {
+                            const arr = innerOneOf.initializer;
+                            if (ts.isArrayLiteralExpression(arr)) {
+                              arr.elements.forEach((el) => {
+                                if (ts.isObjectLiteralExpression(el)) {
+                                  const refProp = el.properties.find(
+                                    (p) =>
+                                      ts.isPropertyAssignment(p) &&
+                                      ts.isIdentifier(p.name) &&
+                                      p.name.text === '$ref',
+                                  );
+                                  if (
+                                    refProp &&
+                                    ts.isPropertyAssignment(refProp)
+                                  ) {
+                                    const refVal = refProp.initializer;
+                                    if (ts.isStringLiteral(refVal)) {
+                                      const parts = refVal.text.split('/');
+                                      const refDtoName =
+                                        parts[parts.length - 1];
+                                      extraDtoNames.push(refDtoName);
+                                    }
+                                  }
+                                }
+                              });
+                            }
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
 
-              if (dtoName || desc) {
+              if (extraDtoNames.length > 0) {
+                // oneOf 케이스: 각 DTO를 별도 응답으로 추가
+                extraDtoNames.forEach((name) => {
+                  responses.push({
+                    status,
+                    description: desc || '',
+                    dtoName: name,
+                  });
+                });
+              } else if (dtoName || desc) {
                 responses.push({
                   status,
                   description: desc || '',

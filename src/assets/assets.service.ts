@@ -5,7 +5,7 @@
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountType } from '@prisma/client';
+import { AccountType, WithdrawalType } from '@prisma/client';
 
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -374,7 +374,8 @@ export class AssetsService {
   }
 
   /**
-   * 자산 기록 목록 조회 (그룹 멤버)
+   * 자산 기록 + 출금 기록 통합 목록 조회 (그룹 멤버)
+   * 날짜 내림차순, 같은 날짜면 출금이 스냅샷보다 먼저
    */
   async findAccountRecords(userId: string, accountId: string) {
     const account = await this.prisma.account.findUnique({
@@ -387,12 +388,37 @@ export class AssetsService {
 
     await this.validateGroupMember(userId, account.groupId);
 
-    const records = await this.prisma.accountRecord.findMany({
-      where: { accountId },
-      orderBy: { recordDate: 'desc' },
-    });
+    const [records, withdrawals] = await Promise.all([
+      this.prisma.accountRecord.findMany({
+        where: { accountId },
+        orderBy: { recordDate: 'desc' },
+      }),
+      this.prisma.accountWithdrawal.findMany({
+        where: { accountId },
+        orderBy: { withdrawalDate: 'desc' },
+      }),
+    ]);
 
-    return records.map((r) => this.formatRecord(r));
+    const snapshots = records.map((r) => ({
+      entryType: 'SNAPSHOT' as const,
+      date: r.recordDate,
+      ...this.formatRecord(r),
+    }));
+
+    const withdrawalItems = withdrawals.map((w) => ({
+      entryType: 'WITHDRAWAL' as const,
+      date: w.withdrawalDate,
+      ...this.formatWithdrawal(w),
+    }));
+
+    return [...snapshots, ...withdrawalItems].sort((a, b) => {
+      const diff = b.date.getTime() - a.date.getTime();
+      if (diff !== 0) return diff;
+      // 같은 날짜면 출금이 스냅샷보다 먼저
+      if (a.entryType === 'WITHDRAWAL' && b.entryType === 'SNAPSHOT') return -1;
+      if (a.entryType === 'SNAPSHOT' && b.entryType === 'WITHDRAWAL') return 1;
+      return 0;
+    });
   }
 
   /**
@@ -1164,9 +1190,11 @@ export class AssetsService {
       const startBase =
         rangeStart ??
         new Date(Math.min(...records.map((r) => r.recordDate.getTime())));
-      // 끝: records 최댓값 (없으면 rangeStart 달)
-      const endBase =
-        records.length > 0
+      // 끝: rangeStart가 있으면(연도 조회) 현재 달까지, 없으면 records 최댓값
+      const now = new Date();
+      const endBase = rangeStart
+        ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+        : records.length > 0
           ? new Date(Math.max(...records.map((r) => r.recordDate.getTime())))
           : startBase;
 
@@ -1225,6 +1253,7 @@ export class AssetsService {
         accountId,
         withdrawalDate,
         amount: dto.amount,
+        type: dto.type,
         note: dto.note,
       },
     });
@@ -1237,11 +1266,15 @@ export class AssetsService {
 
     await Promise.all(
       affectedRecords.map((record) => {
-        const newPrincipal = Math.max(0, Number(record.principal) - dto.amount);
-        const newProfit = Number(record.balance) - newPrincipal;
+        const { principal, profit } = this.applyWithdrawal(
+          Number(record.principal),
+          Number(record.profit),
+          dto.amount,
+          dto.type,
+        );
         return this.prisma.accountRecord.update({
           where: { id: record.id },
-          data: { principal: newPrincipal, profit: newProfit },
+          data: { principal, profit },
         });
       }),
     );
@@ -1321,7 +1354,7 @@ export class AssetsService {
 
     await this.prisma.accountWithdrawal.delete({ where: { id: withdrawalId } });
 
-    // 출금일 이후 AccountRecord의 principal 원복
+    // 출금일 이후 AccountRecord의 principal/profit 원복
     const affectedRecords = await this.prisma.accountRecord.findMany({
       where: {
         accountId,
@@ -1332,9 +1365,13 @@ export class AssetsService {
 
     await Promise.all(
       affectedRecords.map((record) => {
-        const restoredPrincipal =
-          Number(record.principal) + Number(withdrawal.amount);
-        const restoredProfit = Number(record.balance) - restoredPrincipal;
+        const { principal: restoredPrincipal, profit: restoredProfit } =
+          this.reverseWithdrawal(
+            Number(record.principal),
+            Number(record.profit),
+            Number(withdrawal.amount),
+            withdrawal.type,
+          );
         return this.prisma.accountRecord.update({
           where: { id: record.id },
           data: {
@@ -1352,11 +1389,64 @@ export class AssetsService {
     };
   }
 
+  /**
+   * 출금 적용: type에 따라 principal/profit에서 amount 차감
+   * PRINCIPAL: 원금 먼저 차감 → 부족하면 수익에서 차감
+   * PROFIT: 수익 먼저 차감 → 부족하면 원금에서 차감
+   */
+  private applyWithdrawal(
+    principal: number,
+    profit: number,
+    amount: number,
+    type: WithdrawalType,
+  ): { principal: number; profit: number } {
+    if (type === WithdrawalType.PRINCIPAL) {
+      const deductFromPrincipal = Math.min(principal, amount);
+      const remainder = amount - deductFromPrincipal;
+      return {
+        principal: principal - deductFromPrincipal,
+        profit: Math.max(0, profit - remainder),
+      };
+    } else {
+      const deductFromProfit = Math.min(profit, amount);
+      const remainder = amount - deductFromProfit;
+      return {
+        principal: Math.max(0, principal - remainder),
+        profit: profit - deductFromProfit,
+      };
+    }
+  }
+
+  /**
+   * 출금 원복: balance는 그대로이므로, principal/profit만 역산
+   * PRINCIPAL: 원금 복원 → profit = balance - principal
+   * PROFIT: 수익 복원 → principal = balance - profit
+   */
+  private reverseWithdrawal(
+    principal: number,
+    profit: number,
+    amount: number,
+    type: WithdrawalType,
+  ): { principal: number; profit: number } {
+    const balance = principal + profit;
+    if (type === WithdrawalType.PRINCIPAL) {
+      const restoredPrincipal = principal + amount;
+      return {
+        principal: restoredPrincipal,
+        profit: balance - restoredPrincipal,
+      };
+    } else {
+      const restoredProfit = profit + amount;
+      return { principal: balance - restoredProfit, profit: restoredProfit };
+    }
+  }
+
   private formatWithdrawal(withdrawal: {
     id: string;
     accountId: string;
     withdrawalDate: Date;
     amount: unknown;
+    type: WithdrawalType;
     note: string | null;
     createdAt: Date;
   }) {
@@ -1365,6 +1455,7 @@ export class AssetsService {
       accountId: withdrawal.accountId,
       withdrawalDate: withdrawal.withdrawalDate,
       amount: Number(withdrawal.amount).toFixed(2),
+      type: withdrawal.type,
       note: withdrawal.note,
       createdAt: withdrawal.createdAt,
     };

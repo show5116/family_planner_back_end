@@ -913,15 +913,21 @@ model AccountRecord {
   @@map("account_records")
 }
 
-model AccountWithdrawal {
-  id             String   @id @default(uuid())
-  accountId      String
-  withdrawalDate DateTime @db.Date
-  amount         Decimal  @db.Decimal(15, 2)
-  note           String?  @db.VarChar(200)
-  createdAt      DateTime @default(now())
+enum WithdrawalType {
+  PRINCIPAL  // 원금 인출
+  PROFIT     // 수익 인출
+}
 
-  account        Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+model AccountWithdrawal {
+  id             String         @id @default(uuid())
+  accountId      String
+  withdrawalDate DateTime       @db.Date
+  amount         Decimal        @db.Decimal(15, 2)
+  type           WithdrawalType @default(PRINCIPAL)
+  note           String?        @db.VarChar(200)
+  createdAt      DateTime       @default(now())
+
+  account        Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId, withdrawalDate(sort: Desc)])
   @@map("account_withdrawals")

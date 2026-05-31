@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AccountType } from '@prisma/client';
+import { AccountType, WithdrawalType } from '@prisma/client';
 
 export class AccountRecordDto {
   @ApiProperty({ description: '기록 ID', example: 'uuid-1234' })
@@ -143,6 +143,13 @@ export class AccountWithdrawalDto {
   @ApiProperty({ description: '출금 금액', example: '500000.00' })
   amount: string;
 
+  @ApiProperty({
+    description: '출금 유형 (PRINCIPAL: 원금 인출, PROFIT: 수익 인출)',
+    enum: WithdrawalType,
+    example: WithdrawalType.PRINCIPAL,
+  })
+  type: WithdrawalType;
+
   @ApiProperty({ description: '메모', example: '생활비 출금', nullable: true })
   note: string | null;
 
@@ -197,6 +204,89 @@ export class HoldingStatDto {
 
   @ApiProperty({ description: '전체 자산 대비 비율 (%)', example: '4.00' })
   globalRatio: string;
+}
+
+export class AccountRecordSnapshotDto {
+  @ApiProperty({
+    description: '항목 유형',
+    enum: ['SNAPSHOT'],
+    example: 'SNAPSHOT',
+  })
+  entryType: 'SNAPSHOT';
+
+  @ApiProperty({ description: '날짜', example: '2026-05-01' })
+  date: Date;
+
+  @ApiProperty({ description: '기록 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '계좌 ID', example: 'uuid-5678' })
+  accountId: string;
+
+  @ApiProperty({ description: '기록 날짜', example: '2026-03-01' })
+  recordDate: Date;
+
+  @ApiProperty({ description: '잔액', example: '5000000.00' })
+  balance: string;
+
+  @ApiProperty({ description: '원금', example: '4800000.00' })
+  principal: string;
+
+  @ApiProperty({ description: '수익금', example: '200000.00' })
+  profit: string;
+
+  @ApiProperty({ description: '수익률 (%)', example: '4.17' })
+  profitRate: string;
+
+  @ApiProperty({
+    description: '보유 금 무게 (g) — GOLD 타입 기록 전용',
+    example: '37.5000',
+    nullable: true,
+  })
+  gramWeight: string | null;
+
+  @ApiProperty({ description: '메모', example: '이자 입금', nullable: true })
+  note: string | null;
+
+  @ApiProperty({ description: '생성일시' })
+  createdAt: Date;
+}
+
+export class AccountRecordWithdrawalDto {
+  @ApiProperty({
+    description: '항목 유형',
+    enum: ['WITHDRAWAL'],
+    example: 'WITHDRAWAL',
+  })
+  entryType: 'WITHDRAWAL';
+
+  @ApiProperty({ description: '날짜', example: '2026-04-27' })
+  date: Date;
+
+  @ApiProperty({ description: '출금 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '계좌 ID', example: 'uuid-5678' })
+  accountId: string;
+
+  @ApiProperty({ description: '출금 날짜', example: '2026-04-27' })
+  withdrawalDate: Date;
+
+  @ApiProperty({ description: '출금 금액', example: '500000.00' })
+  amount: string;
+
+  @ApiProperty({
+    description: '출금 유형 (PRINCIPAL: 원금 인출, PROFIT: 수익 인출)',
+    enum: WithdrawalType,
+    example: WithdrawalType.PRINCIPAL,
+  })
+  type: WithdrawalType;
+
+  @ApiProperty({ description: '메모', example: '생활비 출금', nullable: true })
+  note: string | null;
+
+  @ApiProperty({ description: '생성일시' })
+  createdAt: Date;
 }
 
 export class AccountStatisticsDto {

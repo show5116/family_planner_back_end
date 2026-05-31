@@ -29,6 +29,8 @@ import {
   AccountDto,
   AccountHoldingRecordDto,
   AccountRecordDto,
+  AccountRecordSnapshotDto,
+  AccountRecordWithdrawalDto,
   AccountStatisticsDto,
   AccountWithdrawalDto,
   TrendItemDto,
@@ -42,6 +44,7 @@ import {
   ApiNotFound,
   ApiSuccess,
 } from '@/common/decorators/api-responses.decorator';
+import { ApiOkResponse } from '@nestjs/swagger';
 
 /**
  * 자산 관리 컨트롤러
@@ -127,8 +130,27 @@ export class AssetsController {
   }
 
   @Get('accounts/:id/records')
-  @ApiOperation({ summary: '자산 기록 목록 조회' })
-  @ApiSuccess(AccountRecordDto, '자산 기록 목록 조회 성공', { isArray: true })
+  @ApiOperation({
+    summary: '자산 기록 목록 조회 (스냅샷 + 출금 통합)',
+    description:
+      'entryType=SNAPSHOT: 잔액 스냅샷, entryType=WITHDRAWAL: 출금 기록. 날짜 내림차순 정렬.',
+  })
+  @ApiOkResponse({
+    description: '자산 기록 목록 조회 성공',
+    schema: {
+      oneOf: [
+        { $ref: '#/components/schemas/AccountRecordSnapshotDto' },
+        { $ref: '#/components/schemas/AccountRecordWithdrawalDto' },
+      ],
+      type: 'array',
+      items: {
+        oneOf: [
+          { $ref: '#/components/schemas/AccountRecordSnapshotDto' },
+          { $ref: '#/components/schemas/AccountRecordWithdrawalDto' },
+        ],
+      },
+    },
+  })
   @ApiNotFound('계좌를 찾을 수 없습니다')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
   findAccountRecords(@Request() req, @Param('id') id: string) {
@@ -167,17 +189,6 @@ export class AssetsController {
     @Body() dto: CreateAccountWithdrawalDto,
   ) {
     return this.assetsService.createWithdrawal(req.user.userId, id, dto);
-  }
-
-  @Get('accounts/:id/withdrawals')
-  @ApiOperation({ summary: '출금 기록 목록 조회' })
-  @ApiSuccess(AccountWithdrawalDto, '출금 기록 목록 조회 성공', {
-    isArray: true,
-  })
-  @ApiNotFound('계좌를 찾을 수 없습니다')
-  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  findWithdrawals(@Request() req, @Param('id') id: string) {
-    return this.assetsService.findWithdrawals(req.user.userId, id);
   }
 
   @Delete('accounts/:id/withdrawals/:withdrawalId')
