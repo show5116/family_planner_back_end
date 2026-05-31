@@ -8,6 +8,7 @@ import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 
 const LOCK_KEY = 'lock:assets:gold-monthly';
+const LOCK_KEY_REMINDER = 'lock:assets:record-reminder';
 const LOCK_TTL = 5 * 60; // 5분
 
 @Injectable()
@@ -148,5 +149,62 @@ export class GoldAssetScheduler {
     }
 
     this.logger.log(`월별 금 자산 업데이트 완료 — ${updated}개 계좌`);
+  }
+
+  /**
+   * 매달 1일 09:00 KST (= UTC 00:00) 실행
+   * 계좌가 있는 그룹의 전체 멤버에게 자산 기록 입력 독려 알림 발송
+   */
+  @Cron('0 0 1 * *')
+  async sendMonthlyRecordReminder() {
+    if (!isSchedulerEnabled('')) return;
+
+    const lockValue = Date.now().toString();
+    const acquired = await this.redis.acquireLock(
+      LOCK_KEY_REMINDER,
+      LOCK_TTL,
+      lockValue,
+    );
+    if (!acquired) return;
+
+    try {
+      await this.runMonthlyRecordReminder();
+    } finally {
+      await this.redis.releaseLock(LOCK_KEY_REMINDER, lockValue);
+    }
+  }
+
+  async runMonthlyRecordReminder() {
+    // 계좌가 존재하는 그룹 ID 목록 조회
+    const groupsWithAccounts = await this.prisma.account.groupBy({
+      by: ['groupId'],
+    });
+
+    if (groupsWithAccounts.length === 0) return;
+
+    const groupIds = groupsWithAccounts.map((g) => g.groupId);
+
+    // 그룹별 전체 멤버 조회
+    const members = await this.prisma.groupMember.findMany({
+      where: { groupId: { in: groupIds } },
+      select: { userId: true, groupId: true },
+    });
+
+    let sent = 0;
+    for (const member of members) {
+      const lang = await this.getUserLang(member.userId);
+      await this.notificationService.sendNotification({
+        userId: member.userId,
+        category: NotificationCategory.ASSET,
+        title: this.i18n.t('assets.notification.record_reminder_title', {
+          lang,
+        }),
+        body: this.i18n.t('assets.notification.record_reminder_body', { lang }),
+        data: { groupId: member.groupId },
+      });
+      sent++;
+    }
+
+    this.logger.log(`월별 자산 기록 독려 알림 발송 완료 — ${sent}명`);
   }
 }

@@ -34,6 +34,8 @@
     "balance_updated_title": "資産残高を更新しました",
     "balance_updated_body": "「{name}」の残高が{balance}円として記録されました",
     "withdrawal_title": "出金記録を追加しました",
-    "withdrawal_body": "「{name}」から{amount}円が出金されました"
+    "withdrawal_body": "「{name}」から{amount}円が出金されました",
+    "record_reminder_title": "今月の資産記録を入力してください",
+    "record_reminder_body": "グループの資産を最新の状態に保つため、今月の残高を記録してください"
   }
 }

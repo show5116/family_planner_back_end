@@ -34,6 +34,8 @@
     "balance_updated_title": "Asset balance updated",
     "balance_updated_body": "\"{name}\" balance recorded as {balance}",
     "withdrawal_title": "Withdrawal recorded",
-    "withdrawal_body": "{amount} withdrawn from \"{name}\""
+    "withdrawal_body": "{amount} withdrawn from \"{name}\"",
+    "record_reminder_title": "Please enter this month's asset records",
+    "record_reminder_body": "Keep your group's assets up to date by recording this month's balances"
   }
 }
