@@ -16,6 +16,7 @@
   "notification": {
     "alert_title": "Today's Weather Alert",
     "precipitation_alert": "{desc} forecast today {icon} Don't forget your umbrella!",
+    "precipitation_alert_with_time": "{desc} forecast today {icon} ({timeRange}) Don't forget your umbrella!",
     "temp_change_alert": "Temperature changed {sign}{diff}°C from yesterday 🌡️ ({label} {temp}°C)",
     "temp_label_max": "High",
     "temp_label_min": "Low",

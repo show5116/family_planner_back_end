@@ -5,7 +5,7 @@
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountType } from '@prisma/client';
+import { AccountType, WithdrawalType } from '@prisma/client';
 
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -20,9 +20,8 @@ import {
 import { CreateAccountWithdrawalDto } from './dto/create-account-withdrawal.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
 import { ReorderAccountsDto } from './dto/reorder-accounts.dto';
-import { CreateAccountHoldingDto } from './dto/create-account-holding.dto';
-import { UpdateAccountHoldingDto } from './dto/update-account-holding.dto';
-import { ReorderAccountHoldingsDto } from './dto/reorder-account-holdings.dto';
+import { CreateAccountHoldingRecordDto } from './dto/create-account-holding-record.dto';
+import { UpdateAccountHoldingRecordDto } from './dto/update-account-holding-record.dto';
 import {
   AccountTrendQueryDto,
   TrendPeriod,
@@ -89,6 +88,7 @@ export class AssetsService {
         accountNumber: dto.accountNumber,
         institution: dto.institution ?? null,
         type: dto.type,
+        recordReminderDay: dto.recordReminderDay ?? null,
       },
     });
 
@@ -145,10 +145,17 @@ export class AssetsService {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    return accounts.map((account) => {
-      const latestRecord = account.records[0] ?? null;
-      return this.formatAccount(account, latestRecord);
-    });
+    return Promise.all(
+      accounts.map(async (account) => {
+        const latest = account.records[0] ?? null;
+        if (!latest) return this.formatAccount(account, null);
+        const adjusted = await this.applyPostSnapshotWithdrawals(
+          account.id,
+          latest,
+        );
+        return this.formatAccount(account, adjusted);
+      }),
+    );
   }
 
   /**
@@ -171,8 +178,13 @@ export class AssetsService {
 
     await this.validateGroupMember(userId, account.groupId);
 
-    const latestRecord = account.records[0] ?? null;
-    return this.formatAccount(account, latestRecord);
+    const latest = account.records[0] ?? null;
+    if (!latest) return this.formatAccount(account, null);
+    const adjusted = await this.applyPostSnapshotWithdrawals(
+      account.id,
+      latest,
+    );
+    return this.formatAccount(account, adjusted);
   }
 
   /**
@@ -198,6 +210,9 @@ export class AssetsService {
         }),
         ...(dto.institution !== undefined && { institution: dto.institution }),
         ...(dto.type !== undefined && { type: dto.type }),
+        ...('recordReminderDay' in dto && {
+          recordReminderDay: dto.recordReminderDay ?? null,
+        }),
       },
       include: {
         records: {
@@ -375,7 +390,8 @@ export class AssetsService {
   }
 
   /**
-   * 자산 기록 목록 조회 (그룹 멤버)
+   * 자산 기록 + 출금 기록 통합 목록 조회 (그룹 멤버)
+   * 날짜 내림차순, 같은 날짜면 출금이 스냅샷보다 먼저
    */
   async findAccountRecords(userId: string, accountId: string) {
     const account = await this.prisma.account.findUnique({
@@ -388,12 +404,75 @@ export class AssetsService {
 
     await this.validateGroupMember(userId, account.groupId);
 
-    const records = await this.prisma.accountRecord.findMany({
-      where: { accountId },
-      orderBy: { recordDate: 'desc' },
+    const [records, withdrawals] = await Promise.all([
+      this.prisma.accountRecord.findMany({
+        where: { accountId },
+        orderBy: [{ recordDate: 'desc' }, { createdAt: 'desc' }],
+      }),
+      this.prisma.accountWithdrawal.findMany({
+        where: { accountId },
+        orderBy: [{ withdrawalDate: 'desc' }, { createdAt: 'desc' }],
+      }),
+    ]);
+
+    const snapshots = records.map((r) => ({
+      entryType: 'SNAPSHOT' as const,
+      date: r.recordDate,
+      createdAt: r.createdAt,
+      ...this.formatRecord(r),
+    }));
+
+    // 출금 기록에 잔액/원금/수익금 추가
+    // 출금 createdAt 기준으로 직전에 생성된 스냅샷에 applyWithdrawal 적용
+    const recordsByCreatedAt = [...records].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+    const withdrawalItems = withdrawals.map((w) => {
+      const prevSnapshot = [...recordsByCreatedAt]
+        .reverse()
+        .find((r) => r.createdAt < w.createdAt);
+
+      let balanceAfter: string | null = null;
+      let principalAfter: string | null = null;
+      let profitAfter: string | null = null;
+      let profitRate: string | null = null;
+
+      if (prevSnapshot) {
+        const { principal, profit } = this.applyWithdrawal(
+          Number(prevSnapshot.principal),
+          Number(prevSnapshot.profit),
+          Number(w.amount),
+          w.type,
+        );
+        const balance = Math.max(
+          0,
+          Number(prevSnapshot.balance) - Number(w.amount),
+        );
+        balanceAfter = balance.toFixed(2);
+        principalAfter = principal.toFixed(2);
+        profitAfter = profit.toFixed(2);
+        profitRate =
+          principal > 0 ? ((profit / principal) * 100).toFixed(2) : '0.00';
+      }
+
+      return {
+        entryType: 'WITHDRAWAL' as const,
+        date: w.withdrawalDate,
+        createdAt: w.createdAt,
+        ...this.formatWithdrawal(w),
+        balanceAfter,
+        principalAfter,
+        profitAfter,
+        profitRate,
+      };
     });
 
-    return records.map((r) => this.formatRecord(r));
+    return [...snapshots, ...withdrawalItems].sort((a, b) => {
+      const dateDiff = b.date.getTime() - a.date.getTime();
+      if (dateDiff !== 0) return dateDiff;
+      // 같은 날짜면 createdAt 내림차순 (나중에 등록한 것이 위)
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
   }
 
   /**
@@ -436,18 +515,26 @@ export class AssetsService {
   /**
    * 그룹 자산 통계 조회
    */
-  async getStatistics(userId: string, groupId: string) {
+  async getStatistics(userId: string, groupId: string, accountIds?: string[]) {
     await this.validateGroupMember(userId, groupId);
 
+    const accountWhere: { groupId: string; id?: { in: string[] } } = {
+      groupId,
+    };
+    if (accountIds && accountIds.length > 0) {
+      const validAccounts = await this.prisma.account.findMany({
+        where: { id: { in: accountIds }, groupId },
+        select: { id: true },
+      });
+      accountWhere.id = { in: validAccounts.map((a) => a.id) };
+    }
+
     const accounts = await this.prisma.account.findMany({
-      where: { groupId },
+      where: accountWhere,
       include: {
         records: {
           orderBy: { recordDate: 'desc' },
           take: 1,
-        },
-        holdings: {
-          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
         },
       },
     });
@@ -457,19 +544,40 @@ export class AssetsService {
     let totalProfit = 0;
     const typeMap = new Map<AccountType, { balance: number; count: number }>();
 
-    // 종목별 집계: name+ticker 기준으로 추정 금액 합산
-    const holdingMap = new Map<
-      string,
-      { name: string; ticker: string | null; estimatedAmount: number }
-    >();
-
     for (const account of accounts) {
       const latest = account.records[0];
       if (!latest) continue;
 
-      const balance = Number(latest.balance);
-      const principal = Number(latest.principal);
-      const profit = Number(latest.profit);
+      // 최신 스냅샷 이후 출금을 순서대로 적용 (balance, principal, profit 보정)
+      const postSnapshotWithdrawals =
+        await this.prisma.accountWithdrawal.findMany({
+          where: {
+            accountId: account.id,
+            OR: [
+              { withdrawalDate: { gt: latest.recordDate } },
+              {
+                withdrawalDate: latest.recordDate,
+                createdAt: { gt: latest.createdAt },
+              },
+            ],
+          },
+          orderBy: [{ withdrawalDate: 'asc' }, { createdAt: 'asc' }],
+          select: { amount: true, type: true },
+        });
+
+      let balance = Number(latest.balance);
+      let principal = Number(latest.principal);
+      let profit = Number(latest.profit);
+
+      for (const w of postSnapshotWithdrawals) {
+        balance = Math.max(0, balance - Number(w.amount));
+        ({ principal, profit } = this.applyWithdrawal(
+          principal,
+          profit,
+          Number(w.amount),
+          w.type,
+        ));
+      }
 
       totalBalance += balance;
       totalPrincipal += principal;
@@ -480,20 +588,6 @@ export class AssetsService {
         balance: existing.balance + balance,
         count: existing.count + 1,
       });
-
-      for (const h of account.holdings) {
-        const estimated = (balance * Number(h.ratio)) / 100;
-        const key = `${h.name}||${h.ticker ?? ''}`;
-        const prev = holdingMap.get(key) ?? {
-          name: h.name,
-          ticker: h.ticker,
-          estimatedAmount: 0,
-        };
-        holdingMap.set(key, {
-          ...prev,
-          estimatedAmount: prev.estimatedAmount + estimated,
-        });
-      }
     }
 
     const profitRate =
@@ -505,15 +599,59 @@ export class AssetsService {
       count: stat.count,
     }));
 
-    const byHolding = Array.from(holdingMap.values()).map((h) => ({
-      name: h.name,
-      ticker: h.ticker,
-      estimatedAmount: h.estimatedAmount.toFixed(2),
-      globalRatio:
-        totalBalance > 0
-          ? ((h.estimatedAmount / totalBalance) * 100).toFixed(2)
-          : '0.00',
-    }));
+    // 종목별 집계: 각 계좌+종목명별 가장 최신 기록 금액 합산
+    const filteredAccountIds = accounts.map((a) => a.id);
+    const holdingMap = new Map<
+      string,
+      { name: string; ticker: string | null; estimatedAmount: number }
+    >();
+
+    if (filteredAccountIds.length > 0) {
+      // 계좌+종목명별 최신 recordDate 조회
+      const latestDates = await this.prisma.accountHoldingRecord.groupBy({
+        by: ['accountId', 'name'],
+        where: { accountId: { in: filteredAccountIds } },
+        _max: { recordDate: true },
+      });
+
+      // 최신 날짜 기록만 조회
+      for (const { accountId, name, _max } of latestDates) {
+        if (!_max.recordDate) continue;
+        const record = await this.prisma.accountHoldingRecord.findUnique({
+          where: {
+            accountId_recordDate_name: {
+              accountId,
+              recordDate: _max.recordDate,
+              name,
+            },
+          },
+          select: { name: true, ticker: true, amount: true },
+        });
+        if (!record) continue;
+        const key = `${record.name}||${record.ticker ?? ''}`;
+        const prev = holdingMap.get(key) ?? {
+          name: record.name,
+          ticker: record.ticker,
+          estimatedAmount: 0,
+        };
+        holdingMap.set(key, {
+          ...prev,
+          estimatedAmount: prev.estimatedAmount + Number(record.amount),
+        });
+      }
+    }
+
+    const byHolding = Array.from(holdingMap.values())
+      .map((h) => ({
+        name: h.name,
+        ticker: h.ticker,
+        estimatedAmount: h.estimatedAmount.toFixed(2),
+        globalRatio:
+          totalBalance > 0
+            ? ((h.estimatedAmount / totalBalance) * 100).toFixed(2)
+            : '0.00',
+      }))
+      .sort((a, b) => Number(b.estimatedAmount) - Number(a.estimatedAmount));
 
     // 자산 연동된 적립금 집계
     const savingsGoalsRaw = await this.prisma.savingsGoal.findMany({
@@ -531,11 +669,17 @@ export class AssetsService {
       currentAmount: Number(g.currentAmount).toFixed(2),
     }));
 
+    // 저금통은 원금/수익 구분 없이 전액을 totalBalance, totalPrincipal에 합산
+    const grandTotalBalance = totalBalance + savingsTotal;
+    const grandTotalPrincipal = totalPrincipal + savingsTotal;
+    const grandProfitRate =
+      grandTotalPrincipal > 0 ? (totalProfit / grandTotalPrincipal) * 100 : 0;
+
     return {
-      totalBalance: totalBalance.toFixed(2),
-      totalPrincipal: totalPrincipal.toFixed(2),
+      totalBalance: grandTotalBalance.toFixed(2),
+      totalPrincipal: grandTotalPrincipal.toFixed(2),
       totalProfit: totalProfit.toFixed(2),
-      profitRate: profitRate.toFixed(2),
+      profitRate: grandProfitRate.toFixed(2),
       accountCount: accounts.length,
       byType,
       savingsTotal: savingsTotal.toFixed(2),
@@ -545,9 +689,13 @@ export class AssetsService {
   }
 
   /**
-   * 계좌 holding 목록 조회 (그룹 멤버)
+   * holding record 목록 조회 (그룹 멤버) — recordDate 필터 가능
    */
-  async findHoldings(userId: string, accountId: string) {
+  async findHoldingRecords(
+    userId: string,
+    accountId: string,
+    recordDate?: string,
+  ) {
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
     });
@@ -558,21 +706,25 @@ export class AssetsService {
 
     await this.validateGroupMember(userId, account.groupId);
 
-    const holdings = await this.prisma.accountHolding.findMany({
-      where: { accountId },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    const records = await this.prisma.accountHoldingRecord.findMany({
+      where: {
+        accountId,
+        ...(recordDate && { recordDate: new Date(recordDate) }),
+      },
+      orderBy: [{ recordDate: 'desc' }, { name: 'asc' }],
     });
 
-    return holdings.map((h) => this.formatHolding(h));
+    return records.map((r) => this.formatHoldingRecord(r));
   }
 
   /**
-   * holding 추가 (소유자만) — 비율 합계 100% 초과 방지
+   * holding record 추가 (소유자만)
+   * ratio = amount / 해당 날짜 AccountRecord.balance × 100 자동 계산
    */
-  async createHolding(
+  async createHoldingRecord(
     userId: string,
     accountId: string,
-    dto: CreateAccountHoldingDto,
+    dto: CreateAccountHoldingRecordDto,
   ) {
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
@@ -586,33 +738,64 @@ export class AssetsService {
       throw new ForbiddenException('assets.errors.own_account_only_add_stock');
     }
 
-    await this.validateRatioSum(accountId, dto.ratio);
+    const recordDate = new Date(dto.recordDate);
 
-    const count = await this.prisma.accountHolding.count({
-      where: { accountId },
+    const accountRecord = await this.prisma.accountRecord.findUnique({
+      where: { accountId_recordDate: { accountId, recordDate } },
+      select: { balance: true },
     });
 
-    const holding = await this.prisma.accountHolding.create({
-      data: {
-        accountId,
-        name: dto.name,
-        ticker: dto.ticker ?? null,
-        ratio: dto.ratio,
-        sortOrder: count,
+    if (!accountRecord) {
+      throw new BadRequestException(
+        '해당 날짜의 자산 기록이 없습니다. 먼저 자산 기록을 추가하세요.',
+      );
+    }
+
+    const balance = Number(accountRecord.balance);
+    const ratio = balance > 0 ? (dto.amount / balance) * 100 : 0;
+
+    if (ratio > 100) {
+      throw new BadRequestException(
+        `금액이 해당 날짜 계좌 잔액(${balance.toFixed(0)}원)을 초과합니다.`,
+      );
+    }
+
+    const existing = await this.prisma.accountHoldingRecord.findUnique({
+      where: {
+        accountId_recordDate_name: { accountId, recordDate, name: dto.name },
       },
     });
 
-    return this.formatHolding(holding);
+    if (existing) {
+      throw new ConflictException(
+        '해당 날짜에 동일한 종목명의 기록이 이미 존재합니다.',
+      );
+    }
+
+    const record = await this.prisma.accountHoldingRecord.create({
+      data: {
+        accountId,
+        recordDate,
+        name: dto.name,
+        ticker: dto.ticker ?? null,
+        amount: dto.amount,
+        ratio: parseFloat(ratio.toFixed(2)),
+      },
+    });
+
+    return this.formatHoldingRecord(record);
   }
 
   /**
-   * holding 수정 (소유자만)
+   * holding record 수정 (소유자만) — name, ticker, amount 수정 가능
+   * name 변경 시 같은 날짜에 동일한 이름이 없어야 함
+   * amount 변경 시 ratio 재계산
    */
-  async updateHolding(
+  async updateHoldingRecord(
     userId: string,
     accountId: string,
-    holdingId: string,
-    dto: UpdateAccountHoldingDto,
+    recordId: string,
+    dto: UpdateAccountHoldingRecordDto,
   ) {
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
@@ -628,34 +811,72 @@ export class AssetsService {
       );
     }
 
-    const holding = await this.prisma.accountHolding.findUnique({
-      where: { id: holdingId },
+    const record = await this.prisma.accountHoldingRecord.findUnique({
+      where: { id: recordId },
     });
 
-    if (!holding || holding.accountId !== accountId) {
+    if (!record || record.accountId !== accountId) {
       throw new NotFoundException('assets.errors.stock_not_found');
     }
 
-    if (dto.ratio !== undefined) {
-      await this.validateRatioSum(accountId, dto.ratio, holdingId);
+    const newName = dto.name ?? record.name;
+    const newAmount = dto.amount ?? Number(record.amount);
+
+    if (dto.name !== undefined && dto.name !== record.name) {
+      const conflict = await this.prisma.accountHoldingRecord.findUnique({
+        where: {
+          accountId_recordDate_name: {
+            accountId,
+            recordDate: record.recordDate,
+            name: dto.name,
+          },
+        },
+      });
+      if (conflict) {
+        throw new ConflictException(
+          '해당 날짜에 동일한 종목명의 기록이 이미 존재합니다.',
+        );
+      }
     }
 
-    const updated = await this.prisma.accountHolding.update({
-      where: { id: holdingId },
+    let newRatio = Number(record.ratio);
+    if (dto.amount !== undefined) {
+      const accountRecord = await this.prisma.accountRecord.findUnique({
+        where: {
+          accountId_recordDate: { accountId, recordDate: record.recordDate },
+        },
+        select: { balance: true },
+      });
+      const balance = Number(accountRecord?.balance ?? 0);
+      newRatio = balance > 0 ? (newAmount / balance) * 100 : 0;
+      if (newRatio > 100) {
+        throw new BadRequestException(
+          `금액이 해당 날짜 계좌 잔액(${balance.toFixed(0)}원)을 초과합니다.`,
+        );
+      }
+    }
+
+    const updated = await this.prisma.accountHoldingRecord.update({
+      where: { id: recordId },
       data: {
-        ...(dto.name !== undefined && { name: dto.name }),
+        name: newName,
         ...(dto.ticker !== undefined && { ticker: dto.ticker }),
-        ...(dto.ratio !== undefined && { ratio: dto.ratio }),
+        amount: newAmount,
+        ratio: parseFloat(newRatio.toFixed(2)),
       },
     });
 
-    return this.formatHolding(updated);
+    return this.formatHoldingRecord(updated);
   }
 
   /**
-   * holding 삭제 (소유자만)
+   * holding record 삭제 (소유자만)
    */
-  async removeHolding(userId: string, accountId: string, holdingId: string) {
+  async removeHoldingRecord(
+    userId: string,
+    accountId: string,
+    recordId: string,
+  ) {
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
     });
@@ -670,31 +891,27 @@ export class AssetsService {
       );
     }
 
-    const holding = await this.prisma.accountHolding.findUnique({
-      where: { id: holdingId },
+    const record = await this.prisma.accountHoldingRecord.findUnique({
+      where: { id: recordId },
     });
 
-    if (!holding || holding.accountId !== accountId) {
+    if (!record || record.accountId !== accountId) {
       throw new NotFoundException('assets.errors.stock_not_found');
     }
 
-    await this.prisma.accountHolding.delete({ where: { id: holdingId } });
+    await this.prisma.accountHoldingRecord.delete({ where: { id: recordId } });
 
     return {
-      message: this.i18n.t('assets.success.stock_deleted', {
+      message: this.i18n.t('assets.success.record_deleted', {
         lang: I18nContext.current()?.lang ?? 'ko',
       }),
     };
   }
 
   /**
-   * holding 순서 변경 (소유자만)
+   * 자동완성용 종목명 목록 조회 (그룹 멤버)
    */
-  async reorderHoldings(
-    userId: string,
-    accountId: string,
-    dto: ReorderAccountHoldingsDto,
-  ) {
+  async findHoldingNames(userId: string, accountId: string) {
     const account = await this.prisma.account.findUnique({
       where: { id: accountId },
     });
@@ -703,84 +920,39 @@ export class AssetsService {
       throw new NotFoundException('assets.errors.account_not_found');
     }
 
-    if (account.userId !== userId) {
-      throw new ForbiddenException(
-        'assets.errors.own_account_only_reorder_stock',
-      );
-    }
+    await this.validateGroupMember(userId, account.groupId);
 
-    const holdings = await this.prisma.accountHolding.findMany({
-      where: { id: { in: dto.holdingIds }, accountId },
-      select: { id: true },
+    const names = await this.prisma.accountHoldingRecord.findMany({
+      where: { accountId },
+      select: { name: true, ticker: true },
+      distinct: ['name'],
+      orderBy: { name: 'asc' },
     });
 
-    const validIds = new Set(holdings.map((h) => h.id));
-    const invalidIds = dto.holdingIds.filter((id) => !validIds.has(id));
-    if (invalidIds.length > 0) {
-      throw new BadRequestException('assets.errors.stock_wrong_account');
-    }
-
-    await this.prisma.$transaction(
-      dto.holdingIds.map((holdingId, index) =>
-        this.prisma.accountHolding.update({
-          where: { id: holdingId },
-          data: { sortOrder: index },
-        }),
-      ),
-    );
-
-    return {
-      message: this.i18n.t('assets.success.stock_order_changed', {
-        lang: I18nContext.current()?.lang ?? 'ko',
-      }),
-    };
+    return names;
   }
 
-  /**
-   * 비율 합계 검증 — 기존 holding 합 + 신규 ratio ≤ 100
-   * excludeId: 수정 시 자기 자신 제외
-   */
-  private async validateRatioSum(
-    accountId: string,
-    newRatio: number,
-    excludeId?: string,
-  ) {
-    const existing = await this.prisma.accountHolding.findMany({
-      where: {
-        accountId,
-        ...(excludeId && { id: { not: excludeId } }),
-      },
-      select: { ratio: true },
-    });
-
-    const currentSum = existing.reduce((s, h) => s + Number(h.ratio), 0);
-
-    if (currentSum + newRatio > 100) {
-      throw new BadRequestException(
-        `비율 합계가 100%를 초과합니다 (현재 합계: ${currentSum.toFixed(2)}%)`,
-      );
-    }
-  }
-
-  private formatHolding(holding: {
+  private formatHoldingRecord(record: {
     id: string;
     accountId: string;
+    recordDate: Date;
     name: string;
     ticker: string | null;
+    amount: unknown;
     ratio: unknown;
-    sortOrder: number;
     createdAt: Date;
     updatedAt: Date;
   }) {
     return {
-      id: holding.id,
-      accountId: holding.accountId,
-      name: holding.name,
-      ticker: holding.ticker,
-      ratio: Number(holding.ratio).toFixed(2),
-      sortOrder: holding.sortOrder,
-      createdAt: holding.createdAt,
-      updatedAt: holding.updatedAt,
+      id: record.id,
+      accountId: record.accountId,
+      recordDate: record.recordDate,
+      name: record.name,
+      ticker: record.ticker,
+      amount: Number(record.amount).toFixed(2),
+      ratio: Number(record.ratio).toFixed(2),
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
     };
   }
 
@@ -795,6 +967,51 @@ export class AssetsService {
   }
 
   /**
+   * 최신 스냅샷 이후 출금을 적용해 보정된 balance/principal/profit 반환
+   */
+  private async applyPostSnapshotWithdrawals(
+    accountId: string,
+    latest: {
+      recordDate: Date;
+      createdAt: Date;
+      balance: unknown;
+      principal: unknown;
+      profit: unknown;
+    },
+  ) {
+    const postWithdrawals = await this.prisma.accountWithdrawal.findMany({
+      where: {
+        accountId,
+        OR: [
+          { withdrawalDate: { gt: latest.recordDate } },
+          {
+            withdrawalDate: latest.recordDate,
+            createdAt: { gt: latest.createdAt },
+          },
+        ],
+      },
+      orderBy: [{ withdrawalDate: 'asc' }, { createdAt: 'asc' }],
+      select: { amount: true, type: true },
+    });
+
+    let balance = Number(latest.balance);
+    let principal = Number(latest.principal);
+    let profit = Number(latest.profit);
+
+    for (const w of postWithdrawals) {
+      balance = Math.max(0, balance - Number(w.amount));
+      ({ principal, profit } = this.applyWithdrawal(
+        principal,
+        profit,
+        Number(w.amount),
+        w.type,
+      ));
+    }
+
+    return { balance, principal, profit };
+  }
+
+  /**
    * 계좌 포맷 헬퍼
    */
   private formatAccount(
@@ -806,6 +1023,8 @@ export class AssetsService {
       accountNumber: string | null;
       institution: string | null;
       type: AccountType;
+      sortOrder: number;
+      recordReminderDay?: number | null;
       createdAt: Date;
       updatedAt: Date;
     },
@@ -839,6 +1058,7 @@ export class AssetsService {
       updatedAt: account.updatedAt,
       latestBalance,
       profitRate,
+      recordReminderDay: account.recordReminderDay,
     };
   }
 
@@ -919,7 +1139,31 @@ export class AssetsService {
       seedRecords = lastBeforeRange.filter((r) => r !== null);
     }
 
-    return this.aggregateTrend(seedRecords, records, query.period, rangeStart);
+    // 출금 데이터 조회 (스냅샷 없는 달의 balance carry-forward 보정용)
+    const withdrawalWhere =
+      rangeStart && rangeEnd
+        ? {
+            accountId: { in: accountIds },
+            withdrawalDate: { gte: rangeStart, lt: rangeEnd },
+          }
+        : { accountId: { in: accountIds } };
+    const withdrawals = await this.prisma.accountWithdrawal.findMany({
+      where: withdrawalWhere,
+      select: {
+        accountId: true,
+        withdrawalDate: true,
+        amount: true,
+        type: true,
+      },
+    });
+
+    return this.aggregateTrend(
+      seedRecords,
+      records,
+      query.period,
+      rangeStart,
+      withdrawals,
+    );
   }
 
   /**
@@ -986,13 +1230,35 @@ export class AssetsService {
       if (lastBefore) seedRecords = [lastBefore];
     }
 
-    return this.aggregateTrend(seedRecords, records, query.period, rangeStart);
+    // 출금 데이터 조회 (스냅샷 없는 달의 balance carry-forward 보정용)
+    const withdrawalWhere =
+      rangeStart && rangeEnd
+        ? { accountId, withdrawalDate: { gte: rangeStart, lt: rangeEnd } }
+        : { accountId };
+    const withdrawals = await this.prisma.accountWithdrawal.findMany({
+      where: withdrawalWhere,
+      select: {
+        accountId: true,
+        withdrawalDate: true,
+        amount: true,
+        type: true,
+      },
+    });
+
+    return this.aggregateTrend(
+      seedRecords,
+      records,
+      query.period,
+      rangeStart,
+      withdrawals,
+    );
   }
 
   /**
    * 기간별 통계 집계 헬퍼
    * - 각 기간(월/년)마다 계좌별 마지막 기록을 합산
    * - 기록 없는 기간은 직전 기록값을 carry-forward (빈 달 채우기)
+   * - carry-forward 시 해당 기간까지 누적된 출금을 balance에서 차감
    */
   private aggregateTrend(
     seedRecords: {
@@ -1011,6 +1277,12 @@ export class AssetsService {
     }[],
     period: TrendPeriod,
     rangeStart: Date | null,
+    withdrawals: {
+      accountId: string;
+      withdrawalDate: Date;
+      amount: unknown;
+      type: WithdrawalType;
+    }[] = [],
   ) {
     // 실제 출력할 기간 범위는 records 기준으로 생성
     // rangeStart가 있으면 해당 월부터 시작 보장 (records가 비어도)
@@ -1047,6 +1319,21 @@ export class AssetsService {
       }
     }
 
+    // 기간별 계좌별 출금 목록 맵 구성
+    const withdrawalMap = new Map<
+      string,
+      Map<string, { amount: number; type: WithdrawalType }[]>
+    >();
+    for (const w of withdrawals) {
+      const key = getPeriodKey(w.withdrawalDate);
+      if (!withdrawalMap.has(key)) withdrawalMap.set(key, new Map());
+      const periodMap = withdrawalMap.get(key);
+      if (!periodMap.has(w.accountId)) periodMap.set(w.accountId, []);
+      periodMap
+        .get(w.accountId)
+        .push({ amount: Number(w.amount), type: w.type });
+    }
+
     // carry-forward 시작값: seed 기록으로 lastKnown 초기화
     const accountIds = [
       ...new Set([
@@ -1066,14 +1353,31 @@ export class AssetsService {
       });
     }
 
-    // carry-forward: 빈 기간에 직전 값 채우기
+    // carry-forward: 빈 기간에 직전 값 채우기 + 출금 차감
     for (const key of allKeys) {
       const periodEntry = rawMap.get(key);
+      const periodWithdrawals = withdrawalMap.get(key);
       for (const accountId of accountIds) {
         if (periodEntry.has(accountId)) {
+          // 스냅샷이 있는 달은 스냅샷 값 그대로 (출금은 이미 스냅샷에 반영됨)
           lastKnown.set(accountId, periodEntry.get(accountId));
         } else if (lastKnown.has(accountId)) {
-          periodEntry.set(accountId, lastKnown.get(accountId));
+          // 스냅샷 없는 달: 직전 값에서 이번 달 출금 순서대로 적용
+          const prev = lastKnown.get(accountId);
+          const accountWithdrawals = periodWithdrawals?.get(accountId) ?? [];
+          let { balance, principal, profit } = prev;
+          for (const w of accountWithdrawals) {
+            balance = Math.max(0, balance - w.amount);
+            ({ principal, profit } = this.applyWithdrawal(
+              principal,
+              profit,
+              w.amount,
+              w.type,
+            ));
+          }
+          const adjusted = { balance, principal, profit };
+          lastKnown.set(accountId, adjusted);
+          periodEntry.set(accountId, adjusted);
         }
       }
     }
@@ -1120,9 +1424,11 @@ export class AssetsService {
       const startBase =
         rangeStart ??
         new Date(Math.min(...records.map((r) => r.recordDate.getTime())));
-      // 끝: records 최댓값 (없으면 rangeStart 달)
-      const endBase =
-        records.length > 0
+      // 끝: rangeStart가 있으면(연도 조회) 현재 달까지, 없으면 records 최댓값
+      const now = new Date();
+      const endBase = rangeStart
+        ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+        : records.length > 0
           ? new Date(Math.max(...records.map((r) => r.recordDate.getTime())))
           : startBase;
 
@@ -1181,23 +1487,38 @@ export class AssetsService {
         accountId,
         withdrawalDate,
         amount: dto.amount,
+        type: dto.type,
         note: dto.note,
       },
     });
 
-    // 출금일 이후(당일 포함) AccountRecord의 principal, profit 재계산
+    // 출금일 이후 AccountRecord의 principal, profit 재계산
+    // 같은 날 스냅샷은 출금 createdAt보다 먼저 생성된 것만 포함 (등록 순서 반영)
     const affectedRecords = await this.prisma.accountRecord.findMany({
-      where: { accountId, recordDate: { gte: withdrawalDate } },
+      where: {
+        accountId,
+        OR: [
+          { recordDate: { gt: withdrawalDate } },
+          {
+            recordDate: withdrawalDate,
+            createdAt: { lte: withdrawal.createdAt },
+          },
+        ],
+      },
       orderBy: { recordDate: 'asc' },
     });
 
     await Promise.all(
       affectedRecords.map((record) => {
-        const newPrincipal = Math.max(0, Number(record.principal) - dto.amount);
-        const newProfit = Number(record.balance) - newPrincipal;
+        const { principal, profit } = this.applyWithdrawal(
+          Number(record.principal),
+          Number(record.profit),
+          dto.amount,
+          dto.type,
+        );
         return this.prisma.accountRecord.update({
           where: { id: record.id },
-          data: { principal: newPrincipal, profit: newProfit },
+          data: { principal, profit },
         });
       }),
     );
@@ -1277,20 +1598,31 @@ export class AssetsService {
 
     await this.prisma.accountWithdrawal.delete({ where: { id: withdrawalId } });
 
-    // 출금일 이후 AccountRecord의 principal 원복
+    // 출금일 이후 AccountRecord의 principal/profit 원복
+    // 같은 날 스냅샷은 출금 createdAt보다 먼저 생성된 것만 포함 (등록 순서 반영)
     const affectedRecords = await this.prisma.accountRecord.findMany({
       where: {
         accountId,
-        recordDate: { gte: withdrawal.withdrawalDate },
+        OR: [
+          { recordDate: { gt: withdrawal.withdrawalDate } },
+          {
+            recordDate: withdrawal.withdrawalDate,
+            createdAt: { lte: withdrawal.createdAt },
+          },
+        ],
       },
       orderBy: { recordDate: 'asc' },
     });
 
     await Promise.all(
       affectedRecords.map((record) => {
-        const restoredPrincipal =
-          Number(record.principal) + Number(withdrawal.amount);
-        const restoredProfit = Number(record.balance) - restoredPrincipal;
+        const { principal: restoredPrincipal, profit: restoredProfit } =
+          this.reverseWithdrawal(
+            Number(record.principal),
+            Number(record.profit),
+            Number(withdrawal.amount),
+            withdrawal.type,
+          );
         return this.prisma.accountRecord.update({
           where: { id: record.id },
           data: {
@@ -1308,11 +1640,64 @@ export class AssetsService {
     };
   }
 
+  /**
+   * 출금 적용: type에 따라 principal/profit에서 amount 차감
+   * PRINCIPAL: 원금 먼저 차감 → 부족하면 수익에서 차감
+   * PROFIT: 수익 먼저 차감 → 부족하면 원금에서 차감
+   */
+  private applyWithdrawal(
+    principal: number,
+    profit: number,
+    amount: number,
+    type: WithdrawalType,
+  ): { principal: number; profit: number } {
+    if (type === WithdrawalType.PRINCIPAL) {
+      const deductFromPrincipal = Math.min(principal, amount);
+      const remainder = amount - deductFromPrincipal;
+      return {
+        principal: principal - deductFromPrincipal,
+        profit: Math.max(0, profit - remainder),
+      };
+    } else {
+      const deductFromProfit = Math.min(profit, amount);
+      const remainder = amount - deductFromProfit;
+      return {
+        principal: Math.max(0, principal - remainder),
+        profit: profit - deductFromProfit,
+      };
+    }
+  }
+
+  /**
+   * 출금 원복: balance는 그대로이므로, principal/profit만 역산
+   * PRINCIPAL: 원금 복원 → profit = balance - principal
+   * PROFIT: 수익 복원 → principal = balance - profit
+   */
+  private reverseWithdrawal(
+    principal: number,
+    profit: number,
+    amount: number,
+    type: WithdrawalType,
+  ): { principal: number; profit: number } {
+    const balance = principal + profit;
+    if (type === WithdrawalType.PRINCIPAL) {
+      const restoredPrincipal = principal + amount;
+      return {
+        principal: restoredPrincipal,
+        profit: balance - restoredPrincipal,
+      };
+    } else {
+      const restoredProfit = profit + amount;
+      return { principal: balance - restoredProfit, profit: restoredProfit };
+    }
+  }
+
   private formatWithdrawal(withdrawal: {
     id: string;
     accountId: string;
     withdrawalDate: Date;
     amount: unknown;
+    type: WithdrawalType;
     note: string | null;
     createdAt: Date;
   }) {
@@ -1321,6 +1706,7 @@ export class AssetsService {
       accountId: withdrawal.accountId,
       withdrawalDate: withdrawal.withdrawalDate,
       amount: Number(withdrawal.amount).toFixed(2),
+      type: withdrawal.type,
       note: withdrawal.note,
       createdAt: withdrawal.createdAt,
     };

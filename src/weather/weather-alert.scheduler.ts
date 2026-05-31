@@ -136,6 +136,8 @@ interface ForecastSummary {
   todayMinTemp: number | null;
   todayMaxTemp: number | null;
   precipType: number;
+  precipStartTime: string | null; // 'HHmm' 형식, 강수 첫 예보 시각
+  precipEndTime: string | null; // 'HHmm' 형식, 강수 마지막 예보 시각
 }
 
 interface GridForecast {
@@ -386,6 +388,8 @@ export class WeatherAlertScheduler {
     let precipType = 0;
     let todayMinTemp: number | null = null;
     let todayMaxTemp: number | null = null;
+    let precipStartTime: string | null = null;
+    let precipEndTime: string | null = null;
 
     for (const item of todayItems) {
       if (item.category === 'PTY') {
@@ -393,6 +397,10 @@ export class WeatherAlertScheduler {
         if (pty > 0) {
           hasPrecipitation = true;
           if (precipType === 0) precipType = pty;
+          if (precipStartTime === null || item.fcstTime < precipStartTime)
+            precipStartTime = item.fcstTime;
+          if (precipEndTime === null || item.fcstTime > precipEndTime)
+            precipEndTime = item.fcstTime;
         }
       }
       if (item.category === 'TMP') {
@@ -402,7 +410,14 @@ export class WeatherAlertScheduler {
       }
     }
 
-    return { hasPrecipitation, todayMinTemp, todayMaxTemp, precipType };
+    return {
+      hasPrecipitation,
+      todayMinTemp,
+      todayMaxTemp,
+      precipType,
+      precipStartTime,
+      precipEndTime,
+    };
   }
 
   private getPtyDescription(pty: number, lang: string): string {
@@ -411,6 +426,43 @@ export class WeatherAlertScheduler {
     if (pty === 3) return this.i18n.t('weather.description.snow', { lang });
     if (pty === 4) return this.i18n.t('weather.description.shower', { lang });
     return '';
+  }
+
+  private formatHour(hhmm: string, lang: string): string {
+    const h = parseInt(hhmm.substring(0, 2), 10);
+    if (lang === 'ko') {
+      const period = h < 12 ? '오전' : '오후';
+      const display = h % 12 === 0 ? 12 : h % 12;
+      return `${period} ${display}시`;
+    }
+    if (lang === 'ja') {
+      const period = h < 12 ? '午前' : '午後';
+      const display = h % 12 === 0 ? 12 : h % 12;
+      return `${period}${display}時`;
+    }
+    if (lang === 'zh') {
+      const period = h < 12 ? '上午' : '下午';
+      const display = h % 12 === 0 ? 12 : h % 12;
+      return `${period}${display}时`;
+    }
+    // en
+    const period = h < 12 ? 'AM' : 'PM';
+    const display = h % 12 === 0 ? 12 : h % 12;
+    return `${display}${period}`;
+  }
+
+  private formatPrecipTimeRange(
+    startTime: string,
+    endTime: string,
+    lang: string,
+  ): string {
+    const start = this.formatHour(startTime, lang);
+    const end = this.formatHour(endTime, lang);
+    if (start === end) return start;
+    if (lang === 'ko') return `${start} ~ ${end}`;
+    if (lang === 'ja') return `${start}〜${end}`;
+    if (lang === 'zh') return `${start} ~ ${end}`;
+    return `${start} – ${end}`;
   }
 
   /**
@@ -430,10 +482,21 @@ export class WeatherAlertScheduler {
         summary.precipType === 3
           ? this.i18n.t('weather.notification.snow_icon', { lang })
           : this.i18n.t('weather.notification.rain_icon', { lang });
+      const timeRange =
+        summary.precipStartTime && summary.precipEndTime
+          ? this.formatPrecipTimeRange(
+              summary.precipStartTime,
+              summary.precipEndTime,
+              lang,
+            )
+          : null;
+      const key = timeRange
+        ? 'weather.notification.precipitation_alert_with_time'
+        : 'weather.notification.precipitation_alert';
       parts.push(
-        this.i18n.t('weather.notification.precipitation_alert', {
+        this.i18n.t(key, {
           lang,
-          args: { desc, icon },
+          args: { desc, icon, timeRange },
         }),
       );
     }

@@ -8,6 +8,7 @@ import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 
 const LOCK_KEY = 'lock:assets:gold-monthly';
+const LOCK_KEY_REMINDER = 'lock:assets:record-reminder';
 const LOCK_TTL = 5 * 60; // 5분
 
 @Injectable()
@@ -148,5 +149,90 @@ export class GoldAssetScheduler {
     }
 
     this.logger.log(`월별 금 자산 업데이트 완료 — ${updated}개 계좌`);
+  }
+
+  /**
+   * 매일 00:00 KST (= UTC 전날 15:00) 실행
+   * 오늘 날짜가 recordReminderDay와 일치하는 계좌의 그룹 멤버 전체에게 알림 발송
+   * 달 말일(29~31일)이 없는 달은 말일에 발송 (예: 31일 설정 → 2월은 28/29일에 발송)
+   */
+  @Cron('0 15 * * *')
+  async sendRecordReminder() {
+    if (!isSchedulerEnabled('')) return;
+
+    const now = new Date();
+    const kstDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+
+    const lockValue = Date.now().toString();
+    const lockKey = `${LOCK_KEY_REMINDER}:${kstDate.toISOString().slice(0, 10)}`;
+    const acquired = await this.redis.acquireLock(lockKey, LOCK_TTL, lockValue);
+    if (!acquired) return;
+
+    try {
+      await this.runRecordReminder(kstDate);
+    } finally {
+      await this.redis.releaseLock(lockKey, lockValue);
+    }
+  }
+
+  async runRecordReminder(kstDate: Date) {
+    const today = kstDate.getUTCDate();
+    const year = kstDate.getUTCFullYear();
+    const month = kstDate.getUTCMonth(); // 0-indexed
+    const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+    // 오늘 발송 대상 day 값: 오늘 날짜 또는 말일 초과 설정값 처리
+    // ex) 31일 설정인데 오늘이 2월 28일(말일)이면 포함
+    const targetDays = [today];
+    if (today === lastDayOfMonth) {
+      // 말일인 경우, today+1 ~ 31 사이 설정값도 포함
+      for (let d = today + 1; d <= 31; d++) {
+        targetDays.push(d);
+      }
+    }
+
+    const accounts = await this.prisma.account.findMany({
+      where: { recordReminderDay: { in: targetDays } },
+      select: { id: true, name: true, groupId: true, userId: true },
+    });
+
+    if (accounts.length === 0) return;
+
+    // 그룹별로 묶어서 중복 알림 방지 (같은 그룹 내 여러 계좌가 같은 날이면 1번만 발송)
+    const groupMap = new Map<string, { name: string; accountId: string }>();
+    for (const account of accounts) {
+      if (!groupMap.has(account.groupId)) {
+        groupMap.set(account.groupId, {
+          name: account.name,
+          accountId: account.id,
+        });
+      }
+    }
+
+    let sent = 0;
+    for (const [groupId, { accountId }] of groupMap) {
+      const members = await this.prisma.groupMember.findMany({
+        where: { groupId },
+        select: { userId: true },
+      });
+
+      for (const member of members) {
+        const lang = await this.getUserLang(member.userId);
+        await this.notificationService.sendNotification({
+          userId: member.userId,
+          category: NotificationCategory.ASSET,
+          title: this.i18n.t('assets.notification.record_reminder_title', {
+            lang,
+          }),
+          body: this.i18n.t('assets.notification.record_reminder_body', {
+            lang,
+          }),
+          data: { groupId, accountId },
+        });
+        sent++;
+      }
+    }
+
+    this.logger.log(`자산 기록 독려 알림 발송 완료 — ${sent}명`);
   }
 }

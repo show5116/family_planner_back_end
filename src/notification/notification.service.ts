@@ -121,15 +121,15 @@ export class NotificationService {
       const messaging = this.firebaseService.getMessaging();
 
       const message = {
-        notification: {
+        data: {
           title: dto.title,
           body: dto.body,
+          ...(dto.data
+            ? Object.fromEntries(
+                Object.entries(dto.data).map(([k, v]) => [k, String(v)]),
+              )
+            : {}),
         },
-        data: dto.data
-          ? Object.fromEntries(
-              Object.entries(dto.data).map(([k, v]) => [k, String(v)]),
-            )
-          : undefined,
         tokens,
       };
 

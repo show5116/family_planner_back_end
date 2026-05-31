@@ -34,6 +34,8 @@
     "balance_updated_title": "자산 잔액 업데이트",
     "balance_updated_body": "\"{name}\" 잔액이 {balance}원으로 기록되었습니다",
     "withdrawal_title": "출금 기록 추가",
-    "withdrawal_body": "\"{name}\"에서 {amount}원이 출금되었습니다"
+    "withdrawal_body": "\"{name}\"에서 {amount}원이 출금되었습니다",
+    "record_reminder_title": "이번 달 자산 기록을 입력해 주세요",
+    "record_reminder_body": "그룹의 자산을 최신 상태로 유지하려면 이번 달 잔액을 기록해 주세요"
   }
 }

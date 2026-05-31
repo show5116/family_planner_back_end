@@ -34,6 +34,8 @@
     "balance_updated_title": "资产余额已更新",
     "balance_updated_body": "「{name}」余额已记录为{balance}元",
     "withdrawal_title": "出金记录已添加",
-    "withdrawal_body": "从\"{name}\"出金{amount}元"
+    "withdrawal_body": "从\"{name}\"出金{amount}元",
+    "record_reminder_title": "请输入本月的资产记录",
+    "record_reminder_body": "请记录本月余额，以保持群组资产的最新状态"
   }
 }

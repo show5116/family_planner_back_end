@@ -94,20 +94,22 @@ model AccountWithdrawal {
   @@map("account_withdrawals")
 }
 
-model AccountHolding {
-  id        String   @id @default(uuid())
-  accountId String
-  name      String   @db.VarChar(100)
-  ticker    String?  @db.VarChar(20)
-  ratio     Decimal  @db.Decimal(5, 2)   // 비율 (%), 합계 100 이하
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model AccountHoldingRecord {
+  id         String   @id @default(uuid())
+  accountId  String
+  recordDate DateTime @db.Date
+  name       String   @db.VarChar(100)
+  ticker     String?  @db.VarChar(20)
+  amount     Decimal  @db.Decimal(15, 2)
+  ratio      Decimal  @db.Decimal(5, 2)   // amount / 해당 날짜 AccountRecord.balance × 100 자동 계산
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@index([accountId, sortOrder])
-  @@map("account_holdings")
+  @@unique([accountId, recordDate, name])
+  @@index([accountId, recordDate(sort: Desc)])
+  @@map("account_holding_records")
 }
 ```
 
@@ -126,8 +128,9 @@ model AccountHolding {
 - [x] 구성원별 자산 현황 통계 (유형별 분류)
 - [x] 그룹/계좌별 기간 통계 (월별/연도별)
 - [x] 실물 금 자산 (GOLD 타입): gramWeight 입력 → GOLD_KRW_SPOT 기준 매달 1일 자동 기록 생성
-- [x] 계좌 내 포트폴리오 종목 관리 (AccountHolding): 종목명·티커·비율(%) 입력, 합계 100% 초과 방지
-- [x] 통계 API byHolding: 전체 자산 기준 종목별 추정 금액 및 비율 집계
+- [x] 포트폴리오 종목 기록 (AccountHoldingRecord): 날짜·종목명·금액 입력 → ratio 자동 계산, 종목 사전 등록 불필요
+- [x] 종목명 자동완성용 API: 해당 계좌에서 사용된 종목명 목록 반환
+- [x] 통계 API byHolding: 계좌+종목명별 최신 기록 금액 합산 (금액 내림차순 정렬)
 - [x] 적립금 연동: 통계 API에 `savingsTotal`, `savingsGoals` 항목 포함
 
 ### ⬜ 향후 고려
@@ -152,11 +155,11 @@ model AccountHolding {
 | POST   | `/assets/accounts/:id/withdrawals`          | 출금 기록 추가 (이후 기록 재계산) | JWT, Owner        |
 | GET    | `/assets/accounts/:id/withdrawals`          | 출금 기록 목록                    | JWT, Group Member |
 | DELETE | `/assets/accounts/:id/withdrawals/:wId`     | 출금 기록 삭제 (이후 기록 원복)   | JWT, Owner        |
-| GET    | `/assets/accounts/:id/holdings`             | 종목 목록 조회                    | JWT, Group Member |
-| POST   | `/assets/accounts/:id/holdings`             | 종목 추가                         | JWT, Owner        |
-| PATCH  | `/assets/accounts/:id/holdings/reorder`     | 종목 순서 변경                    | JWT, Owner        |
-| PATCH  | `/assets/accounts/:id/holdings/:holdingId`  | 종목 수정                         | JWT, Owner        |
-| DELETE | `/assets/accounts/:id/holdings/:holdingId`  | 종목 삭제                         | JWT, Owner        |
+| GET    | `/assets/accounts/:id/holding-records/names`              | 종목명 목록 조회 (자동완성용)                              | JWT, Group Member |
+| GET    | `/assets/accounts/:id/holding-records`                    | 종목 기록 목록 (recordDate 쿼리로 날짜 필터 가능)          | JWT, Group Member |
+| POST   | `/assets/accounts/:id/holding-records`                    | 종목 기록 추가 (name·ticker·amount → ratio 자동 계산)     | JWT, Owner        |
+| PATCH  | `/assets/accounts/:id/holding-records/:recordId`          | 종목 기록 수정 (name·ticker·amount)                       | JWT, Owner        |
+| DELETE | `/assets/accounts/:id/holding-records/:recordId`          | 종목 기록 삭제                                             | JWT, Owner        |
 | GET    | `/assets/gold/current-price`                | 금 현물가 조회 (원/g)             | JWT               |
 | GET    | `/assets/statistics`                        | 통계 조회 (적립금·종목 포함)      | JWT, Group Member |
 | GET    | `/assets/statistics/trend`                  | 그룹 전체 자산 기간 통계          | JWT, Group Member |
@@ -267,13 +270,20 @@ profitRate = principal > 0 ? (profit / principal) * 100 : 0
 - 출금 삭제 시 출금일 이후 기록 원복
 - 동일 날짜에 여러 출금 기록 허용
 
-### 포트폴리오 종목 (AccountHolding)
+### 포트폴리오 종목 기록 (AccountHoldingRecord)
 
-- 계좌 내 종목·자산 구성을 비율(%)로 기록
-- `name` (필수) + `ticker` (선택, 표시용) + `ratio` (0.01~100%)
-- 계좌 내 holding 비율 합계가 100%를 초과하면 400 오류
-- 동일한 종목명+티커 조합은 `byHolding` 통계에서 합산됨
-- 추정 금액 = `AccountRecord.balance × ratio / 100`
-- `globalRatio` = 해당 종목 추정 금액 / 전체 자산 총잔액 × 100
+- 종목 사전 등록 없이 기록 추가 시 name·ticker·amount를 직접 입력
+- `ratio` = `amount / 해당 날짜 AccountRecord.balance × 100` 자동 계산
+- 해당 `recordDate`의 `AccountRecord`가 반드시 먼저 존재해야 함 (없으면 400)
+- amount가 계좌 잔액을 초과하면 400 오류
+- 동일 `accountId + recordDate + name` 중복 불가 (409 오류)
+- 수정 시: name 변경 → 같은 날짜 중복 검사, amount 변경 → ratio 재계산
+- `GET .../holding-records/names`: 해당 계좌의 종목명+티커 목록 반환 (UI 자동완성용)
 
-**Last Updated**: 2026-05-26
+**통계 byHolding**
+- 계좌+종목명별 **최신 recordDate** 기준 amount를 그룹 전체 합산
+- `estimatedAmount` = 최신 기록 amount 합산
+- `globalRatio` = estimatedAmount / 전체 자산 총잔액 × 100
+- 금액 내림차순 정렬
+
+**Last Updated**: 2026-05-31

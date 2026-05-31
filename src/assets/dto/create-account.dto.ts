@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { AccountType } from '@prisma/client';
 
 export class CreateAccountDto {
@@ -36,4 +36,16 @@ export class CreateAccountDto {
   })
   @IsEnum(AccountType)
   type: AccountType;
+
+  @ApiProperty({
+    description: '자산 기록 입력 알림 일자 (1~31, null이면 알림 없음)',
+    example: 1,
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(31)
+  recordReminderDay?: number | null;
 }
