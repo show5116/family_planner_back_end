@@ -294,6 +294,34 @@ export class AccountRecordWithdrawalDto {
 
   @ApiProperty({ description: '생성일시' })
   createdAt: Date;
+
+  @ApiProperty({
+    description: '출금 후 잔액 (직전 스냅샷 기준, 스냅샷 없으면 null)',
+    example: '4500000.00',
+    nullable: true,
+  })
+  balanceAfter: string | null;
+
+  @ApiProperty({
+    description: '출금 후 원금 (직전 스냅샷 기준, 스냅샷 없으면 null)',
+    example: '4300000.00',
+    nullable: true,
+  })
+  principalAfter: string | null;
+
+  @ApiProperty({
+    description: '출금 후 수익금 (직전 스냅샷 기준, 스냅샷 없으면 null)',
+    example: '200000.00',
+    nullable: true,
+  })
+  profitAfter: string | null;
+
+  @ApiProperty({
+    description: '출금 후 수익률 (%, 직전 스냅샷 기준, 스냅샷 없으면 null)',
+    example: '4.17',
+    nullable: true,
+  })
+  profitRate: string | null;
 }
 
 export class AccountStatisticsDto {

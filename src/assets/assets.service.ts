@@ -395,33 +395,71 @@ export class AssetsService {
     const [records, withdrawals] = await Promise.all([
       this.prisma.accountRecord.findMany({
         where: { accountId },
-        orderBy: { recordDate: 'desc' },
+        orderBy: [{ recordDate: 'desc' }, { createdAt: 'desc' }],
       }),
       this.prisma.accountWithdrawal.findMany({
         where: { accountId },
-        orderBy: { withdrawalDate: 'desc' },
+        orderBy: [{ withdrawalDate: 'desc' }, { createdAt: 'desc' }],
       }),
     ]);
 
     const snapshots = records.map((r) => ({
       entryType: 'SNAPSHOT' as const,
       date: r.recordDate,
+      createdAt: r.createdAt,
       ...this.formatRecord(r),
     }));
 
-    const withdrawalItems = withdrawals.map((w) => ({
-      entryType: 'WITHDRAWAL' as const,
-      date: w.withdrawalDate,
-      ...this.formatWithdrawal(w),
-    }));
+    // 출금 기록에 잔액/원금/수익금 추가
+    // 출금 createdAt 기준으로 직전에 생성된 스냅샷에 applyWithdrawal 적용
+    const recordsByCreatedAt = [...records].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+    const withdrawalItems = withdrawals.map((w) => {
+      const prevSnapshot = [...recordsByCreatedAt]
+        .reverse()
+        .find((r) => r.createdAt < w.createdAt);
+
+      let balanceAfter: string | null = null;
+      let principalAfter: string | null = null;
+      let profitAfter: string | null = null;
+      let profitRate: string | null = null;
+
+      if (prevSnapshot) {
+        const { principal, profit } = this.applyWithdrawal(
+          Number(prevSnapshot.principal),
+          Number(prevSnapshot.profit),
+          Number(w.amount),
+          w.type,
+        );
+        const balance = Math.max(
+          0,
+          Number(prevSnapshot.balance) - Number(w.amount),
+        );
+        balanceAfter = balance.toFixed(2);
+        principalAfter = principal.toFixed(2);
+        profitAfter = profit.toFixed(2);
+        profitRate =
+          principal > 0 ? ((profit / principal) * 100).toFixed(2) : '0.00';
+      }
+
+      return {
+        entryType: 'WITHDRAWAL' as const,
+        date: w.withdrawalDate,
+        createdAt: w.createdAt,
+        ...this.formatWithdrawal(w),
+        balanceAfter,
+        principalAfter,
+        profitAfter,
+        profitRate,
+      };
+    });
 
     return [...snapshots, ...withdrawalItems].sort((a, b) => {
-      const diff = b.date.getTime() - a.date.getTime();
-      if (diff !== 0) return diff;
-      // 같은 날짜면 출금이 스냅샷보다 먼저
-      if (a.entryType === 'WITHDRAWAL' && b.entryType === 'SNAPSHOT') return -1;
-      if (a.entryType === 'SNAPSHOT' && b.entryType === 'WITHDRAWAL') return 1;
-      return 0;
+      const dateDiff = b.date.getTime() - a.date.getTime();
+      if (dateDiff !== 0) return dateDiff;
+      // 같은 날짜면 createdAt 내림차순 (나중에 등록한 것이 위)
+      return b.createdAt.getTime() - a.createdAt.getTime();
     });
   }
 
@@ -996,7 +1034,31 @@ export class AssetsService {
       seedRecords = lastBeforeRange.filter((r) => r !== null);
     }
 
-    return this.aggregateTrend(seedRecords, records, query.period, rangeStart);
+    // 출금 데이터 조회 (스냅샷 없는 달의 balance carry-forward 보정용)
+    const withdrawalWhere =
+      rangeStart && rangeEnd
+        ? {
+            accountId: { in: accountIds },
+            withdrawalDate: { gte: rangeStart, lt: rangeEnd },
+          }
+        : { accountId: { in: accountIds } };
+    const withdrawals = await this.prisma.accountWithdrawal.findMany({
+      where: withdrawalWhere,
+      select: {
+        accountId: true,
+        withdrawalDate: true,
+        amount: true,
+        type: true,
+      },
+    });
+
+    return this.aggregateTrend(
+      seedRecords,
+      records,
+      query.period,
+      rangeStart,
+      withdrawals,
+    );
   }
 
   /**
@@ -1063,13 +1125,35 @@ export class AssetsService {
       if (lastBefore) seedRecords = [lastBefore];
     }
 
-    return this.aggregateTrend(seedRecords, records, query.period, rangeStart);
+    // 출금 데이터 조회 (스냅샷 없는 달의 balance carry-forward 보정용)
+    const withdrawalWhere =
+      rangeStart && rangeEnd
+        ? { accountId, withdrawalDate: { gte: rangeStart, lt: rangeEnd } }
+        : { accountId };
+    const withdrawals = await this.prisma.accountWithdrawal.findMany({
+      where: withdrawalWhere,
+      select: {
+        accountId: true,
+        withdrawalDate: true,
+        amount: true,
+        type: true,
+      },
+    });
+
+    return this.aggregateTrend(
+      seedRecords,
+      records,
+      query.period,
+      rangeStart,
+      withdrawals,
+    );
   }
 
   /**
    * 기간별 통계 집계 헬퍼
    * - 각 기간(월/년)마다 계좌별 마지막 기록을 합산
    * - 기록 없는 기간은 직전 기록값을 carry-forward (빈 달 채우기)
+   * - carry-forward 시 해당 기간까지 누적된 출금을 balance에서 차감
    */
   private aggregateTrend(
     seedRecords: {
@@ -1088,6 +1172,12 @@ export class AssetsService {
     }[],
     period: TrendPeriod,
     rangeStart: Date | null,
+    withdrawals: {
+      accountId: string;
+      withdrawalDate: Date;
+      amount: unknown;
+      type: WithdrawalType;
+    }[] = [],
   ) {
     // 실제 출력할 기간 범위는 records 기준으로 생성
     // rangeStart가 있으면 해당 월부터 시작 보장 (records가 비어도)
@@ -1124,6 +1214,21 @@ export class AssetsService {
       }
     }
 
+    // 기간별 계좌별 출금 목록 맵 구성
+    const withdrawalMap = new Map<
+      string,
+      Map<string, { amount: number; type: WithdrawalType }[]>
+    >();
+    for (const w of withdrawals) {
+      const key = getPeriodKey(w.withdrawalDate);
+      if (!withdrawalMap.has(key)) withdrawalMap.set(key, new Map());
+      const periodMap = withdrawalMap.get(key);
+      if (!periodMap.has(w.accountId)) periodMap.set(w.accountId, []);
+      periodMap
+        .get(w.accountId)
+        .push({ amount: Number(w.amount), type: w.type });
+    }
+
     // carry-forward 시작값: seed 기록으로 lastKnown 초기화
     const accountIds = [
       ...new Set([
@@ -1143,14 +1248,31 @@ export class AssetsService {
       });
     }
 
-    // carry-forward: 빈 기간에 직전 값 채우기
+    // carry-forward: 빈 기간에 직전 값 채우기 + 출금 차감
     for (const key of allKeys) {
       const periodEntry = rawMap.get(key);
+      const periodWithdrawals = withdrawalMap.get(key);
       for (const accountId of accountIds) {
         if (periodEntry.has(accountId)) {
+          // 스냅샷이 있는 달은 스냅샷 값 그대로 (출금은 이미 스냅샷에 반영됨)
           lastKnown.set(accountId, periodEntry.get(accountId));
         } else if (lastKnown.has(accountId)) {
-          periodEntry.set(accountId, lastKnown.get(accountId));
+          // 스냅샷 없는 달: 직전 값에서 이번 달 출금 순서대로 적용
+          const prev = lastKnown.get(accountId);
+          const accountWithdrawals = periodWithdrawals?.get(accountId) ?? [];
+          let { balance, principal, profit } = prev;
+          for (const w of accountWithdrawals) {
+            balance = Math.max(0, balance - w.amount);
+            ({ principal, profit } = this.applyWithdrawal(
+              principal,
+              profit,
+              w.amount,
+              w.type,
+            ));
+          }
+          const adjusted = { balance, principal, profit };
+          lastKnown.set(accountId, adjusted);
+          periodEntry.set(accountId, adjusted);
         }
       }
     }
@@ -1265,9 +1387,19 @@ export class AssetsService {
       },
     });
 
-    // 출금일 이후(당일 포함) AccountRecord의 principal, profit 재계산
+    // 출금일 이후 AccountRecord의 principal, profit 재계산
+    // 같은 날 스냅샷은 출금 createdAt보다 먼저 생성된 것만 포함 (등록 순서 반영)
     const affectedRecords = await this.prisma.accountRecord.findMany({
-      where: { accountId, recordDate: { gte: withdrawalDate } },
+      where: {
+        accountId,
+        OR: [
+          { recordDate: { gt: withdrawalDate } },
+          {
+            recordDate: withdrawalDate,
+            createdAt: { lte: withdrawal.createdAt },
+          },
+        ],
+      },
       orderBy: { recordDate: 'asc' },
     });
 
@@ -1362,10 +1494,17 @@ export class AssetsService {
     await this.prisma.accountWithdrawal.delete({ where: { id: withdrawalId } });
 
     // 출금일 이후 AccountRecord의 principal/profit 원복
+    // 같은 날 스냅샷은 출금 createdAt보다 먼저 생성된 것만 포함 (등록 순서 반영)
     const affectedRecords = await this.prisma.accountRecord.findMany({
       where: {
         accountId,
-        recordDate: { gte: withdrawal.withdrawalDate },
+        OR: [
+          { recordDate: { gt: withdrawal.withdrawalDate } },
+          {
+            recordDate: withdrawal.withdrawalDate,
+            createdAt: { lte: withdrawal.createdAt },
+          },
+        ],
       },
       orderBy: { recordDate: 'asc' },
     });
