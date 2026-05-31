@@ -317,7 +317,11 @@ export class AssetsController {
   @ApiSuccess(AccountStatisticsDto, '자산 통계 조회 성공')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
   getStatistics(@Request() req, @Query() query: AssetsStatisticsQueryDto) {
-    return this.assetsService.getStatistics(req.user.userId, query.groupId);
+    return this.assetsService.getStatistics(
+      req.user.userId,
+      query.groupId,
+      query.accountIds,
+    );
   }
 
   @Get('statistics/trend')

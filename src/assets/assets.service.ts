@@ -515,11 +515,22 @@ export class AssetsService {
   /**
    * 그룹 자산 통계 조회
    */
-  async getStatistics(userId: string, groupId: string) {
+  async getStatistics(userId: string, groupId: string, accountIds?: string[]) {
     await this.validateGroupMember(userId, groupId);
 
+    const accountWhere: { groupId: string; id?: { in: string[] } } = {
+      groupId,
+    };
+    if (accountIds && accountIds.length > 0) {
+      const validAccounts = await this.prisma.account.findMany({
+        where: { id: { in: accountIds }, groupId },
+        select: { id: true },
+      });
+      accountWhere.id = { in: validAccounts.map((a) => a.id) };
+    }
+
     const accounts = await this.prisma.account.findMany({
-      where: { groupId },
+      where: accountWhere,
       include: {
         records: {
           orderBy: { recordDate: 'desc' },
@@ -589,17 +600,17 @@ export class AssetsService {
     }));
 
     // 종목별 집계: 각 계좌+종목명별 가장 최신 기록 금액 합산
-    const accountIds = accounts.map((a) => a.id);
+    const filteredAccountIds = accounts.map((a) => a.id);
     const holdingMap = new Map<
       string,
       { name: string; ticker: string | null; estimatedAmount: number }
     >();
 
-    if (accountIds.length > 0) {
+    if (filteredAccountIds.length > 0) {
       // 계좌+종목명별 최신 recordDate 조회
       const latestDates = await this.prisma.accountHoldingRecord.groupBy({
         by: ['accountId', 'name'],
-        where: { accountId: { in: accountIds } },
+        where: { accountId: { in: filteredAccountIds } },
         _max: { recordDate: true },
       });
 
