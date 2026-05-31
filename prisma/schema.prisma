@@ -869,9 +869,10 @@ model Account {
   name          String              @db.VarChar(100)
   accountNumber String?             @db.VarChar(50)
   institution   String?             @db.VarChar(100)
-  type          AccountType
-  sortOrder     Int                 @default(0)
-  createdAt     DateTime            @default(now())
+  type                AccountType
+  sortOrder           Int                 @default(0)
+  recordReminderDay   Int?
+  createdAt           DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
   group         Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)

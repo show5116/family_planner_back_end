@@ -86,6 +86,13 @@ export class AccountDto {
 
   @ApiProperty({ description: '수익률 (%)', example: '4.17', nullable: true })
   profitRate: string | null;
+
+  @ApiProperty({
+    description: '자산 기록 입력 알림 일자 (1~31, null이면 알림 없음)',
+    example: 1,
+    nullable: true,
+  })
+  recordReminderDay: number | null;
 }
 
 export class AccountTypeStatDto {

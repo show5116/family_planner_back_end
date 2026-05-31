@@ -88,6 +88,7 @@ export class AssetsService {
         accountNumber: dto.accountNumber,
         institution: dto.institution ?? null,
         type: dto.type,
+        recordReminderDay: dto.recordReminderDay ?? null,
       },
     });
 
@@ -197,6 +198,9 @@ export class AssetsService {
         }),
         ...(dto.institution !== undefined && { institution: dto.institution }),
         ...(dto.type !== undefined && { type: dto.type }),
+        ...('recordReminderDay' in dto && {
+          recordReminderDay: dto.recordReminderDay ?? null,
+        }),
       },
       include: {
         records: {
@@ -876,6 +880,8 @@ export class AssetsService {
       accountNumber: string | null;
       institution: string | null;
       type: AccountType;
+      sortOrder: number;
+      recordReminderDay: number | null;
       createdAt: Date;
       updatedAt: Date;
     },
@@ -909,6 +915,7 @@ export class AssetsService {
       updatedAt: account.updatedAt,
       latestBalance,
       profitRate,
+      recordReminderDay: account.recordReminderDay,
     };
   }
 

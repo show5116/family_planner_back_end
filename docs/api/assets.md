@@ -20,7 +20,8 @@
   "name": "주택청약", // 계좌명 (string)
   "accountNumber": "123-456-789", // 계좌번호 (string?)
   "institution": "국민은행", // 금융기관명 (string?)
-  "type": null // 계좌 유형 (AccountType)
+  "type": null, // 계좌 유형 (AccountType)
+  "recordReminderDay": 1 // 자산 기록 입력 알림 일자 (1~31, null이면 알림 없음) (number | null?)
 }
 ```
 
@@ -40,7 +41,8 @@
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
   "latestBalance": "5000000.00", // 최신 잔액 (string | null)
-  "profitRate": "4.17" // 수익률 (%) (string | null)
+  "profitRate": "4.17", // 수익률 (%) (string | null)
+  "recordReminderDay": 1 // 자산 기록 입력 알림 일자 (1~31, null이면 알림 없음) (number | null)
 }
 ```
 
@@ -73,7 +75,8 @@
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
   "latestBalance": "5000000.00", // 최신 잔액 (string | null)
-  "profitRate": "4.17" // 수익률 (%) (string | null)
+  "profitRate": "4.17", // 수익률 (%) (string | null)
+  "recordReminderDay": 1 // 자산 기록 입력 알림 일자 (1~31, null이면 알림 없음) (number | null)
 }
 ```
 
@@ -105,7 +108,8 @@
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
   "latestBalance": "5000000.00", // 최신 잔액 (string | null)
-  "profitRate": "4.17" // 수익률 (%) (string | null)
+  "profitRate": "4.17", // 수익률 (%) (string | null)
+  "recordReminderDay": 1 // 자산 기록 입력 알림 일자 (1~31, null이면 알림 없음) (number | null)
 }
 ```
 
@@ -157,7 +161,8 @@
   "name": "주택청약", // 계좌명 (string?)
   "accountNumber": "123-456-789", // 계좌번호 (string?)
   "institution": "국민은행", // 금융기관명 (string?)
-  "type": null // 계좌 유형 (AccountType?)
+  "type": null, // 계좌 유형 (AccountType?)
+  "recordReminderDay": 1 // 자산 기록 입력 알림 일자 (1~31, null이면 알림 해제) (number | null?)
 }
 ```
 
@@ -177,7 +182,8 @@
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
   "latestBalance": "5000000.00", // 최신 잔액 (string | null)
-  "profitRate": "4.17" // 수익률 (%) (string | null)
+  "profitRate": "4.17", // 수익률 (%) (string | null)
+  "recordReminderDay": 1 // 자산 기록 입력 알림 일자 (1~31, null이면 알림 없음) (number | null)
 }
 ```
 
