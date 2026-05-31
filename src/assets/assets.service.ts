@@ -145,10 +145,17 @@ export class AssetsService {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    return accounts.map((account) => {
-      const latestRecord = account.records[0] ?? null;
-      return this.formatAccount(account, latestRecord);
-    });
+    return Promise.all(
+      accounts.map(async (account) => {
+        const latest = account.records[0] ?? null;
+        if (!latest) return this.formatAccount(account, null);
+        const adjusted = await this.applyPostSnapshotWithdrawals(
+          account.id,
+          latest,
+        );
+        return this.formatAccount(account, adjusted);
+      }),
+    );
   }
 
   /**
@@ -171,8 +178,13 @@ export class AssetsService {
 
     await this.validateGroupMember(userId, account.groupId);
 
-    const latestRecord = account.records[0] ?? null;
-    return this.formatAccount(account, latestRecord);
+    const latest = account.records[0] ?? null;
+    if (!latest) return this.formatAccount(account, null);
+    const adjusted = await this.applyPostSnapshotWithdrawals(
+      account.id,
+      latest,
+    );
+    return this.formatAccount(account, adjusted);
   }
 
   /**
@@ -525,13 +537,44 @@ export class AssetsService {
       const latest = account.records[0];
       if (!latest) continue;
 
-      totalBalance += Number(latest.balance);
-      totalPrincipal += Number(latest.principal);
-      totalProfit += Number(latest.profit);
+      // 최신 스냅샷 이후 출금을 순서대로 적용 (balance, principal, profit 보정)
+      const postSnapshotWithdrawals =
+        await this.prisma.accountWithdrawal.findMany({
+          where: {
+            accountId: account.id,
+            OR: [
+              { withdrawalDate: { gt: latest.recordDate } },
+              {
+                withdrawalDate: latest.recordDate,
+                createdAt: { gt: latest.createdAt },
+              },
+            ],
+          },
+          orderBy: [{ withdrawalDate: 'asc' }, { createdAt: 'asc' }],
+          select: { amount: true, type: true },
+        });
+
+      let balance = Number(latest.balance);
+      let principal = Number(latest.principal);
+      let profit = Number(latest.profit);
+
+      for (const w of postSnapshotWithdrawals) {
+        balance = Math.max(0, balance - Number(w.amount));
+        ({ principal, profit } = this.applyWithdrawal(
+          principal,
+          profit,
+          Number(w.amount),
+          w.type,
+        ));
+      }
+
+      totalBalance += balance;
+      totalPrincipal += principal;
+      totalProfit += profit;
 
       const existing = typeMap.get(account.type) ?? { balance: 0, count: 0 };
       typeMap.set(account.type, {
-        balance: existing.balance + Number(latest.balance),
+        balance: existing.balance + balance,
         count: existing.count + 1,
       });
     }
@@ -615,11 +658,17 @@ export class AssetsService {
       currentAmount: Number(g.currentAmount).toFixed(2),
     }));
 
+    // 저금통은 원금/수익 구분 없이 전액을 totalBalance, totalPrincipal에 합산
+    const grandTotalBalance = totalBalance + savingsTotal;
+    const grandTotalPrincipal = totalPrincipal + savingsTotal;
+    const grandProfitRate =
+      grandTotalPrincipal > 0 ? (totalProfit / grandTotalPrincipal) * 100 : 0;
+
     return {
-      totalBalance: totalBalance.toFixed(2),
-      totalPrincipal: totalPrincipal.toFixed(2),
+      totalBalance: grandTotalBalance.toFixed(2),
+      totalPrincipal: grandTotalPrincipal.toFixed(2),
       totalProfit: totalProfit.toFixed(2),
-      profitRate: profitRate.toFixed(2),
+      profitRate: grandProfitRate.toFixed(2),
       accountCount: accounts.length,
       byType,
       savingsTotal: savingsTotal.toFixed(2),
@@ -907,6 +956,51 @@ export class AssetsService {
   }
 
   /**
+   * 최신 스냅샷 이후 출금을 적용해 보정된 balance/principal/profit 반환
+   */
+  private async applyPostSnapshotWithdrawals(
+    accountId: string,
+    latest: {
+      recordDate: Date;
+      createdAt: Date;
+      balance: unknown;
+      principal: unknown;
+      profit: unknown;
+    },
+  ) {
+    const postWithdrawals = await this.prisma.accountWithdrawal.findMany({
+      where: {
+        accountId,
+        OR: [
+          { withdrawalDate: { gt: latest.recordDate } },
+          {
+            withdrawalDate: latest.recordDate,
+            createdAt: { gt: latest.createdAt },
+          },
+        ],
+      },
+      orderBy: [{ withdrawalDate: 'asc' }, { createdAt: 'asc' }],
+      select: { amount: true, type: true },
+    });
+
+    let balance = Number(latest.balance);
+    let principal = Number(latest.principal);
+    let profit = Number(latest.profit);
+
+    for (const w of postWithdrawals) {
+      balance = Math.max(0, balance - Number(w.amount));
+      ({ principal, profit } = this.applyWithdrawal(
+        principal,
+        profit,
+        Number(w.amount),
+        w.type,
+      ));
+    }
+
+    return { balance, principal, profit };
+  }
+
+  /**
    * 계좌 포맷 헬퍼
    */
   private formatAccount(
@@ -919,7 +1013,7 @@ export class AssetsService {
       institution: string | null;
       type: AccountType;
       sortOrder: number;
-      recordReminderDay: number | null;
+      recordReminderDay?: number | null;
       createdAt: Date;
       updatedAt: Date;
     },
