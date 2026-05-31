@@ -131,8 +131,11 @@ export class FirebaseService implements OnModuleInit {
     try {
       const message = {
         topic,
-        notification,
-        data: data || {},
+        data: {
+          title: notification.title,
+          body: notification.body,
+          ...(data || {}),
+        },
       };
 
       const response = await this.getMessaging().send(message);
