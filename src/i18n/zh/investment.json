@@ -27,6 +27,9 @@
     "KR3Y": "韩国国债3年期",
     "VIX": "VIX恐慌指数",
     "BTC_KRW": "比特币",
+    "RUSSELL2000": "罗素2000",
+    "NAT_GAS": "天然气",
+    "WHEAT": "小麦",
     "BUFFETT_US": "巴菲特指标（美国）",
     "FEAR_GREED": "恐惧贪婪指数"
   }

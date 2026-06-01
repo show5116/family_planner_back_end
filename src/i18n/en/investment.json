@@ -27,6 +27,9 @@
     "KR3Y": "Korea 3Y Treasury",
     "VIX": "VIX",
     "BTC_KRW": "Bitcoin (KRW)",
+    "RUSSELL2000": "Russell 2000",
+    "NAT_GAS": "Natural Gas",
+    "WHEAT": "Wheat",
     "BUFFETT_US": "Buffett Indicator (US)",
     "FEAR_GREED": "Fear & Greed Index"
   }
