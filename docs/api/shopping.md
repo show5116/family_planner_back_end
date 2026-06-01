@@ -397,3 +397,29 @@
 #### 404 - 구매 이력을 찾을 수 없습니다
 
 ---
+
+### DELETE `shopping/history/:historyId`
+
+**요약:** 구매 이력 삭제 (오입력 정정용)
+
+**Path Parameters:**
+
+- `historyId` (`string`)
+
+**Query Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 이력 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 구매 이력을 찾을 수 없습니다
+
+---

@@ -152,4 +152,20 @@ export class ShoppingController {
       historyId,
     );
   }
+
+  @Delete('history/:historyId')
+  @ApiOperation({ summary: '구매 이력 삭제 (오입력 정정용)' })
+  @ApiSuccess(MessageResponseDto, '이력 삭제 성공')
+  @ApiNotFound('구매 이력을 찾을 수 없습니다')
+  deleteHistory(
+    @Request() req,
+    @Query() query: GroupIdQueryDto,
+    @Param('historyId') historyId: string,
+  ) {
+    return this.shoppingService.deleteHistory(
+      req.user.userId,
+      query.groupId,
+      historyId,
+    );
+  }
 }

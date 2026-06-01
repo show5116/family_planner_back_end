@@ -171,10 +171,11 @@ POST /shopping/cart/complete
 
 ### B. 구매 이력 (Shopping History)
 
-| Method | Endpoint                                  | 설명                   |
-| ------ | ----------------------------------------- | ---------------------- |
-| `GET`  | `/shopping/history?groupId=`              | 이력 목록 (페이지네이션) |
-| `GET`  | `/shopping/history/:historyId?groupId=`   | 이력 상세              |
+| Method   | Endpoint                                  | 설명                   |
+| -------- | ----------------------------------------- | ---------------------- |
+| `GET`    | `/shopping/history?groupId=`              | 이력 목록 (페이지네이션) |
+| `GET`    | `/shopping/history/:historyId?groupId=`   | 이력 상세              |
+| `DELETE` | `/shopping/history/:historyId?groupId=`   | 이력 삭제 (오입력 정정) |
 
 ---
 
@@ -201,6 +202,7 @@ POST /shopping/cart/complete
 - [x] 장보기 완료 + 냉장고 이관 트랜잭션
 - [x] 가계부 자동 등록 연동 (`expense` 옵션)
 - [x] ShoppingHistory 조회 (목록/상세, 페이지네이션, expense 포함)
+- [x] ShoppingHistory 삭제 (`DELETE /shopping/history/:historyId`) — 연결된 Expense는 shoppingHistoryId만 null로 처리하여 가계부 내역 보존
 
 ---
 

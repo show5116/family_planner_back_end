@@ -7,6 +7,7 @@
     "purchase_history_not_found": "Purchase history not found"
   },
   "success": {
-    "item_deleted": "Item deleted"
+    "item_deleted": "Item deleted",
+    "history_deleted": "Purchase history deleted"
   }
 }

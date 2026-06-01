@@ -7,6 +7,7 @@
     "purchase_history_not_found": "购买记录不存在"
   },
   "success": {
-    "item_deleted": "商品已删除"
+    "item_deleted": "商品已删除",
+    "history_deleted": "购买记录已删除"
   }
 }

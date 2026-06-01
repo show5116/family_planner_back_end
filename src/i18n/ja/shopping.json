@@ -7,6 +7,7 @@
     "purchase_history_not_found": "購入履歴が見つかりません"
   },
   "success": {
-    "item_deleted": "品目を削除しました"
+    "item_deleted": "品目を削除しました",
+    "history_deleted": "購入履歴を削除しました"
   }
 }

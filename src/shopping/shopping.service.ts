@@ -316,4 +316,30 @@ export class ShoppingService {
       throw new NotFoundException('shopping.errors.purchase_history_not_found');
     return history;
   }
+
+  async deleteHistory(userId: string, groupId: string, historyId: string) {
+    await this.assertMember(userId, groupId);
+    const history = await this.prisma.shoppingHistory.findFirst({
+      where: { id: historyId, groupId },
+      include: { expense: true },
+    });
+    if (!history)
+      throw new NotFoundException('shopping.errors.purchase_history_not_found');
+
+    await this.prisma.$transaction(async (tx) => {
+      if (history.expense) {
+        await tx.expense.update({
+          where: { id: history.expense.id },
+          data: { shoppingHistoryId: null },
+        });
+      }
+      await tx.shoppingHistory.delete({ where: { id: historyId } });
+    });
+
+    return {
+      message: this.i18n.t('shopping.success.history_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
+  }
 }
