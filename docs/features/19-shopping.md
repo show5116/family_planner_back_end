@@ -47,6 +47,7 @@ model ShoppingCartItem {
   name           String        @db.VarChar(100)
   quantity       Decimal       @db.Decimal(10, 2)
   unit           String?       @db.VarChar(20)
+  price          Decimal?      @db.Decimal(10, 2)
   isChecked      Boolean       @default(false)
   memo           String?       @db.VarChar(200)
   createdAt      DateTime      @default(now())

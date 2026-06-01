@@ -31,6 +31,7 @@
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "isChecked": false, // boolean
       "memo": "1+1 행사", // string | null
       "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -55,6 +56,7 @@
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string?
+  "price": 3500, // number?
   "memo": "1+1 행사" // string?
 }
 ```
@@ -70,6 +72,7 @@
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -92,6 +95,7 @@
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string?
+      "price": 3500, // number?
       "memo": "1+1 행사" // string?
     }
   ] // CartItemEntryDto[]
@@ -109,6 +113,7 @@
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -132,6 +137,7 @@
       "quantity": 2, // number?
       "unit": "개", // string?
       "isChecked": true, // boolean?
+      "price": 3500, // number?
       "memo": "1+1 행사" // string?
     }
   ], // CartItemUpdateEntryDto[]?
@@ -154,6 +160,7 @@
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "isChecked": false, // boolean
       "memo": "1+1 행사", // string | null
       "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -185,6 +192,7 @@
   "quantity": 2, // number?
   "unit": "개", // string?
   "isChecked": true, // boolean?
+  "price": 3500, // number?
   "memo": "1+1 행사" // string?
 }
 ```
@@ -200,6 +208,7 @@
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date

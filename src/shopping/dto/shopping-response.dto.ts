@@ -16,6 +16,9 @@ export class CartItemDto {
   @ApiProperty({ example: '개', nullable: true })
   unit: string | null;
 
+  @ApiProperty({ example: 3500, nullable: true })
+  price: number | null;
+
   @ApiProperty({ example: false })
   isChecked: boolean;
 

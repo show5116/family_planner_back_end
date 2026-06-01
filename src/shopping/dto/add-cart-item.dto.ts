@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -28,6 +29,12 @@ export class AddCartItemDto {
   @IsString()
   @MaxLength(20)
   unit?: string;
+
+  @ApiProperty({ example: 3500, required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  price?: number;
 
   @ApiProperty({ example: '1+1 행사', required: false })
   @IsOptional()

@@ -7638,6 +7638,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "isChecked": false, // boolean
       "memo": "1+1 행사", // string | null
       "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7662,6 +7663,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string?
+  "price": 3500, // number?
   "memo": "1+1 행사" // string?
 }
 ```
@@ -7677,6 +7679,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7699,6 +7702,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string?
+      "price": 3500, // number?
       "memo": "1+1 행사" // string?
     }
   ] // CartItemEntryDto[]
@@ -7716,6 +7720,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7739,6 +7744,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "quantity": 2, // number?
       "unit": "개", // string?
       "isChecked": true, // boolean?
+      "price": 3500, // number?
       "memo": "1+1 행사" // string?
     }
   ], // CartItemUpdateEntryDto[]?
@@ -7761,6 +7767,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "isChecked": false, // boolean
       "memo": "1+1 행사", // string | null
       "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7792,6 +7799,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "quantity": 2, // number?
   "unit": "개", // string?
   "isChecked": true, // boolean?
+  "price": 3500, // number?
   "memo": "1+1 행사" // string?
 }
 ```
@@ -7807,6 +7815,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
