@@ -129,7 +129,7 @@
 
 **Query Parameters:**
 
-- `days` (`number`) (Optional): 조회 일수 (1~365)
+- `days` (`number`) (Optional): 조회 일수 (1~1825)
 
 **Responses:**
 
