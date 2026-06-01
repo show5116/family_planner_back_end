@@ -49,6 +49,7 @@ model User {
   childcareAsParent    ChildcareAccount[]          @relation("ChildcareParent")
   childcareTransactions ChildcareTransaction[]     @relation("ChildcareTransactionCreator")
   childProfiles        Child[]                     @relation("ChildParent")
+  linkedChildProfiles  Child[]                     @relation("ChildLinkedUser")
   votesCreated         Vote[]                      @relation("VoteCreator")
   voteBallots          VoteBallot[]                @relation("VoteBallots")
   subscriptionTier      SubscriptionTier            @default(free)
@@ -99,6 +100,8 @@ model Group {
   shoppingHistories   ShoppingHistory[]
   itemNameHistories   ItemNameHistory[]
   groupExpiryPresets  GroupExpiryPreset[]
+  savingsGoals        SavingsGoal[]
+  minigameResults     MinigameResult[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -1033,6 +1036,7 @@ model Child {
 
   group         Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
   parentUser    User              @relation("ChildParent", fields: [parentUserId], references: [id], onDelete: Cascade)
+  linkedUser    User?             @relation("ChildLinkedUser", fields: [userId], references: [id], onDelete: SetNull)
   account       ChildcareAccount?
   allowancePlan ChildAllowancePlan?
 
@@ -1210,6 +1214,8 @@ model MinigameResult {
   createdBy    String
   createdAt    DateTime     @default(now())
 
+  group        Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   @@index([groupId, createdAt(sort: Desc)])
   @@index([groupId, gameType])
   @@index([createdBy])
@@ -1293,6 +1299,7 @@ model SavingsGoal {
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
+  group         Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
   transactions  SavingsTransaction[]
 
   @@index([groupId])
@@ -1406,6 +1413,7 @@ model ShoppingCartItem {
   name           String        @db.VarChar(100)
   quantity       Decimal       @db.Decimal(10, 2)
   unit           String?       @db.VarChar(20)
+  price          Decimal?      @db.Decimal(10, 2)
   isChecked      Boolean       @default(false)
   memo           String?       @db.VarChar(200)
   createdAt      DateTime      @default(now())

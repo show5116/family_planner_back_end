@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -25,6 +26,12 @@ export class UpdateCartItemDto {
   @IsOptional()
   @IsBoolean()
   isChecked?: boolean;
+
+  @ApiProperty({ example: 3500, required: false, nullable: true })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  price?: number;
 
   @ApiProperty({ example: '1+1 행사', required: false, nullable: true })
   @IsOptional()

@@ -5099,7 +5099,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 **Query Parameters:**
 
-- `days` (`number`) (Optional): 조회 일수 (1~365)
+- `days` (`number`) (Optional): 조회 일수 (1~1825)
 
 **Responses:**
 
@@ -7638,6 +7638,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "isChecked": false, // boolean
       "memo": "1+1 행사", // string | null
       "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7662,6 +7663,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string?
+  "price": 3500, // number?
   "memo": "1+1 행사" // string?
 }
 ```
@@ -7677,6 +7679,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7699,6 +7702,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string?
+      "price": 3500, // number?
       "memo": "1+1 행사" // string?
     }
   ] // CartItemEntryDto[]
@@ -7716,6 +7720,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7739,6 +7744,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "quantity": 2, // number?
       "unit": "개", // string?
       "isChecked": true, // boolean?
+      "price": 3500, // number?
       "memo": "1+1 행사" // string?
     }
   ], // CartItemUpdateEntryDto[]?
@@ -7761,6 +7767,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "name": "우유", // string
       "quantity": 2, // number
       "unit": "개", // string | null
+      "price": 3500, // number | null
       "isChecked": false, // boolean
       "memo": "1+1 행사", // string | null
       "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7792,6 +7799,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "quantity": 2, // number?
   "unit": "개", // string?
   "isChecked": true, // boolean?
+  "price": 3500, // number?
   "memo": "1+1 행사" // string?
 }
 ```
@@ -7807,6 +7815,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "name": "우유", // string
   "quantity": 2, // number
   "unit": "개", // string | null
+  "price": 3500, // number | null
   "isChecked": false, // boolean
   "memo": "1+1 행사", // string | null
   "createdAt": "2025-01-01T00:00:00Z" // Date
@@ -7998,6 +8007,32 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
     "date": "2025-01-01T00:00:00Z", // Date
     "description": "마트 장보기" // string | null
   } // 연결된 가계부 지출 (장보기 완료 시 가계부 등록한 경우에만 존재) (LinkedExpenseDto | null)
+}
+```
+
+#### 404 - 구매 이력을 찾을 수 없습니다
+
+---
+
+### DELETE `shopping/history/:historyId`
+
+**요약:** 구매 이력 삭제 (오입력 정정용)
+
+**Path Parameters:**
+
+- `historyId` (`string`)
+
+**Query Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 이력 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
 }
 ```
 

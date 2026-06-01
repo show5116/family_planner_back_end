@@ -9,13 +9,16 @@
     "total_budget_template_not_found": "Total budget template not found",
     "not_member": "You are not a member of this group",
     "unsupported_file_type": "Unsupported file type. (JPEG, PNG, WebP, PDF)",
-    "own_receipt_only_delete": "You can only delete receipts from your own expenses"
+    "own_receipt_only_delete": "You can only delete receipts from your own expenses",
+    "merchant_not_found": "Merchant not found",
+    "own_merchant_only": "You can only update or delete your own merchants"
   },
   "success": {
     "expense_deleted": "Expense record deleted",
     "receipt_deleted": "Receipt deleted",
     "budget_template_deleted": "Budget template deleted",
-    "total_budget_template_deleted": "Total budget template deleted"
+    "total_budget_template_deleted": "Total budget template deleted",
+    "merchant_deleted": "Merchant deleted"
   },
   "category": {
     "TRANSPORTATION": "Transportation",

@@ -27,6 +27,9 @@
     "KR3Y": "한국채 3년물",
     "VIX": "VIX 지수",
     "BTC_KRW": "비트코인",
+    "RUSSELL2000": "러셀 2000",
+    "NAT_GAS": "천연가스",
+    "WHEAT": "밀",
     "BUFFETT_US": "버핏 지수 (미국)",
     "FEAR_GREED": "공포탐욕지수"
   }

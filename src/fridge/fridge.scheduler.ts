@@ -62,9 +62,10 @@ export class FridgeScheduler {
 
     for (const [groupId, expiringItems] of groupMap) {
       const members = await this.prisma.groupMember.findMany({
-        where: { groupId },
+        where: { groupId, group: { id: groupId } },
         select: { userId: true },
       });
+      if (members.length === 0) continue;
 
       for (const item of expiringItems) {
         const daysLeft = Math.floor(

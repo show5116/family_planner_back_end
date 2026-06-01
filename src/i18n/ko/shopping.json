@@ -7,6 +7,7 @@
     "purchase_history_not_found": "구매 이력을 찾을 수 없습니다"
   },
   "success": {
-    "item_deleted": "품목이 삭제되었습니다"
+    "item_deleted": "품목이 삭제되었습니다",
+    "history_deleted": "구매 이력이 삭제되었습니다"
   }
 }

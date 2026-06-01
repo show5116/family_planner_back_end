@@ -67,6 +67,7 @@ export class ShoppingService {
         name: dto.name,
         quantity: dto.quantity,
         unit: dto.unit,
+        price: dto.price,
         memo: dto.memo,
       },
     });
@@ -96,6 +97,7 @@ export class ShoppingService {
             name: item.name,
             quantity: item.quantity,
             unit: item.unit,
+            price: item.price,
             memo: item.memo,
           },
         }),
@@ -128,6 +130,7 @@ export class ShoppingService {
           data: {
             ...(u.quantity !== undefined && { quantity: u.quantity }),
             ...(u.unit !== undefined && { unit: u.unit }),
+            ...(u.price !== undefined && { price: u.price }),
             ...(u.isChecked !== undefined && { isChecked: u.isChecked }),
             ...(u.memo !== undefined && { memo: u.memo }),
           },
@@ -167,6 +170,7 @@ export class ShoppingService {
       data: {
         ...(dto.quantity !== undefined && { quantity: dto.quantity }),
         ...(dto.unit !== undefined && { unit: dto.unit }),
+        ...(dto.price !== undefined && { price: dto.price }),
         ...(dto.isChecked !== undefined && { isChecked: dto.isChecked }),
         ...(dto.memo !== undefined && { memo: dto.memo }),
       },
@@ -237,7 +241,10 @@ export class ShoppingService {
             fridgeItemId = created.id;
           }
 
-          const itemPrice = transferMap.get(ci.id)?.price ?? null;
+          const itemPrice =
+            ci.price != null
+              ? Number(ci.price)
+              : (transferMap.get(ci.id)?.price ?? null);
           if (itemPrice != null) totalPrice += itemPrice;
 
           await tx.shoppingHistoryItem.create({
@@ -315,5 +322,31 @@ export class ShoppingService {
     if (!history)
       throw new NotFoundException('shopping.errors.purchase_history_not_found');
     return history;
+  }
+
+  async deleteHistory(userId: string, groupId: string, historyId: string) {
+    await this.assertMember(userId, groupId);
+    const history = await this.prisma.shoppingHistory.findFirst({
+      where: { id: historyId, groupId },
+      include: { expense: true },
+    });
+    if (!history)
+      throw new NotFoundException('shopping.errors.purchase_history_not_found');
+
+    await this.prisma.$transaction(async (tx) => {
+      if (history.expense) {
+        await tx.expense.update({
+          where: { id: history.expense.id },
+          data: { shoppingHistoryId: null },
+        });
+      }
+      await tx.shoppingHistory.delete({ where: { id: historyId } });
+    });
+
+    return {
+      message: this.i18n.t('shopping.success.history_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 }
