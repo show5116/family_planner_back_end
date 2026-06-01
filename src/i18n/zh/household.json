@@ -9,13 +9,16 @@
     "total_budget_template_not_found": "总预算模板不存在",
     "not_member": "您不是该群组成员",
     "unsupported_file_type": "不支持的文件类型（JPEG、PNG、WebP、PDF）",
-    "own_receipt_only_delete": "只能删除自己支出的收据"
+    "own_receipt_only_delete": "只能删除自己支出的收据",
+    "merchant_not_found": "商家不存在",
+    "own_merchant_only": "只能修改或删除自己添加的商家"
   },
   "success": {
     "expense_deleted": "支出记录已删除",
     "receipt_deleted": "收据已删除",
     "budget_template_deleted": "预算模板已删除",
-    "total_budget_template_deleted": "总预算模板已删除"
+    "total_budget_template_deleted": "总预算模板已删除",
+    "merchant_deleted": "商家已删除"
   },
   "category": {
     "TRANSPORTATION": "交通费",

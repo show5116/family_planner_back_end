@@ -9,13 +9,16 @@
     "total_budget_template_not_found": "全体予算テンプレートが見つかりません",
     "not_member": "このグループのメンバーではありません",
     "unsupported_file_type": "サポートされていないファイル形式です。(JPEG、PNG、WebP、PDF)",
-    "own_receipt_only_delete": "自分が登録した支出のレシートのみ削除できます"
+    "own_receipt_only_delete": "自分が登録した支出のレシートのみ削除できます",
+    "merchant_not_found": "加盟店が見つかりません",
+    "own_merchant_only": "自分が登録した加盟店のみ更新・削除できます"
   },
   "success": {
     "expense_deleted": "支出履歴を削除しました",
     "receipt_deleted": "レシートを削除しました",
     "budget_template_deleted": "予算テンプレートを削除しました",
-    "total_budget_template_deleted": "全体予算テンプレートを削除しました"
+    "total_budget_template_deleted": "全体予算テンプレートを削除しました",
+    "merchant_deleted": "加盟店を削除しました"
   },
   "category": {
     "TRANSPORTATION": "交通費",

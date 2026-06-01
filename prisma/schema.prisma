@@ -49,6 +49,7 @@ model User {
   childcareAsParent    ChildcareAccount[]          @relation("ChildcareParent")
   childcareTransactions ChildcareTransaction[]     @relation("ChildcareTransactionCreator")
   childProfiles        Child[]                     @relation("ChildParent")
+  linkedChildProfiles  Child[]                     @relation("ChildLinkedUser")
   votesCreated         Vote[]                      @relation("VoteCreator")
   voteBallots          VoteBallot[]                @relation("VoteBallots")
   subscriptionTier      SubscriptionTier            @default(free)
@@ -1035,6 +1036,7 @@ model Child {
 
   group         Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
   parentUser    User              @relation("ChildParent", fields: [parentUserId], references: [id], onDelete: Cascade)
+  linkedUser    User?             @relation("ChildLinkedUser", fields: [userId], references: [id], onDelete: SetNull)
   account       ChildcareAccount?
   allowancePlan ChildAllowancePlan?
 

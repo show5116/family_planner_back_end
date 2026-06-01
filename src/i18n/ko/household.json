@@ -9,13 +9,16 @@
     "total_budget_template_not_found": "전체 예산 템플릿을 찾을 수 없습니다",
     "not_member": "해당 그룹의 멤버가 아닙니다",
     "unsupported_file_type": "지원하지 않는 파일 형식입니다. (JPEG, PNG, WebP, PDF)",
-    "own_receipt_only_delete": "본인이 등록한 지출의 영수증만 삭제할 수 있습니다"
+    "own_receipt_only_delete": "본인이 등록한 지출의 영수증만 삭제할 수 있습니다",
+    "merchant_not_found": "가맹점을 찾을 수 없습니다",
+    "own_merchant_only": "본인이 등록한 가맹점만 수정/삭제할 수 있습니다"
   },
   "success": {
     "expense_deleted": "지출 내역이 삭제되었습니다",
     "receipt_deleted": "영수증이 삭제되었습니다",
     "budget_template_deleted": "예산 템플릿이 삭제되었습니다",
-    "total_budget_template_deleted": "전체 예산 템플릿이 삭제되었습니다"
+    "total_budget_template_deleted": "전체 예산 템플릿이 삭제되었습니다",
+    "merchant_deleted": "가맹점이 삭제되었습니다"
   },
   "category": {
     "TRANSPORTATION": "교통비",
