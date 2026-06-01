@@ -74,7 +74,7 @@ export class ChildcareScheduler {
         },
         include: {
           child: {
-            include: { account: true },
+            include: { account: true, group: { select: { id: true } } },
           },
         },
       });
@@ -85,7 +85,7 @@ export class ChildcareScheduler {
 
       for (const plan of plans) {
         const { child } = plan;
-        if (!child.account) continue;
+        if (!child.account || !child.group) continue;
 
         const account = child.account;
 
@@ -261,14 +261,14 @@ export class ChildcareScheduler {
             lt: dayAfterTomorrow,
           },
         },
-        include: { child: true },
+        include: { child: { include: { group: { select: { id: true } } } } },
       });
 
       this.logger.debug(`연봉 협상 알림 대상: ${plans.length}건`);
 
       for (const plan of plans) {
         const { child } = plan;
-        if (!plan.nextNegotiationDate) continue;
+        if (!plan.nextNegotiationDate || !child.group) continue;
         const negDate = new Date(plan.nextNegotiationDate);
         negDate.setHours(0, 0, 0, 0);
 
@@ -371,7 +371,9 @@ export class ChildcareScheduler {
         },
         include: {
           account: {
-            include: { child: true },
+            include: {
+              child: { include: { group: { select: { id: true } } } },
+            },
           },
         },
       });
@@ -380,6 +382,7 @@ export class ChildcareScheduler {
 
       for (const plan of plans) {
         const { account } = plan;
+        if (!account.child.group) continue;
         const principal = account.savingsBalance;
 
         // 이자 계산

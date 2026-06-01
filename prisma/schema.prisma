@@ -99,6 +99,8 @@ model Group {
   shoppingHistories   ShoppingHistory[]
   itemNameHistories   ItemNameHistory[]
   groupExpiryPresets  GroupExpiryPreset[]
+  savingsGoals        SavingsGoal[]
+  minigameResults     MinigameResult[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -1210,6 +1212,8 @@ model MinigameResult {
   createdBy    String
   createdAt    DateTime     @default(now())
 
+  group        Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   @@index([groupId, createdAt(sort: Desc)])
   @@index([groupId, gameType])
   @@index([createdBy])
@@ -1293,6 +1297,7 @@ model SavingsGoal {
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
+  group         Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
   transactions  SavingsTransaction[]
 
   @@index([groupId])
