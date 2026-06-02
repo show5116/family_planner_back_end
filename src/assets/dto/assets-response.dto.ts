@@ -164,6 +164,14 @@ export class AccountWithdrawalDto {
   createdAt: Date;
 }
 
+export class HoldingNameDto {
+  @ApiProperty({ description: '종목/자산명', example: '나스닥 ETF' })
+  name: string;
+
+  @ApiProperty({ description: '티커 심볼', example: 'QQQ', nullable: true })
+  ticker: string | null;
+}
+
 export class AccountHoldingRecordDto {
   @ApiProperty({ description: '기록 ID', example: 'uuid-1234' })
   id: string;
@@ -183,17 +191,26 @@ export class AccountHoldingRecordDto {
   @ApiProperty({ description: '금액', example: '2000000.00' })
   amount: string;
 
-  @ApiProperty({
-    description: '비율 (%, 해당 날짜 계좌 잔액 기준)',
-    example: '40.00',
-  })
-  ratio: string;
-
   @ApiProperty({ description: '생성일시' })
   createdAt: Date;
 
   @ApiProperty({ description: '수정일시' })
   updatedAt: Date;
+}
+
+export class AccountHoldingRecordListDto {
+  @ApiProperty({
+    type: AccountHoldingRecordDto,
+    isArray: true,
+    example: '<AccountHoldingRecordDto>',
+  })
+  records: AccountHoldingRecordDto[];
+
+  @ApiProperty({
+    description: '미할당 금액 (잔액 - 종목 합계, 음수면 초과)',
+    example: '500000.00',
+  })
+  unallocatedAmount: string;
 }
 
 export class HoldingStatDto {
