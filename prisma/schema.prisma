@@ -944,7 +944,6 @@ model AccountHoldingRecord {
   name       String   @db.VarChar(100)
   ticker     String?  @db.VarChar(20)
   amount     Decimal  @db.Decimal(15, 2)
-  ratio      Decimal  @db.Decimal(5, 2)   // amount / 해당 날짜 AccountRecord.balance × 100
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

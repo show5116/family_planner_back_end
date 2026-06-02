@@ -28,11 +28,13 @@ import {
 import {
   AccountDto,
   AccountHoldingRecordDto,
+  AccountHoldingRecordListDto,
   AccountRecordDto,
   AccountRecordSnapshotDto,
   AccountRecordWithdrawalDto,
   AccountStatisticsDto,
   AccountWithdrawalDto,
+  HoldingNameDto,
   TrendItemDto,
 } from './dto/assets-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
@@ -210,20 +212,18 @@ export class AssetsController {
 
   // ─── 포트폴리오 종목 기록 ─────────────────────────────────
 
-  @Get('accounts/:id/holding-records/names')
-  @ApiOperation({ summary: '계좌 종목명 목록 조회 (자동완성용)' })
-  @ApiSuccess(Object, '종목명 목록 조회 성공', { isArray: true })
-  @ApiNotFound('계좌를 찾을 수 없습니다')
+  @Get('groups/:groupId/holding-records/names')
+  @ApiOperation({ summary: '그룹 종목명 목록 조회 (자동완성용)' })
+  @ApiSuccess(HoldingNameDto, '종목명 목록 조회 성공', { isArray: true })
+  @ApiNotFound('그룹을 찾을 수 없습니다')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  findHoldingNames(@Request() req, @Param('id') id: string) {
-    return this.assetsService.findHoldingNames(req.user.userId, id);
+  findHoldingNames(@Request() req, @Param('groupId') groupId: string) {
+    return this.assetsService.findHoldingNames(req.user.userId, groupId);
   }
 
   @Get('accounts/:id/holding-records')
   @ApiOperation({ summary: '종목 기록 목록 조회' })
-  @ApiSuccess(AccountHoldingRecordDto, '종목 기록 목록 조회 성공', {
-    isArray: true,
-  })
+  @ApiSuccess(AccountHoldingRecordListDto, '종목 기록 목록 조회 성공')
   @ApiNotFound('계좌를 찾을 수 없습니다')
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
   findHoldingRecords(
@@ -239,17 +239,10 @@ export class AssetsController {
   }
 
   @Post('accounts/:id/holding-records')
-  @ApiOperation({
-    summary: '종목 기록 추가',
-    description:
-      '금액 입력 시 해당 날짜의 AccountRecord.balance 기준으로 비율(ratio) 자동 계산. 해당 날짜의 자산 기록이 먼저 존재해야 합니다.',
-  })
+  @ApiOperation({ summary: '종목 기록 추가' })
   @ApiCreated(AccountHoldingRecordDto, '종목 기록 추가 성공')
-  @ApiNotFound('계좌 또는 해당 날짜 자산 기록을 찾을 수 없습니다')
+  @ApiNotFound('계좌를 찾을 수 없습니다')
   @ApiForbidden('본인의 계좌에만 기록을 추가할 수 있습니다')
-  @ApiBadRequest(
-    '금액이 계좌 잔액을 초과하거나 동일한 종목명의 기록이 이미 존재합니다',
-  )
   createHoldingRecord(
     @Request() req,
     @Param('id') id: string,

@@ -706,20 +706,39 @@ export class AssetsService {
 
     await this.validateGroupMember(userId, account.groupId);
 
-    const records = await this.prisma.accountHoldingRecord.findMany({
-      where: {
-        accountId,
-        ...(recordDate && { recordDate: new Date(recordDate) }),
-      },
-      orderBy: [{ recordDate: 'desc' }, { name: 'asc' }],
-    });
+    const whereDate = recordDate ? new Date(recordDate) : undefined;
 
-    return records.map((r) => this.formatHoldingRecord(r));
+    const [records, accountRecord] = await Promise.all([
+      this.prisma.accountHoldingRecord.findMany({
+        where: { accountId, ...(whereDate && { recordDate: whereDate }) },
+        orderBy: [{ recordDate: 'desc' }, { name: 'asc' }],
+      }),
+      whereDate
+        ? this.prisma.accountRecord.findUnique({
+            where: {
+              accountId_recordDate: { accountId, recordDate: whereDate },
+            },
+            select: { balance: true },
+          })
+        : this.prisma.accountRecord.findFirst({
+            where: { accountId },
+            orderBy: { recordDate: 'desc' },
+            select: { balance: true },
+          }),
+    ]);
+
+    const balance = Number(accountRecord?.balance ?? 0);
+    const totalAmount = records.reduce((sum, r) => sum + Number(r.amount), 0);
+    const unallocatedAmount = (balance - totalAmount).toFixed(2);
+
+    return {
+      records: records.map((r) => this.formatHoldingRecord(r)),
+      unallocatedAmount,
+    };
   }
 
   /**
    * holding record 추가 (소유자만)
-   * ratio = amount / 해당 날짜 AccountRecord.balance × 100 자동 계산
    */
   async createHoldingRecord(
     userId: string,
@@ -740,26 +759,6 @@ export class AssetsService {
 
     const recordDate = new Date(dto.recordDate);
 
-    const accountRecord = await this.prisma.accountRecord.findUnique({
-      where: { accountId_recordDate: { accountId, recordDate } },
-      select: { balance: true },
-    });
-
-    if (!accountRecord) {
-      throw new BadRequestException(
-        '해당 날짜의 자산 기록이 없습니다. 먼저 자산 기록을 추가하세요.',
-      );
-    }
-
-    const balance = Number(accountRecord.balance);
-    const ratio = balance > 0 ? (dto.amount / balance) * 100 : 0;
-
-    if (ratio > 100) {
-      throw new BadRequestException(
-        `금액이 해당 날짜 계좌 잔액(${balance.toFixed(0)}원)을 초과합니다.`,
-      );
-    }
-
     const existing = await this.prisma.accountHoldingRecord.findUnique({
       where: {
         accountId_recordDate_name: { accountId, recordDate, name: dto.name },
@@ -779,7 +778,6 @@ export class AssetsService {
         name: dto.name,
         ticker: dto.ticker ?? null,
         amount: dto.amount,
-        ratio: parseFloat(ratio.toFixed(2)),
       },
     });
 
@@ -789,7 +787,6 @@ export class AssetsService {
   /**
    * holding record 수정 (소유자만) — name, ticker, amount 수정 가능
    * name 변경 시 같은 날짜에 동일한 이름이 없어야 함
-   * amount 변경 시 ratio 재계산
    */
   async updateHoldingRecord(
     userId: string,
@@ -839,30 +836,12 @@ export class AssetsService {
       }
     }
 
-    let newRatio = Number(record.ratio);
-    if (dto.amount !== undefined) {
-      const accountRecord = await this.prisma.accountRecord.findUnique({
-        where: {
-          accountId_recordDate: { accountId, recordDate: record.recordDate },
-        },
-        select: { balance: true },
-      });
-      const balance = Number(accountRecord?.balance ?? 0);
-      newRatio = balance > 0 ? (newAmount / balance) * 100 : 0;
-      if (newRatio > 100) {
-        throw new BadRequestException(
-          `금액이 해당 날짜 계좌 잔액(${balance.toFixed(0)}원)을 초과합니다.`,
-        );
-      }
-    }
-
     const updated = await this.prisma.accountHoldingRecord.update({
       where: { id: recordId },
       data: {
         name: newName,
         ...(dto.ticker !== undefined && { ticker: dto.ticker }),
         amount: newAmount,
-        ratio: parseFloat(newRatio.toFixed(2)),
       },
     });
 
@@ -911,21 +890,13 @@ export class AssetsService {
   /**
    * 자동완성용 종목명 목록 조회 (그룹 멤버)
    */
-  async findHoldingNames(userId: string, accountId: string) {
-    const account = await this.prisma.account.findUnique({
-      where: { id: accountId },
-    });
-
-    if (!account) {
-      throw new NotFoundException('assets.errors.account_not_found');
-    }
-
-    await this.validateGroupMember(userId, account.groupId);
+  async findHoldingNames(userId: string, groupId: string) {
+    await this.validateGroupMember(userId, groupId);
 
     const names = await this.prisma.accountHoldingRecord.findMany({
-      where: { accountId },
+      where: { account: { groupId } },
       select: { name: true, ticker: true },
-      distinct: ['name'],
+      distinct: ['name', 'ticker'],
       orderBy: { name: 'asc' },
     });
 
@@ -939,7 +910,6 @@ export class AssetsService {
     name: string;
     ticker: string | null;
     amount: unknown;
-    ratio: unknown;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -950,7 +920,6 @@ export class AssetsService {
       name: record.name,
       ticker: record.ticker,
       amount: Number(record.amount).toFixed(2),
-      ratio: Number(record.ratio).toFixed(2),
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
