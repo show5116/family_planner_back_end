@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { CustomThrottlerGuard } from '@/common/guards/throttler.guard';
 import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
@@ -149,11 +150,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
       resolvers: [AcceptLanguageResolver],
     }),
-    ThrottlerModule.forRoot(
-      process.env.NODE_ENV === 'production'
-        ? [{ ttl: 60000, limit: 10 }]
-        : [{ ttl: 60000, limit: 10000 }],
-    ),
+    ThrottlerModule.forRoot([]),
     EventEmitterModule.forRoot(),
     ...(process.env.NODE_ENV === 'production' ||
     process.env.ENABLE_SCHEDULER === 'true'
@@ -193,7 +190,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: CustomThrottlerGuard,
     },
     {
       provide: APP_GUARD,
