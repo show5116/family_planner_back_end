@@ -349,10 +349,14 @@ export class AssetsStatisticsService {
     for (const key of allKeys) {
       const periodEntry = rawMap.get(key);
       for (const accountId of accountIds) {
-        if (periodEntry.has(accountId)) {
-          lastKnown.set(accountId, periodEntry.get(accountId));
-        } else if (lastKnown.has(accountId)) {
-          periodEntry.set(accountId, lastKnown.get(accountId));
+        const current = periodEntry.get(accountId);
+        if (current !== undefined) {
+          lastKnown.set(accountId, current);
+        } else {
+          const known = lastKnown.get(accountId);
+          if (known !== undefined) {
+            periodEntry.set(accountId, known);
+          }
         }
       }
     }
