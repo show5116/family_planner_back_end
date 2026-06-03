@@ -900,19 +900,20 @@ enum AccountType {
 }
 
 model AccountRecord {
-  id         String   @id @default(uuid())
-  accountId  String
-  recordDate DateTime @db.Date
-  balance    Decimal  @db.Decimal(15, 2)
-  principal  Decimal  @db.Decimal(15, 2)
-  profit     Decimal  @db.Decimal(15, 2)
-  gramWeight Decimal? @db.Decimal(10, 4)
-  note       String?  @db.VarChar(200)
-  createdAt  DateTime @default(now())
+  id           String             @id @default(uuid())
+  accountId    String
+  recordDate   DateTime           @db.Date
+  balance      Decimal            @db.Decimal(15, 2)
+  principal    Decimal            @db.Decimal(15, 2)
+  profit       Decimal            @db.Decimal(15, 2)
+  gramWeight   Decimal?           @db.Decimal(10, 4)
+  note         String?            @db.VarChar(200)
+  withdrawalId String?            @unique
+  createdAt    DateTime           @default(now())
 
-  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  withdrawal   AccountWithdrawal? @relation(fields: [withdrawalId], references: [id], onDelete: SetNull)
 
-  @@unique([accountId, recordDate])
   @@index([accountId, recordDate(sort: Desc)])
   @@map("account_records")
 }
@@ -932,6 +933,7 @@ model AccountWithdrawal {
   createdAt      DateTime       @default(now())
 
   account        Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  record         AccountRecord?
 
   @@index([accountId, withdrawalDate(sort: Desc)])
   @@map("account_withdrawals")
