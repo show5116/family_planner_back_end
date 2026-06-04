@@ -1,4 +1,4 @@
-﻿import {
+import {
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -11,10 +11,23 @@ import { UpdateMemoDto } from './dto/update-memo.dto';
 import { MemoQueryDto, MemoTagListQueryDto } from './dto/memo-query.dto';
 import { CreateMemoTagDto } from './dto/create-memo-tag.dto';
 import { CreateMemoAttachmentDto } from './dto/create-memo-attachment.dto';
-import { CreateChecklistItemDto } from './dto/create-checklist-item.dto';
-import { UpdateChecklistItemDto } from './dto/update-checklist-item.dto';
 import { MemoVisibility } from './enums/memo-visibility.enum';
-import { MemoType } from './enums/memo-type.enum';
+
+const MEMO_INCLUDE = {
+  user: { select: { id: true, name: true } },
+  tags: true,
+  attachments: true,
+} as const;
+
+function toMemoResponse(memo: any) {
+  return {
+    ...memo,
+    checklistMeta: {
+      total: memo.totalCount,
+      checked: memo.checkedCount,
+    },
+  };
+}
 
 @Injectable()
 export class MemoService {
@@ -23,20 +36,9 @@ export class MemoService {
     private readonly i18n: I18nService,
   ) {}
 
-  /**
-   * 메모 생성
-   */
   async create(userId: string, dto: CreateMemoDto) {
-    const isChecklist = dto.type === MemoType.CHECKLIST;
-
-    if (isChecklist) {
-      if (!dto.checklistItems?.length) {
-        throw new BadRequestException('memo.errors.checklist_min_one_item');
-      }
-    } else {
-      if (!dto.content?.trim()) {
-        throw new BadRequestException('memo.errors.body_required');
-      }
+    if (!dto.content?.trim()) {
+      throw new BadRequestException('memo.errors.body_required');
     }
 
     if (dto.visibility === MemoVisibility.GROUP) {
@@ -46,42 +48,26 @@ export class MemoService {
       await this.validateGroupMembership(userId, dto.groupId);
     }
 
-    return this.prisma.memo.create({
+    const memo = await this.prisma.memo.create({
       data: {
         userId,
         groupId: dto.visibility === MemoVisibility.GROUP ? dto.groupId : null,
         title: dto.title,
-        content: dto.content ?? '',
+        content: dto.content,
         format: dto.format,
-        type: dto.type,
         visibility: dto.visibility,
+        checkedCount: dto.checklistMeta?.checked ?? 0,
+        totalCount: dto.checklistMeta?.total ?? 0,
         tags: dto.tags?.length
-          ? {
-              create: dto.tags.map((tag) => ({ name: tag.name })),
-            }
+          ? { create: dto.tags.map((tag) => ({ name: tag.name })) }
           : undefined,
-        checklistItems:
-          isChecklist && dto.checklistItems?.length
-            ? {
-                create: dto.checklistItems.map((item, index) => ({
-                  content: item.content,
-                  order: item.order ?? index,
-                })),
-              }
-            : undefined,
       },
-      include: {
-        user: { select: { id: true, name: true } },
-        tags: true,
-        attachments: true,
-        checklistItems: { orderBy: { order: 'asc' } },
-      },
+      include: MEMO_INCLUDE,
     });
+
+    return toMemoResponse(memo);
   }
 
-  /**
-   * 메모 목록 조회 (본인 개인 메모 + 소속 그룹 메모)
-   */
   async findAll(userId: string, query: MemoQueryDto) {
     const userGroupIds = await this.getUserGroupIds(userId);
 
@@ -100,18 +86,9 @@ export class MemoService {
       ],
       ...(query.visibility && { visibility: query.visibility }),
       ...(query.groupId && { groupId: query.groupId }),
-      ...(query.tag && {
-        tags: { some: { name: query.tag } },
-      }),
-      ...(query.search && {
-        OR: [
-          { title: { contains: query.search } },
-          { content: { contains: query.search } },
-        ],
-      }),
+      ...(query.tag && { tags: { some: { name: query.tag } } }),
     };
 
-    // search 필터가 있으면 기본 OR 조건과 결합
     if (query.search) {
       const accessCondition = [
         { userId, visibility: MemoVisibility.PRIVATE },
@@ -139,12 +116,7 @@ export class MemoService {
     const [memos, total] = await Promise.all([
       this.prisma.memo.findMany({
         where,
-        include: {
-          user: { select: { id: true, name: true } },
-          tags: true,
-          attachments: true,
-          checklistItems: { orderBy: { order: 'asc' } },
-        },
+        include: MEMO_INCLUDE,
         orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
         skip: (query.page - 1) * query.limit,
         take: query.limit,
@@ -153,7 +125,7 @@ export class MemoService {
     ]);
 
     return {
-      data: memos,
+      data: memos.map(toMemoResponse),
       meta: {
         total,
         page: query.page,
@@ -163,18 +135,10 @@ export class MemoService {
     };
   }
 
-  /**
-   * 메모 상세 조회
-   */
   async findOne(userId: string, id: string) {
     const memo = await this.prisma.memo.findFirst({
       where: { id, deletedAt: null },
-      include: {
-        user: { select: { id: true, name: true } },
-        tags: true,
-        attachments: true,
-        checklistItems: { orderBy: { order: 'asc' } },
-      },
+      include: MEMO_INCLUDE,
     });
 
     if (!memo) {
@@ -183,12 +147,9 @@ export class MemoService {
 
     await this.validateReadAccess(userId, memo);
 
-    return memo;
+    return toMemoResponse(memo);
   }
 
-  /**
-   * 메모 수정
-   */
   async update(userId: string, id: string, dto: UpdateMemoDto) {
     const memo = await this.prisma.memo.findFirst({
       where: { id, deletedAt: null },
@@ -210,7 +171,7 @@ export class MemoService {
       await this.validateGroupMembership(userId, groupId);
     }
 
-    return this.prisma.memo.update({
+    const updated = await this.prisma.memo.update({
       where: { id },
       data: {
         ...(dto.title && { title: dto.title }),
@@ -226,28 +187,17 @@ export class MemoService {
             create: dto.tags.map((tag) => ({ name: tag.name })),
           },
         }),
-        ...(dto.checklistItems && {
-          checklistItems: {
-            deleteMany: {},
-            create: dto.checklistItems.map((item, index) => ({
-              content: item.content,
-              order: item.order ?? index,
-            })),
-          },
+        ...(dto.checklistMeta !== undefined && {
+          checkedCount: dto.checklistMeta?.checked ?? 0,
+          totalCount: dto.checklistMeta?.total ?? 0,
         }),
       },
-      include: {
-        user: { select: { id: true, name: true } },
-        tags: true,
-        attachments: true,
-        checklistItems: { orderBy: { order: 'asc' } },
-      },
+      include: MEMO_INCLUDE,
     });
+
+    return toMemoResponse(updated);
   }
 
-  /**
-   * 메모 삭제 (Soft Delete)
-   */
   async remove(userId: string, id: string) {
     const memo = await this.prisma.memo.findFirst({
       where: { id, deletedAt: null },
@@ -273,27 +223,18 @@ export class MemoService {
     };
   }
 
-  /**
-   * 핀 토글 (핀 ↔ 핀 해제)
-   */
   async togglePin(userId: string, id: string) {
     const memo = await this.findOwnMemo(userId, id);
 
-    return this.prisma.memo.update({
+    const updated = await this.prisma.memo.update({
       where: { id },
       data: { isPinned: !memo.isPinned },
-      include: {
-        user: { select: { id: true, name: true } },
-        tags: true,
-        attachments: true,
-        checklistItems: { orderBy: { order: 'asc' } },
-      },
+      include: MEMO_INCLUDE,
     });
+
+    return toMemoResponse(updated);
   }
 
-  /**
-   * 핀된 메모 목록 조회 (대시보드 위젯용)
-   */
   async findPinned(userId: string, groupId?: string) {
     const userGroupIds = await this.getUserGroupIds(userId);
 
@@ -305,7 +246,7 @@ export class MemoService {
         ? [{ groupId: { in: userGroupIds }, visibility: MemoVisibility.GROUP }]
         : [];
 
-    return this.prisma.memo.findMany({
+    const memos = await this.prisma.memo.findMany({
       where: {
         deletedAt: null,
         isPinned: true,
@@ -314,19 +255,13 @@ export class MemoService {
           ...groupFilter,
         ],
       },
-      include: {
-        user: { select: { id: true, name: true } },
-        tags: true,
-        attachments: true,
-        checklistItems: { orderBy: { order: 'asc' } },
-      },
+      include: MEMO_INCLUDE,
       orderBy: { updatedAt: 'desc' },
     });
+
+    return memos.map(toMemoResponse);
   }
 
-  /**
-   * 태그 이름 목록 조회 (중복 제거)
-   */
   async findTagNames(userId: string, query: MemoTagListQueryDto) {
     let memoWhere: any = { deletedAt: null };
 
@@ -371,23 +306,14 @@ export class MemoService {
     return { tags: tags.map((t) => t.name) };
   }
 
-  /**
-   * 태그 추가
-   */
   async addTag(userId: string, memoId: string, dto: CreateMemoTagDto) {
     const memo = await this.findOwnMemo(userId, memoId);
 
     return this.prisma.memoTag.create({
-      data: {
-        memoId: memo.id,
-        name: dto.name,
-      },
+      data: { memoId: memo.id, name: dto.name },
     });
   }
 
-  /**
-   * 태그 삭제
-   */
   async removeTag(userId: string, memoId: string, tagId: string) {
     await this.findOwnMemo(userId, memoId);
 
@@ -408,9 +334,6 @@ export class MemoService {
     };
   }
 
-  /**
-   * 첨부파일 추가
-   */
   async addAttachment(
     userId: string,
     memoId: string,
@@ -429,9 +352,6 @@ export class MemoService {
     });
   }
 
-  /**
-   * 첨부파일 삭제
-   */
   async removeAttachment(userId: string, memoId: string, attachmentId: string) {
     await this.findOwnMemo(userId, memoId);
 
@@ -452,119 +372,6 @@ export class MemoService {
     };
   }
 
-  /**
-   * 체크리스트 항목 추가
-   */
-  async addChecklistItem(
-    userId: string,
-    memoId: string,
-    dto: CreateChecklistItemDto,
-  ) {
-    const memo = await this.findOwnMemo(userId, memoId);
-
-    if ((memo.type as MemoType) !== MemoType.CHECKLIST) {
-      throw new BadRequestException('memo.errors.checklist_only');
-    }
-
-    const order =
-      dto.order ??
-      (await this.prisma.checklistItem.count({ where: { memoId } }));
-
-    return this.prisma.checklistItem.create({
-      data: { memoId, content: dto.content, order },
-    });
-  }
-
-  /**
-   * 체크리스트 항목 수정 (내용/순서)
-   */
-  async updateChecklistItem(
-    userId: string,
-    memoId: string,
-    itemId: string,
-    dto: UpdateChecklistItemDto,
-  ) {
-    await this.findOwnMemo(userId, memoId);
-    const item = await this.findChecklistItem(itemId, memoId);
-
-    return this.prisma.checklistItem.update({
-      where: { id: item.id },
-      data: {
-        ...(dto.content !== undefined && { content: dto.content }),
-        ...(dto.order !== undefined && { order: dto.order }),
-      },
-    });
-  }
-
-  /**
-   * 체크리스트 항목 삭제
-   */
-  async removeChecklistItem(userId: string, memoId: string, itemId: string) {
-    await this.findOwnMemo(userId, memoId);
-    await this.findChecklistItem(itemId, memoId);
-
-    await this.prisma.checklistItem.delete({ where: { id: itemId } });
-
-    return {
-      message: this.i18n.t('memo.success.item_deleted', {
-        lang: I18nContext.current()?.lang ?? 'ko',
-      }),
-    };
-  }
-
-  /**
-   * 체크리스트 항목 체크/해제 토글
-   */
-  async toggleChecklistItem(userId: string, memoId: string, itemId: string) {
-    await this.findOwnMemo(userId, memoId);
-    const item = await this.findChecklistItem(itemId, memoId);
-
-    return this.prisma.checklistItem.update({
-      where: { id: item.id },
-      data: { isChecked: !item.isChecked },
-    });
-  }
-
-  /**
-   * 체크리스트 전체 선택 또는 전체 해제
-   */
-  async toggleAllChecklist(userId: string, memoId: string, checkAll: boolean) {
-    await this.findOwnMemo(userId, memoId);
-
-    await this.prisma.checklistItem.updateMany({
-      where: { memoId },
-      data: { isChecked: checkAll },
-    });
-
-    return {
-      message: checkAll
-        ? this.i18n.t('memo.success.all_checked', {
-            lang: I18nContext.current()?.lang ?? 'ko',
-          })
-        : this.i18n.t('memo.success.all_unchecked', {
-            lang: I18nContext.current()?.lang ?? 'ko',
-          }),
-    };
-  }
-
-  /**
-   * 체크리스트 항목 조회 (존재 확인)
-   */
-  private async findChecklistItem(itemId: string, memoId: string) {
-    const item = await this.prisma.checklistItem.findFirst({
-      where: { id: itemId, memoId },
-    });
-
-    if (!item) {
-      throw new NotFoundException('memo.errors.item_not_found');
-    }
-
-    return item;
-  }
-
-  /**
-   * 본인 메모 확인 (수정/삭제 권한 검증)
-   */
   private async findOwnMemo(userId: string, memoId: string) {
     const memo = await this.prisma.memo.findFirst({
       where: { id: memoId, deletedAt: null },
@@ -581,9 +388,6 @@ export class MemoService {
     return memo;
   }
 
-  /**
-   * 읽기 권한 검증
-   */
   private async validateReadAccess(userId: string, memo: any) {
     if (memo.visibility === MemoVisibility.PRIVATE && memo.userId !== userId) {
       throw new ForbiddenException('memo.errors.no_access');
@@ -594,9 +398,6 @@ export class MemoService {
     }
   }
 
-  /**
-   * 그룹 멤버십 검증
-   */
   private async validateGroupMembership(userId: string, groupId: string) {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
@@ -607,9 +408,6 @@ export class MemoService {
     }
   }
 
-  /**
-   * 사용자가 속한 그룹 ID 목록 조회
-   */
   private async getUserGroupIds(userId: string): Promise<string[]> {
     const memberships = await this.prisma.groupMember.findMany({
       where: { userId },

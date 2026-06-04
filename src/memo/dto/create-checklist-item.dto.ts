@@ -10,6 +10,17 @@ import {
 
 export class CreateChecklistItemDto {
   @ApiProperty({
+    description: '섹션 제목 (같은 sectionTitle끼리 그룹핑)',
+    example: '부모 물건',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  sectionTitle?: string;
+
+  @ApiProperty({
     description: '항목 내용',
     example: '여권 챙기기',
     minLength: 1,

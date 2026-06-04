@@ -1,27 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MemoFormat } from '@/memo/enums/memo-format.enum';
-import { MemoType } from '@/memo/enums/memo-type.enum';
 import { MemoVisibility } from '@/memo/enums/memo-visibility.enum';
-
-export class ChecklistItemDto {
-  @ApiProperty({ description: '항목 ID', example: 'uuid-1234' })
-  id: string;
-
-  @ApiProperty({ description: '항목 내용', example: '여권 챙기기' })
-  content: string;
-
-  @ApiProperty({ description: '체크 여부', example: false })
-  isChecked: boolean;
-
-  @ApiProperty({ description: '정렬 순서', example: 0 })
-  order: number;
-
-  @ApiProperty({ description: '생성일' })
-  createdAt: Date;
-
-  @ApiProperty({ description: '수정일' })
-  updatedAt: Date;
-}
 
 export class MemoTagDto {
   @ApiProperty({ description: '태그 ID', example: 'uuid-1234' })
@@ -59,21 +38,26 @@ export class MemoAuthorDto {
   name: string;
 }
 
+export class ChecklistMetaDto {
+  @ApiProperty({ description: '전체 체크리스트 항목 수', example: 11 })
+  total: number;
+
+  @ApiProperty({ description: '체크된 항목 수', example: 3 })
+  checked: number;
+}
+
 export class MemoDto {
   @ApiProperty({ description: '메모 ID', example: 'uuid-1234' })
   id: string;
 
-  @ApiProperty({ description: '제목', example: '회의 메모' })
+  @ApiProperty({ description: '제목', example: '외박 준비물' })
   title: string;
 
-  @ApiProperty({ description: '본문' })
+  @ApiProperty({ description: 'Delta JSON 문자열 또는 일반 텍스트' })
   content: string;
 
   @ApiProperty({ description: '메모 형식', enum: MemoFormat })
   format: MemoFormat;
-
-  @ApiProperty({ description: '메모 타입', enum: MemoType })
-  type: MemoType;
 
   @ApiProperty({ description: '공개 범위', enum: MemoVisibility })
   visibility: MemoVisibility;
@@ -94,10 +78,10 @@ export class MemoDto {
   attachments: MemoAttachmentDto[];
 
   @ApiProperty({
-    description: '체크리스트 항목 목록 (type=CHECKLIST일 때)',
-    type: [ChecklistItemDto],
+    description: '체크리스트 집계 (체크리스트 없으면 total=0)',
+    type: ChecklistMetaDto,
   })
-  checklistItems: ChecklistItemDto[];
+  checklistMeta: ChecklistMetaDto;
 
   @ApiProperty({ description: '생성일' })
   createdAt: Date;
