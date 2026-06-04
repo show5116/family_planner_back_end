@@ -10,4 +10,7 @@ export enum MemoFormat {
 
   /** 일반 텍스트 형식 */
   PLAIN = 'PLAIN',
+
+  /** Quill Delta JSON 형식 */
+  DELTA = 'DELTA',
 }

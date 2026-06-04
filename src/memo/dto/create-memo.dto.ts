@@ -3,6 +3,8 @@ import {
   IsString,
   IsOptional,
   IsEnum,
+  IsInt,
+  Min,
   MinLength,
   MaxLength,
   IsArray,
@@ -11,9 +13,7 @@ import {
 import { Type, Transform } from 'class-transformer';
 import { sanitizeHtmlContent } from '@/common/utils/sanitize-html.util';
 import { MemoFormat } from '@/memo/enums/memo-format.enum';
-import { MemoType } from '@/memo/enums/memo-type.enum';
 import { MemoVisibility } from '@/memo/enums/memo-visibility.enum';
-import { CreateChecklistItemDto } from '@/memo/dto/create-checklist-item.dto';
 
 class CreateMemoTagDto {
   @ApiProperty({ description: '태그 이름', example: '중요' })
@@ -23,10 +23,22 @@ class CreateMemoTagDto {
   name: string;
 }
 
+export class ChecklistMetaDto {
+  @ApiProperty({ description: '전체 체크리스트 항목 수', example: 11 })
+  @IsInt()
+  @Min(0)
+  total: number;
+
+  @ApiProperty({ description: '체크된 항목 수', example: 3 })
+  @IsInt()
+  @Min(0)
+  checked: number;
+}
+
 export class CreateMemoDto {
   @ApiProperty({
     description: '메모 제목',
-    example: '회의 메모',
+    example: '외박 준비물',
     minLength: 1,
     maxLength: 200,
   })
@@ -36,8 +48,8 @@ export class CreateMemoDto {
   title: string;
 
   @ApiProperty({
-    description: '메모 본문 (NOTE 타입 필수, CHECKLIST 타입 불필요)',
-    example: '# 회의 내용\n- 항목 1\n- 항목 2',
+    description: 'Delta JSON 문자열 (format=DELTA) 또는 일반 텍스트',
+    example: '{"ops":[{"insert":"본문 텍스트\\n"}]}',
     required: false,
   })
   @IsOptional()
@@ -46,24 +58,14 @@ export class CreateMemoDto {
   content?: string;
 
   @ApiProperty({
-    description: '메모 형식',
+    description: '메모 형식 (기본값: DELTA)',
     enum: MemoFormat,
-    default: MemoFormat.MARKDOWN,
+    default: MemoFormat.DELTA,
     required: false,
   })
   @IsOptional()
   @IsEnum(MemoFormat)
-  format?: MemoFormat = MemoFormat.MARKDOWN;
-
-  @ApiProperty({
-    description: '메모 타입 (NOTE: 일반, CHECKLIST: 체크리스트)',
-    enum: MemoType,
-    default: MemoType.NOTE,
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(MemoType)
-  type?: MemoType = MemoType.NOTE;
+  format?: MemoFormat = MemoFormat.DELTA;
 
   @ApiProperty({
     description: '공개 범위',
@@ -92,13 +94,12 @@ export class CreateMemoDto {
   tags?: CreateMemoTagDto[];
 
   @ApiProperty({
-    description: '체크리스트 항목 목록 (CHECKLIST 타입 필수)',
-    type: [CreateChecklistItemDto],
+    description: '체크리스트 집계 (Delta에 list 블록이 있을 때 전송)',
+    type: ChecklistMetaDto,
     required: false,
   })
   @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreateChecklistItemDto)
-  checklistItems?: CreateChecklistItemDto[];
+  @ValidateNested()
+  @Type(() => ChecklistMetaDto)
+  checklistMeta?: ChecklistMetaDto;
 }

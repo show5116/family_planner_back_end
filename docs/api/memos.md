@@ -16,12 +16,9 @@
 
 ```json
 {
-  "title": "회의 메모", // 메모 제목 (string)
-  "content": "# 회의 내용
-- 항목 1
-- 항목 2", // 메모 본문 (NOTE 타입 필수, CHECKLIST 타입 불필요) (string?)
-  "format": null, // 메모 형식 (MemoFormat?)
-  "type": null, // 메모 타입 (NOTE: 일반, CHECKLIST: 체크리스트) (MemoType?)
+  "title": "외박 준비물", // 메모 제목 (string)
+  "content": "{"ops":[{"insert":"본문 텍스트\n"}]}", // Delta JSON 문자열 (format=DELTA) 또는 일반 텍스트 (string?)
+  "format": null, // 메모 형식 (기본값: DELTA) (MemoFormat?)
   "visibility": null, // 공개 범위 (MemoVisibility?)
   "groupId": "", // 그룹 ID (GROUP 공개 시 필수) (string?)
   "tags": [
@@ -29,12 +26,10 @@
       "name": "중요" // 태그 이름 (string)
     }
   ], // 태그 목록 (CreateMemoTagDto[]?)
-  "checklistItems": [
-    {
-      "content": "여권 챙기기", // 항목 내용 (string)
-      "order": 0 // 정렬 순서 (number?)
-    }
-  ] // 체크리스트 항목 목록 (CHECKLIST 타입 필수) (CreateChecklistItemDto[]?)
+  "checklistMeta": {
+    "total": 11, // 전체 체크리스트 항목 수 (number)
+    "checked": 3 // 체크된 항목 수 (number)
+  } // 체크리스트 집계 (Delta에 list 블록이 있을 때 전송) (ChecklistMetaDto?)
 }
 ```
 
@@ -45,10 +40,9 @@
 ```json
 {
   "id": "uuid-1234", // 메모 ID (string)
-  "title": "회의 메모", // 제목 (string)
-  "content": "", // 본문 (string)
+  "title": "외박 준비물", // 제목 (string)
+  "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
   "format": null, // 메모 형식 (MemoFormat)
-  "type": null, // 메모 타입 (MemoType)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -72,16 +66,10 @@
       "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
     }
   ], // 첨부파일 목록 (MemoAttachmentDto[])
-  "checklistItems": [
-    {
-      "id": "uuid-1234", // 항목 ID (string)
-      "content": "여권 챙기기", // 항목 내용 (string)
-      "isChecked": false, // 체크 여부 (boolean)
-      "order": 0, // 정렬 순서 (number)
-      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
-      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
-    }
-  ], // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
+  "checklistMeta": {
+    "total": 11, // 전체 체크리스트 항목 수 (number)
+    "checked": 3 // 체크된 항목 수 (number)
+  }, // 체크리스트 집계 (체크리스트 없으면 total=0) (ChecklistMetaDto)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -111,10 +99,9 @@
   "data": [
     {
       "id": "uuid-1234", // 메모 ID (string)
-      "title": "회의 메모", // 제목 (string)
-      "content": "", // 본문 (string)
+      "title": "외박 준비물", // 제목 (string)
+      "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
       "format": null, // 메모 형식 (MemoFormat)
-      "type": null, // 메모 타입 (MemoType)
       "visibility": null, // 공개 범위 (MemoVisibility)
       "isPinned": false, // 핀 여부 (boolean)
       "groupId": null, // 그룹 ID (string | null)
@@ -134,14 +121,10 @@
         "mimeType": "application/pdf",
         "createdAt": "2025-01-01T00:00:00Z"
       }, // 첨부파일 목록 (MemoAttachmentDto[])
-      "checklistItems": {
-        "id": "uuid-1234",
-        "content": "여권 챙기기",
-        "isChecked": false,
-        "order": 0,
-        "createdAt": "2025-01-01T00:00:00Z",
-        "updatedAt": "2025-01-01T00:00:00Z"
-      }, // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
+      "checklistMeta": {
+        "total": 11,
+        "checked": 3
+      }, // 체크리스트 집계 (체크리스트 없으면 total=0) (ChecklistMetaDto)
       "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
     }
@@ -189,10 +172,9 @@
 ```json
 {
   "id": "uuid-1234", // 메모 ID (string)
-  "title": "회의 메모", // 제목 (string)
-  "content": "", // 본문 (string)
+  "title": "외박 준비물", // 제목 (string)
+  "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
   "format": null, // 메모 형식 (MemoFormat)
-  "type": null, // 메모 타입 (MemoType)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -216,16 +198,10 @@
       "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
     }
   ], // 첨부파일 목록 (MemoAttachmentDto[])
-  "checklistItems": [
-    {
-      "id": "uuid-1234", // 항목 ID (string)
-      "content": "여권 챙기기", // 항목 내용 (string)
-      "isChecked": false, // 체크 여부 (boolean)
-      "order": 0, // 정렬 순서 (number)
-      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
-      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
-    }
-  ], // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
+  "checklistMeta": {
+    "total": 11, // 전체 체크리스트 항목 수 (number)
+    "checked": 3 // 체크된 항목 수 (number)
+  }, // 체크리스트 집계 (체크리스트 없으면 total=0) (ChecklistMetaDto)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -248,10 +224,9 @@
 ```json
 {
   "id": "uuid-1234", // 메모 ID (string)
-  "title": "회의 메모", // 제목 (string)
-  "content": "", // 본문 (string)
+  "title": "외박 준비물", // 제목 (string)
+  "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
   "format": null, // 메모 형식 (MemoFormat)
-  "type": null, // 메모 타입 (MemoType)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -275,16 +250,10 @@
       "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
     }
   ], // 첨부파일 목록 (MemoAttachmentDto[])
-  "checklistItems": [
-    {
-      "id": "uuid-1234", // 항목 ID (string)
-      "content": "여권 챙기기", // 항목 내용 (string)
-      "isChecked": false, // 체크 여부 (boolean)
-      "order": 0, // 정렬 순서 (number)
-      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
-      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
-    }
-  ], // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
+  "checklistMeta": {
+    "total": 11, // 전체 체크리스트 항목 수 (number)
+    "checked": 3 // 체크된 항목 수 (number)
+  }, // 체크리스트 집계 (체크리스트 없으면 total=0) (ChecklistMetaDto)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -317,10 +286,9 @@
 ```json
 {
   "id": "uuid-1234", // 메모 ID (string)
-  "title": "회의 메모", // 제목 (string)
-  "content": "", // 본문 (string)
+  "title": "외박 준비물", // 제목 (string)
+  "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
   "format": null, // 메모 형식 (MemoFormat)
-  "type": null, // 메모 타입 (MemoType)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -344,16 +312,10 @@
       "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
     }
   ], // 첨부파일 목록 (MemoAttachmentDto[])
-  "checklistItems": [
-    {
-      "id": "uuid-1234", // 항목 ID (string)
-      "content": "여권 챙기기", // 항목 내용 (string)
-      "isChecked": false, // 체크 여부 (boolean)
-      "order": 0, // 정렬 순서 (number)
-      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
-      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
-    }
-  ], // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
+  "checklistMeta": {
+    "total": 11, // 전체 체크리스트 항목 수 (number)
+    "checked": 3 // 체크된 항목 수 (number)
+  }, // 체크리스트 집계 (체크리스트 없으면 total=0) (ChecklistMetaDto)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -404,10 +366,9 @@
 ```json
 {
   "id": "uuid-1234", // 메모 ID (string)
-  "title": "회의 메모", // 제목 (string)
-  "content": "", // 본문 (string)
+  "title": "외박 준비물", // 제목 (string)
+  "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
   "format": null, // 메모 형식 (MemoFormat)
-  "type": null, // 메모 타입 (MemoType)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -431,16 +392,10 @@
       "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
     }
   ], // 첨부파일 목록 (MemoAttachmentDto[])
-  "checklistItems": [
-    {
-      "id": "uuid-1234", // 항목 ID (string)
-      "content": "여권 챙기기", // 항목 내용 (string)
-      "isChecked": false, // 체크 여부 (boolean)
-      "order": 0, // 정렬 순서 (number)
-      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
-      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
-    }
-  ], // 체크리스트 항목 목록 (type=CHECKLIST일 때) (ChecklistItemDto[])
+  "checklistMeta": {
+    "total": 11, // 전체 체크리스트 항목 수 (number)
+    "checked": 3 // 체크된 항목 수 (number)
+  }, // 체크리스트 집계 (체크리스트 없으면 total=0) (ChecklistMetaDto)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -568,165 +523,5 @@
 ```
 
 #### 404 - 첨부파일을 찾을 수 없습니다
-
----
-
-### POST `memos/:id/checklist`
-
-**요약:** 체크리스트 항목 추가
-
-**Path Parameters:**
-
-- `id` (`string`)
-
-**Request Body:**
-
-```json
-{
-  "content": "여권 챙기기", // 항목 내용 (string)
-  "order": 0 // 정렬 순서 (number?)
-}
-```
-
-**Responses:**
-
-#### 201 - 항목 추가 성공
-
-```json
-{
-  "id": "uuid-1234", // 항목 ID (string)
-  "content": "여권 챙기기", // 항목 내용 (string)
-  "isChecked": false, // 체크 여부 (boolean)
-  "order": 0, // 정렬 순서 (number)
-  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
-  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
-}
-```
-
-#### 404 - 메모를 찾을 수 없습니다
-
-#### 403 - 본인의 메모만 수정할 수 있습니다
-
----
-
-### PATCH `memos/:id/checklist/:itemId`
-
-**요약:** 체크리스트 항목 수정 (내용/순서)
-
-**Path Parameters:**
-
-- `id` (`string`)
-- `itemId` (`string`)
-
-**Request Body:**
-
-```json
-{
-  "content": "여권 챙기기", // 항목 내용 (string?)
-  "order": 1 // 정렬 순서 (number?)
-}
-```
-
-**Responses:**
-
-#### 200 - 항목 수정 성공
-
-```json
-{
-  "id": "uuid-1234", // 항목 ID (string)
-  "content": "여권 챙기기", // 항목 내용 (string)
-  "isChecked": false, // 체크 여부 (boolean)
-  "order": 0, // 정렬 순서 (number)
-  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
-  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
-}
-```
-
-#### 404 - 항목을 찾을 수 없습니다
-
-#### 403 - 본인의 메모만 수정할 수 있습니다
-
----
-
-### DELETE `memos/:id/checklist/:itemId`
-
-**요약:** 체크리스트 항목 삭제
-
-**Path Parameters:**
-
-- `id` (`string`)
-- `itemId` (`string`)
-
-**Responses:**
-
-#### 200 - 항목 삭제 성공
-
-```json
-{
-  "message": "작업이 완료되었습니다" // string
-}
-```
-
-#### 404 - 항목을 찾을 수 없습니다
-
-#### 403 - 본인의 메모만 수정할 수 있습니다
-
----
-
-### POST `memos/:id/checklist/:itemId/toggle`
-
-**요약:** 체크리스트 항목 체크/해제 토글
-
-**Path Parameters:**
-
-- `id` (`string`)
-- `itemId` (`string`)
-
-**Responses:**
-
-#### 200 - 토글 성공
-
-```json
-{
-  "id": "uuid-1234", // 항목 ID (string)
-  "content": "여권 챙기기", // 항목 내용 (string)
-  "isChecked": false, // 체크 여부 (boolean)
-  "order": 0, // 정렬 순서 (number)
-  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
-  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
-}
-```
-
-#### 404 - 항목을 찾을 수 없습니다
-
-#### 403 - 본인의 메모만 수정할 수 있습니다
-
----
-
-### POST `memos/:id/checklist/toggle-all`
-
-**요약:** 체크리스트 전체 선택/해제 (checkAll=true: 전체 선택, 기본값: 전체 해제)
-
-**Path Parameters:**
-
-- `id` (`string`)
-
-**Query Parameters:**
-
-- `checkAll` (`boolean`)
-
-**Responses:**
-
-#### 200 - 전체 선택/해제 성공
-
-```json
-{
-  "message": "작업이 완료되었습니다" // string
-}
-```
-
-#### 404 - 메모를 찾을 수 없습니다
-
-#### 403 - 본인의 메모만 수정할 수 있습니다
 
 ---

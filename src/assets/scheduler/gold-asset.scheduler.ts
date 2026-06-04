@@ -102,9 +102,9 @@ export class GoldAssetScheduler {
       const grams = Number(latestRecord.gramWeight);
       const balance = grams * pricePerGram;
 
-      // 이미 해당 날짜 기록 존재 시 스킵
-      const exists = await this.prisma.accountRecord.findUnique({
-        where: { accountId_recordDate: { accountId: account.id, recordDate } },
+      // 이미 해당 날짜 사용자 스냅샷 존재 시 스킵
+      const exists = await this.prisma.accountRecord.findFirst({
+        where: { accountId: account.id, recordDate, withdrawalId: null },
       });
       if (exists) continue;
 

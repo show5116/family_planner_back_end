@@ -598,24 +598,24 @@ enum notifications_category {
 }
 
 model Memo {
-  id             String         @id @default(uuid())
-  userId         String
-  groupId        String?
-  title          String         @db.VarChar(200)
-  content        String         @db.Text
-  format         MemoFormat     @default(MARKDOWN)
-  type           MemoType       @default(NOTE)
-  visibility     MemoVisibility @default(PRIVATE)
-  isPinned       Boolean        @default(false)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  deletedAt      DateTime?
+  id            String         @id @default(uuid())
+  userId        String
+  groupId       String?
+  title         String         @db.VarChar(200)
+  content       String         @db.Text
+  format        MemoFormat     @default(DELTA)
+  visibility    MemoVisibility @default(PRIVATE)
+  isPinned      Boolean        @default(false)
+  checkedCount  Int            @default(0)
+  totalCount    Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
 
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group          Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  tags           MemoTag[]
-  attachments    MemoAttachment[]
-  checklistItems ChecklistItem[]
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group       Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  tags        MemoTag[]
+  attachments MemoAttachment[]
 
   @@index([userId, isPinned])
   @@index([userId, createdAt(sort: Desc)])
@@ -655,31 +655,12 @@ enum MemoFormat {
   MARKDOWN
   HTML
   PLAIN
-}
-
-enum MemoType {
-  NOTE
-  CHECKLIST
+  DELTA
 }
 
 enum MemoVisibility {
   PRIVATE
   GROUP
-}
-
-model ChecklistItem {
-  id        String   @id @default(uuid())
-  memoId    String
-  content   String   @db.VarChar(300)
-  isChecked Boolean  @default(false)
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  memo      Memo     @relation(fields: [memoId], references: [id], onDelete: Cascade)
-
-  @@index([memoId, order])
-  @@map("checklist_items")
 }
 
 model Merchant {
@@ -900,19 +881,20 @@ enum AccountType {
 }
 
 model AccountRecord {
-  id         String   @id @default(uuid())
-  accountId  String
-  recordDate DateTime @db.Date
-  balance    Decimal  @db.Decimal(15, 2)
-  principal  Decimal  @db.Decimal(15, 2)
-  profit     Decimal  @db.Decimal(15, 2)
-  gramWeight Decimal? @db.Decimal(10, 4)
-  note       String?  @db.VarChar(200)
-  createdAt  DateTime @default(now())
+  id           String             @id @default(uuid())
+  accountId    String
+  recordDate   DateTime           @db.Date
+  balance      Decimal            @db.Decimal(15, 2)
+  principal    Decimal            @db.Decimal(15, 2)
+  profit       Decimal            @db.Decimal(15, 2)
+  gramWeight   Decimal?           @db.Decimal(10, 4)
+  note         String?            @db.VarChar(200)
+  withdrawalId String?            @unique
+  createdAt    DateTime           @default(now())
 
-  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  withdrawal   AccountWithdrawal? @relation(fields: [withdrawalId], references: [id], onDelete: SetNull)
 
-  @@unique([accountId, recordDate])
   @@index([accountId, recordDate(sort: Desc)])
   @@map("account_records")
 }
@@ -932,6 +914,7 @@ model AccountWithdrawal {
   createdAt      DateTime       @default(now())
 
   account        Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  record         AccountRecord?
 
   @@index([accountId, withdrawalDate(sort: Desc)])
   @@map("account_withdrawals")
