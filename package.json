@@ -55,6 +55,7 @@
     "bcrypt": "^6.0.0",
     "cache-manager": "^7.2.7",
     "cache-manager-redis-yet": "^5.1.5",
+    "cheerio": "^1.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",

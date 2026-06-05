@@ -12,6 +12,7 @@ import { MemoQueryDto, MemoTagListQueryDto } from './dto/memo-query.dto';
 import { CreateMemoTagDto } from './dto/create-memo-tag.dto';
 import { CreateMemoAttachmentDto } from './dto/create-memo-attachment.dto';
 import { MemoVisibility } from './enums/memo-visibility.enum';
+import { deltaToPlainText } from './utils/delta-to-plain-text.util';
 
 const MEMO_INCLUDE = {
   user: { select: { id: true, name: true } },
@@ -54,6 +55,7 @@ export class MemoService {
         groupId: dto.visibility === MemoVisibility.GROUP ? dto.groupId : null,
         title: dto.title,
         content: dto.content,
+        plainText: deltaToPlainText(dto.content),
         format: dto.format,
         visibility: dto.visibility,
         checkedCount: dto.checklistMeta?.checked ?? 0,
@@ -107,7 +109,7 @@ export class MemoService {
         {
           OR: [
             { title: { contains: query.search } },
-            { content: { contains: query.search } },
+            { plainText: { contains: query.search, not: null } },
           ],
         },
       ];
@@ -175,7 +177,10 @@ export class MemoService {
       where: { id },
       data: {
         ...(dto.title && { title: dto.title }),
-        ...(dto.content && { content: dto.content }),
+        ...(dto.content && {
+          content: dto.content,
+          plainText: deltaToPlainText(dto.content),
+        }),
         ...(dto.format && { format: dto.format }),
         ...(dto.visibility && { visibility: dto.visibility }),
         ...(dto.visibility === MemoVisibility.GROUP &&
