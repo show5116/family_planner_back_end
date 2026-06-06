@@ -1054,7 +1054,103 @@ export class RedisService implements OnModuleInit {
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
-   * 8. Indicator History (지표 시계열 — Python AI 에이전트용)
+   * 8. Memo Edit Lock (편집 충돌 방지)
+   * ───────────────────────────────────────────────────────────────────────── */
+
+  private memoLockKey(memoId: string) {
+    return `memo:lock:${memoId}`;
+  }
+
+  /**
+   * 메모 편집 잠금 획득 (SET NX EX)
+   * 이미 다른 사용자가 잠금 중이면 false 반환
+   *
+   * @param memoId - 메모 ID
+   * @param userId - 잠금을 요청한 사용자 ID
+   * @param ttlSeconds - 잠금 만료 시간 (기본 60초)
+   * @returns 획득 성공 여부
+   */
+  async acquireMemoLock(
+    memoId: string,
+    userId: string,
+    ttlSeconds = 60,
+  ): Promise<boolean> {
+    const key = this.memoLockKey(memoId);
+    const result = await this.redisClient.set(
+      key,
+      userId,
+      'EX',
+      ttlSeconds,
+      'NX',
+    );
+    return result === 'OK';
+  }
+
+  /**
+   * 메모 편집 잠금 해제 (본인의 잠금만 해제)
+   * Lua 스크립트로 원자적 처리
+   *
+   * @param memoId - 메모 ID
+   * @param userId - 요청한 사용자 ID
+   * @returns 해제 성공 여부 (본인 잠금이 아니면 false)
+   */
+  async releaseMemoLock(memoId: string, userId: string): Promise<boolean> {
+    const key = this.memoLockKey(memoId);
+    const script = `
+      if redis.call("GET", KEYS[1]) == ARGV[1] then
+        return redis.call("DEL", KEYS[1])
+      else
+        return 0
+      end
+    `;
+    const result = await this.redisClient.eval(script, 1, key, userId);
+    return result === 1;
+  }
+
+  /**
+   * 메모 편집 잠금 TTL 갱신 (heartbeat)
+   * 본인이 잠금 중일 때만 갱신
+   *
+   * @param memoId - 메모 ID
+   * @param userId - 요청한 사용자 ID
+   * @param ttlSeconds - 갱신할 TTL (기본 60초)
+   * @returns 갱신 성공 여부
+   */
+  async renewMemoLock(
+    memoId: string,
+    userId: string,
+    ttlSeconds = 60,
+  ): Promise<boolean> {
+    const key = this.memoLockKey(memoId);
+    const script = `
+      if redis.call("GET", KEYS[1]) == ARGV[1] then
+        return redis.call("EXPIRE", KEYS[1], ARGV[2])
+      else
+        return 0
+      end
+    `;
+    const result = await this.redisClient.eval(
+      script,
+      1,
+      key,
+      userId,
+      ttlSeconds.toString(),
+    );
+    return result === 1;
+  }
+
+  /**
+   * 메모 편집 잠금 상태 조회
+   *
+   * @param memoId - 메모 ID
+   * @returns 잠금 중인 userId 또는 null
+   */
+  async getMemoLock(memoId: string): Promise<string | null> {
+    return await this.redisClient.get(this.memoLockKey(memoId));
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * 9. Indicator History (지표 시계열 — Python AI 에이전트용)
    * ───────────────────────────────────────────────────────────────────────── */
 
   /**

@@ -603,6 +603,7 @@ model Memo {
   groupId       String?
   title         String         @db.VarChar(200)
   content       String         @db.Text
+  plainText     String?        @db.Text
   format        MemoFormat     @default(DELTA)
   visibility    MemoVisibility @default(PRIVATE)
   isPinned      Boolean        @default(false)
