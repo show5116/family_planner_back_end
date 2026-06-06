@@ -6,8 +6,7 @@
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
-import { BulkAddCartItemDto } from './dto/bulk-add-cart-item.dto';
-import { BulkUpdateCartItemDto } from './dto/bulk-update-cart-item.dto';
+import { SyncCartItemsDto } from './dto/sync-cart-items.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { CompleteShoppingDto } from './dto/complete-shopping.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
@@ -73,24 +72,28 @@ export class ShoppingService {
     });
   }
 
-  async bulkAddCartItems(
-    userId: string,
-    groupId: string,
-    dto: BulkAddCartItemDto,
-  ) {
+  async syncCartItems(userId: string, groupId: string, dto: SyncCartItemsDto) {
     await this.assertMember(userId, groupId);
     const cart = await this.getOrCreateCart(groupId);
-    const allNames = dto.items.map((i) => i.name);
+
+    const inserts = dto.inserts ?? [];
+    const updates = dto.updates ?? [];
+    const deletes = dto.deletes ?? [];
+
+    const insertNames = inserts.map((i) => i.name);
     const [frequentItems] = await Promise.all([
-      this.prisma.frequentItem.findMany({
-        where: { groupId, name: { in: allNames } },
-      }),
-      Promise.all(allNames.map((name) => this.saveItemName(groupId, name))),
+      insertNames.length > 0
+        ? this.prisma.frequentItem.findMany({
+            where: { groupId, name: { in: insertNames } },
+          })
+        : Promise.resolve([]),
+      Promise.all(insertNames.map((name) => this.saveItemName(groupId, name))),
     ]);
     const frequentMap = new Map(frequentItems.map((f) => [f.name, f.id]));
-    return this.prisma.$transaction(
-      dto.items.map((item) =>
-        this.prisma.shoppingCartItem.create({
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of inserts) {
+        await tx.shoppingCartItem.create({
           data: {
             cartId: cart.id,
             frequentItemId: frequentMap.get(item.name),
@@ -100,26 +103,9 @@ export class ShoppingService {
             price: item.price,
             memo: item.memo,
           },
-        }),
-      ),
-    );
-  }
+        });
+      }
 
-  async bulkUpdateCartItems(
-    userId: string,
-    groupId: string,
-    dto: BulkUpdateCartItemDto,
-  ) {
-    await this.assertMember(userId, groupId);
-    const cart = await this.prisma.shoppingCart.findUnique({
-      where: { groupId },
-    });
-    if (!cart) throw new NotFoundException('shopping.errors.cart_not_found');
-
-    const updates = dto.updates ?? [];
-    const deletes = dto.deletes ?? [];
-
-    await this.prisma.$transaction(async (tx) => {
       for (const u of updates) {
         const item = await tx.shoppingCartItem.findFirst({
           where: { id: u.id, cartId: cart.id },

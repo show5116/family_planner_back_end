@@ -13,6 +13,36 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export class CartItemInsertEntryDto {
+  @ApiProperty({ example: '우유', maxLength: 100 })
+  @IsString()
+  @MaxLength(100)
+  name: string;
+
+  @ApiProperty({ example: 2 })
+  @IsNumber()
+  @Min(0.01)
+  quantity: number;
+
+  @ApiProperty({ example: '개', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  unit?: string;
+
+  @ApiProperty({ example: 3500, required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  price?: number;
+
+  @ApiProperty({ example: '1+1 행사', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  memo?: string;
+}
+
 export class CartItemUpdateEntryDto {
   @ApiProperty({ example: 'uuid-cart-item' })
   @IsUUID()
@@ -48,10 +78,17 @@ export class CartItemUpdateEntryDto {
   memo?: string;
 }
 
-export class BulkUpdateCartItemDto {
+export class SyncCartItemsDto {
   @ApiProperty({ example: 'uuid-group' })
   @IsUUID()
   groupId: string;
+
+  @ApiProperty({ type: [CartItemInsertEntryDto], required: false })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CartItemInsertEntryDto)
+  inserts?: CartItemInsertEntryDto[];
 
   @ApiProperty({ type: [CartItemUpdateEntryDto], required: false })
   @IsOptional()
