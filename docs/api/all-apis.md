@@ -5806,6 +5806,68 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ---
 
+### POST `memos/:id/lock`
+
+**요약:** 편집 잠금 획득 (편집 모드 진입 시 호출)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 잠금 획득 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 메모를 찾을 수 없습니다
+
+---
+
+### DELETE `memos/:id/lock`
+
+**요약:** 편집 잠금 해제 (편집 완료 또는 취소 시 호출)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 잠금 해제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+---
+
+### POST `memos/:id/lock/heartbeat`
+
+**요약:** 편집 잠금 TTL 갱신 (30초마다 호출)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 갱신 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+---
+
 ## 미니게임
 
 **Base Path:** `/minigames`
@@ -7549,16 +7611,16 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ---
 
-### POST `shopping/cart/items/bulk`
+### PATCH `shopping/cart/items/bulk`
 
-**요약:** 장바구니 품목 일괄 추가
+**요약:** 장바구니 품목 일괄 동기화 (추가/수정/삭제)
 
 **Request Body:**
 
 ```json
 {
   "groupId": "uuid-group", // string
-  "items": [
+  "inserts": [
     {
       "name": "우유", // string
       "quantity": 2, // number
@@ -7566,39 +7628,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "price": 3500, // number?
       "memo": "1+1 행사" // string?
     }
-  ] // CartItemEntryDto[]
-}
-```
-
-**Responses:**
-
-#### 200 - 품목 일괄 추가 성공
-
-```json
-{
-  "id": "uuid-1234", // string
-  "cartId": "uuid-cart", // string
-  "name": "우유", // string
-  "quantity": 2, // number
-  "unit": "개", // string | null
-  "price": 3500, // number | null
-  "isChecked": false, // boolean
-  "memo": "1+1 행사", // string | null
-  "createdAt": "2025-01-01T00:00:00Z" // Date
-}
-```
-
----
-
-### PATCH `shopping/cart/items/bulk`
-
-**요약:** 장바구니 품목 일괄 수정/삭제
-
-**Request Body:**
-
-```json
-{
-  "groupId": "uuid-group", // string
+  ], // CartItemInsertEntryDto[]?
   "updates": [
     {
       "id": "uuid-cart-item", // string
@@ -7615,7 +7645,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 **Responses:**
 
-#### 200 - 일괄 수정/삭제 성공
+#### 200 - 일괄 동기화 성공
 
 ```json
 {

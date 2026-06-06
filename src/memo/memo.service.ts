@@ -3,9 +3,11 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RedisService } from '@/redis/redis.service';
 import { CreateMemoDto } from './dto/create-memo.dto';
 import { UpdateMemoDto } from './dto/update-memo.dto';
 import { MemoQueryDto, MemoTagListQueryDto } from './dto/memo-query.dto';
@@ -35,6 +37,7 @@ export class MemoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService,
+    private readonly redis: RedisService,
   ) {}
 
   async create(userId: string, dto: CreateMemoDto) {
@@ -420,5 +423,61 @@ export class MemoService {
     });
 
     return memberships.map((m) => m.groupId);
+  }
+
+  /**
+   * 편집 잠금 획득
+   * 이미 다른 사용자가 편집 중이면 409 반환
+   */
+  async acquireLock(userId: string, memoId: string) {
+    await this.validateReadAccess(
+      userId,
+      await this.findMemoForAccess(userId, memoId),
+    );
+
+    const acquired = await this.redis.acquireMemoLock(memoId, userId);
+    if (!acquired) {
+      const lockedBy = await this.redis.getMemoLock(memoId);
+      if (lockedBy === userId) {
+        // 본인이 이미 잠금 중이면 TTL만 갱신
+        await this.redis.renewMemoLock(memoId, userId);
+        return { locked: true, lockedByMe: true };
+      }
+      throw new ConflictException('memo.errors.already_locked');
+    }
+
+    return { locked: true, lockedByMe: true };
+  }
+
+  /**
+   * 편집 잠금 해제
+   */
+  async releaseLock(userId: string, memoId: string) {
+    await this.redis.releaseMemoLock(memoId, userId);
+    return { locked: false };
+  }
+
+  /**
+   * heartbeat — TTL 갱신 (30초마다 호출)
+   * 잠금이 만료되었거나 다른 사용자 잠금이면 409
+   */
+  async heartbeat(userId: string, memoId: string) {
+    const renewed = await this.redis.renewMemoLock(memoId, userId);
+    if (!renewed) {
+      throw new ConflictException('memo.errors.lock_expired');
+    }
+    return { locked: true };
+  }
+
+  private async findMemoForAccess(userId: string, memoId: string) {
+    const memo = await this.prisma.memo.findFirst({
+      where: { id: memoId, deletedAt: null },
+    });
+
+    if (!memo) {
+      throw new NotFoundException('memo.errors.memo_not_found');
+    }
+
+    return memo;
   }
 }

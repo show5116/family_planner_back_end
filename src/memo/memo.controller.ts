@@ -31,6 +31,7 @@ import {
   ApiCreated,
   ApiNotFound,
   ApiForbidden,
+  ApiConflict,
 } from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('메모')
@@ -151,5 +152,29 @@ export class MemoController {
     @Param('attachmentId') attachmentId: string,
   ) {
     return this.memoService.removeAttachment(req.user.userId, id, attachmentId);
+  }
+
+  @Post(':id/lock')
+  @ApiOperation({ summary: '편집 잠금 획득 (편집 모드 진입 시 호출)' })
+  @ApiSuccess(MessageResponseDto, '잠금 획득 성공')
+  @ApiNotFound('메모를 찾을 수 없습니다')
+  @ApiConflict('다른 사용자가 편집 중입니다')
+  acquireLock(@Request() req, @Param('id') id: string) {
+    return this.memoService.acquireLock(req.user.userId, id);
+  }
+
+  @Delete(':id/lock')
+  @ApiOperation({ summary: '편집 잠금 해제 (편집 완료 또는 취소 시 호출)' })
+  @ApiSuccess(MessageResponseDto, '잠금 해제 성공')
+  releaseLock(@Request() req, @Param('id') id: string) {
+    return this.memoService.releaseLock(req.user.userId, id);
+  }
+
+  @Post(':id/lock/heartbeat')
+  @ApiOperation({ summary: '편집 잠금 TTL 갱신 (30초마다 호출)' })
+  @ApiSuccess(MessageResponseDto, '갱신 성공')
+  @ApiConflict('잠금이 만료되었거나 다른 사용자에게 이전되었습니다')
+  heartbeat(@Request() req, @Param('id') id: string) {
+    return this.memoService.heartbeat(req.user.userId, id);
   }
 }
