@@ -44,43 +44,6 @@
 
 ---
 
-### POST `shopping/cart/items`
-
-**요약:** 장바구니 품목 추가
-
-**Request Body:**
-
-```json
-{
-  "groupId": "uuid-group", // string
-  "name": "우유", // string
-  "quantity": 2, // number
-  "unit": "개", // string?
-  "price": 3500, // number?
-  "memo": "1+1 행사" // string?
-}
-```
-
-**Responses:**
-
-#### 201 - 품목 추가 성공
-
-```json
-{
-  "id": "uuid-1234", // string
-  "cartId": "uuid-cart", // string
-  "name": "우유", // string
-  "quantity": 2, // number
-  "unit": "개", // string | null
-  "price": 3500, // number | null
-  "isChecked": false, // boolean
-  "memo": "1+1 행사", // string | null
-  "createdAt": "2025-01-01T00:00:00Z" // Date
-}
-```
-
----
-
 ### PATCH `shopping/cart/items/bulk`
 
 **요약:** 장바구니 품목 일괄 동기화 (추가/수정/삭제)

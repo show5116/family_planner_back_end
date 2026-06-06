@@ -5,7 +5,6 @@
 } from '@nestjs/common';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
-import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { SyncCartItemsDto } from './dto/sync-cart-items.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { CompleteShoppingDto } from './dto/complete-shopping.dto';
@@ -50,28 +49,6 @@ export class ShoppingService {
     return this.getOrCreateCart(groupId);
   }
 
-  async addCartItem(userId: string, groupId: string, dto: AddCartItemDto) {
-    await this.assertMember(userId, groupId);
-    const cart = await this.getOrCreateCart(groupId);
-    const [frequent] = await Promise.all([
-      this.prisma.frequentItem.findUnique({
-        where: { groupId_name: { groupId, name: dto.name } },
-      }),
-      this.saveItemName(groupId, dto.name),
-    ]);
-    return this.prisma.shoppingCartItem.create({
-      data: {
-        cartId: cart.id,
-        frequentItemId: frequent?.id,
-        name: dto.name,
-        quantity: dto.quantity,
-        unit: dto.unit,
-        price: dto.price,
-        memo: dto.memo,
-      },
-    });
-  }
-
   async syncCartItems(userId: string, groupId: string, dto: SyncCartItemsDto) {
     await this.assertMember(userId, groupId);
     const cart = await this.getOrCreateCart(groupId);
@@ -114,6 +91,7 @@ export class ShoppingService {
         await tx.shoppingCartItem.update({
           where: { id: u.id },
           data: {
+            ...(u.name !== undefined && { name: u.name }),
             ...(u.quantity !== undefined && { quantity: u.quantity }),
             ...(u.unit !== undefined && { unit: u.unit }),
             ...(u.price !== undefined && { price: u.price }),

@@ -48,6 +48,12 @@ export class CartItemUpdateEntryDto {
   @IsUUID()
   id: string;
 
+  @ApiProperty({ example: '우유', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  name?: string;
+
   @ApiProperty({ example: 2, required: false })
   @IsOptional()
   @IsNumber()
