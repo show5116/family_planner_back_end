@@ -474,7 +474,7 @@ export class FridgeService {
       where: { id: itemId },
       data: {
         ...(dto.name && { name: dto.name }),
-        ...(dto.defaultUnit !== undefined && { defaultUnit: dto.defaultUnit }),
+        defaultUnit: dto.defaultUnit ?? null,
         ...(dto.autoAdd !== undefined && { autoAdd: dto.autoAdd }),
       },
     });

@@ -105,6 +105,15 @@ export class ShoppingExpenseDto {
   @IsOptional()
   @IsEnum(ExpenseCategory)
   category?: ExpenseCategory;
+
+  @ApiProperty({
+    example: 'uuid-merchant',
+    required: false,
+    description: '소비처 ID',
+  })
+  @IsOptional()
+  @IsUUID()
+  merchantId?: string;
 }
 
 export class CompleteShoppingDto {
@@ -120,6 +129,17 @@ export class CompleteShoppingDto {
   @ValidateNested({ each: true })
   @Type(() => TransferItemDto)
   transfers: TransferItemDto[];
+
+  @ApiProperty({
+    example: ['uuid-cart-item-1', 'uuid-cart-item-2'],
+    required: false,
+    description:
+      '장바구니에 남겨둘 항목 ID 목록 (제외 항목은 이력에 포함되지 않고 장바구니에 유지됨)',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  excludes?: string[];
 
   @ApiProperty({
     type: ShoppingExpenseDto,
