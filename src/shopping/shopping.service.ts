@@ -1,4 +1,4 @@
-﻿import {
+import {
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -9,6 +9,10 @@ import { SyncCartItemsDto } from './dto/sync-cart-items.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { CompleteShoppingDto } from './dto/complete-shopping.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
+
+const DEFAULT_ALERT_DAYS_BEFORE = 3;
+const DEFAULT_EXPENSE_CATEGORY = 'GROCERIES' as const;
+const DEFAULT_EXPENSE_DESCRIPTION = 'groceries';
 
 @Injectable()
 export class ShoppingService {
@@ -69,9 +73,9 @@ export class ShoppingService {
     const frequentMap = new Map(frequentItems.map((f) => [f.name, f.id]));
 
     await this.prisma.$transaction(async (tx) => {
-      for (const item of inserts) {
-        await tx.shoppingCartItem.create({
-          data: {
+      if (inserts.length > 0) {
+        await tx.shoppingCartItem.createMany({
+          data: inserts.map((item) => ({
             cartId: cart.id,
             frequentItemId: frequentMap.get(item.name),
             name: item.name,
@@ -79,26 +83,31 @@ export class ShoppingService {
             unit: item.unit,
             price: item.price,
             memo: item.memo,
-          },
+          })),
         });
       }
 
-      for (const u of updates) {
-        const item = await tx.shoppingCartItem.findFirst({
-          where: { id: u.id, cartId: cart.id },
+      if (updates.length > 0) {
+        const validItems = await tx.shoppingCartItem.findMany({
+          where: { id: { in: updates.map((u) => u.id) }, cartId: cart.id },
+          select: { id: true },
         });
-        if (!item) continue;
-        await tx.shoppingCartItem.update({
-          where: { id: u.id },
-          data: {
-            ...(u.name !== undefined && { name: u.name }),
-            ...(u.quantity !== undefined && { quantity: u.quantity }),
-            unit: u.unit ?? null,
-            ...(u.price !== undefined && { price: u.price }),
-            ...(u.isChecked !== undefined && { isChecked: u.isChecked }),
-            ...(u.memo !== undefined && { memo: u.memo }),
-          },
-        });
+        const validIds = new Set(validItems.map((i) => i.id));
+
+        for (const u of updates) {
+          if (!validIds.has(u.id)) continue;
+          await tx.shoppingCartItem.update({
+            where: { id: u.id },
+            data: {
+              ...(u.name !== undefined && { name: u.name }),
+              ...(u.quantity !== undefined && { quantity: u.quantity }),
+              unit: u.unit ?? null,
+              ...(u.price !== undefined && { price: u.price }),
+              ...(u.isChecked !== undefined && { isChecked: u.isChecked }),
+              ...(u.memo !== undefined && { memo: u.memo }),
+            },
+          });
+        }
       }
 
       if (deletes.length > 0) {
@@ -121,12 +130,8 @@ export class ShoppingService {
     dto: UpdateCartItemDto,
   ) {
     await this.assertMember(userId, groupId);
-    const cart = await this.prisma.shoppingCart.findUnique({
-      where: { groupId },
-    });
-    if (!cart) throw new NotFoundException('shopping.errors.cart_not_found');
     const item = await this.prisma.shoppingCartItem.findFirst({
-      where: { id: itemId, cartId: cart.id },
+      where: { id: itemId, cart: { groupId } },
     });
     if (!item) throw new NotFoundException('shopping.errors.item_not_found');
     return this.prisma.shoppingCartItem.update({
@@ -143,12 +148,8 @@ export class ShoppingService {
 
   async removeCartItem(userId: string, groupId: string, itemId: string) {
     await this.assertMember(userId, groupId);
-    const cart = await this.prisma.shoppingCart.findUnique({
-      where: { groupId },
-    });
-    if (!cart) throw new NotFoundException('shopping.errors.cart_not_found');
     const item = await this.prisma.shoppingCartItem.findFirst({
-      where: { id: itemId, cartId: cart.id },
+      where: { id: itemId, cart: { groupId } },
     });
     if (!item) throw new NotFoundException('shopping.errors.item_not_found');
     await this.prisma.shoppingCartItem.delete({ where: { id: itemId } });
@@ -205,7 +206,8 @@ export class ShoppingService {
                 expiresAt: transfer.expiresAt
                   ? new Date(transfer.expiresAt)
                   : undefined,
-                alertDaysBefore: transfer.alertDaysBefore ?? 3,
+                alertDaysBefore:
+                  transfer.alertDaysBefore ?? DEFAULT_ALERT_DAYS_BEFORE,
               },
             });
             fridgeItemId = created.id;
@@ -239,9 +241,10 @@ export class ShoppingService {
               userId,
               type: 'EXPENSE',
               amount,
-              category: dto.expense.category ?? 'GROCERIES',
+              category: dto.expense.category ?? DEFAULT_EXPENSE_CATEGORY,
               date: new Date(dto.expense.date ?? today),
-              description: dto.expense.description ?? 'groceries',
+              description:
+                dto.expense.description ?? DEFAULT_EXPENSE_DESCRIPTION,
               paymentMethod: dto.expense.paymentMethod,
               merchantId: dto.expense.merchantId,
               shoppingHistoryId: history.id,
