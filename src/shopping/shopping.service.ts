@@ -93,7 +93,7 @@ export class ShoppingService {
           data: {
             ...(u.name !== undefined && { name: u.name }),
             ...(u.quantity !== undefined && { quantity: u.quantity }),
-            ...(u.unit !== undefined && { unit: u.unit }),
+            unit: u.unit ?? null,
             ...(u.price !== undefined && { price: u.price }),
             ...(u.isChecked !== undefined && { isChecked: u.isChecked }),
             ...(u.memo !== undefined && { memo: u.memo }),
@@ -174,6 +174,12 @@ export class ShoppingService {
     }
 
     const transferMap = new Map(dto.transfers.map((t) => [t.cartItemId, t]));
+    const excludeSet = new Set(dto.excludes ?? []);
+
+    const itemsToComplete = cart.items.filter((ci) => !excludeSet.has(ci.id));
+    if (itemsToComplete.length === 0) {
+      throw new NotFoundException('shopping.errors.cart_empty');
+    }
 
     const historyId = await this.prisma.$transaction(
       async (tx) => {
@@ -183,7 +189,7 @@ export class ShoppingService {
 
         let totalPrice = 0;
 
-        for (const ci of cart.items) {
+        for (const ci of itemsToComplete) {
           const transfer = transferMap.get(ci.id);
           let fridgeItemId: string | null = null;
 
@@ -237,12 +243,18 @@ export class ShoppingService {
               date: new Date(dto.expense.date ?? today),
               description: dto.expense.description ?? 'groceries',
               paymentMethod: dto.expense.paymentMethod,
+              merchantId: dto.expense.merchantId,
               shoppingHistoryId: history.id,
             },
           });
         }
 
-        await tx.shoppingCartItem.deleteMany({ where: { cartId: cart.id } });
+        await tx.shoppingCartItem.deleteMany({
+          where: {
+            cartId: cart.id,
+            ...(excludeSet.size > 0 && { id: { notIn: [...excludeSet] } }),
+          },
+        });
 
         return history.id;
       },

@@ -60,11 +60,11 @@ export class CartItemUpdateEntryDto {
   @Min(0.01)
   quantity?: number;
 
-  @ApiProperty({ example: '개', required: false })
+  @ApiProperty({ example: '개', required: false, nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  unit?: string;
+  unit?: string | null;
 
   @ApiProperty({ example: true, required: false })
   @IsOptional()
