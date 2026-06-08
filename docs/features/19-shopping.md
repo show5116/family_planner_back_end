@@ -108,16 +108,17 @@ shoppingHistory   ShoppingHistory? @relation(fields: [shoppingHistoryId], refere
 
 ```
 POST /shopping/cart/complete
-  body: { groupId, transfers[], expense?: { amount, paymentMethod, date? } }
+  body: { groupId, transfers[], excludes[]?, expense?: { ... } }
 
-1. ShoppingHistory 생성
-2. ShoppingHistoryItem 생성 (품목별)
-3. FridgeItem 이관 (transfers[] 기반)
-4. expense 필드가 있으면:
-   → Expense 생성 (category: FOOD, type: EXPENSE, shoppingHistoryId 설정)
-5. 카트 초기화 (items 전체 삭제)
+1. excludes[] 에 포함된 항목은 건너뜀 (장바구니에 유지)
+2. ShoppingHistory 생성
+3. ShoppingHistoryItem 생성 (완료 대상 품목별)
+4. FridgeItem 이관 (transfers[] 기반)
+5. expense 필드가 있으면:
+   → Expense 생성 (merchantId 포함, shoppingHistoryId 설정)
+6. 카트 초기화 (excludes 제외한 items 삭제)
 
-→ 전체 단일 트랜잭션
+→ 전체 단일 트랜잭션 (timeout: 30s)
 ```
 
 ### Request Body (완료 처리)
@@ -131,21 +132,25 @@ POST /shopping/cart/complete
       "storageLocationId": "uuid",
       "quantity": 2,
       "unit": "개",
+      "price": 3500,
       "expiresAt": "2026-05-20",
       "alertDaysBefore": 3
     }
   ],
+  "excludes": ["uuid-cart-item-1"],
   "expense": {
     "amount": 45000,
     "paymentMethod": "CARD",
     "date": "2026-05-12",
     "description": "마트 장보기",
-    "category": "FOOD"
+    "category": "GROCERIES",
+    "merchantId": "uuid-merchant"
   }
 }
 ```
 
-> `expense` 필드는 optional — 생략 시 가계부 등록 없이 이력만 저장
+> - `expense` 필드는 optional — 생략 시 가계부 등록 없이 이력만 저장
+> - `excludes` 필드는 optional — 장바구니에 남겨둘 품목 ID 목록 (미구매 항목 유지)
 
 ### 딥링크 FCM data
 
@@ -163,9 +168,7 @@ POST /shopping/cart/complete
 | Method   | Endpoint                                | 설명                              |
 | -------- | --------------------------------------- | --------------------------------- |
 | `GET`    | `/shopping/cart?groupId=`               | 활성 장바구니 조회                |
-| `POST`   | `/shopping/cart/items`                  | 품목 추가                         |
-| `POST`   | `/shopping/cart/items/bulk`             | 품목 일괄 추가                    |
-| `PATCH`  | `/shopping/cart/items/bulk`             | 품목 일괄 수정/삭제               |
+| `PATCH`  | `/shopping/cart/items/bulk`             | 품목 일괄 동기화 (추가/수정/삭제) |
 | `PATCH`  | `/shopping/cart/items/:itemId?groupId=` | 품목 수정 (수량, 체크 등)         |
 | `DELETE` | `/shopping/cart/items/:itemId?groupId=` | 품목 삭제                         |
 | `POST`   | `/shopping/cart/complete`               | 장보기 완료 (냉장고 이관 + 가계부 연동) |
@@ -189,21 +192,27 @@ POST /shopping/cart/complete
 ### 가계부 연동
 - `expense` 필드 포함 시: Expense 생성 + `shoppingHistoryId` 설정 (단일 트랜잭션)
 - `expense` 필드 생략 시: 가계부 등록 없이 이력만 저장
-- 카테고리 기본값 `FOOD`, 클라이언트가 변경 가능
+- 카테고리 기본값 `GROCERIES`, 클라이언트가 변경 가능
+- `merchantId` 지원 — 소비처 연결 가능
 - `Expense.shoppingHistoryId @unique` — 1:1 연결 보장
+
+### 제외 항목 (excludes)
+- `excludes[]`에 포함된 cartItemId는 이력에 저장되지 않고 장바구니에 유지
+- 모든 항목이 제외 목록이면 400 에러 (완료할 항목 없음)
 
 ---
 
 ## 구현 상태
 
 ### ✅ 완료
-- [x] ShoppingCart API (조회/추가/수정/삭제)
-- [x] 품목 일괄 추가 (`POST /shopping/cart/items/bulk`)
-- [x] 품목 일괄 수정/삭제 (`PATCH /shopping/cart/items/bulk`)
+- [x] ShoppingCart API (조회/수정/삭제)
+- [x] 품목 일괄 동기화 — `PATCH /shopping/cart/items/bulk` (inserts/updates/deletes 통합)
 - [x] 장보기 완료 + 냉장고 이관 트랜잭션
-- [x] 가계부 자동 등록 연동 (`expense` 옵션)
+- [x] 가계부 자동 등록 연동 (`expense` 옵션, `merchantId` 포함)
+- [x] 장보기 완료 제외 항목 (`excludes[]`) — 미구매 품목 장바구니 유지
 - [x] ShoppingHistory 조회 (목록/상세, 페이지네이션, expense 포함)
 - [x] ShoppingHistory 삭제 (`DELETE /shopping/history/:historyId`) — 연결된 Expense는 shoppingHistoryId만 null로 처리하여 가계부 내역 보존
+- [x] 서비스 최적화 — createMany, relation filter, findMany 사전 검증 적용
 
 ---
 
@@ -212,11 +221,9 @@ POST /shopping/cart/complete
 ```
 src/shopping/
   dto/
-    add-cart-item.dto.ts
-    bulk-add-cart-item.dto.ts
-    bulk-update-cart-item.dto.ts
+    sync-cart-items.dto.ts      — SyncCartItemsDto (inserts/updates/deletes 통합)
     update-cart-item.dto.ts
-    complete-shopping.dto.ts
+    complete-shopping.dto.ts    — excludes[], expense.merchantId 포함
     history-query.dto.ts
     group-id-query.dto.ts
     shopping-response.dto.ts    — ShoppingCartDto, CartItemDto, ShoppingHistoryDto, PaginatedHistoryDto
@@ -225,4 +232,4 @@ src/shopping/
   shopping.module.ts
 ```
 
-**Last Updated**: 2026-05-26
+**Last Updated**: 2026-06-08
