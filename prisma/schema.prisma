@@ -38,8 +38,10 @@ model User {
   taskSkips            TaskSkip[]
   tasks                Task[]
   memos                Memo[]
-  expenses             Expense[]
-  recurringExpenses    RecurringExpense[]
+  expenses                    Expense[]
+  expensesAsMember            Expense[]             @relation("ExpenseMember")
+  recurringExpenses           RecurringExpense[]
+  recurringExpensesAsMember   RecurringExpense[]    @relation("RecurringExpenseMember")
   budgets              Budget[]
   budgetTemplates      BudgetTemplate[]
   groupBudgets         GroupBudget[]
@@ -700,6 +702,7 @@ model Expense {
   incomeCategory      IncomeCategory?
   refundedExpenseId   String?
   shoppingHistoryId   String?           @unique
+  memberId            String?
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
@@ -711,6 +714,7 @@ model Expense {
   refunds           Expense[]         @relation("ExpenseRefund")
   receipts          ExpenseReceipt[]
   shoppingHistory   ShoppingHistory?  @relation(fields: [shoppingHistoryId], references: [id])
+  member            User?             @relation("ExpenseMember", fields: [memberId], references: [id], onDelete: SetNull)
 
   @@index([groupId, date(sort: Desc)])
   @@index([userId, date(sort: Desc)])
@@ -721,6 +725,7 @@ model Expense {
   @@index([merchantId])
   @@index([recurringExpenseId])
   @@index([refundedExpenseId])
+  @@index([memberId])
   @@map("expenses")
 }
 
@@ -738,18 +743,21 @@ model RecurringExpense {
   description    String?          @db.VarChar(200)
   dayOfMonth     Int
   isActive       Boolean          @default(true)
+  memberId       String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   group    Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   merchant Merchant? @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+  member   User?     @relation("RecurringExpenseMember", fields: [memberId], references: [id], onDelete: SetNull)
   expenses Expense[]
 
   @@index([groupId, isActive])
   @@index([userId, isActive])
   @@index([dayOfMonth])
   @@index([merchantId])
+  @@index([memberId])
   @@map("recurring_expenses")
 }
 

@@ -110,4 +110,14 @@ export class UpdateExpenseDto {
   @IsOptional()
   @IsString()
   refundedExpenseId?: string | null;
+
+  @ApiProperty({
+    description: '결제 주체 ID (null 전달 시 해제)',
+    example: 'uuid-1234',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  memberId?: string | null;
 }

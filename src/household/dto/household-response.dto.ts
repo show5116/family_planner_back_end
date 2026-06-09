@@ -67,6 +67,13 @@ export class RecurringExpenseDto {
   isActive: boolean;
 
   @ApiProperty({
+    description: '결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용)',
+    example: 'uuid-1234',
+    nullable: true,
+  })
+  memberId: string | null;
+
+  @ApiProperty({
     description: '생성 일시',
     example: '2026-06-08T00:00:00.000Z',
   })
@@ -241,6 +248,14 @@ export class ExpenseDto {
     required: false,
   })
   refunds: ExpenseDto[];
+
+  @ApiProperty({
+    description: '결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용)',
+    example: 'uuid-1234',
+    nullable: true,
+    required: false,
+  })
+  memberId: string | null;
 
   @ApiProperty({
     description:

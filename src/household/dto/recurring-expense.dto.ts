@@ -89,6 +89,14 @@ export class CreateRecurringExpenseDto {
   @Min(1)
   @Max(31)
   dayOfMonth: number;
+
+  @ApiProperty({
+    description: '결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  memberId?: string;
 }
 
 export class UpdateRecurringExpenseDto {
@@ -159,6 +167,15 @@ export class UpdateRecurringExpenseDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiProperty({
+    description: '결제 주체 ID (null 전달 시 해제)',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  memberId?: string | null;
 }
 
 export class RecurringExpenseQueryDto {

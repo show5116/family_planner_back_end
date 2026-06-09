@@ -71,6 +71,7 @@ export class HouseholdService {
         merchantId: dto.merchantId ?? null,
         incomeCategory: dto.incomeCategory ?? null,
         refundedExpenseId: dto.refundedExpenseId ?? null,
+        memberId: dto.memberId ?? null,
       },
       include: { receipts: true, merchant: true, refunds: true },
     });
@@ -199,6 +200,7 @@ export class HouseholdService {
         ...(dto.refundedExpenseId !== undefined && {
           refundedExpenseId: dto.refundedExpenseId,
         }),
+        ...(dto.memberId !== undefined && { memberId: dto.memberId }),
       },
       include: { receipts: true, merchant: true, refunds: true },
     });
@@ -605,6 +607,7 @@ export class HouseholdService {
         description: dto.description ?? null,
         dayOfMonth: dto.dayOfMonth,
         isActive: true,
+        memberId: dto.memberId ?? null,
       },
       include: { merchant: true },
     });
@@ -691,6 +694,7 @@ export class HouseholdService {
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.dayOfMonth !== undefined && { dayOfMonth: dto.dayOfMonth }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+        ...(dto.memberId !== undefined && { memberId: dto.memberId }),
       },
       include: { merchant: true },
     });

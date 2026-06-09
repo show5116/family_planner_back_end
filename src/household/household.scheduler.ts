@@ -80,6 +80,7 @@ export class HouseholdScheduler {
             incomeCategory: rec.incomeCategory,
             recurringExpenseId: rec.id,
             isConfirmed: !rec.isVariable,
+            memberId: rec.memberId,
           },
         });
       }),
