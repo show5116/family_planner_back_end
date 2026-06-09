@@ -4,7 +4,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsBoolean,
   IsDateString,
   Min,
 } from 'class-validator';
@@ -83,26 +82,6 @@ export class CreateExpenseDto {
   merchantId?: string;
 
   @ApiProperty({
-    description: '고정 지출 여부',
-    example: false,
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isRecurring?: boolean;
-
-  @ApiProperty({
-    description:
-      '예상 금액 (가변 고정 지출에 사용, 설정 시 매달 복사본은 미확인 상태로 생성)',
-    example: 150000,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  estimatedAmount?: number;
-
-  @ApiProperty({
     description: '입금 카테고리 (type=INCOME 일 때 사용)',
     enum: IncomeCategory,
     example: IncomeCategory.SALARY,
@@ -120,4 +99,13 @@ export class CreateExpenseDto {
   @IsOptional()
   @IsString()
   refundedExpenseId?: string;
+
+  @ApiProperty({
+    description: '결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용)',
+    example: 'uuid-1234',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  memberId?: string;
 }

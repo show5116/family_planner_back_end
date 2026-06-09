@@ -38,7 +38,10 @@ model User {
   taskSkips            TaskSkip[]
   tasks                Task[]
   memos                Memo[]
-  expenses             Expense[]
+  expenses                    Expense[]
+  expensesAsMember            Expense[]             @relation("ExpenseMember")
+  recurringExpenses           RecurringExpense[]
+  recurringExpensesAsMember   RecurringExpense[]    @relation("RecurringExpenseMember")
   budgets              Budget[]
   budgetTemplates      BudgetTemplate[]
   groupBudgets         GroupBudget[]
@@ -84,6 +87,7 @@ model Group {
   tasks               Task[]
   memos               Memo[]
   expenses            Expense[]
+  recurringExpenses   RecurringExpense[]
   budgets             Budget[]
   budgetTemplates     BudgetTemplate[]
   groupBudgets        GroupBudget[]
@@ -672,9 +676,10 @@ model Merchant {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  group    Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expenses Expense[]
+  group             Group?             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses          Expense[]
+  recurringExpenses RecurringExpense[]
 
   @@index([groupId])
   @@index([userId])
@@ -682,32 +687,34 @@ model Merchant {
 }
 
 model Expense {
-  id                String           @id @default(uuid())
-  groupId           String?
-  userId            String
-  type              TransactionType  @default(EXPENSE)
-  amount            Decimal          @db.Decimal(10, 2)
-  category          ExpenseCategory?
-  date              DateTime         @db.Date
-  description       String?          @db.VarChar(200)
-  paymentMethod     PaymentMethod?
-  merchantId        String?
-  isRecurring       Boolean          @default(false)
-  estimatedAmount   Decimal?         @db.Decimal(10, 2)
-  isConfirmed       Boolean          @default(true)
-  incomeCategory    IncomeCategory?
-  refundedExpenseId String?
-  shoppingHistoryId String?          @unique
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id                  String            @id @default(uuid())
+  groupId             String?
+  userId              String
+  type                TransactionType   @default(EXPENSE)
+  amount              Decimal           @db.Decimal(10, 2)
+  category            ExpenseCategory?
+  date                DateTime          @db.Date
+  description         String?           @db.VarChar(200)
+  paymentMethod       PaymentMethod?
+  merchantId          String?
+  recurringExpenseId  String?
+  isConfirmed         Boolean           @default(true)
+  incomeCategory      IncomeCategory?
+  refundedExpenseId   String?
+  shoppingHistoryId   String?           @unique
+  memberId            String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
-  group            Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  merchant         Merchant?        @relation(fields: [merchantId], references: [id], onDelete: SetNull)
-  refundedExpense  Expense?         @relation("ExpenseRefund", fields: [refundedExpenseId], references: [id], onDelete: Cascade)
-  refunds          Expense[]        @relation("ExpenseRefund")
-  receipts         ExpenseReceipt[]
-  shoppingHistory  ShoppingHistory? @relation(fields: [shoppingHistoryId], references: [id])
+  group             Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant          Merchant?         @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+  recurringExpense  RecurringExpense? @relation(fields: [recurringExpenseId], references: [id], onDelete: SetNull)
+  refundedExpense   Expense?          @relation("ExpenseRefund", fields: [refundedExpenseId], references: [id], onDelete: Cascade)
+  refunds           Expense[]         @relation("ExpenseRefund")
+  receipts          ExpenseReceipt[]
+  shoppingHistory   ShoppingHistory?  @relation(fields: [shoppingHistoryId], references: [id])
+  member            User?             @relation("ExpenseMember", fields: [memberId], references: [id], onDelete: SetNull)
 
   @@index([groupId, date(sort: Desc)])
   @@index([userId, date(sort: Desc)])
@@ -716,8 +723,42 @@ model Expense {
   @@index([date(sort: Desc)])
   @@index([type])
   @@index([merchantId])
+  @@index([recurringExpenseId])
   @@index([refundedExpenseId])
+  @@index([memberId])
   @@map("expenses")
+}
+
+model RecurringExpense {
+  id             String           @id @default(uuid())
+  groupId        String?
+  userId         String
+  type           TransactionType  @default(EXPENSE)
+  amount         Decimal          @db.Decimal(10, 2)
+  isVariable     Boolean          @default(false)
+  category       ExpenseCategory?
+  incomeCategory IncomeCategory?
+  paymentMethod  PaymentMethod?
+  merchantId     String?
+  description    String?          @db.VarChar(200)
+  dayOfMonth     Int
+  isActive       Boolean          @default(true)
+  memberId       String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  group    Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant Merchant? @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+  member   User?     @relation("RecurringExpenseMember", fields: [memberId], references: [id], onDelete: SetNull)
+  expenses Expense[]
+
+  @@index([groupId, isActive])
+  @@index([userId, isActive])
+  @@index([dayOfMonth])
+  @@index([merchantId])
+  @@index([memberId])
+  @@map("recurring_expenses")
 }
 
 model ExpenseReceipt {

@@ -26,11 +26,10 @@
 - 소비처 기준 지출 필터링 지원
 
 ### 고정비용 관리
-- 매달/매년 고정 금액 등록 (월세, 관리비, 보험료, 구독 서비스)
-- 자동 반복 설정
-- **가변 고정 지출**: `estimatedAmount` 설정 시 매달 복사본은 `isConfirmed = false`(미확인)로 생성
-  - 실제 금액 확인 후 `PATCH`로 `amount` 수정 + `isConfirmed: true` 전송
-  - `estimatedAmount` 없는 항목(고정 구독료 등)은 복사 시 `isConfirmed = true`로 자동 확정
+- 별도 `RecurringExpense` 테이블로 관리 (월 없이 `dayOfMonth`만 보유)
+- 매달 해당 일(day)에 스케줄러가 `Expense`를 자동 생성
+- **가변 고정 지출**: `estimatedAmount` 설정 시 생성된 Expense는 해당 금액으로 등록
+- 비활성화(`isActive = false`)로 일시 중단 가능, 삭제해도 기존 Expense 이력은 보존 (FK `SetNull`)
 
 ### 데이터 분석
 - 카테고리별 지출 통계 (표/차트)
@@ -42,6 +41,31 @@
 ## 데이터베이스
 
 ```prisma
+model RecurringExpense {
+  id              String           @id @default(uuid())
+  groupId         String?
+  userId          String
+  type            TransactionType  @default(EXPENSE)
+  amount          Decimal          @db.Decimal(10, 2)
+  estimatedAmount Decimal?         @db.Decimal(10, 2)
+  category        ExpenseCategory?
+  incomeCategory  IncomeCategory?
+  paymentMethod   PaymentMethod?
+  merchantId      String?
+  description     String?          @db.VarChar(200)
+  dayOfMonth      Int
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  group    Group?    @relation(...)
+  user     User      @relation(...)
+  merchant Merchant? @relation(...)
+  expenses Expense[]
+
+  @@map("recurring_expenses")
+}
+
 model Merchant {
   id        String    @id @default(uuid())
   groupId   String?
@@ -60,22 +84,20 @@ model Merchant {
 }
 
 model Expense {
-  id                String           @id @default(uuid())
-  groupId           String?
-  userId            String
-  type              TransactionType  @default(EXPENSE)
-  amount            Decimal          @db.Decimal(10, 2)
-  category          ExpenseCategory?
-  date              DateTime         @db.Date
-  description       String?          @db.VarChar(200)
-  paymentMethod     PaymentMethod?
-  merchantId        String?
-  isRecurring       Boolean          @default(false)
-  estimatedAmount   Decimal?         @db.Decimal(10, 2)
-  isConfirmed       Boolean          @default(true)
-  incomeCategory    IncomeCategory?
-  refundedExpenseId String?
-  shoppingHistoryId String?          @unique
+  id                 String            @id @default(uuid())
+  groupId            String?
+  userId             String
+  type               TransactionType   @default(EXPENSE)
+  amount             Decimal           @db.Decimal(10, 2)
+  category           ExpenseCategory?
+  date               DateTime          @db.Date
+  description        String?           @db.VarChar(200)
+  paymentMethod      PaymentMethod?
+  merchantId         String?
+  recurringExpenseId String?
+  incomeCategory     IncomeCategory?
+  refundedExpenseId  String?
+  shoppingHistoryId  String?           @unique
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
@@ -237,9 +259,10 @@ enum PaymentMethod {
 - [x] 결제 수단 관리 (카드, 현금, 계좌이체)
 - [x] 소비처(Merchant) CRUD (쿠팡, 컬리 등 그룹/개인 단위 관리)
 - [x] 지출-소비처 연결 (merchantId FK, 소비처 기준 필터링)
-- [x] 고정비용 플래그 (`isRecurring`)
-- [x] 가변 고정 지출 (`estimatedAmount` + `isConfirmed`) — 예상 금액으로 복사 후 실제 금액 확인 처리
-- [x] 고정비용 자동 복사 스케줄러 (매일 00:05, 날짜 clamp + 중복 방지)
+- [x] 고정지출 전용 테이블 (`RecurringExpense`) — `dayOfMonth` 기반, 월 데이터 없음
+- [x] 가변 고정 지출 (`estimatedAmount`) — 설정 시 생성된 Expense에 해당 금액 사용
+- [x] 고정지출 CRUD (`/household/recurring-expenses`) — 비활성화 지원
+- [x] 고정비용 자동 생성 스케줄러 (매일 00:05, `dayOfMonth` 기준, 중복 방지)
 - [x] 월별 지출 통계 (카테고리별 합계, 건수)
 - [x] 연별 지출 통계 (월별 합계, `GET /household/statistics/yearly`)
 - [x] 예산 일괄 설정 및 관리 (카테고리별, bulk upsert)
@@ -275,13 +298,21 @@ enum PaymentMethod {
 | PATCH  | `/household/expenses/:id`                       | 지출 수정                                     | JWT, Owner        |
 | DELETE | `/household/expenses/:id`                       | 지출 삭제                                     | JWT, Owner        |
 
-### 고정비용
-> 매일 00:05 스케줄러가 자동 실행 — 별도 API 없음
-> - 이전 달 `isRecurring=true` 지출을 이번 달로 복사
-> - 날짜 clamp: 이번 달에 없는 날짜(31일 등)는 말일로 자동 조정
-> - 중복 방지: 동일 `(groupId, userId, amount, category, date)` 존재 시 skip
-> - `estimatedAmount` 있음 → `amount = estimatedAmount`, `isConfirmed = false` 로 복사
-> - `estimatedAmount` 없음 → `amount` 그대로, `isConfirmed = true` 로 복사
+### 고정지출
+| Method | Endpoint                              | 설명                              | 권한              |
+| ------ | ------------------------------------- | --------------------------------- | ----------------- |
+| POST   | `/household/recurring-expenses`       | 고정지출 등록                     | JWT, Group Member |
+| GET    | `/household/recurring-expenses`       | 고정지출 목록 (groupId 생략 시 개인) | JWT, Group Member |
+| GET    | `/household/recurring-expenses/:id`   | 고정지출 상세                     | JWT, Group Member |
+| PATCH  | `/household/recurring-expenses/:id`   | 고정지출 수정 (비활성화 포함)     | JWT, Owner        |
+| DELETE | `/household/recurring-expenses/:id`   | 고정지출 삭제                     | JWT, Owner        |
+
+> **스케줄러** (매일 00:05 자동 실행)
+> - `isActive=true`인 `RecurringExpense`의 `dayOfMonth`가 오늘이면 `Expense` 자동 생성
+> - 이번 달에 해당 day 없으면 말일로 clamp (예: 2월 31일 → 2월 28일)
+> - 중복 방지: 동일 `(recurringExpenseId, date)` 존재 시 skip
+> - `estimatedAmount` 있으면 해당 금액으로 생성, 없으면 `amount` 사용
+> - 생성된 `Expense`에 `recurringExpenseId` FK 연결 (고정지출 삭제 시 `SetNull` — 이력 보존)
 
 ### 영수증
 | Method | Endpoint                                             | 설명                              | 권한       |
@@ -365,17 +396,18 @@ src/household/
     create-expense.dto.ts
     update-expense.dto.ts
     expense-query.dto.ts
+    recurring-expense.dto.ts      — CreateRecurringExpenseDto, UpdateRecurringExpenseDto, RecurringExpenseQueryDto
     create-budget.dto.ts          — BulkUpsertBudgetDto
     budget-template.dto.ts        — BulkUpsertBudgetTemplateDto
     group-budget.dto.ts           — UpsertGroupBudgetDto, UpsertGroupBudgetTemplateDto
     confirm-receipt.dto.ts
     household-query.dto.ts        — StatisticsQueryDto, YearlyStatisticsQueryDto, BudgetQueryDto, ReceiptUploadQueryDto
     merchant.dto.ts               — CreateMerchantDto, UpdateMerchantDto, MerchantQueryDto
-    household-response.dto.ts     — ExpenseDto, MerchantDto, BudgetDto, BudgetTemplateDto, GroupBudgetDto, GroupBudgetTemplateDto, StatisticsDto, YearlyStatisticsDto, ExpenseReceiptDto, ReceiptUploadUrlDto, BulkBudgetResultDto, BulkBudgetTemplateResultDto
+    household-response.dto.ts     — ExpenseDto, RecurringExpenseDto, MerchantDto, BudgetDto, BudgetTemplateDto, GroupBudgetDto, GroupBudgetTemplateDto, StatisticsDto, YearlyStatisticsDto, ExpenseReceiptDto, ReceiptUploadUrlDto, BulkBudgetResultDto, BulkBudgetTemplateResultDto
   household.controller.ts
   household.service.ts
   household.scheduler.ts
   household.module.ts
 ```
 
-**Last Updated**: 2026-05-28 (입금 카테고리, 반품/환불 연결 추가)
+**Last Updated**: 2026-06-08 (고정지출 RecurringExpense 전용 테이블 분리)
