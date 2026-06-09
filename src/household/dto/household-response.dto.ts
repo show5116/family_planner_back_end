@@ -6,6 +6,79 @@ import {
   TransactionType,
 } from '@prisma/client';
 
+export class RecurringExpenseDto {
+  @ApiProperty({ description: '고정지출 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid-1234', nullable: true })
+  groupId: string | null;
+
+  @ApiProperty({ description: '등록자 ID', example: 'uuid-1234' })
+  userId: string;
+
+  @ApiProperty({
+    description: '거래 유형',
+    enum: TransactionType,
+    example: TransactionType.EXPENSE,
+  })
+  type: TransactionType;
+
+  @ApiProperty({ description: '기본 금액', example: '150000.00' })
+  amount: string;
+
+  @ApiProperty({
+    description:
+      '가변 여부 (true면 자동 생성된 Expense는 미확정(isConfirmed=false) 상태로 등록됨)',
+    example: false,
+  })
+  isVariable: boolean;
+
+  @ApiProperty({
+    description: '카테고리',
+    enum: ExpenseCategory,
+    nullable: true,
+  })
+  category: ExpenseCategory | null;
+
+  @ApiProperty({
+    description: '입금 카테고리',
+    enum: IncomeCategory,
+    nullable: true,
+  })
+  incomeCategory: IncomeCategory | null;
+
+  @ApiProperty({
+    description: '결제 수단',
+    enum: PaymentMethod,
+    nullable: true,
+  })
+  paymentMethod: PaymentMethod | null;
+
+  @ApiProperty({ description: '소비처 ID', nullable: true })
+  merchantId: string | null;
+
+  @ApiProperty({ description: '내용', example: '월세', nullable: true })
+  description: string | null;
+
+  @ApiProperty({ description: '매달 발생 일(day). 1~31', example: 25 })
+  dayOfMonth: number;
+
+  @ApiProperty({ description: '활성 여부', example: true })
+  isActive: boolean;
+
+  @ApiProperty({
+    description: '생성 일시',
+    example: '2026-06-08T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: '수정 일시',
+    example: '2026-06-08T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
 export class MerchantDto {
   @ApiProperty({ description: '소비처 ID', example: 'uuid-1234' })
   id: string;
@@ -123,9 +196,6 @@ export class ExpenseDto {
   })
   paymentMethod: PaymentMethod | null;
 
-  @ApiProperty({ description: '고정 지출 여부', example: false })
-  isRecurring: boolean;
-
   @ApiProperty({
     description: '입금 카테고리 (type=INCOME 일 때)',
     enum: IncomeCategory,
@@ -135,14 +205,16 @@ export class ExpenseDto {
   incomeCategory: IncomeCategory | null;
 
   @ApiProperty({
-    description: '예상 금액 (가변 고정 지출용)',
-    example: '150000.00',
+    description: '연결된 고정지출 규칙 ID (스케줄러로 자동 생성된 경우)',
+    example: 'uuid-1234',
     nullable: true,
+    required: false,
   })
-  estimatedAmount: string | null;
+  recurringExpenseId: string | null;
 
   @ApiProperty({
-    description: '실제 금액 확인 여부 (false = 아직 예상 금액 상태)',
+    description:
+      '실제 금액 확인 여부 (false = 가변 고정지출로 자동 생성된 미확정 항목)',
     example: true,
   })
   isConfirmed: boolean;

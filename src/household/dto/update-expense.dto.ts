@@ -81,35 +81,6 @@ export class UpdateExpenseDto {
   merchantId?: string | null;
 
   @ApiProperty({
-    description: '고정 지출 여부',
-    example: false,
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isRecurring?: boolean;
-
-  @ApiProperty({
-    description: '예상 금액 (null 전달 시 해제)',
-    example: 150000,
-    required: false,
-    nullable: true,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  estimatedAmount?: number | null;
-
-  @ApiProperty({
-    description: '실제 금액 확인 여부',
-    example: true,
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isConfirmed?: boolean;
-
-  @ApiProperty({
     description: '입금 카테고리 (type=INCOME 일 때 사용, null 전달 시 해제)',
     enum: IncomeCategory,
     example: IncomeCategory.SALARY,
@@ -119,6 +90,16 @@ export class UpdateExpenseDto {
   @IsOptional()
   @IsEnum(IncomeCategory)
   incomeCategory?: IncomeCategory | null;
+
+  @ApiProperty({
+    description:
+      '실제 금액 확인 여부 (가변 고정지출 자동 생성 시 false로 설정됨)',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isConfirmed?: boolean;
 
   @ApiProperty({
     description: '환불 대상 지출 ID (null 전달 시 연결 해제)',

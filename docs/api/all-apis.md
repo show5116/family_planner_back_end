@@ -4214,8 +4214,6 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string?)
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
   "merchantId": "uuid-1234", // 소비처 ID (string?)
-  "isRecurring": false, // 고정 지출 여부 (boolean?)
-  "estimatedAmount": 150000, // 예상 금액 (가변 고정 지출에 사용, 설정 시 매달 복사본은 미확인 상태로 생성) (number?)
   "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때 사용) (IncomeCategory?)
   "refundedExpenseId": "uuid-1234" // 환불 대상 지출 ID (반품/환불 시 원본 지출과 연결) (string?)
 }
@@ -4236,10 +4234,9 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
-  "isRecurring": false, // 고정 지출 여부 (boolean)
   "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
-  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
-  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
+  "recurringExpenseId": "uuid-1234", // 연결된 고정지출 규칙 ID (스케줄러로 자동 생성된 경우) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 가변 고정지출로 자동 생성된 미확정 항목) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
@@ -4282,50 +4279,9 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
-  "isRecurring": false, // 고정 지출 여부 (boolean)
   "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
-  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
-  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
-  "merchant": null, // 소비처 (MerchantDto | null)
-  "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
-  "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
-  "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
-  "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
-  "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
-}
-```
-
-#### 403 - 해당 그룹의 멤버가 아닙니다
-
----
-
-### GET `household/expenses/recurring`
-
-**요약:** 고정 지출 목록 조회
-
-**Query Parameters:**
-
-- `groupId` (`string`) - Optional
-
-**Responses:**
-
-#### 200 - 고정 지출 목록 조회 성공
-
-```json
-{
-  "id": "uuid-1234", // 지출 ID (string)
-  "groupId": "uuid-1234", // 그룹 ID (string)
-  "userId": "uuid-1234", // 작성자 ID (string)
-  "type": null, // 거래 유형 (TransactionType)
-  "amount": 15000, // 금액 (string)
-  "category": null, // 카테고리 (ExpenseCategory)
-  "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
-  "description": "점심 식사", // 내용 (string | null)
-  "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
-  "isRecurring": false, // 고정 지출 여부 (boolean)
-  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
-  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
-  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
+  "recurringExpenseId": "uuid-1234", // 연결된 고정지출 규칙 ID (스케줄러로 자동 생성된 경우) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 가변 고정지출로 자동 생성된 미확정 항목) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
@@ -4362,10 +4318,9 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
-  "isRecurring": false, // 고정 지출 여부 (boolean)
   "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
-  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
-  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
+  "recurringExpenseId": "uuid-1234", // 연결된 고정지출 규칙 ID (스케줄러로 자동 생성된 경우) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 가변 고정지출로 자동 생성된 미확정 항목) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
@@ -4400,10 +4355,8 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "description": "점심 식사", // 내용 (string?)
   "paymentMethod": null, // 결제 수단 (PaymentMethod?)
   "merchantId": "uuid-1234", // 소비처 ID (null 전달 시 소비처 연결 해제) (string | null?)
-  "isRecurring": false, // 고정 지출 여부 (boolean?)
-  "estimatedAmount": 150000, // 예상 금액 (null 전달 시 해제) (number | null?)
-  "isConfirmed": true, // 실제 금액 확인 여부 (boolean?)
   "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때 사용, null 전달 시 해제) (IncomeCategory | null?)
+  "isConfirmed": true, // 실제 금액 확인 여부 (가변 고정지출 자동 생성 시 false로 설정됨) (boolean?)
   "refundedExpenseId": "uuid-1234" // 환불 대상 지출 ID (null 전달 시 연결 해제) (string | null?)
 }
 ```
@@ -4423,10 +4376,9 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "date": "2026-02-27T00:00:00.000Z", // 지출 날짜 (Date)
   "description": "점심 식사", // 내용 (string | null)
   "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
-  "isRecurring": false, // 고정 지출 여부 (boolean)
   "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때) (IncomeCategory | null)
-  "estimatedAmount": "150000.00", // 예상 금액 (가변 고정 지출용) (string | null)
-  "isConfirmed": true, // 실제 금액 확인 여부 (false = 아직 예상 금액 상태) (boolean)
+  "recurringExpenseId": "uuid-1234", // 연결된 고정지출 규칙 ID (스케줄러로 자동 생성된 경우) (string | null)
+  "isConfirmed": true, // 실제 금액 확인 여부 (false = 가변 고정지출로 자동 생성된 미확정 항목) (boolean)
   "merchant": null, // 소비처 (MerchantDto | null)
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
@@ -4887,6 +4839,208 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 404 - 전체 예산 템플릿을 찾을 수 없습니다
 
 #### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### POST `household/recurring-expenses`
+
+**요약:** 고정지출 등록
+
+**Request Body:**
+
+```json
+{
+  "groupId": "", // 그룹 ID (개인 지출 시 생략) (string?)
+  "type": null, // 거래 유형 (기본값: EXPENSE) (TransactionType?)
+  "amount": 150000, // 금액 (number)
+  "isVariable": false, // 가변 여부 (true면 자동 생성된 Expense는 미확정(isConfirmed=false) 상태로 등록됨) (boolean?)
+  "category": null, // 카테고리 (ExpenseCategory?)
+  "incomeCategory": null, // 입금 카테고리 (type=INCOME 일 때 사용) (IncomeCategory?)
+  "paymentMethod": null, // 결제 수단 (PaymentMethod?)
+  "merchantId": "", // 소비처 ID (string?)
+  "description": "월세", // 내용 (string?)
+  "dayOfMonth": 25 // 매달 발생 일(day). 1~31 (number)
+}
+```
+
+**Responses:**
+
+#### 201 - 고정지출 등록 성공
+
+```json
+{
+  "id": "uuid-1234", // 고정지출 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string | null)
+  "userId": "uuid-1234", // 등록자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
+  "amount": "150000.00", // 기본 금액 (string)
+  "isVariable": false, // 가변 여부 (true면 자동 생성된 Expense는 미확정(isConfirmed=false) 상태로 등록됨) (boolean)
+  "category": null, // 카테고리 (ExpenseCategory | null)
+  "incomeCategory": null, // 입금 카테고리 (IncomeCategory | null)
+  "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
+  "merchantId": null, // 소비처 ID (string | null)
+  "description": "월세", // 내용 (string | null)
+  "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
+  "isActive": true, // 활성 여부 (boolean)
+  "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### GET `household/recurring-expenses`
+
+**요약:** 고정지출 목록 조회
+
+**Query Parameters:**
+
+- `groupId` (`string`) (Optional): 그룹 ID (생략 시 개인)
+- `includeInactive` (`boolean`) (Optional): 비활성 포함 여부 (기본: 활성만)
+
+**Responses:**
+
+#### 200 - 고정지출 목록 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 고정지출 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string | null)
+  "userId": "uuid-1234", // 등록자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
+  "amount": "150000.00", // 기본 금액 (string)
+  "isVariable": false, // 가변 여부 (true면 자동 생성된 Expense는 미확정(isConfirmed=false) 상태로 등록됨) (boolean)
+  "category": null, // 카테고리 (ExpenseCategory | null)
+  "incomeCategory": null, // 입금 카테고리 (IncomeCategory | null)
+  "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
+  "merchantId": null, // 소비처 ID (string | null)
+  "description": "월세", // 내용 (string | null)
+  "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
+  "isActive": true, // 활성 여부 (boolean)
+  "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### GET `household/recurring-expenses/:id`
+
+**요약:** 고정지출 상세 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 고정지출 상세 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 고정지출 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string | null)
+  "userId": "uuid-1234", // 등록자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
+  "amount": "150000.00", // 기본 금액 (string)
+  "isVariable": false, // 가변 여부 (true면 자동 생성된 Expense는 미확정(isConfirmed=false) 상태로 등록됨) (boolean)
+  "category": null, // 카테고리 (ExpenseCategory | null)
+  "incomeCategory": null, // 입금 카테고리 (IncomeCategory | null)
+  "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
+  "merchantId": null, // 소비처 ID (string | null)
+  "description": "월세", // 내용 (string | null)
+  "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
+  "isActive": true, // 활성 여부 (boolean)
+  "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 404 - 고정지출을 찾을 수 없습니다
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
+### PATCH `household/recurring-expenses/:id`
+
+**요약:** 고정지출 수정
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "amount": 0, // 금액 (number?)
+  "isVariable": false, // 가변 여부 (boolean?)
+  "category": null, // 카테고리 (ExpenseCategory?)
+  "incomeCategory": null, // 입금 카테고리 (null 전달 시 해제) (IncomeCategory | null?)
+  "paymentMethod": null, // 결제 수단 (PaymentMethod?)
+  "merchantId": null, // 소비처 ID (null 전달 시 해제) (string | null?)
+  "description": "", // 내용 (string?)
+  "dayOfMonth": 0, // 매달 발생 일(day). 1~31 (number?)
+  "isActive": false // 활성 여부 (boolean?)
+}
+```
+
+**Responses:**
+
+#### 200 - 고정지출 수정 성공
+
+```json
+{
+  "id": "uuid-1234", // 고정지출 ID (string)
+  "groupId": "uuid-1234", // 그룹 ID (string | null)
+  "userId": "uuid-1234", // 등록자 ID (string)
+  "type": null, // 거래 유형 (TransactionType)
+  "amount": "150000.00", // 기본 금액 (string)
+  "isVariable": false, // 가변 여부 (true면 자동 생성된 Expense는 미확정(isConfirmed=false) 상태로 등록됨) (boolean)
+  "category": null, // 카테고리 (ExpenseCategory | null)
+  "incomeCategory": null, // 입금 카테고리 (IncomeCategory | null)
+  "paymentMethod": null, // 결제 수단 (PaymentMethod | null)
+  "merchantId": null, // 소비처 ID (string | null)
+  "description": "월세", // 내용 (string | null)
+  "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
+  "isActive": true, // 활성 여부 (boolean)
+  "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
+}
+```
+
+#### 404 - 고정지출을 찾을 수 없습니다
+
+#### 403 - 본인이 등록한 고정지출만 수정할 수 있습니다
+
+---
+
+### DELETE `household/recurring-expenses/:id`
+
+**요약:** 고정지출 삭제
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 고정지출 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 고정지출을 찾을 수 없습니다
+
+#### 403 - 본인이 등록한 고정지출만 삭제할 수 있습니다
 
 ---
 

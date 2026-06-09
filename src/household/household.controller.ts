@@ -24,6 +24,11 @@ import {
   MerchantQueryDto,
 } from './dto/merchant.dto';
 import {
+  CreateRecurringExpenseDto,
+  UpdateRecurringExpenseDto,
+  RecurringExpenseQueryDto,
+} from './dto/recurring-expense.dto';
+import {
   StatisticsQueryDto,
   YearlyStatisticsQueryDto,
   BudgetQueryDto,
@@ -31,6 +36,7 @@ import {
 } from './dto/household-query.dto';
 import {
   ExpenseDto,
+  RecurringExpenseDto,
   BudgetDto,
   BudgetTemplateDto,
   GroupBudgetDto,
@@ -78,17 +84,6 @@ export class HouseholdController {
   @ApiForbidden('해당 그룹의 멤버가 아닙니다')
   findAllExpenses(@Request() req, @Query() query: ExpenseQueryDto) {
     return this.householdService.findAllExpenses(req.user.userId, query);
-  }
-
-  @Get('expenses/recurring')
-  @ApiOperation({ summary: '고정 지출 목록 조회' })
-  @ApiSuccess(ExpenseDto, '고정 지출 목록 조회 성공', { isArray: true })
-  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
-  findRecurringExpenses(@Request() req, @Query('groupId') groupId?: string) {
-    return this.householdService.findRecurringExpenses(
-      req.user.userId,
-      groupId,
-    );
   }
 
   @Get('expenses/:id')
@@ -315,6 +310,65 @@ export class HouseholdController {
       req.user.userId,
       groupId,
     );
+  }
+
+  // ─── 고정지출 CRUD ───────────────────────────────────────
+
+  @Post('recurring-expenses')
+  @ApiOperation({ summary: '고정지출 등록' })
+  @ApiCreated(RecurringExpenseDto, '고정지출 등록 성공')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  createRecurringExpense(
+    @Request() req,
+    @Body() dto: CreateRecurringExpenseDto,
+  ) {
+    return this.householdService.createRecurringExpense(req.user.userId, dto);
+  }
+
+  @Get('recurring-expenses')
+  @ApiOperation({ summary: '고정지출 목록 조회' })
+  @ApiSuccess(RecurringExpenseDto, '고정지출 목록 조회 성공', { isArray: true })
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findRecurringExpenses(
+    @Request() req,
+    @Query() query: RecurringExpenseQueryDto,
+  ) {
+    return this.householdService.findRecurringExpenses(req.user.userId, query);
+  }
+
+  @Get('recurring-expenses/:id')
+  @ApiOperation({ summary: '고정지출 상세 조회' })
+  @ApiSuccess(RecurringExpenseDto, '고정지출 상세 조회 성공')
+  @ApiNotFound('고정지출을 찾을 수 없습니다')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  findOneRecurringExpense(@Request() req, @Param('id') id: string) {
+    return this.householdService.findOneRecurringExpense(req.user.userId, id);
+  }
+
+  @Patch('recurring-expenses/:id')
+  @ApiOperation({ summary: '고정지출 수정' })
+  @ApiSuccess(RecurringExpenseDto, '고정지출 수정 성공')
+  @ApiNotFound('고정지출을 찾을 수 없습니다')
+  @ApiForbidden('본인이 등록한 고정지출만 수정할 수 있습니다')
+  updateRecurringExpense(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateRecurringExpenseDto,
+  ) {
+    return this.householdService.updateRecurringExpense(
+      req.user.userId,
+      id,
+      dto,
+    );
+  }
+
+  @Delete('recurring-expenses/:id')
+  @ApiOperation({ summary: '고정지출 삭제' })
+  @ApiSuccess(MessageResponseDto, '고정지출 삭제 성공')
+  @ApiNotFound('고정지출을 찾을 수 없습니다')
+  @ApiForbidden('본인이 등록한 고정지출만 삭제할 수 있습니다')
+  removeRecurringExpense(@Request() req, @Param('id') id: string) {
+    return this.householdService.removeRecurringExpense(req.user.userId, id);
   }
 
   // ─── 소비처 ──────────────────────────────────────────────

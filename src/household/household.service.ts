@@ -27,6 +27,11 @@ import {
 } from './dto/group-budget.dto';
 import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { ConfirmReceiptDto } from './dto/confirm-receipt.dto';
+import {
+  CreateRecurringExpenseDto,
+  UpdateRecurringExpenseDto,
+  RecurringExpenseQueryDto,
+} from './dto/recurring-expense.dto';
 
 const ALLOWED_RECEIPT_TYPES = [
   'image/jpeg',
@@ -64,9 +69,6 @@ export class HouseholdService {
         description: dto.description,
         paymentMethod: dto.paymentMethod,
         merchantId: dto.merchantId ?? null,
-        isRecurring: dto.isRecurring ?? false,
-        estimatedAmount: dto.estimatedAmount ?? null,
-        isConfirmed: true,
         incomeCategory: dto.incomeCategory ?? null,
         refundedExpenseId: dto.refundedExpenseId ?? null,
       },
@@ -190,10 +192,6 @@ export class HouseholdService {
           paymentMethod: dto.paymentMethod,
         }),
         ...(dto.merchantId !== undefined && { merchantId: dto.merchantId }),
-        ...(dto.isRecurring !== undefined && { isRecurring: dto.isRecurring }),
-        ...(dto.estimatedAmount !== undefined && {
-          estimatedAmount: dto.estimatedAmount,
-        }),
         ...(dto.isConfirmed !== undefined && { isConfirmed: dto.isConfirmed }),
         ...(dto.incomeCategory !== undefined && {
           incomeCategory: dto.incomeCategory,
@@ -584,85 +582,144 @@ export class HouseholdService {
     };
   }
 
-  /**
-   * 고정 지출 목록 조회
-   */
-  async findRecurringExpenses(userId: string, groupId?: string) {
-    if (groupId) {
-      await this.validateGroupMember(userId, groupId);
+  // ─────────────────────────────────────────────
+  // 고정지출 CRUD
+  // ─────────────────────────────────────────────
+
+  async createRecurringExpense(userId: string, dto: CreateRecurringExpenseDto) {
+    if (dto.groupId) {
+      await this.validateGroupMember(userId, dto.groupId);
     }
 
-    const where = groupId
-      ? { groupId, isRecurring: true }
-      : { groupId: null, userId, isRecurring: true };
-
-    return await this.prisma.expense.findMany({
-      where,
-      include: { receipts: true, merchant: true, refunds: true },
-      orderBy: { date: 'desc' },
+    return this.prisma.recurringExpense.create({
+      data: {
+        groupId: dto.groupId ?? null,
+        userId,
+        type: dto.type ?? 'EXPENSE',
+        amount: dto.amount,
+        isVariable: dto.isVariable ?? false,
+        category: dto.category ?? null,
+        incomeCategory: dto.incomeCategory ?? null,
+        paymentMethod: dto.paymentMethod ?? null,
+        merchantId: dto.merchantId ?? null,
+        description: dto.description ?? null,
+        dayOfMonth: dto.dayOfMonth,
+        isActive: true,
+      },
+      include: { merchant: true },
     });
   }
 
-  /**
-   * 고정비용 다음 달 복사
-   */
-  async copyRecurringExpenses(
-    userId: string,
-    groupId: string | undefined,
-    targetMonth: string,
-  ) {
-    if (groupId) {
-      await this.validateGroupMember(userId, groupId);
+  async findRecurringExpenses(userId: string, query: RecurringExpenseQueryDto) {
+    if (query.groupId) {
+      await this.validateGroupMember(userId, query.groupId);
     }
 
-    const [year, monthNum] = targetMonth.split('-').map(Number);
-    const prevYear = monthNum === 1 ? year - 1 : year;
-    const prevMonth = monthNum === 1 ? 12 : monthNum - 1;
-
-    const prevStart = new Date(prevYear, prevMonth - 1, 1);
-    const prevEnd = new Date(prevYear, prevMonth, 1);
-
-    const recurringWhere = groupId
-      ? { groupId, isRecurring: true, date: { gte: prevStart, lt: prevEnd } }
+    const where = query.groupId
+      ? {
+          groupId: query.groupId,
+          ...(query.includeInactive ? {} : { isActive: true }),
+        }
       : {
-          groupId: null,
+          groupId: null as string | null,
           userId,
-          isRecurring: true,
-          date: { gte: prevStart, lt: prevEnd },
+          ...(query.includeInactive ? {} : { isActive: true }),
         };
 
-    const recurringExpenses = await this.prisma.expense.findMany({
-      where: recurringWhere,
+    return this.prisma.recurringExpense.findMany({
+      where,
+      include: { merchant: true },
+      orderBy: { dayOfMonth: 'asc' },
+    });
+  }
+
+  async findOneRecurringExpense(userId: string, id: string) {
+    const rec = await this.prisma.recurringExpense.findUnique({
+      where: { id },
+      include: { merchant: true },
     });
 
-    if (recurringExpenses.length === 0) {
-      return { count: 0, expenses: [] };
+    if (!rec) {
+      throw new NotFoundException(
+        'household.errors.recurring_expense_not_found',
+      );
     }
 
-    const targetDate = new Date(year, monthNum - 1, 1);
-    const created = await this.prisma.$transaction(
-      recurringExpenses.map((e) => {
-        const isVariable = e.estimatedAmount !== null;
-        return this.prisma.expense.create({
-          data: {
-            groupId: e.groupId,
-            userId: e.userId,
-            amount: isVariable ? e.estimatedAmount : e.amount,
-            category: e.category,
-            date: targetDate,
-            description: e.description,
-            paymentMethod: e.paymentMethod,
-            merchantId: e.merchantId,
-            isRecurring: true,
-            estimatedAmount: e.estimatedAmount,
-            isConfirmed: !isVariable,
-            incomeCategory: e.incomeCategory,
-          },
-        });
-      }),
-    );
+    if (rec.groupId) {
+      await this.validateGroupMember(userId, rec.groupId);
+    } else if (rec.userId !== userId) {
+      throw new ForbiddenException('household.errors.own_expense_only_view');
+    }
 
-    return { count: created.length, expenses: created };
+    return rec;
+  }
+
+  async updateRecurringExpense(
+    userId: string,
+    id: string,
+    dto: UpdateRecurringExpenseDto,
+  ) {
+    const rec = await this.prisma.recurringExpense.findUnique({
+      where: { id },
+    });
+
+    if (!rec) {
+      throw new NotFoundException(
+        'household.errors.recurring_expense_not_found',
+      );
+    }
+
+    if (rec.groupId) {
+      await this.validateGroupMember(userId, rec.groupId);
+    } else if (rec.userId !== userId) {
+      throw new ForbiddenException('household.errors.own_expense_only_update');
+    }
+
+    return this.prisma.recurringExpense.update({
+      where: { id },
+      data: {
+        ...(dto.amount !== undefined && { amount: dto.amount }),
+        ...(dto.isVariable !== undefined && { isVariable: dto.isVariable }),
+        ...(dto.category !== undefined && { category: dto.category }),
+        ...(dto.incomeCategory !== undefined && {
+          incomeCategory: dto.incomeCategory,
+        }),
+        ...(dto.paymentMethod !== undefined && {
+          paymentMethod: dto.paymentMethod,
+        }),
+        ...(dto.merchantId !== undefined && { merchantId: dto.merchantId }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.dayOfMonth !== undefined && { dayOfMonth: dto.dayOfMonth }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      },
+      include: { merchant: true },
+    });
+  }
+
+  async removeRecurringExpense(userId: string, id: string) {
+    const rec = await this.prisma.recurringExpense.findUnique({
+      where: { id },
+    });
+
+    if (!rec) {
+      throw new NotFoundException(
+        'household.errors.recurring_expense_not_found',
+      );
+    }
+
+    if (rec.groupId) {
+      await this.validateGroupMember(userId, rec.groupId);
+    } else if (rec.userId !== userId) {
+      throw new ForbiddenException('household.errors.own_expense_only_delete');
+    }
+
+    await this.prisma.recurringExpense.delete({ where: { id } });
+
+    return {
+      message: this.i18n.t('household.success.expense_deleted', {
+        lang: I18nContext.current()?.lang ?? 'ko',
+      }),
+    };
   }
 
   /**
