@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
+  ValidateIf,
   Min,
   Max,
   IsInt,
@@ -174,6 +175,7 @@ export class UpdateRecurringExpenseDto {
     nullable: true,
   })
   @IsOptional()
+  @ValidateIf((o) => o.memberId !== null)
   @IsString()
   memberId?: string | null;
 }
