@@ -10,6 +10,11 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
+import {
+  FORECAST_CACHE_KEY,
+  FORECAST_CACHE_TTL,
+  ForecastRawCache,
+} from '@/weather/weather.service';
 
 // 위경도 → 기상청 격자 변환 (weather.service.ts와 동일한 LCC 상수)
 const LCC = {
@@ -154,8 +159,6 @@ export class WeatherAlertScheduler {
 
   // 전날 기온 캐시 키 (격자별, 날짜별) — TTL 48시간
   private readonly PREV_TEMP_TTL = 48 * 60 * 60;
-  // 크론잡 격자 예보 캐시 TTL: 1시간
-  private readonly ALERT_FORECAST_TTL = 60 * 60;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -231,8 +234,10 @@ export class WeatherAlertScheduler {
 
     const today = dayjs().tz('Asia/Seoul').format('YYYYMMDD');
 
-    // 3. 시도별 처리
+    // 3. 시도별 처리 (burst 방지: sido 간 300ms 간격)
+    let sidoIndex = 0;
     for (const [sido, { userIds, nx, ny }] of sidoMap) {
+      if (sidoIndex++ > 0) await new Promise((r) => setTimeout(r, 300));
       try {
         const forecast = await this.getForecastForGrid(sido, nx, ny, today);
         if (!forecast) continue;
@@ -326,12 +331,14 @@ export class WeatherAlertScheduler {
     today: string,
   ): Promise<GridForecast | null> {
     const { baseDate, baseTime } = getForecastBaseTime(dayjs());
-    const cacheKey = `weather_alert_fcst:${sido}`;
+    const cacheKey = FORECAST_CACHE_KEY(sido);
 
-    const cached = await this.redisService.get<GridForecast>(cacheKey);
+    // on-demand 캐시(forecast:sido)를 재사용 — 캐시 히트 시 raw 데이터에서 summary만 추출
+    const cached = await this.redisService.get<ForecastRawCache>(cacheKey);
     if (cached) {
-      this.logger.debug(`[WeatherAlert] 격자 ${nx}_${ny} 캐시 히트`);
-      return cached;
+      this.logger.debug(`[WeatherAlert] 시도 ${sido} 캐시 히트`);
+      const summary = this.parseForecastSummaryFromRaw(cached.forecasts, today);
+      return { summary, baseDate: cached.baseDate };
     }
 
     if (!this.serviceKey) {
@@ -364,15 +371,106 @@ export class WeatherAlertScheduler {
       const items: KmaFcstItem[] = data.response.body.items.item;
       const summary = this.parseForecastSummary(items, today);
 
-      const result: GridForecast = { summary, baseDate };
-      await this.redisService.set(cacheKey, result, this.ALERT_FORECAST_TTL);
-      return result;
+      // on-demand 캐시와 동일한 키/TTL로 저장하여 이후 사용자 요청 시 재사용
+      const raw = this.buildRawCache(baseDate, baseTime, items);
+      await this.redisService.set(cacheKey, raw, FORECAST_CACHE_TTL);
+
+      return { summary, baseDate };
     } catch (err) {
       this.logger.error(
         `[WeatherAlert] KMA API 호출 실패 (${nx},${ny}): ${err.message}`,
       );
       return null;
     }
+  }
+
+  private buildRawCache(
+    baseDate: string,
+    baseTime: string,
+    items: KmaFcstItem[],
+  ): ForecastRawCache {
+    const grouped = new Map<string, Map<string, string>>();
+    for (const item of items) {
+      const key = `${item.fcstDate}_${item.fcstTime}`;
+      if (!grouped.has(key)) grouped.set(key, new Map());
+      grouped.get(key).set(item.category, item.fcstValue);
+    }
+
+    const dailyTemp = new Map<string, { min: number; max: number }>();
+    for (const [key, values] of grouped) {
+      const date = key.split('_')[0];
+      const tmp = parseFloat(values.get('TMP') ?? '0');
+      if (!dailyTemp.has(date)) {
+        dailyTemp.set(date, { min: tmp, max: tmp });
+      } else {
+        const d = dailyTemp.get(date);
+        d.min = Math.min(d.min, tmp);
+        d.max = Math.max(d.max, tmp);
+      }
+    }
+
+    const forecasts = [];
+    for (const [key, values] of grouped) {
+      const [fcstDate, fcstTime] = key.split('_');
+      const get = (cat: string) => values.get(cat) ?? '0';
+      const daily = dailyTemp.get(fcstDate);
+      forecasts.push({
+        fcstDate,
+        fcstTime,
+        temperature: parseFloat(get('TMP')),
+        minTemperature: daily?.min ?? null,
+        maxTemperature: daily?.max ?? null,
+        precipitationProbability: parseInt(get('POP')),
+        precipitation: parseFloat(get('PCP') === '강수없음' ? '0' : get('PCP')),
+        humidity: parseInt(get('REH')),
+        windSpeed: parseFloat(get('WSD')),
+        sky: parseInt(get('SKY')),
+        precipitationType: parseInt(get('PTY')),
+      });
+    }
+
+    forecasts.sort((a, b) =>
+      (a.fcstDate + a.fcstTime).localeCompare(b.fcstDate + b.fcstTime),
+    );
+
+    return { baseDate, baseTime, forecasts };
+  }
+
+  private parseForecastSummaryFromRaw(
+    forecasts: ForecastRawCache['forecasts'],
+    today: string,
+  ): ForecastSummary {
+    let hasPrecipitation = false;
+    let precipType = 0;
+    let todayMinTemp: number | null = null;
+    let todayMaxTemp: number | null = null;
+    let precipStartTime: string | null = null;
+    let precipEndTime: string | null = null;
+
+    for (const item of forecasts) {
+      if (item.fcstDate !== today) continue;
+      const pty = item.precipitationType;
+      if (pty > 0) {
+        hasPrecipitation = true;
+        if (precipType === 0) precipType = pty;
+        if (precipStartTime === null || item.fcstTime < precipStartTime)
+          precipStartTime = item.fcstTime;
+        if (precipEndTime === null || item.fcstTime > precipEndTime)
+          precipEndTime = item.fcstTime;
+      }
+      const tmp = item.temperature;
+      if (todayMinTemp === null || tmp < todayMinTemp) todayMinTemp = tmp;
+      if (todayMaxTemp === null || tmp > todayMaxTemp) todayMaxTemp = tmp;
+    }
+
+    return {
+      hasPrecipitation,
+      todayMinTemp,
+      todayMaxTemp,
+      precipType,
+      precipStartTime,
+      precipEndTime,
+    };
   }
 
   /**

@@ -19,6 +19,44 @@ const FORECAST_CACHE_TTL = 60 * 60 * 3;
 // 미세먼지 캐시 TTL: 1시간 (에어코리아 갱신 주기)
 const AIR_CACHE_TTL = 60 * 60;
 
+export const FORECAST_CACHE_KEY = (sido: string) => `forecast:${sido}`;
+export { FORECAST_CACHE_TTL };
+
+interface WeatherRawCache {
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+  precipitation: number;
+  precipitationType: number;
+  baseDate: string;
+  baseTime: string;
+  sidoKey: string | null;
+  pm10: number | null;
+  pm25: number | null;
+  pm10Grade: number | null;
+  pm25Grade: number | null;
+}
+
+interface ForecastRawItemCache {
+  fcstDate: string;
+  fcstTime: string;
+  temperature: number;
+  minTemperature: number | null;
+  maxTemperature: number | null;
+  precipitationProbability: number;
+  precipitation: number;
+  humidity: number;
+  windSpeed: number;
+  sky: number;
+  precipitationType: number;
+}
+
+export interface ForecastRawCache {
+  baseDate: string;
+  baseTime: string;
+  forecasts: ForecastRawItemCache[];
+}
+
 interface KmaItem {
   category: string;
   obsrValue: string;
@@ -197,18 +235,18 @@ export class WeatherService {
   }
 
   async getWeather(query: WeatherQueryDto): Promise<WeatherResponseDto> {
-    const { nx, ny } = toGrid(query.lat, query.lon);
     const lang = I18nContext.current()?.lang ?? 'ko';
     const sido = getSidoKey(query.lat, query.lon);
+
+    const cacheKey = `weather:${sido}`;
+    const cached = await this.redisService.get<WeatherRawCache>(cacheKey);
+    if (cached) return this.translateWeatherCache(cached, lang);
 
     // 기상청 초단기실황: 매시 정각 발표, 약 10분 후 제공 → 안전하게 1시간 전 기준
     const now = dayjs().subtract(1, 'hour');
     const baseDate = now.format('YYYYMMDD');
     const baseTime = now.format('HH00');
-
-    const cacheKey = `weather:${sido}:${lang}`;
-    const cached = await this.redisService.get<WeatherResponseDto>(cacheKey);
-    if (cached) return cached;
+    const { nx, ny } = toGrid(query.lat, query.lon);
 
     try {
       const { data } = await firstValueFrom(
@@ -237,23 +275,22 @@ export class WeatherService {
         items.find((i) => i.category === category)?.obsrValue ?? '0';
 
       const pty = parseInt(get('PTY'));
+      const airData = await this.getAirQuality(query.lat, query.lon);
 
-      const airData = await this.getAirQuality(query.lat, query.lon, lang);
-
-      const result: WeatherResponseDto = {
+      const raw: WeatherRawCache = {
         temperature: parseFloat(get('T1H')),
         humidity: parseInt(get('REH')),
         windSpeed: parseFloat(get('WSD')),
         precipitation: parseFloat(get('RN1')),
         precipitationType: pty,
-        weatherDescription: this.getPtyDescription(pty, lang),
         baseDate,
         baseTime,
         ...airData,
+        sidoKey: sido,
       };
 
-      await this.redisService.set(cacheKey, result, WEATHER_CACHE_TTL);
-      return result;
+      await this.redisService.set(cacheKey, raw, WEATHER_CACHE_TTL);
+      return this.translateWeatherCache(raw, lang);
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
       const status = error?.response?.status;
@@ -266,14 +303,15 @@ export class WeatherService {
   }
 
   async getForecast(query: WeatherQueryDto): Promise<ForecastResponseDto> {
-    const { nx, ny } = toGrid(query.lat, query.lon);
     const lang = I18nContext.current()?.lang ?? 'ko';
     const sido = getSidoKey(query.lat, query.lon);
-    const { baseDate, baseTime } = getForecastBaseTime(dayjs());
 
-    const cacheKey = `forecast:${sido}:${lang}`;
-    const cached = await this.redisService.get<ForecastResponseDto>(cacheKey);
-    if (cached) return cached;
+    const cacheKey = FORECAST_CACHE_KEY(sido);
+    const cached = await this.redisService.get<ForecastRawCache>(cacheKey);
+    if (cached) return this.translateForecastCache(cached, lang);
+
+    const { baseDate, baseTime } = getForecastBaseTime(dayjs());
+    const { nx, ny } = toGrid(query.lat, query.lon);
 
     try {
       const { data } = await firstValueFrom(
@@ -298,11 +336,14 @@ export class WeatherService {
       }
 
       const items = data.response.body.items.item;
-      const forecasts = this.parseForecastItems(items, lang);
+      const raw: ForecastRawCache = {
+        baseDate,
+        baseTime,
+        forecasts: this.parseForecastItemsRaw(items),
+      };
 
-      const result: ForecastResponseDto = { baseDate, baseTime, forecasts };
-      await this.redisService.set(cacheKey, result, FORECAST_CACHE_TTL);
-      return result;
+      await this.redisService.set(cacheKey, raw, FORECAST_CACHE_TTL);
+      return this.translateForecastCache(raw, lang);
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
       const status = error?.response?.status;
@@ -314,10 +355,48 @@ export class WeatherService {
     }
   }
 
-  private parseForecastItems(
-    items: KmaFcstItem[],
+  private translateWeatherCache(
+    raw: WeatherRawCache,
     lang: string,
-  ): ForecastItemDto[] {
+  ): WeatherResponseDto {
+    return {
+      temperature: raw.temperature,
+      humidity: raw.humidity,
+      windSpeed: raw.windSpeed,
+      precipitation: raw.precipitation,
+      precipitationType: raw.precipitationType,
+      weatherDescription: this.getPtyDescription(raw.precipitationType, lang),
+      baseDate: raw.baseDate,
+      baseTime: raw.baseTime,
+      pm10: raw.pm10,
+      pm25: raw.pm25,
+      pm10Grade: raw.pm10Grade,
+      pm25Grade: raw.pm25Grade,
+      sidoName: raw.sidoKey
+        ? this.i18n.t(`weather.sido.${raw.sidoKey}`, { lang })
+        : null,
+    };
+  }
+
+  private translateForecastCache(
+    raw: ForecastRawCache,
+    lang: string,
+  ): ForecastResponseDto {
+    return {
+      baseDate: raw.baseDate,
+      baseTime: raw.baseTime,
+      forecasts: raw.forecasts.map((item) => ({
+        ...item,
+        weatherDescription: this.getWeatherDescription(
+          item.sky,
+          item.precipitationType,
+          lang,
+        ),
+      })),
+    };
+  }
+
+  private parseForecastItemsRaw(items: KmaFcstItem[]): ForecastRawItemCache[] {
     // 날짜+시각 기준으로 그룹화
     const grouped = new Map<string, Map<string, string>>();
 
@@ -341,7 +420,7 @@ export class WeatherService {
       }
     }
 
-    const result: ForecastItemDto[] = [];
+    const result: ForecastRawItemCache[] = [];
 
     for (const [key, values] of grouped) {
       const [fcstDate, fcstTime] = key.split('_');
@@ -362,7 +441,6 @@ export class WeatherService {
         windSpeed: parseFloat(get('WSD')),
         sky,
         precipitationType: pty,
-        weatherDescription: this.getWeatherDescription(sky, pty, lang),
       });
     }
 
@@ -377,13 +455,12 @@ export class WeatherService {
   private async getAirQuality(
     lat: number,
     lon: number,
-    lang: string,
   ): Promise<{
     pm10: number | null;
     pm25: number | null;
     pm10Grade: number | null;
     pm25Grade: number | null;
-    sidoName: string | null;
+    sidoKey: string | null;
   }> {
     if (!this.serviceKey) {
       return {
@@ -391,7 +468,7 @@ export class WeatherService {
         pm25: null,
         pm10Grade: null,
         pm25Grade: null,
-        sidoName: null,
+        sidoKey: null,
       };
     }
 
@@ -399,19 +476,17 @@ export class WeatherService {
     // 에어코리아 API는 한국어 시도명으로 쿼리해야 함
     const sidoNameKo = this.i18n.t(`weather.sido.${sidoKey}`, { lang: 'ko' });
 
-    const cacheKey = `air:${Math.round(lat * 10) / 10}:${Math.round(lon * 10) / 10}:${lang}`;
+    const cacheKey = `air:${sidoKey}`;
     const cached = await this.redisService.get<{
       pm10: number | null;
       pm25: number | null;
       pm10Grade: number | null;
       pm25Grade: number | null;
-      sidoName: string | null;
+      sidoKey: string | null;
     }>(cacheKey);
     if (cached) return cached;
 
     try {
-      const sidoName = sidoNameKo;
-
       const { data: measureData } = await firstValueFrom(
         this.httpService.get<AirKoreaResponse<AirMeasureItem>>(
           this.airMeasureUrl,
@@ -419,7 +494,7 @@ export class WeatherService {
             params: {
               serviceKey: this.serviceKey,
               returnType: 'json',
-              sidoName,
+              sidoName: sidoNameKo,
               pageNo: 1,
               numOfRows: 1,
               ver: '1.0',
@@ -435,7 +510,7 @@ export class WeatherService {
           pm25: null,
           pm10Grade: null,
           pm25Grade: null,
-          sidoName: null,
+          sidoKey: null,
         };
       }
 
@@ -446,7 +521,7 @@ export class WeatherService {
           measure.pm10Grade !== '-' ? parseInt(measure.pm10Grade) : null,
         pm25Grade:
           measure.pm25Grade !== '-' ? parseInt(measure.pm25Grade) : null,
-        sidoName: this.i18n.t(`weather.sido.${sidoKey}`, { lang }),
+        sidoKey,
       };
 
       await this.redisService.set(cacheKey, result, AIR_CACHE_TTL);
@@ -458,7 +533,7 @@ export class WeatherService {
         pm25: null,
         pm10Grade: null,
         pm25Grade: null,
-        sidoName: null,
+        sidoKey: null,
       };
     }
   }
