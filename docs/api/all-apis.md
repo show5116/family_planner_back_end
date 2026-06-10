@@ -2468,12 +2468,13 @@ period=monthly 시 year 필수.
 
 ```json
 {
+  "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
+  "keyword": "사과", // 품목 키워드 (string)
   "storageType": null, // 보관 유형 (StorageType)
-  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
-  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
-  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
+  "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 
@@ -2488,8 +2489,7 @@ period=monthly 시 year 필수.
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "category": "채소", // 카테고리 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "globalPresetId": "uuid-5678", // 글로벌 프리셋 ID (string)
   "customDays": 10 // 커스텀 유통기한 (일) (number)
 }
 ```
@@ -2500,12 +2500,13 @@ period=monthly 시 year 필수.
 
 ```json
 {
+  "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
+  "keyword": "사과", // 품목 키워드 (string)
   "storageType": null, // 보관 유형 (StorageType)
-  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
-  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
-  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
+  "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 
@@ -2529,12 +2530,13 @@ period=monthly 시 year 필수.
 
 ```json
 {
+  "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
+  "keyword": "사과", // 품목 키워드 (string)
   "storageType": null, // 보관 유형 (StorageType)
-  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
-  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
-  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
+  "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 
