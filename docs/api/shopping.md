@@ -186,6 +186,7 @@
 ```json
 {
   "groupId": "uuid-group", // string
+  "completedAt": "2026-06-10T14:30:00.000Z", // 장보기 완료 시각 (기본: 현재 시각) (string?)
   "transfers": [
     {
       "cartItemId": "uuid-cart-item", // string

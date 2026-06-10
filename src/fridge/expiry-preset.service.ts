@@ -13,96 +13,72 @@ export class ExpiryPresetService {
     if (!member) throw new NotFoundException('fridge.errors.group_member_only');
   }
 
-  /**
-   * 유통기한 프리셋 전체 조회 (글로벌 기본값 + 그룹 커스텀 오버라이드 머지)
-   * 카테고리+보관유형 조합별로 커스텀이 있으면 커스텀값, 없으면 글로벌 기본값 반환
-   * keywords는 클라이언트 로컬 매칭용 (글로벌 항목에만 존재, 커스텀 전용 항목은 null)
-   */
   async getPresets(userId: string, groupId: string) {
     await this.assertMember(userId, groupId);
 
     const [globalPresets, groupPresets] = await Promise.all([
       this.prisma.globalExpiryPreset.findMany({
-        orderBy: [{ category: 'asc' }, { storageType: 'asc' }],
+        orderBy: [
+          { category: 'asc' },
+          { storageType: 'asc' },
+          { keyword: 'asc' },
+        ],
       }),
       this.prisma.groupExpiryPreset.findMany({ where: { groupId } }),
     ]);
 
     const groupPresetMap = new Map(
-      groupPresets.map((gp) => [`${gp.category}_${gp.storageType}`, gp]),
+      groupPresets.map((gp) => [gp.globalPresetId, gp]),
     );
 
-    // 카테고리+보관유형 조합 기준으로 글로벌 키워드 목록 집계
-    const globalKeywordsByKey = new Map<string, string[]>();
-    for (const gp of globalPresets) {
-      const key = `${gp.category}_${gp.storageType}`;
-      const existing = globalKeywordsByKey.get(key) ?? [];
-      existing.push(gp.keyword);
-      globalKeywordsByKey.set(key, existing);
-    }
-
-    // 카테고리+보관유형 조합 기준으로 글로벌 대표값(defaultDays) 추출
-    const globalByKey = new Map<string, (typeof globalPresets)[number]>();
-    for (const gp of globalPresets) {
-      const key = `${gp.category}_${gp.storageType}`;
-      if (!globalByKey.has(key)) globalByKey.set(key, gp);
-    }
-
-    // 글로벌 + 그룹 커스텀 합집합 키
-    const allKeys = new Set([...globalByKey.keys(), ...groupPresetMap.keys()]);
-
-    return [...allKeys].map((key) => {
-      const global = globalByKey.get(key);
-      const custom = groupPresetMap.get(key);
-      const [category, storageType] = custom
-        ? [custom.category, custom.storageType]
-        : [global.category, global.storageType];
+    return globalPresets.map((global) => {
+      const custom = groupPresetMap.get(global.id);
       return {
-        category,
-        storageType,
+        globalPresetId: global.id,
+        category: global.category,
+        keyword: global.keyword,
+        storageType: global.storageType,
         days: custom?.customDays ?? global.defaultDays,
-        keywords: globalKeywordsByKey.get(key) ?? null,
         isCustom: !!custom,
         customPresetId: custom?.id ?? null,
       };
     });
   }
 
-  /**
-   * 그룹별 카테고리 커스텀 프리셋 upsert
-   * 저장 후 머지된 프리셋 형태로 반환
-   */
   async upsertGroupPreset(userId: string, dto: UpsertGroupExpiryPresetDto) {
     await this.assertMember(userId, dto.groupId);
+
+    const global = await this.prisma.globalExpiryPreset.findUnique({
+      where: { id: dto.globalPresetId },
+    });
+    if (!global) throw new NotFoundException('fridge.errors.preset_not_found');
+
     const saved = await this.prisma.groupExpiryPreset.upsert({
       where: {
-        groupId_category_storageType: {
+        groupId_globalPresetId: {
           groupId: dto.groupId,
-          category: dto.category,
-          storageType: dto.storageType,
+          globalPresetId: dto.globalPresetId,
         },
       },
       update: { customDays: dto.customDays },
       create: {
         groupId: dto.groupId,
-        category: dto.category,
-        storageType: dto.storageType,
+        globalPresetId: dto.globalPresetId,
         customDays: dto.customDays,
       },
     });
+
     return {
-      category: saved.category,
-      storageType: saved.storageType,
+      globalPresetId: global.id,
+      category: global.category,
+      keyword: global.keyword,
+      storageType: global.storageType,
       days: saved.customDays,
-      keywords: null,
       isCustom: true,
       customPresetId: saved.id,
     };
   }
 
-  /**
-   * 그룹별 카테고리 커스텀 프리셋 삭제
-   */
   async deleteGroupPreset(userId: string, groupId: string, presetId: string) {
     await this.assertMember(userId, groupId);
     const preset = await this.prisma.groupExpiryPreset.findFirst({

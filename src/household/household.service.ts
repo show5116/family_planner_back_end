@@ -58,6 +58,10 @@ export class HouseholdService {
       await this.validateGroupMember(userId, dto.groupId);
     }
 
+    if (dto.memberId && dto.groupId) {
+      await this.validateGroupMember(dto.memberId, dto.groupId);
+    }
+
     const expense = await this.prisma.expense.create({
       data: {
         groupId: dto.groupId ?? null,
@@ -73,7 +77,12 @@ export class HouseholdService {
         refundedExpenseId: dto.refundedExpenseId ?? null,
         memberId: dto.memberId ?? null,
       },
-      include: { receipts: true, merchant: true, refunds: true },
+      include: {
+        receipts: true,
+        merchant: true,
+        refunds: true,
+        member: { select: { id: true, name: true } },
+      },
     });
 
     // 그룹 지출 등록 알림 (등록자 제외 그룹 멤버 전체)
@@ -138,7 +147,12 @@ export class HouseholdService {
 
     return await this.prisma.expense.findMany({
       where,
-      include: { receipts: true, merchant: true, refunds: true },
+      include: {
+        receipts: true,
+        merchant: true,
+        refunds: true,
+        member: { select: { id: true, name: true } },
+      },
       orderBy: { date: 'desc' },
     });
   }
@@ -149,7 +163,12 @@ export class HouseholdService {
   async findOneExpense(userId: string, id: string) {
     const expense = await this.prisma.expense.findUnique({
       where: { id },
-      include: { receipts: true, merchant: true, refunds: true },
+      include: {
+        receipts: true,
+        merchant: true,
+        refunds: true,
+        member: { select: { id: true, name: true } },
+      },
     });
 
     if (!expense) {
@@ -181,6 +200,10 @@ export class HouseholdService {
       throw new ForbiddenException('household.errors.own_expense_only_update');
     }
 
+    if (dto.memberId && expense.groupId) {
+      await this.validateGroupMember(dto.memberId, expense.groupId);
+    }
+
     return await this.prisma.expense.update({
       where: { id },
       data: {
@@ -202,7 +225,12 @@ export class HouseholdService {
         }),
         ...(dto.memberId !== undefined && { memberId: dto.memberId }),
       },
-      include: { receipts: true, merchant: true, refunds: true },
+      include: {
+        receipts: true,
+        merchant: true,
+        refunds: true,
+        member: { select: { id: true, name: true } },
+      },
     });
   }
 
@@ -593,6 +621,10 @@ export class HouseholdService {
       await this.validateGroupMember(userId, dto.groupId);
     }
 
+    if (dto.memberId && dto.groupId) {
+      await this.validateGroupMember(dto.memberId, dto.groupId);
+    }
+
     return this.prisma.recurringExpense.create({
       data: {
         groupId: dto.groupId ?? null,
@@ -609,7 +641,10 @@ export class HouseholdService {
         isActive: true,
         memberId: dto.memberId ?? null,
       },
-      include: { merchant: true },
+      include: {
+        merchant: true,
+        member: { select: { id: true, name: true } },
+      },
     });
   }
 
@@ -631,7 +666,10 @@ export class HouseholdService {
 
     return this.prisma.recurringExpense.findMany({
       where,
-      include: { merchant: true },
+      include: {
+        merchant: true,
+        member: { select: { id: true, name: true } },
+      },
       orderBy: { dayOfMonth: 'asc' },
     });
   }
@@ -639,7 +677,10 @@ export class HouseholdService {
   async findOneRecurringExpense(userId: string, id: string) {
     const rec = await this.prisma.recurringExpense.findUnique({
       where: { id },
-      include: { merchant: true },
+      include: {
+        merchant: true,
+        member: { select: { id: true, name: true } },
+      },
     });
 
     if (!rec) {
@@ -678,6 +719,10 @@ export class HouseholdService {
       throw new ForbiddenException('household.errors.own_expense_only_update');
     }
 
+    if (dto.memberId && rec.groupId) {
+      await this.validateGroupMember(dto.memberId, rec.groupId);
+    }
+
     return this.prisma.recurringExpense.update({
       where: { id },
       data: {
@@ -696,7 +741,10 @@ export class HouseholdService {
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         ...(dto.memberId !== undefined && { memberId: dto.memberId }),
       },
-      include: { merchant: true },
+      include: {
+        merchant: true,
+        member: { select: { id: true, name: true } },
+      },
     });
   }
 
@@ -1239,7 +1287,7 @@ export class HouseholdService {
   /**
    * 가계 등록 시 그룹 멤버에게 알림 발송 (등록자 제외)
    */
-  private async sendExpenseCreatedNotification(
+  async sendExpenseCreatedNotification(
     userId: string,
     groupId: string,
     expense: {
@@ -1293,7 +1341,7 @@ export class HouseholdService {
   /**
    * 예산 초과 여부 확인 후 그룹 멤버에게 알림 발송
    */
-  private async checkBudgetExceeded(
+  async checkBudgetExceeded(
     userId: string,
     groupId: string,
     dateStr: string,

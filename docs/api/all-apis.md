@@ -2468,12 +2468,13 @@ period=monthly 시 year 필수.
 
 ```json
 {
+  "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
+  "keyword": "사과", // 품목 키워드 (string)
   "storageType": null, // 보관 유형 (StorageType)
-  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
-  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
-  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
+  "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 
@@ -2488,8 +2489,7 @@ period=monthly 시 year 필수.
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "category": "채소", // 카테고리 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "globalPresetId": "uuid-5678", // 글로벌 프리셋 ID (string)
   "customDays": 10 // 커스텀 유통기한 (일) (number)
 }
 ```
@@ -2500,12 +2500,13 @@ period=monthly 시 year 필수.
 
 ```json
 {
+  "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
+  "keyword": "사과", // 품목 키워드 (string)
   "storageType": null, // 보관 유형 (StorageType)
-  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
-  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
-  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
+  "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 
@@ -2529,12 +2530,13 @@ period=monthly 시 year 필수.
 
 ```json
 {
+  "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
+  "keyword": "사과", // 품목 키워드 (string)
   "storageType": null, // 보관 유형 (StorageType)
-  "days": 7, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
-  "keywords": ["시금치", "열무"], // 매칭 키워드 목록 (클라이언트 로컬 매칭용, 글로벌 항목에만 존재) (string[] | null)
+  "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
-  "customPresetId": "uuid-1234" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
+  "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
 }
 ```
 
@@ -4242,6 +4244,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4288,6 +4291,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4328,6 +4332,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4388,6 +4393,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -4890,6 +4896,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
   "isActive": true, // 활성 여부 (boolean)
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -4928,6 +4935,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
   "isActive": true, // 활성 여부 (boolean)
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -4965,6 +4973,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
   "isActive": true, // 활성 여부 (boolean)
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -5021,6 +5030,7 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
   "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
   "isActive": true, // 활성 여부 (boolean)
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -7882,6 +7892,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 ```json
 {
   "groupId": "uuid-group", // string
+  "completedAt": "2026-06-10T14:30:00.000Z", // 장보기 완료 시각 (기본: 현재 시각) (string?)
   "transfers": [
     {
       "cartItemId": "uuid-cart-item", // string

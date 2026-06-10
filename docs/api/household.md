@@ -52,6 +52,7 @@
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -98,6 +99,7 @@
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -138,6 +140,7 @@
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -198,6 +201,7 @@
   "refundedExpenseId": "uuid-1234", // 환불 대상 지출 ID (반품/환불 시 원본 지출 ID) (string | null)
   "refunds": [], // 이 지출에 연결된 환불 목록 (ExpenseDto[])
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "shoppingHistoryId": "uuid-1234", // 연결된 장보기 이력 ID (장보기 완료 시 자동 생성된 지출에만 존재) (string | null)
   "createdAt": "2026-02-27T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-02-27T00:00:00.000Z" // 수정 일시 (Date)
@@ -700,6 +704,7 @@
   "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
   "isActive": true, // 활성 여부 (boolean)
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -738,6 +743,7 @@
   "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
   "isActive": true, // 활성 여부 (boolean)
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -775,6 +781,7 @@
   "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
   "isActive": true, // 활성 여부 (boolean)
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
 }
@@ -831,6 +838,7 @@
   "dayOfMonth": 25, // 매달 발생 일(day). 1~31 (number)
   "isActive": true, // 활성 여부 (boolean)
   "memberId": "uuid-1234", // 결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용) (string | null)
+  "member": null, // 결제 주체 정보 (ExpenseMemberDto | null)
   "createdAt": "2026-06-08T00:00:00.000Z", // 생성 일시 (Date)
   "updatedAt": "2026-06-08T00:00:00.000Z" // 수정 일시 (Date)
 }

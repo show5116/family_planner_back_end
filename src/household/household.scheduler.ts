@@ -2,12 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
+import { HouseholdService } from './household.service';
 
 @Injectable()
 export class HouseholdScheduler {
   private readonly logger = new Logger(HouseholdScheduler.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly householdService: HouseholdService,
+  ) {}
 
   /**
    * 매일 00:05에 실행.
@@ -32,6 +36,7 @@ export class HouseholdScheduler {
 
     const recurringList = await this.prisma.recurringExpense.findMany({
       where: { isActive: true },
+      include: { member: { select: { deletedAt: true } } },
     });
 
     if (recurringList.length === 0) return;
@@ -64,9 +69,9 @@ export class HouseholdScheduler {
 
     const targetDate = new Date(thisYear, thisMonth, todayDay);
 
-    await this.prisma.$transaction(
-      toCreate.map((rec) => {
-        return this.prisma.expense.create({
+    const created = await this.prisma.$transaction(
+      toCreate.map((rec) =>
+        this.prisma.expense.create({
           data: {
             groupId: rec.groupId,
             userId: rec.userId,
@@ -80,13 +85,35 @@ export class HouseholdScheduler {
             incomeCategory: rec.incomeCategory,
             recurringExpenseId: rec.id,
             isConfirmed: !rec.isVariable,
-            memberId: rec.memberId,
+            memberId: rec.member?.deletedAt ? null : rec.memberId,
           },
-        });
-      }),
+        }),
+      ),
     );
 
     this.logger.log(`고정비용 ${toCreate.length}건 자동 생성 완료`);
+
+    for (const expense of created) {
+      if (!expense.groupId) continue;
+      this.householdService
+        .sendExpenseCreatedNotification(
+          expense.userId,
+          expense.groupId,
+          expense,
+        )
+        .catch(() => null);
+      if (expense.type !== 'INCOME' && expense.category) {
+        const dateStr = expense.date.toISOString().slice(0, 10);
+        this.householdService
+          .checkBudgetExceeded(
+            expense.userId,
+            expense.groupId,
+            dateStr,
+            expense.category,
+          )
+          .catch(() => null);
+      }
+    }
   }
 
   /**

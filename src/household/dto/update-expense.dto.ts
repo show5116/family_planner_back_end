@@ -6,6 +6,7 @@ import {
   IsString,
   IsBoolean,
   IsDateString,
+  ValidateIf,
   Min,
 } from 'class-validator';
 import {
@@ -118,6 +119,7 @@ export class UpdateExpenseDto {
     nullable: true,
   })
   @IsOptional()
+  @ValidateIf((o) => o.memberId !== null)
   @IsString()
   memberId?: string | null;
 }

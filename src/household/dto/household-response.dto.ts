@@ -6,6 +6,14 @@ import {
   TransactionType,
 } from '@prisma/client';
 
+export class ExpenseMemberDto {
+  @ApiProperty({ description: '유저 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({ description: '이름', example: '홍길동' })
+  name: string;
+}
+
 export class RecurringExpenseDto {
   @ApiProperty({ description: '고정지출 ID', example: 'uuid-1234' })
   id: string;
@@ -72,6 +80,13 @@ export class RecurringExpenseDto {
     nullable: true,
   })
   memberId: string | null;
+
+  @ApiProperty({
+    description: '결제 주체 정보',
+    type: () => ExpenseMemberDto,
+    nullable: true,
+  })
+  member: ExpenseMemberDto | null;
 
   @ApiProperty({
     description: '생성 일시',
@@ -256,6 +271,14 @@ export class ExpenseDto {
     required: false,
   })
   memberId: string | null;
+
+  @ApiProperty({
+    description: '결제 주체 정보',
+    type: () => ExpenseMemberDto,
+    nullable: true,
+    required: false,
+  })
+  member: ExpenseMemberDto | null;
 
   @ApiProperty({
     description:
