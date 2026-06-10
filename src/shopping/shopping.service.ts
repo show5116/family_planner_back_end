@@ -185,7 +185,10 @@ export class ShoppingService {
     const historyId = await this.prisma.$transaction(
       async (tx) => {
         const history = await tx.shoppingHistory.create({
-          data: { groupId },
+          data: {
+            groupId,
+            ...(dto.completedAt && { completedAt: new Date(dto.completedAt) }),
+          },
         });
 
         let totalPrice = 0;

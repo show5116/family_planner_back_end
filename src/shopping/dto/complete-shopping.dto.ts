@@ -122,6 +122,15 @@ export class CompleteShoppingDto {
   groupId: string;
 
   @ApiProperty({
+    example: '2026-06-10T14:30:00.000Z',
+    required: false,
+    description: '장보기 완료 시각 (기본: 현재 시각)',
+  })
+  @IsOptional()
+  @IsDateString()
+  completedAt?: string;
+
+  @ApiProperty({
     type: [TransferItemDto],
     description: '냉장고로 이관할 품목 목록',
   })
