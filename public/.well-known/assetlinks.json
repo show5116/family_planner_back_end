@@ -3,9 +3,10 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.yourcompany.familyplanner",
+      "package_name": "com.hmncorp.familyplanner",
       "sha256_cert_fingerprints": [
-        "YOUR_SHA256_FINGERPRINT_HERE"
+        "85:57:C5:D1:34:C6:9F:EE:44:74:AD:26:3D:49:08:1C:02:C0:0C:23:BF:38:AD:6A:D1:4A:34:4E:BA:28:30:9B",
+        "CE:9F:39:A7:48:8F:BF:4D:C9:80:62:41:D3:06:0A:75:14:41:C7:78:85:CD:D8:07:D4:61:D4:2F:24:86:10:34"
       ]
     }
   }

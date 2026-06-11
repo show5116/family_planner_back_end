@@ -22,6 +22,7 @@ import { I18nValidationPipe } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from '@/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { VersioningType } from '@nestjs/common';
 import { join } from 'path';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
@@ -38,6 +39,9 @@ async function bootstrap() {
   // Pino Logger 설정
   app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService);
+
+  // API URI 버전 관리 (/v1/)
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   // Cookie 파서 미들웨어 설정
   app.use(cookieParser());

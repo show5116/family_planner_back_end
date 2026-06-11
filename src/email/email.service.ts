@@ -142,6 +142,33 @@ export class EmailService {
     });
   }
 
+  async sendDataExportEmail(
+    to: string,
+    userName: string,
+    zipBuffer: Buffer,
+    filename: string,
+  ): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: this.smtpFrom,
+        to,
+        subject: '[가족 플래너] 내 데이터 내보내기',
+        html: `
+          <p>${userName}님, 안녕하세요.</p>
+          <p>요청하신 개인정보 내보내기 파일을 첨부해 드립니다.</p>
+          <p>첨부 파일에는 계정 정보, 일정, 메모, 지출 내역이 포함되어 있습니다.</p>
+          <br/>
+          <p>가족 플래너 드림</p>
+        `,
+        attachments: [{ filename, content: zipBuffer }],
+      });
+      this.logger.log(`Data export email sent to: ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send data export email to ${to}`, error);
+      throw new Error('이메일 전송에 실패했습니다');
+    }
+  }
+
   async sendGroupInviteEmail(
     to: string,
     groupName: string,

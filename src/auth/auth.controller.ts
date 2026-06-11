@@ -73,6 +73,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('signup')
   @ApiOperation({ summary: '회원가입' })
   @ApiResponse({
@@ -280,6 +281,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
   @Post('refresh')
   @ApiOperation({
     summary: 'Access Token 갱신 (RTR)',
@@ -336,6 +338,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('verify-email')
   @ApiOperation({ summary: '이메일 인증' })
   @ApiResponse({
@@ -393,6 +396,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('reset-password')
   @ApiOperation({ summary: '비밀번호 재설정' })
   @ApiResponse({
@@ -647,6 +651,40 @@ export class AuthController {
   @ApiSuccess(Object, '위치 정보 업데이트 성공')
   updateLocation(@Request() req, @Body() dto: UpdateLocationDto) {
     return this.authService.updateLocation(req.user.userId, dto.lat, dto.lon);
+  }
+
+  // ===== 내 계정 관리 =====
+
+  @Delete('me')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '내 계정 삭제 예약 (7일 유예 후 완전 삭제)',
+    description:
+      '7일 유예 기간 동안 취소 가능합니다. 유예 기간 후 모든 데이터가 삭제됩니다.',
+  })
+  @ApiSuccess(DeleteAccountResponseDto, '계정 삭제 예약 성공')
+  deleteMyAccount(@Request() req: any) {
+    return this.authService.deleteMyAccount(req.user.userId);
+  }
+
+  @Post('me/cancel-delete')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '내 계정 삭제 예약 취소' })
+  @ApiSuccess(CancelDeleteAccountResponseDto, '계정 삭제 예약 취소 성공')
+  cancelDeleteMyAccount(@Request() req: any) {
+    return this.authService.cancelDeleteMyAccount(req.user.userId);
+  }
+
+  @Get('me/export')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '내 데이터 내보내기 (개인정보보호법 제35조)',
+    description:
+      '본인의 모든 개인정보를 ZIP 파일로 압축하여 가입 이메일로 전송합니다.',
+  })
+  @ApiSuccess(Object, '이메일 전송 성공')
+  getMyDataExport(@Request() req: any) {
+    return this.authService.getMyDataExport(req.user.userId);
   }
 
   // ===== 운영자 전용 =====
