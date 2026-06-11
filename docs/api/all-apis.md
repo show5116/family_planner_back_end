@@ -1105,7 +1105,8 @@ period=monthly 시 year 필수.
     "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
-    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+    "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
   } // 생성된 사용자 정보 (UserDto)
 }
 ```
@@ -1139,7 +1140,8 @@ period=monthly 시 year 필수.
     "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
-    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+    "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
   } // 사용자 정보 (UserDto)
 }
 ```
@@ -1360,7 +1362,8 @@ period=monthly 시 year 필수.
     "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
-    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+    "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
   } // 업데이트된 사용자 정보 (UserDto)
 }
 ```
@@ -1407,7 +1410,8 @@ period=monthly 시 year 필수.
     "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
-    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+    "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
   } // 사용자 정보 (UserDto)
 }
 ```
@@ -1472,7 +1476,8 @@ period=monthly 시 year 필수.
     "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
-    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+    "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
   } // 사용자 정보 (UserDto)
 }
 ```
@@ -1537,7 +1542,8 @@ period=monthly 시 year 필수.
     "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
     "socialProvider": "google", // 소셜 로그인 제공자 (string?)
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
-    "updatedAt": "2024-01-01T00:00:00.000Z" // 수정 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+    "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
   } // 사용자 정보 (UserDto)
 }
 ```
@@ -1567,6 +1573,55 @@ period=monthly 시 year 필수.
 **Responses:**
 
 #### 200 - 위치 정보 업데이트 성공
+
+---
+
+### DELETE `auth/me`
+
+**요약:** 내 계정 삭제 예약 (7일 유예 후 완전 삭제)
+
+**설명:**
+7일 유예 기간 동안 취소 가능합니다. 유예 기간 후 모든 데이터가 삭제됩니다.
+
+**Responses:**
+
+#### 200 - 계정 삭제 예약 성공
+
+```json
+{
+  "message": "계정 삭제가 예약되었습니다. 7일 후 완전히 삭제됩니다", // 응답 메시지 (string)
+  "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 실제 삭제 예정 일시 (Date)
+}
+```
+
+---
+
+### POST `auth/me/cancel-delete`
+
+**요약:** 내 계정 삭제 예약 취소
+
+**Responses:**
+
+#### 200 - 계정 삭제 예약 취소 성공
+
+```json
+{
+  "message": "계정 삭제 예약이 취소되었습니다" // 응답 메시지 (string)
+}
+```
+
+---
+
+### GET `auth/me/export`
+
+**요약:** 내 데이터 내보내기 (개인정보보호법 제35조)
+
+**설명:**
+본인의 모든 개인정보를 JSON 형태로 내려받습니다.
+
+**Responses:**
+
+#### 200 - 데이터 내보내기 성공
 
 ---
 

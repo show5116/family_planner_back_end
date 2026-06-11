@@ -739,6 +739,7 @@ export class AuthService {
         personalColor: true,
         createdAt: true,
         password: true,
+        deletedAt: true,
       },
     });
 
@@ -770,6 +771,7 @@ export class AuthService {
       personalColor: user.personalColor,
       createdAt: user.createdAt,
       hasPassword: user.password !== null,
+      scheduledDeleteAt: user.deletedAt ?? null,
     };
   }
 
@@ -912,7 +914,541 @@ export class AuthService {
     };
   }
 
+  async getMyDataExport(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phoneNumber: true,
+        provider: true,
+        language: true,
+        subscriptionTier: true,
+        termsAgreedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        lastLoginAt: true,
+        groupMemberships: {
+          select: {
+            groupId: true,
+            joinedAt: true,
+            roleId: true,
+          },
+        },
+        tasks: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+            priority: true,
+            status: true,
+            scheduledAt: true,
+            dueAt: true,
+            completedAt: true,
+            location: true,
+            createdAt: true,
+          },
+          where: { deletedAt: null },
+        },
+        recurrings: {
+          select: {
+            id: true,
+            ruleType: true,
+            ruleConfig: true,
+            isActive: true,
+            createdAt: true,
+          },
+        },
+        memos: {
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            visibility: true,
+            isPinned: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          where: { deletedAt: null },
+        },
+        expenses: {
+          select: {
+            id: true,
+            type: true,
+            amount: true,
+            category: true,
+            date: true,
+            description: true,
+            paymentMethod: true,
+            isConfirmed: true,
+            createdAt: true,
+          },
+        },
+        recurringExpenses: {
+          select: {
+            id: true,
+            type: true,
+            amount: true,
+            category: true,
+            description: true,
+            dayOfMonth: true,
+            isActive: true,
+            createdAt: true,
+          },
+        },
+        budgets: {
+          select: {
+            id: true,
+            category: true,
+            amount: true,
+            month: true,
+            createdAt: true,
+          },
+        },
+        accounts: {
+          select: {
+            id: true,
+            name: true,
+            institution: true,
+            type: true,
+            createdAt: true,
+          },
+        },
+        merchants: {
+          select: {
+            id: true,
+            name: true,
+            createdAt: true,
+          },
+        },
+        childProfiles: {
+          select: {
+            id: true,
+            name: true,
+            birthDate: true,
+            createdAt: true,
+          },
+        },
+        childcareTransactions: {
+          select: {
+            id: true,
+            type: true,
+            amount: true,
+            description: true,
+            createdAt: true,
+          },
+        },
+        votesCreated: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            isMultiple: true,
+            isAnonymous: true,
+            endsAt: true,
+            createdAt: true,
+          },
+        },
+        voteBallots: {
+          select: {
+            id: true,
+            optionId: true,
+            votedAt: true,
+          },
+        },
+        questions: {
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            category: true,
+            status: true,
+            createdAt: true,
+          },
+          where: { deletedAt: null },
+        },
+        notifications: {
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            createdAt: true,
+          },
+          take: 200,
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (!user.email) {
+      throw new BadRequestException(
+        '이메일이 등록되지 않아 데이터를 전송할 수 없습니다',
+      );
+    }
+
+    const {
+      tasks,
+      recurrings,
+      memos,
+      expenses,
+      recurringExpenses,
+      budgets,
+      accounts,
+      merchants,
+      childProfiles,
+      childcareTransactions,
+      votesCreated,
+      voteBallots,
+      questions,
+      notifications,
+      groupMemberships,
+      ...profile
+    } = user;
+
+    const zipBuffer = await new Promise<Buffer>((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { ZipArchive } = require('archiver');
+      const archive = new ZipArchive({ zlib: { level: 6 } });
+      const chunks: Buffer[] = [];
+
+      archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+      archive.on('end', () => resolve(Buffer.concat(chunks)));
+      archive.on('error', reject);
+
+      const buf = (s: string) => Buffer.from(s, 'utf-8');
+
+      archive.append(
+        buf(JSON.stringify({ exportedAt: new Date(), ...profile }, null, 2)),
+        { name: 'profile.json' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(groupMemberships, ['그룹ID', '가입일', '역할ID'], (r) => [
+            r.groupId,
+            r.joinedAt,
+            r.roleId,
+          ]),
+        ),
+        { name: 'groups.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            tasks,
+            [
+              'id',
+              '제목',
+              '설명',
+              '유형',
+              '우선순위',
+              '상태',
+              '예정일',
+              '마감일',
+              '완료일',
+              '장소',
+              '생성일',
+            ],
+            (r) => [
+              r.id,
+              r.title,
+              r.description,
+              r.type,
+              r.priority,
+              r.status,
+              r.scheduledAt,
+              r.dueAt,
+              r.completedAt,
+              r.location,
+              r.createdAt,
+            ],
+          ),
+        ),
+        { name: 'tasks.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            recurrings,
+            ['id', '반복유형', '활성여부', '생성일'],
+            (r) => [r.id, r.ruleType, r.isActive, r.createdAt],
+          ),
+        ),
+        { name: 'recurring_tasks.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            memos,
+            ['id', '제목', '내용', '공개범위', '고정여부', '생성일', '수정일'],
+            (r) => [
+              r.id,
+              r.title,
+              r.content,
+              r.visibility,
+              r.isPinned,
+              r.createdAt,
+              r.updatedAt,
+            ],
+          ),
+        ),
+        { name: 'memos.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            expenses,
+            [
+              'id',
+              '유형',
+              '금액',
+              '카테고리',
+              '날짜',
+              '설명',
+              '결제수단',
+              '확정여부',
+              '생성일',
+            ],
+            (r) => [
+              r.id,
+              r.type,
+              r.amount,
+              r.category,
+              r.date,
+              r.description,
+              r.paymentMethod,
+              r.isConfirmed,
+              r.createdAt,
+            ],
+          ),
+        ),
+        { name: 'expenses.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            recurringExpenses,
+            [
+              'id',
+              '유형',
+              '금액',
+              '카테고리',
+              '설명',
+              '결제일',
+              '활성여부',
+              '생성일',
+            ],
+            (r) => [
+              r.id,
+              r.type,
+              r.amount,
+              r.category,
+              r.description,
+              r.dayOfMonth,
+              r.isActive,
+              r.createdAt,
+            ],
+          ),
+        ),
+        { name: 'recurring_expenses.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            budgets,
+            ['id', '카테고리', '금액', '월', '생성일'],
+            (r) => [r.id, r.category, r.amount, r.month, r.createdAt],
+          ),
+        ),
+        { name: 'budgets.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            accounts,
+            ['id', '이름', '금융기관', '유형', '생성일'],
+            (r) => [r.id, r.name, r.institution, r.type, r.createdAt],
+          ),
+        ),
+        { name: 'accounts.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(merchants, ['id', '이름', '생성일'], (r) => [
+            r.id,
+            r.name,
+            r.createdAt,
+          ]),
+        ),
+        { name: 'merchants.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            childProfiles,
+            ['id', '이름', '생년월일', '생성일'],
+            (r) => [r.id, r.name, r.birthDate, r.createdAt],
+          ),
+        ),
+        { name: 'children.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            childcareTransactions,
+            ['id', '유형', '금액', '설명', '생성일'],
+            (r) => [r.id, r.type, r.amount, r.description, r.createdAt],
+          ),
+        ),
+        { name: 'childcare_transactions.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            votesCreated,
+            ['id', '제목', '설명', '복수선택', '익명여부', '종료일', '생성일'],
+            (r) => [
+              r.id,
+              r.title,
+              r.description,
+              r.isMultiple,
+              r.isAnonymous,
+              r.endsAt,
+              r.createdAt,
+            ],
+          ),
+        ),
+        { name: 'votes.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(voteBallots, ['id', '선택지ID', '투표일'], (r) => [
+            r.id,
+            r.optionId,
+            r.votedAt,
+          ]),
+        ),
+        { name: 'vote_ballots.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(
+            questions,
+            ['id', '제목', '내용', '카테고리', '상태', '생성일'],
+            (r) => [
+              r.id,
+              r.title,
+              r.content,
+              r.category,
+              r.status,
+              r.createdAt,
+            ],
+          ),
+        ),
+        { name: 'questions.csv' },
+      );
+      archive.append(
+        buf(
+          this.toCsv(notifications, ['id', '제목', '내용', '생성일'], (r) => [
+            r.id,
+            r.title,
+            r.body,
+            r.createdAt,
+          ]),
+        ),
+        { name: 'notifications.csv' },
+      );
+
+      archive.finalize();
+    });
+
+    const filename = `my-data-${new Date().toISOString().slice(0, 10)}.zip`;
+    await this.emailService.sendDataExportEmail(
+      user.email,
+      user.name,
+      zipBuffer,
+      filename,
+    );
+
+    return { message: '데이터 내보내기 파일을 이메일로 전송했습니다' };
+  }
+
+  private toCsv<T>(
+    rows: T[],
+    headers: string[],
+    mapper: (row: T) => unknown[],
+  ): string {
+    const escape = (v: unknown) => {
+      const str = v == null ? '' : String(v);
+      return str.includes(',') || str.includes('"') || str.includes('\n')
+        ? `"${str.replace(/"/g, '""')}"`
+        : str;
+    };
+    const lines = [
+      headers.join(','),
+      ...rows.map((r) => mapper(r).map(escape).join(',')),
+    ];
+    return '﻿' + lines.join('\r\n'); // BOM 추가로 엑셀 한글 깨짐 방지
+  }
+
   private readonly ACCOUNT_DELETION_GRACE_DAYS = 7;
+
+  async deleteMyAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (user.deletedAt) {
+      throw new BadRequestException('이미 삭제 예약된 계정입니다');
+    }
+
+    const scheduledAt = new Date();
+    scheduledAt.setDate(
+      scheduledAt.getDate() + this.ACCOUNT_DELETION_GRACE_DAYS,
+    );
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { deletedAt: scheduledAt },
+    });
+
+    return {
+      message: `계정 삭제가 예약되었습니다. ${this.ACCOUNT_DELETION_GRACE_DAYS}일 후 완전히 삭제됩니다`,
+      scheduledDeleteAt: scheduledAt,
+    };
+  }
+
+  async cancelDeleteMyAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (!user.deletedAt) {
+      throw new BadRequestException('삭제 예약된 계정이 아닙니다');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { deletedAt: null },
+    });
+
+    return { message: '계정 삭제 예약이 취소되었습니다' };
+  }
 
   /**
    * 계정 삭제 예약 (운영자 전용, 7일 유예)

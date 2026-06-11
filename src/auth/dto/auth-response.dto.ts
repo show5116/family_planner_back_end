@@ -92,6 +92,13 @@ export class UserDto {
     example: '2024-01-01T00:00:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiProperty({
+    description: '계정 삭제 예정 일시 (null이면 삭제 예약 없음)',
+    example: '2024-01-08T00:00:00.000Z',
+    nullable: true,
+  })
+  scheduledDeleteAt: Date | null;
 }
 
 /**
