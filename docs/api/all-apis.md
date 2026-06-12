@@ -1617,11 +1617,11 @@ period=monthly 시 year 필수.
 **요약:** 내 데이터 내보내기 (개인정보보호법 제35조)
 
 **설명:**
-본인의 모든 개인정보를 JSON 형태로 내려받습니다.
+본인의 모든 개인정보를 ZIP 파일로 압축하여 가입 이메일로 전송합니다.
 
 **Responses:**
 
-#### 200 - 데이터 내보내기 성공
+#### 200 - 이메일 전송 성공
 
 ---
 
@@ -3829,6 +3829,153 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 #### 403 - 권한 없음
 
 #### 404 - 초대 요청을 찾을 수 없음
+
+---
+
+### GET `groups/my-reports`
+
+**요약:** 내가 신고한 목록 조회
+
+**Responses:**
+
+#### 200 - 내 신고 목록 조회 성공
+
+```json
+{
+  "id": "uuid", // 신고 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "reporterId": "uuid", // 신고자 ID (string)
+  "reportedId": "uuid", // 피신고자 ID (string)
+  "reason": "ABUSE", // 신고 사유 (string)
+  "detail": "지속적으로 욕설을 사용합니다.", // 상세 내용 (string | null)
+  "status": "PENDING", // 처리 상태 (string)
+  "createdAt": "2026-06-12T00:00:00Z" // 신고일 (Date)
+}
+```
+
+---
+
+### POST `groups/:id/members/:userId/report`
+
+**요약:** 그룹원 신고
+
+**설명:**
+같은 그룹 내 멤버를 신고합니다. 동일 대상을 중복 신고할 수 없습니다.
+
+**인증/권한:**
+
+- GroupMembershipGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `userId` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "reason": null, // 신고 사유 (ReportReason)
+  "detail": "지속적으로 욕설을 사용합니다." // 상세 내용 (선택) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 신고 접수 성공
+
+```json
+{
+  "id": "uuid", // 신고 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "reporterId": "uuid", // 신고자 ID (string)
+  "reportedId": "uuid", // 피신고자 ID (string)
+  "reason": "ABUSE", // 신고 사유 (string)
+  "detail": "지속적으로 욕설을 사용합니다.", // 상세 내용 (string | null)
+  "status": "PENDING", // 처리 상태 (string)
+  "createdAt": "2026-06-12T00:00:00Z" // 신고일 (Date)
+}
+```
+
+#### 404 - 그룹 또는 멤버를 찾을 수 없음
+
+#### 403 - 그룹 멤버가 아님
+
+---
+
+## 그룹 신고 (ADMIN)
+
+**Base Path:** `/groups/admin/reports`
+
+### GET `groups/admin/reports`
+
+**요약:** 신고 목록 조회
+
+**설명:**
+status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
+
+**Query Parameters:**
+
+- `status` (`ReportStatus`) - Optional
+
+**Responses:**
+
+#### 200 - 신고 목록 조회 성공
+
+```json
+{
+  "id": "uuid", // 신고 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "groupName": "우리 가족", // 그룹명 (string)
+  "reporterName": "홍길동", // 신고자 이름 (string)
+  "reportedName": "김철수", // 피신고자 이름 (string)
+  "reason": "ABUSE", // 신고 사유 (string)
+  "detail": null, // 상세 내용 (string | null)
+  "status": "PENDING", // 처리 상태 (string)
+  "resolveNote": null, // 처리 메모 (string | null)
+  "resolvedAt": "2025-01-01T00:00:00Z", // 처리일 (Date | null)
+  "resolvedByName": null, // 처리자 이름 (string | null)
+  "createdAt": "2026-06-12T00:00:00Z" // 신고일 (Date)
+}
+```
+
+---
+
+### PATCH `groups/admin/reports/:reportId`
+
+**요약:** 신고 처리 (상태 변경)
+
+**Path Parameters:**
+
+- `reportId` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "status": null, // 처리 상태 (ReportStatus)
+  "resolveNote": "확인 후 경고 조치 완료" // 처리 메모 (string?)
+}
+```
+
+**Responses:**
+
+#### 200 - 신고 처리 성공
+
+```json
+{
+  "id": "uuid", // 신고 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "reporterId": "uuid", // 신고자 ID (string)
+  "reportedId": "uuid", // 피신고자 ID (string)
+  "reason": "ABUSE", // 신고 사유 (string)
+  "detail": "지속적으로 욕설을 사용합니다.", // 상세 내용 (string | null)
+  "status": "PENDING", // 처리 상태 (string)
+  "createdAt": "2026-06-12T00:00:00Z" // 신고일 (Date)
+}
+```
+
+#### 404 - 신고를 찾을 수 없음
 
 ---
 

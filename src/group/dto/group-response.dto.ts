@@ -432,3 +432,79 @@ export class GetMyJoinRequestsResponseDto {
   @ApiProperty({ type: [MyJoinRequestDto] })
   data: MyJoinRequestDto[];
 }
+
+export class MemberReportResponseDto {
+  @ApiProperty({ description: '신고 ID', example: 'uuid' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid' })
+  groupId: string;
+
+  @ApiProperty({ description: '신고자 ID', example: 'uuid' })
+  reporterId: string;
+
+  @ApiProperty({ description: '피신고자 ID', example: 'uuid' })
+  reportedId: string;
+
+  @ApiProperty({ description: '신고 사유', example: 'ABUSE' })
+  reason: string;
+
+  @ApiProperty({
+    description: '상세 내용',
+    example: '지속적으로 욕설을 사용합니다.',
+    nullable: true,
+  })
+  detail: string | null;
+
+  @ApiProperty({
+    description: '처리 상태',
+    example: 'PENDING',
+    enum: ['PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED'],
+  })
+  status: string;
+
+  @ApiProperty({ description: '신고일', example: '2026-06-12T00:00:00Z' })
+  createdAt: Date;
+}
+
+export class AdminMemberReportDto {
+  @ApiProperty({ description: '신고 ID', example: 'uuid' })
+  id: string;
+
+  @ApiProperty({ description: '그룹 ID', example: 'uuid' })
+  groupId: string;
+
+  @ApiProperty({ description: '그룹명', example: '우리 가족' })
+  groupName: string;
+
+  @ApiProperty({ description: '신고자 이름', example: '홍길동' })
+  reporterName: string;
+
+  @ApiProperty({ description: '피신고자 이름', example: '김철수' })
+  reportedName: string;
+
+  @ApiProperty({ description: '신고 사유', example: 'ABUSE' })
+  reason: string;
+
+  @ApiProperty({ description: '상세 내용', nullable: true })
+  detail: string | null;
+
+  @ApiProperty({
+    description: '처리 상태',
+    example: 'PENDING',
+    enum: ['PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED'],
+  })
+  status: string;
+
+  @ApiProperty({ description: '처리 메모', nullable: true })
+  resolveNote: string | null;
+
+  @ApiProperty({ description: '처리일', nullable: true })
+  resolvedAt: Date | null;
+
+  @ApiProperty({ description: '처리자 이름', nullable: true })
+  resolvedByName: string | null;
+
+  @ApiProperty({ description: '신고일', example: '2026-06-12T00:00:00Z' })
+  createdAt: Date;
+}

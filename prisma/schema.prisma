@@ -55,6 +55,9 @@ model User {
   linkedChildProfiles  Child[]                     @relation("ChildLinkedUser")
   votesCreated         Vote[]                      @relation("VoteCreator")
   voteBallots          VoteBallot[]                @relation("VoteBallots")
+  reportsMade          MemberReport[]              @relation("ReporterRelation")
+  reportsReceived      MemberReport[]              @relation("ReportedRelation")
+  resolvedReports      MemberReport[]              @relation("ReportResolver")
   subscriptionTier      SubscriptionTier            @default(free)
   subscriptionExpiresAt DateTime?
   inAppPurchaseToken    String?                     @db.VarChar(500)
@@ -106,6 +109,7 @@ model Group {
   groupExpiryPresets  GroupExpiryPreset[]
   savingsGoals        SavingsGoal[]
   minigameResults     MinigameResult[]
+  memberReports       MemberReport[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -1517,4 +1521,47 @@ model GroupExpiryPreset {
   @@unique([groupId, globalPresetId])
   @@index([groupId])
   @@map("group_expiry_presets")
+}
+
+model MemberReport {
+  id           String       @id @default(uuid())
+  groupId      String
+  reporterId   String
+  reportedId   String
+  reason       ReportReason
+  detail       String?      @db.VarChar(500)
+  status       ReportStatus @default(PENDING)
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolveNote  String?      @db.VarChar(500)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  group      Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  reporter   User   @relation("ReporterRelation", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported   User   @relation("ReportedRelation", fields: [reportedId], references: [id], onDelete: Cascade)
+  resolvedBy User?  @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@unique([groupId, reporterId, reportedId])
+  @@index([groupId])
+  @@index([reportedId])
+  @@index([reporterId])
+  @@index([status])
+  @@map("member_reports")
+}
+
+enum ReportReason {
+  SPAM
+  ABUSE
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  FAKE_IDENTITY
+  ETC
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  DISMISSED
 }

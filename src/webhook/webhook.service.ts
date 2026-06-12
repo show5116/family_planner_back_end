@@ -313,6 +313,77 @@ export class WebhookService {
   }
 
   /**
+   * 그룹원 신고 Discord 알림
+   */
+  async sendMemberReportToDiscord(report: {
+    id: string;
+    groupId: string;
+    groupName: string;
+    reporterName: string;
+    reportedName: string;
+    reason: string;
+    detail?: string;
+  }): Promise<void> {
+    if (!this.discordWebhookUrl) {
+      this.logger.warn('DISCORD_WEBHOOK_URL이 설정되지 않았습니다');
+      return;
+    }
+
+    const reasonMap: Record<string, string> = {
+      SPAM: '🗑️ 스팸',
+      ABUSE: '🤬 욕설/비방',
+      HARASSMENT: '😤 괴롭힘',
+      INAPPROPRIATE_CONTENT: '🔞 부적절한 콘텐츠',
+      FAKE_IDENTITY: '🎭 사칭',
+      ETC: '📌 기타',
+    };
+
+    const embed = {
+      title: '🚩 그룹원 신고 접수',
+      color: 0xff6b35,
+      fields: [
+        { name: '그룹', value: report.groupName, inline: true },
+        { name: '그룹 ID', value: `\`${report.groupId}\``, inline: true },
+        { name: '​', value: '​', inline: false },
+        { name: '신고자', value: report.reporterName, inline: true },
+        { name: '피신고자', value: report.reportedName, inline: true },
+        {
+          name: '신고 사유',
+          value: reasonMap[report.reason] ?? report.reason,
+          inline: false,
+        },
+        ...(report.detail
+          ? [{ name: '상세 내용', value: report.detail, inline: false }]
+          : []),
+        {
+          name: '신고 ID',
+          value: `\`${report.id}\``,
+          inline: false,
+        },
+      ],
+      timestamp: new Date().toISOString(),
+      footer: { text: 'Family Planner - 신고 시스템' },
+    };
+
+    try {
+      const response = await fetch(this.discordWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embeds: [embed] }),
+      });
+      if (!response.ok) {
+        this.logger.error(
+          `Discord 신고 알림 전송 실패: ${response.status} ${response.statusText}`,
+        );
+      } else {
+        this.logger.log('그룹원 신고 Discord 알림 전송 성공');
+      }
+    } catch (error) {
+      this.logger.error('Discord 신고 알림 전송 중 에러 발생', error);
+    }
+  }
+
+  /**
    * Google Play Real-time Developer Notifications 처리
    * TODO: 스토어 등록 후 구현
    *   1. Pub/Sub 메시지 base64 디코딩

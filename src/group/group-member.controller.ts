@@ -13,11 +13,13 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { GroupMemberService } from '@/group/group-member.service';
 import { GroupInviteService } from '@/group/group-invite.service';
+import { GroupReportService } from '@/group/group-report.service';
 import { UpdateMemberRoleDto } from '@/group/dto/update-member-role.dto';
 import { UpdateMyColorDto } from '@/group/dto/update-my-color.dto';
 import { TransferOwnershipDto } from '@/group/dto/transfer-ownership.dto';
 import { JoinGroupDto } from '@/group/dto/join-group.dto';
 import { InviteByEmailDto } from '@/group/dto/invite-by-email.dto';
+import { ReportMemberDto } from '@/group/dto/report-member.dto';
 import {
   GroupMemberDto,
   LeaveGroupResponseDto,
@@ -33,6 +35,7 @@ import {
   CancelInviteResponseDto,
   ResendInviteResponseDto,
   MyJoinRequestDto,
+  MemberReportResponseDto,
 } from '@/group/dto/group-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
@@ -57,6 +60,7 @@ export class GroupMemberController {
   constructor(
     private readonly groupMemberService: GroupMemberService,
     private readonly groupInviteService: GroupInviteService,
+    private readonly groupReportService: GroupReportService,
   ) {}
 
   @Get('my-join-requests')
@@ -314,5 +318,40 @@ export class GroupMemberController {
     @Request() req,
   ) {
     return this.groupInviteService.resendInvite(id, requestId, req.user.userId);
+  }
+
+  @Get('my-reports')
+  @ApiOperation({ summary: '내가 신고한 목록 조회' })
+  @ApiSuccess(MemberReportResponseDto, '내 신고 목록 조회 성공', {
+    isArray: true,
+  })
+  getMyReports(@Request() req) {
+    return this.groupReportService.getMyReports(req.user.userId);
+  }
+
+  @Post(':id/members/:userId/report')
+  @UseGuards(GroupMembershipGuard)
+  @ApiOperation({
+    summary: '그룹원 신고',
+    description:
+      '같은 그룹 내 멤버를 신고합니다. 동일 대상을 중복 신고할 수 없습니다.',
+  })
+  @ApiCreated(MemberReportResponseDto, '신고 접수 성공')
+  @ApiBadRequest('자기 자신 신고 불가')
+  @ApiConflict('이미 신고한 멤버')
+  @ApiNotFound('그룹 또는 멤버를 찾을 수 없음')
+  @ApiForbidden('그룹 멤버가 아님')
+  reportMember(
+    @Param('id') id: string,
+    @Param('userId') targetUserId: string,
+    @Request() req,
+    @Body() dto: ReportMemberDto,
+  ) {
+    return this.groupReportService.reportMember(
+      req.user.userId,
+      id,
+      targetUserId,
+      dto,
+    );
   }
 }
