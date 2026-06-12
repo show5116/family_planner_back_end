@@ -625,6 +625,77 @@ INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
 
 ---
 
+### GET `groups/my-reports`
+
+**요약:** 내가 신고한 목록 조회
+
+**Responses:**
+
+#### 200 - 내 신고 목록 조회 성공
+
+```json
+{
+  "id": "uuid", // 신고 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "reporterId": "uuid", // 신고자 ID (string)
+  "reportedId": "uuid", // 피신고자 ID (string)
+  "reason": "ABUSE", // 신고 사유 (string)
+  "detail": "지속적으로 욕설을 사용합니다.", // 상세 내용 (string | null)
+  "status": "PENDING", // 처리 상태 (string)
+  "createdAt": "2026-06-12T00:00:00Z" // 신고일 (Date)
+}
+```
+
+---
+
+### POST `groups/:id/members/:userId/report`
+
+**요약:** 그룹원 신고
+
+**설명:**
+같은 그룹 내 멤버를 신고합니다. 동일 대상을 중복 신고할 수 없습니다.
+
+**인증/권한:**
+
+- GroupMembershipGuard
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `userId` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "reason": null, // 신고 사유 (ReportReason)
+  "detail": "지속적으로 욕설을 사용합니다." // 상세 내용 (선택) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 신고 접수 성공
+
+```json
+{
+  "id": "uuid", // 신고 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "reporterId": "uuid", // 신고자 ID (string)
+  "reportedId": "uuid", // 피신고자 ID (string)
+  "reason": "ABUSE", // 신고 사유 (string)
+  "detail": "지속적으로 욕설을 사용합니다.", // 상세 내용 (string | null)
+  "status": "PENDING", // 처리 상태 (string)
+  "createdAt": "2026-06-12T00:00:00Z" // 신고일 (Date)
+}
+```
+
+#### 404 - 그룹 또는 멤버를 찾을 수 없음
+
+#### 403 - 그룹 멤버가 아님
+
+---
+
 ## 그룹 역할
 
 **Base Path:** `/groups`
