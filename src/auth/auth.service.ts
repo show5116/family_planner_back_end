@@ -329,11 +329,18 @@ export class AuthService {
       throw new BadRequestException('auth.errors.already_verified');
     }
 
+    const trialExpiresAt = new Date();
+    trialExpiresAt.setDate(trialExpiresAt.getDate() + 14);
+
     // 이메일 인증 완료 및 Redis에서 코드 삭제
     await Promise.all([
       this.prisma.user.update({
         where: { id: user.id },
-        data: { isEmailVerified: true },
+        data: {
+          isEmailVerified: true,
+          subscriptionTier: 'ad_free',
+          subscriptionExpiresAt: trialExpiresAt,
+        },
       }),
       this.redisService.del(`email-verification:${email}`),
     ]);
@@ -700,6 +707,9 @@ export class AuthService {
       }
     }
 
+    const trialExpiresAt = new Date();
+    trialExpiresAt.setDate(trialExpiresAt.getDate() + 14);
+
     const user = await this.prisma.user.create({
       data: {
         email: payload.email,
@@ -710,6 +720,8 @@ export class AuthService {
         isEmailVerified: true,
         password: null,
         termsAgreedAt: new Date(),
+        subscriptionTier: 'ad_free',
+        subscriptionExpiresAt: trialExpiresAt,
       },
     });
 

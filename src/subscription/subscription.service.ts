@@ -14,6 +14,7 @@ export class SubscriptionService {
       select: {
         subscriptionTier: true,
         subscriptionExpiresAt: true,
+        inAppPurchaseToken: true,
       },
     });
 
@@ -24,6 +25,10 @@ export class SubscriptionService {
         user.subscriptionTier,
         user.subscriptionExpiresAt,
       ),
+      isTrial:
+        user.subscriptionTier === SubscriptionTier.ad_free &&
+        !user.inAppPurchaseToken,
+      daysLeft: this.calcDaysLeft(user.subscriptionExpiresAt),
     };
   }
 
@@ -43,6 +48,7 @@ export class SubscriptionService {
       select: {
         subscriptionTier: true,
         subscriptionExpiresAt: true,
+        inAppPurchaseToken: true,
       },
     });
 
@@ -53,6 +59,10 @@ export class SubscriptionService {
         user.subscriptionTier,
         user.subscriptionExpiresAt,
       ),
+      isTrial:
+        user.subscriptionTier === SubscriptionTier.ad_free &&
+        !user.inAppPurchaseToken,
+      daysLeft: this.calcDaysLeft(user.subscriptionExpiresAt),
     };
   }
 
@@ -62,6 +72,7 @@ export class SubscriptionService {
       select: {
         subscriptionTier: true,
         subscriptionExpiresAt: true,
+        inAppPurchaseToken: true,
       },
     });
 
@@ -75,13 +86,23 @@ export class SubscriptionService {
         where: { id: userId },
         data: { subscriptionTier: SubscriptionTier.free },
       });
-      return { tier: SubscriptionTier.free, expiresAt: null, isActive: false };
+      return {
+        tier: SubscriptionTier.free,
+        expiresAt: null,
+        isActive: false,
+        isTrial: false,
+        daysLeft: 0,
+      };
     }
 
     return {
       tier: user.subscriptionTier,
       expiresAt: user.subscriptionExpiresAt,
       isActive,
+      isTrial:
+        user.subscriptionTier === SubscriptionTier.ad_free &&
+        !user.inAppPurchaseToken,
+      daysLeft: this.calcDaysLeft(user.subscriptionExpiresAt),
     };
   }
 
@@ -115,5 +136,11 @@ export class SubscriptionService {
     if (tier === SubscriptionTier.free) return false;
     if (!expiresAt) return true;
     return expiresAt > new Date();
+  }
+
+  private calcDaysLeft(expiresAt: Date | null): number {
+    if (!expiresAt) return 0;
+    const diff = expiresAt.getTime() - Date.now();
+    return diff > 0 ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : 0;
   }
 }

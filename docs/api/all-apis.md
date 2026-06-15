@@ -8506,7 +8506,9 @@ R2에 파일이 존재하는지 확인합니다.
 {
   "tier": null, // SubscriptionTier
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
-  "isActive": false // 구독 활성 여부 (boolean)
+  "isActive": false, // 구독 활성 여부 (boolean)
+  "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
+  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
 }
 ```
 
@@ -8534,7 +8536,9 @@ R2에 파일이 존재하는지 확인합니다.
 {
   "tier": null, // SubscriptionTier
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
-  "isActive": false // 구독 활성 여부 (boolean)
+  "isActive": false, // 구독 활성 여부 (boolean)
+  "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
+  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
 }
 ```
 
@@ -8552,7 +8556,9 @@ R2에 파일이 존재하는지 확인합니다.
 {
   "tier": null, // SubscriptionTier
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
-  "isActive": false // 구독 활성 여부 (boolean)
+  "isActive": false, // 구독 활성 여부 (boolean)
+  "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
+  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
 }
 ```
 
