@@ -54,6 +54,7 @@ import {
 } from '@/auth/dto/auth-response.dto';
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
+import { AppleAuthGuard } from '@/auth/guards/apple-auth.guard';
 import { LocalAuthGuard } from '@/auth/guards/local-auth.guard';
 import { AdminGuard } from '@/auth/admin.guard';
 import { Public } from '@/auth/decorators/public.decorator';
@@ -604,6 +605,58 @@ export class AuthController {
     type: TokenResponseDto,
   })
   async kakaoCallback(@Request() req, @Res() res: Response) {
+    const result = await this.authService.validateSocialUser(req.user);
+    this.handleSocialLoginCallback(req, res, result);
+  }
+
+  @Public()
+  @Post('apple/mobile')
+  @ApiOperation({ summary: 'Apple 모바일 로그인 (Identity Token)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        identityToken: { type: 'string', description: 'Apple Identity Token' },
+        name: {
+          type: 'string',
+          description: '사용자 이름 (최초 로그인 시에만 전달)',
+        },
+      },
+      required: ['identityToken'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Apple 모바일 로그인 성공, 토큰 반환',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({ status: 401, description: '유효하지 않은 Identity Token' })
+  appleMobileLogin(
+    @Body('identityToken') identityToken: string,
+    @Body('name') name?: string,
+  ) {
+    return this.authService.appleMobileLogin(identityToken, name);
+  }
+
+  @Public()
+  @Get('apple')
+  @UseGuards(AppleAuthGuard)
+  @ApiOperation({ summary: 'Apple 로그인 시작' })
+  @ApiResponse({ status: 302, description: 'Apple OAuth 페이지로 리다이렉트' })
+  async appleLogin() {
+    // Guard가 자동으로 Apple OAuth로 리다이렉트
+  }
+
+  @Public()
+  @Post('apple/callback')
+  @UseGuards(AppleAuthGuard)
+  @ApiOperation({ summary: 'Apple 로그인 콜백 (Apple은 POST로 전송)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Apple 로그인 성공, 토큰 반환',
+    type: TokenResponseDto,
+  })
+  async appleCallback(@Request() req, @Res() res: Response) {
     const result = await this.authService.validateSocialUser(req.user);
     this.handleSocialLoginCallback(req, res, result);
   }

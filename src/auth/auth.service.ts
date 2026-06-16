@@ -571,6 +571,37 @@ export class AuthService {
   }
 
   /**
+   * 모바일 Apple 로그인 (identity token 검증)
+   * Flutter sign_in_with_apple 패키지에서 발급받은 identityToken을 Apple 공개키로 검증
+   */
+  async appleMobileLogin(identityToken: string, name?: string | null) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const appleSignin = require('apple-signin-auth');
+
+    let payload: any;
+    try {
+      payload = await appleSignin.verifyIdToken(identityToken, {
+        audience: this.configService.get<string>('oauth.apple.clientId'),
+        ignoreExpiration: false,
+      });
+    } catch {
+      throw new UnauthorizedException('auth.errors.invalid_apple_token');
+    }
+
+    const email = payload.email ?? null;
+    // Apple은 최초 로그인 시에만 name을 클라이언트에서 전달받음
+    const displayName = name?.trim() || email?.split('@')[0] || '사용자';
+
+    return this.validateSocialUser({
+      provider: 'APPLE',
+      providerId: payload.sub,
+      email,
+      name: displayName,
+      profileImage: null,
+    });
+  }
+
+  /**
    * 소셜 로그인 처리 (Google, Kakao 등)
    * - 기존 사용자: 즉시 토큰 발급
    * - 신규 사용자: 약관 동의를 위한 tempToken 반환 (계정 미생성)

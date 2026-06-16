@@ -8,6 +8,7 @@ import { JwtStrategy } from '@/auth/strategies/jwt.strategy';
 import { LocalStrategy } from '@/auth/strategies/local.strategy';
 import { GoogleStrategy } from '@/auth/strategies/google.strategy';
 import { KakaoStrategy } from '@/auth/strategies/kakao.strategy';
+import { AppleStrategy } from '@/auth/strategies/apple.strategy';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { EmailModule } from '@/email/email.module';
 import { StorageModule } from '@/storage/storage.module';
@@ -30,6 +31,7 @@ import { WebhookModule } from '@/webhook/webhook.module';
     JwtStrategy,
     GoogleStrategy,
     KakaoStrategy,
+    AppleStrategy,
   ],
   exports: [AuthService],
 })

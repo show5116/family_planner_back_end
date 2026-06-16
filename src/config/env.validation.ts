@@ -40,6 +40,13 @@ export const validationSchema = Joi.object({
   KAKAO_CLIENT_SECRET: Joi.string().optional().allow(''),
   KAKAO_CALLBACK_URL: Joi.string().uri().optional(),
 
+  // Apple OAuth (선택적)
+  APPLE_CLIENT_ID: Joi.string().optional(),
+  APPLE_TEAM_ID: Joi.string().optional(),
+  APPLE_KEY_ID: Joi.string().optional(),
+  APPLE_PRIVATE_KEY: Joi.string().optional(),
+  APPLE_CALLBACK_URL: Joi.string().uri().optional(),
+
   // CORS 설정 (선택적)
   CORS_ORIGINS: Joi.string().optional(),
 
