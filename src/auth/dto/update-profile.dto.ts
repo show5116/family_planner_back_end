@@ -3,11 +3,13 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateProfileDto {
   @ApiProperty({
-    description: '현재 비밀번호 (필수)',
+    description: '현재 비밀번호 (LOCAL 로그인 사용자만 필수)',
     example: 'currentPassword123!',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  currentPassword: string;
+  currentPassword?: string;
 
   @ApiProperty({
     description: '이름',

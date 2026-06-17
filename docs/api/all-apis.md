@@ -1521,6 +1521,72 @@ period=monthly 시 year 필수.
 
 ---
 
+### POST `auth/apple/mobile`
+
+**요약:** Apple 모바일 로그인 (Identity Token)
+
+**Responses:**
+
+#### 200 - Apple 모바일 로그인 성공, 토큰 반환
+
+```json
+{
+  "user": {
+    "id": "user_clxxx123", // 사용자 ID (string)
+    "email": "user@example.com", // 이메일 (string)
+    "name": "홍길동", // 사용자 이름 (string)
+    "isEmailVerified": true, // 이메일 인증 여부 (boolean)
+    "isAdmin": false, // 운영자 여부 (boolean)
+    "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
+    "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+    "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
+    "socialProvider": "google", // 소셜 로그인 제공자 (string?)
+    "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
+    "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+    "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
+  } // 사용자 정보 (UserDto)
+}
+```
+
+#### 401 - 유효하지 않은 Identity Token
+
+---
+
+### GET `auth/apple`
+
+**요약:** Apple 로그인 시작
+
+**인증/권한:**
+
+- AppleAuthGuard
+
+**Responses:**
+
+#### 302 - Apple OAuth 페이지로 리다이렉트
+
+---
+
+### POST `auth/apple/callback`
+
+**요약:** Apple 로그인 콜백 (Apple은 POST로 전송)
+
+**인증/권한:**
+
+- AppleAuthGuard
+
+**Responses:**
+
+#### 200 - Apple 로그인 성공, 토큰 반환
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyXzEyMyIsImlhdCI6MTYxNjIzOTAyMn0...", // Access Token (JWT) (string)
+  "refreshToken": "refresh_token_abc123def456" // Refresh Token (RTR 방식) (string)
+}
+```
+
+---
+
 ### POST `auth/social-signup`
 
 **요약:** 소셜 신규 회원가입 완료 (약관 동의)

@@ -823,7 +823,7 @@ export class AuthService {
    */
   async updateProfile(
     userId: string,
-    currentPassword: string,
+    currentPassword: string | undefined,
     updates: {
       name?: string;
       phoneNumber?: string;
@@ -839,22 +839,18 @@ export class AuthService {
       throw new NotFoundException('auth.errors.user_not_found');
     }
 
-    // 소셜 로그인 사용자이고 비밀번호가 설정되지 않은 경우
-    if (!user.password && user.provider !== 'LOCAL') {
-      throw new BadRequestException('auth.errors.social_set_password_first');
-    }
-
-    // 현재 비밀번호 확인
-    if (!user.password) {
-      throw new BadRequestException('auth.errors.password_not_set');
-    }
-
-    const isPasswordValid = await this.verifyPassword(
-      currentPassword,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new ForbiddenException('auth.errors.wrong_current_password');
+    if (user.password) {
+      // 비밀번호가 있는 사용자는 현재 비밀번호 검증 필수
+      if (!currentPassword) {
+        throw new BadRequestException('auth.errors.current_password_required');
+      }
+      const isPasswordValid = await this.verifyPassword(
+        currentPassword,
+        user.password,
+      );
+      if (!isPasswordValid) {
+        throw new ForbiddenException('auth.errors.wrong_current_password');
+      }
     }
 
     // 업데이트할 데이터 준비
