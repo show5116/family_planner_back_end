@@ -494,10 +494,6 @@ export class TaskService {
       throw new NotFoundException('task.errors.task_not_found');
     }
 
-    if (task.userId !== userId) {
-      throw new ForbiddenException('task.errors.own_task_only_delete');
-    }
-
     if (task.recurringId && !deleteScope) {
       throw new ForbiddenException(
         'task.errors.recurring_delete_scope_required',
