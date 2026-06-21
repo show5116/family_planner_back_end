@@ -8,8 +8,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateTaskDto, UpdateTaskDto, QueryTasksDto } from './dto';
-import { RecurringGenerationType } from './enums';
+import { RecurringGenerationType, AnniversaryOffsetType } from './enums';
 import { RecurringService } from './recurring.service';
+import { AnniversaryService } from './anniversary.service';
 import { TaskQueryBuilder } from './builders';
 import { TaskStatus } from './enums';
 import {
@@ -26,6 +27,7 @@ export class TaskService {
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
     private recurringService: RecurringService,
+    private anniversaryService: AnniversaryService,
     private i18n: I18nService,
   ) {}
 
@@ -148,6 +150,16 @@ export class TaskService {
       await this.validateParticipants(dto.groupId, dto.participantIds);
     }
 
+    // 기념일 연동: offsetDays → scheduledAt 자동 계산
+    let resolvedScheduledAt = dto.scheduledAt || null;
+    if (dto.anniversaryId && dto.offsetDays != null && dto.offsetType) {
+      resolvedScheduledAt = await this.anniversaryService.resolveScheduledAt(
+        dto.anniversaryId,
+        dto.offsetDays,
+        dto.offsetType,
+      );
+    }
+
     // 트랜잭션으로 DB 작업 수행
     let createdRecurringId: string | null = null;
 
@@ -186,12 +198,15 @@ export class TaskService {
           groupId: dto.groupId || null,
           categoryId: dto.categoryId,
           recurringId,
+          anniversaryId: dto.anniversaryId || null,
+          offsetDays: dto.offsetDays ?? null,
+          offsetType: dto.offsetType ?? null,
           title: dto.title,
           description: dto.description || null,
           location: (dto.location as unknown as Prisma.InputJsonValue) ?? null,
           type: dto.type,
           priority: dto.priority || 'MEDIUM',
-          scheduledAt: dto.scheduledAt || null,
+          scheduledAt: resolvedScheduledAt,
           dueAt: dto.dueAt || null,
         },
       });
@@ -277,6 +292,12 @@ export class TaskService {
       throw new NotFoundException('task.errors.task_not_found');
     }
 
+    const rawTask = task as any as {
+      anniversaryId: string | null;
+      offsetDays: number | null;
+      offsetType: AnniversaryOffsetType | null;
+    };
+
     if (task.userId !== userId) {
       const isParticipant = await this.prisma.taskParticipant.findUnique({
         where: { taskId_userId: { taskId, userId } },
@@ -305,6 +326,45 @@ export class TaskService {
     // 업데이트 데이터 준비
     const { updateData, updateManyData, changesAfter } =
       this.buildUpdateData(dto);
+
+    // 기념일 연동 필드 처리
+    const anniversaryId =
+      dto.anniversaryId !== undefined
+        ? dto.anniversaryId
+        : (rawTask.anniversaryId ?? null);
+    const offsetDays =
+      dto.offsetDays !== undefined
+        ? dto.offsetDays
+        : (rawTask.offsetDays ?? null);
+    const offsetType =
+      dto.offsetType !== undefined
+        ? dto.offsetType
+        : (rawTask.offsetType ?? null);
+
+    if (anniversaryId && offsetDays != null && offsetType) {
+      const scheduledAt = await this.anniversaryService.resolveScheduledAt(
+        anniversaryId,
+        offsetDays,
+        offsetType,
+      );
+      updateData.scheduledAt = scheduledAt;
+      updateManyData.scheduledAt = scheduledAt;
+      (changesAfter as Record<string, string>).scheduledAt =
+        scheduledAt.toISOString();
+    }
+
+    if (dto.anniversaryId !== undefined) {
+      updateData.anniversaryId = dto.anniversaryId ?? null;
+      updateManyData.anniversaryId = dto.anniversaryId ?? null;
+    }
+    if (dto.offsetDays !== undefined) {
+      updateData.offsetDays = dto.offsetDays ?? null;
+      updateManyData.offsetDays = dto.offsetDays ?? null;
+    }
+    if (dto.offsetType !== undefined) {
+      updateData.offsetType = dto.offsetType ?? null;
+      updateManyData.offsetType = dto.offsetType ?? null;
+    }
 
     const before = {
       title: task.title,
@@ -564,18 +624,16 @@ export class TaskService {
    * 업데이트 데이터 빌드
    */
   private buildUpdateData(dto: UpdateTaskDto): {
-    updateData: Prisma.TaskUpdateInput;
+    updateData: Prisma.TaskUncheckedUpdateInput;
     updateManyData: Prisma.TaskUncheckedUpdateManyInput;
-    changesAfter: Prisma.InputJsonObject;
+    changesAfter: Record<string, Prisma.InputJsonValue | null>;
   } {
-    const updateData: Prisma.TaskUpdateInput = {};
+    const updateData: Prisma.TaskUncheckedUpdateInput = {};
     const updateManyData: Prisma.TaskUncheckedUpdateManyInput = {};
     const changesAfter: Record<string, Prisma.InputJsonValue | null> = {};
 
     if (dto.categoryId !== undefined) {
-      updateData.category = dto.categoryId
-        ? { connect: { id: dto.categoryId } }
-        : { disconnect: true };
+      updateData.categoryId = dto.categoryId ?? null;
       updateManyData.categoryId = dto.categoryId ?? null;
       changesAfter.categoryId = dto.categoryId ?? null;
     }

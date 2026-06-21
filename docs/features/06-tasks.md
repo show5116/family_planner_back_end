@@ -26,6 +26,29 @@
 - **반복 일정**: 스케줄러 자동 생성 (매일 0시, 미래 3개월 분량)
 - **알림 시스템**: 시작 전/마감 전 알림, 참여자 지정 시 알림
 - **변경 이력**: 모든 변경사항 자동 기록
+- **기념일 연동**: 그룹 기념일을 등록하고, Task에 `기념일 + N일/N년` 형태로 날짜 자동 계산
+
+---
+
+## 기념일 관리
+
+그룹 단위로 기념일(연애 시작일, 결혼기념일 등)을 등록하고 경과일을 확인합니다.
+
+- **목록** (`GET /tasks/anniversaries?groupId=...`): 그룹 기념일 목록 + 오늘 기준 경과일(`daysSince`) 반환
+- **단건 조회** (`GET /tasks/anniversaries/:id`): 단건 조회 + `daysSince`
+- **생성** (`POST /tasks/anniversaries`): 제목, 날짜, 이모지 등록
+- **수정** (`PUT /tasks/anniversaries/:id`): 날짜 변경 시 연동된 모든 Task의 `scheduledAt` 자동 재계산
+- **삭제** (`DELETE /tasks/anniversaries/:id`): 연동 Task의 `anniversaryId`는 자동으로 `null` 처리 (Task 자체는 유지)
+
+### 기념일 연동 Task
+Task 생성/수정 시 `anniversaryId + offsetDays + offsetType` 세 필드를 함께 전달하면 `scheduledAt`이 자동 계산됩니다.
+
+| offsetType | 예시                                         |
+| ---------- | -------------------------------------------- |
+| `DAYS`     | `offsetDays=100` → 기념일 + 100일째 날       |
+| `YEARS`    | `offsetDays=1` → 기념일로부터 정확히 1년 후  |
+
+기념일 날짜가 수정되면 해당 기념일에 연동된 모든 Task의 `scheduledAt`이 일괄 재계산됩니다.
 
 ---
 
@@ -99,11 +122,12 @@
 
 ### Tasks
 - userId, groupId, categoryId, recurringId
+- anniversaryId (null이면 기념일 미연동), offsetDays, offsetType (DAYS/YEARS)
 - title, description, location
 - type (CALENDAR_ONLY, TODO_LINKED, TODO_ONLY)
 - status (PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED)
 - priority (LOW, MEDIUM, HIGH, URGENT)
-- scheduledAt, dueAt
+- scheduledAt (anniversaryId + offsetDays + offsetType로 자동 계산), dueAt
 - deletedAt (Soft Delete)
 - participants (TaskParticipant 관계)
 
@@ -143,6 +167,12 @@
 - action (CREATE, UPDATE, DELETE, COMPLETE, SKIP)
 - changes (JSON, before/after)
 
+### Anniversaries
+- groupId
+- title, date (DATE), emoji
+- isActive
+- tasks (연동된 Task 목록, SetNull on delete)
+
 ---
 
 ## 구현 상태
@@ -174,6 +204,10 @@
 - [x] AFTER_COMPLETION 타입 (Task 완료 시 다음 Task 자동 생성)
 - [x] 반복 간격 설정 (격주, 3주마다 등)
 - [x] 반복 종료 조건 (계속 반복, 날짜 지정, 횟수 지정)
+- [x] 기념일 CRUD (그룹 단위, 경과일 자동 계산)
+- [x] 기념일 연동 Task (offsetDays/offsetType → scheduledAt 자동 계산)
+- [x] 기념일 날짜 변경 시 연동 Task scheduledAt 일괄 재계산
+- [x] 기념일 삭제 시 연동 Task anniversaryId SetNull 처리
 
 ### ⬜ TODO / 향후 고려
 - [ ] 단위 테스트
@@ -205,12 +239,33 @@
 | DELETE | `/tasks/:id`                       | Task 삭제               | JWT   |
 | PATCH  | `/tasks/recurrings/:id/pause`      | 반복 일정 일시정지/재개 | JWT   |
 | POST   | `/tasks/recurrings/:id/skip`       | 반복 일정 건너뛰기      | JWT   |
+| GET    | `/tasks/anniversaries`             | 기념일 목록 조회        | JWT   |
+| GET    | `/tasks/anniversaries/:id`         | 기념일 단건 조회        | JWT   |
+| POST   | `/tasks/anniversaries`             | 기념일 생성             | JWT   |
+| PUT    | `/tasks/anniversaries/:id`         | 기념일 수정             | JWT   |
+| DELETE | `/tasks/anniversaries/:id`         | 기념일 삭제             | JWT   |
 
 ### 공휴일 쿼리 파라미터
 | 파라미터 | 필수 | 설명              |
 | -------- | ---- | ----------------- |
 | `year`   | ✅   | 연도 (2000~2100)  |
 | `month`  | ✅   | 월 (1~12)         |
+
+### 기념일 목록 쿼리 파라미터
+| 파라미터  | 필수 | 설명      |
+| --------- | ---- | --------- |
+| `groupId` | ✅   | 그룹 ID   |
+
+### Task 기념일 연동 필드 (생성/수정 시)
+| 필드          | 설명                                                        |
+| ------------- | ----------------------------------------------------------- |
+| `anniversaryId` | 연동할 기념일 ID (null 전달 시 연동 해제)                 |
+| `offsetDays`  | 기념일로부터 오프셋 값 (offsetType에 따라 일 또는 연 단위) |
+| `offsetType`  | `DAYS` (일 기준) 또는 `YEARS` (연 기준)                    |
+
+- 세 필드 모두 전달 시 `scheduledAt`이 자동 계산됩니다
+- 예: `anniversaryId=X, offsetDays=100, offsetType=DAYS` → 기념일 + 100일째 날
+- 예: `anniversaryId=X, offsetDays=1, offsetType=YEARS` → 기념일 1주년
 
 ---
 
@@ -232,15 +287,19 @@ src/task/
     holiday-query.dto.ts
     holiday-response.dto.ts
     common-response.dto.ts
+    create-anniversary.dto.ts
+    update-anniversary.dto.ts
+    anniversary-response.dto.ts
     index.ts
   enums/
     task-type.enum.ts
-    task-status.enum.ts        — PENDING / IN_PROGRESS / COMPLETED / HOLD / DROP / FAILED
+    task-status.enum.ts              — PENDING / IN_PROGRESS / COMPLETED / HOLD / DROP / FAILED
     task-priority.enum.ts
     task-reminder-type.enum.ts
     task-history-action.enum.ts
     recurring-rule-type.enum.ts
     recurring-generation-type.enum.ts
+    anniversary-offset-type.enum.ts  — DAYS / YEARS
     index.ts
   interfaces/
     recurring-rule-config.interface.ts
@@ -260,9 +319,10 @@ src/task/
   category.service.ts
   recurring.service.ts
   holiday.service.ts
+  anniversary.service.ts
   task-scheduler.service.ts
   recurring-date.util.ts
   task.module.ts
 ```
 
-**Last Updated**: 2026-05-26
+**Last Updated**: 2026-06-20

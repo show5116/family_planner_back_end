@@ -1336,7 +1336,7 @@ period=monthly 시 year 필수.
 
 ```json
 {
-  "currentPassword": "currentPassword123!", // 현재 비밀번호 (필수) (string)
+  "currentPassword": "currentPassword123!", // 현재 비밀번호 (LOCAL 로그인 사용자만 필수) (string?)
   "name": "홍길동", // 이름 (string?)
   "phoneNumber": "010-1234-5678", // 전화번호 (string?)
   "newPassword": "newPassword123!", // 새 비밀번호 (선택, 변경 시에만) (string?)
@@ -8818,6 +8818,198 @@ R2에 파일이 존재하는지 확인합니다.
 
 ---
 
+### GET `tasks/anniversaries`
+
+**요약:** 그룹 기념일 목록 조회 (경과일 포함)
+
+**Query Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 기념일 목록 조회 성공
+
+```json
+{
+  "id": "uuid", // 기념일 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "title": "연애 시작일", // 기념일 이름 (string)
+  "date": "2023-01-01T00:00:00.000Z", // 기념일 날짜 (Date)
+  "emoji": "💑", // 이모지 (string | null)
+  "milestoneConfig": {
+    "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
+    "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
+  }, // milestone Task 자동 생성 설정 (MilestoneConfigDto | null)
+  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수) (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
+}
+```
+
+#### 403 - 그룹 멤버만 조회 가능
+
+---
+
+### GET `tasks/anniversaries/:id`
+
+**요약:** 기념일 단건 조회 (경과일 포함)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 기념일 조회 성공
+
+```json
+{
+  "id": "uuid", // 기념일 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "title": "연애 시작일", // 기념일 이름 (string)
+  "date": "2023-01-01T00:00:00.000Z", // 기념일 날짜 (Date)
+  "emoji": "💑", // 이모지 (string | null)
+  "milestoneConfig": {
+    "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
+    "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
+  }, // milestone Task 자동 생성 설정 (MilestoneConfigDto | null)
+  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수) (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
+}
+```
+
+#### 404 - 기념일을 찾을 수 없음
+
+#### 403 - 그룹 멤버만 조회 가능
+
+---
+
+### POST `tasks/anniversaries`
+
+**요약:** 기념일 생성
+
+**Request Body:**
+
+```json
+{
+  "groupId": "uuid", // 그룹 ID (string)
+  "title": "연애 시작일", // 기념일 이름 (string)
+  "date": "2023-01-01", // 기념일 날짜 (YYYY-MM-DD) (string)
+  "emoji": "💑", // 이모지 (string?)
+  "milestoneConfig": {
+    "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
+    "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
+  } // milestone Task 자동 생성 설정 (MilestoneConfigDto?)
+}
+```
+
+**Responses:**
+
+#### 201 - 기념일 생성 성공
+
+```json
+{
+  "id": "uuid", // 기념일 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "title": "연애 시작일", // 기념일 이름 (string)
+  "date": "2023-01-01T00:00:00.000Z", // 기념일 날짜 (Date)
+  "emoji": "💑", // 이모지 (string | null)
+  "milestoneConfig": {
+    "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
+    "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
+  }, // milestone Task 자동 생성 설정 (MilestoneConfigDto | null)
+  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수) (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
+}
+```
+
+#### 403 - 그룹 멤버만 생성 가능
+
+---
+
+### PUT `tasks/anniversaries/:id`
+
+**요약:** 기념일 수정
+
+**설명:**
+날짜 변경 시 연동된 Task의 scheduledAt이 자동 재계산됩니다.
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "title": "연애 시작일", // 기념일 이름 (string?)
+  "date": "2023-01-01", // 기념일 날짜 (YYYY-MM-DD) (string?)
+  "emoji": "💑", // 이모지 (string?)
+  "milestoneConfig": {
+    "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
+    "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
+  } // milestone Task 자동 생성 설정 (MilestoneConfigDto?)
+}
+```
+
+**Responses:**
+
+#### 200 - 기념일 수정 성공
+
+```json
+{
+  "id": "uuid", // 기념일 ID (string)
+  "groupId": "uuid", // 그룹 ID (string)
+  "title": "연애 시작일", // 기념일 이름 (string)
+  "date": "2023-01-01T00:00:00.000Z", // 기념일 날짜 (Date)
+  "emoji": "💑", // 이모지 (string | null)
+  "milestoneConfig": {
+    "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
+    "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
+  }, // milestone Task 자동 생성 설정 (MilestoneConfigDto | null)
+  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수) (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
+}
+```
+
+#### 404 - 기념일을 찾을 수 없음
+
+#### 403 - 그룹 멤버만 수정 가능
+
+---
+
+### DELETE `tasks/anniversaries/:id`
+
+**요약:** 기념일 삭제
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Query Parameters:**
+
+- `deleteWithTasks` (`string`) - Optional
+
+**Responses:**
+
+#### 200 - 기념일 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 기념일을 찾을 수 없음
+
+#### 403 - 그룹 멤버만 삭제 가능
+
+---
+
 ### GET `tasks`
 
 **요약:** Task 목록 조회 (캘린더/할일 뷰)
@@ -9001,7 +9193,10 @@ R2에 파일이 존재하는지 확인합니다.
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
   ], // 알림 목록 (TaskReminderDto[]?)
-  "participantIds": ["uuid-1", "uuid-2"] // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
+  "participantIds": ["uuid-1", "uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
+  "anniversaryId": "uuid", // 기념일 ID (기념일 연동 Task인 경우) (string?)
+  "offsetDays": 100, // 기념일로부터 오프셋 값. offsetType=DAYS이면 일수, YEARS이면 연수 (number?)
+  "offsetType": null // 오프셋 단위 (DAYS: 일 기준, YEARS: 연 기준) (AnniversaryOffsetType?)
 }
 ```
 
@@ -9106,7 +9301,10 @@ R2에 파일이 존재하는지 확인합니다.
       "reminderType": null, // 알림 타입 (TaskReminderType)
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
-  ] // 알림 목록 (전달 시 기존 알림 전체 교체) (TaskReminderDto[]?)
+  ], // 알림 목록 (전달 시 기존 알림 전체 교체) (TaskReminderDto[]?)
+  "anniversaryId": "uuid", // 기념일 ID (null 전달 시 연동 해제) (string | null?)
+  "offsetDays": 100, // 기념일 오프셋 값 (number?)
+  "offsetType": null // 오프셋 단위 (DAYS / YEARS) (AnniversaryOffsetType?)
 }
 ```
 

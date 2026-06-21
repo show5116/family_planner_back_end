@@ -271,7 +271,7 @@
 
 ```json
 {
-  "currentPassword": "currentPassword123!", // 현재 비밀번호 (필수) (string)
+  "currentPassword": "currentPassword123!", // 현재 비밀번호 (LOCAL 로그인 사용자만 필수) (string?)
   "name": "홍길동", // 이름 (string?)
   "phoneNumber": "010-1234-5678", // 전화번호 (string?)
   "newPassword": "newPassword123!", // 새 비밀번호 (선택, 변경 시에만) (string?)

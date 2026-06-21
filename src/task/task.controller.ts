@@ -15,6 +15,7 @@ import { TaskService } from './task.service';
 import { CategoryService } from './category.service';
 import { RecurringService } from './recurring.service';
 import { HolidayService } from './holiday.service';
+import { AnniversaryService } from './anniversary.service';
 import {
   CreateCategoryDto,
   UpdateCategoryDto,
@@ -30,6 +31,9 @@ import {
   RecurringDto,
   TaskSkipDto,
   MessageResponseDto,
+  CreateAnniversaryDto,
+  UpdateAnniversaryDto,
+  AnniversaryDto,
 } from './dto';
 import { HolidayQueryDto } from './dto/holiday-query.dto';
 import { HolidayListDto } from './dto/holiday-response.dto';
@@ -54,6 +58,7 @@ export class TaskController {
     private readonly categoryService: CategoryService,
     private readonly recurringService: RecurringService,
     private readonly holidayService: HolidayService,
+    private readonly anniversaryService: AnniversaryService,
   ) {}
 
   // ==================== 공휴일 API ====================
@@ -108,6 +113,71 @@ export class TaskController {
   @ApiForbidden('연결된 Task가 있으면 삭제 불가')
   deleteCategory(@Param('id') id: string, @Request() req) {
     return this.categoryService.deleteCategory(req.user.userId, id);
+  }
+
+  // ==================== 기념일 API ====================
+
+  @Get('anniversaries')
+  @ApiOperation({ summary: '그룹 기념일 목록 조회 (경과일 포함)' })
+  @ApiSuccess(AnniversaryDto, '기념일 목록 조회 성공', { isArray: true })
+  @ApiForbidden('그룹 멤버만 조회 가능')
+  getAnniversaries(@Request() req, @Query('groupId') groupId: string) {
+    return this.anniversaryService.getAnniversaries(req.user.userId, groupId);
+  }
+
+  @Get('anniversaries/:id')
+  @ApiOperation({ summary: '기념일 단건 조회 (경과일 포함)' })
+  @ApiSuccess(AnniversaryDto, '기념일 조회 성공')
+  @ApiNotFound('기념일을 찾을 수 없음')
+  @ApiForbidden('그룹 멤버만 조회 가능')
+  getAnniversaryById(@Param('id') id: string, @Request() req) {
+    return this.anniversaryService.getAnniversaryById(req.user.userId, id);
+  }
+
+  @Post('anniversaries')
+  @ApiOperation({ summary: '기념일 생성' })
+  @ApiCreated(AnniversaryDto, '기념일 생성 성공')
+  @ApiForbidden('그룹 멤버만 생성 가능')
+  createAnniversary(@Request() req, @Body() dto: CreateAnniversaryDto) {
+    return this.anniversaryService.createAnniversary(req.user.userId, dto);
+  }
+
+  @Put('anniversaries/:id')
+  @ApiOperation({
+    summary: '기념일 수정',
+    description: '날짜 변경 시 연동된 Task의 scheduledAt이 자동 재계산됩니다.',
+  })
+  @ApiSuccess(AnniversaryDto, '기념일 수정 성공')
+  @ApiNotFound('기념일을 찾을 수 없음')
+  @ApiForbidden('그룹 멤버만 수정 가능')
+  updateAnniversary(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() dto: UpdateAnniversaryDto,
+  ) {
+    return this.anniversaryService.updateAnniversary(req.user.userId, id, dto);
+  }
+
+  @Delete('anniversaries/:id')
+  @ApiOperation({
+    summary: '기념일 삭제',
+    description:
+      'deleteWithTasks=true: 연동된 milestone Task도 함께 삭제\n' +
+      'deleteWithTasks=false (기본값): Task는 유지하고 기념일만 삭제',
+  })
+  @ApiSuccess(MessageResponseDto, '기념일 삭제 성공')
+  @ApiNotFound('기념일을 찾을 수 없음')
+  @ApiForbidden('그룹 멤버만 삭제 가능')
+  deleteAnniversary(
+    @Param('id') id: string,
+    @Request() req,
+    @Query('deleteWithTasks') deleteWithTasks?: string,
+  ) {
+    return this.anniversaryService.deleteAnniversary(
+      req.user.userId,
+      id,
+      deleteWithTasks === 'true',
+    );
   }
 
   // ==================== Task API ====================
