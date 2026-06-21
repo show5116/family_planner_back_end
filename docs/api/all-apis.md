@@ -9024,6 +9024,7 @@ R2에 파일이 존재하는지 확인합니다.
 - `priority` (`TaskPriority`) (Optional): 우선순위
 - `status` (`TaskStatus`) (Optional): Task 상태
 - `search` (`string`) (Optional): 검색어 (제목, 설명, 장소)
+- `anniversaryId` (`string`) (Optional): 기념일 ID (해당 기념일의 milestone Task만 조회)
 - `startDate` (`string`) (Optional): 시작 날짜
 - `endDate` (`string`) (Optional): 종료 날짜
 - `page` (`number`) (Optional): 페이지

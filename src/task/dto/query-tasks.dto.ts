@@ -99,6 +99,14 @@ export class QueryTasksDto {
   @IsOptional()
   search?: string;
 
+  @ApiPropertyOptional({
+    description: '기념일 ID (해당 기념일의 milestone Task만 조회)',
+    example: 'uuid',
+  })
+  @IsUUID()
+  @IsOptional()
+  anniversaryId?: string;
+
   @ApiPropertyOptional({ description: '시작 날짜', example: '2025-12-01' })
   @IsOptional()
   startDate?: string;

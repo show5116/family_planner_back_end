@@ -63,6 +63,8 @@ export class TaskQueryBuilder {
     }
     if (query.priority) andConditions.push({ priority: query.priority });
     if (query.status) andConditions.push({ status: query.status });
+    if (query.anniversaryId)
+      andConditions.push({ anniversaryId: query.anniversaryId });
 
     // 검색어 필터 (title, description, location)
     if (query.search) {
