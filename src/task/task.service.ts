@@ -54,6 +54,17 @@ export class TaskService {
       }
     }
 
+    // anniversaryId 검증 (해당 기념일의 그룹에 속한 멤버인지 확인)
+    if (query.anniversaryId) {
+      const anniversary = await this.prisma.anniversary.findUnique({
+        where: { id: query.anniversaryId },
+        select: { groupId: true },
+      });
+      if (!anniversary || !userGroupIds.includes(anniversary.groupId)) {
+        throw new ForbiddenException('task.errors.group_member_only_view');
+      }
+    }
+
     // 쿼리 빌더로 조건 생성
     const where = TaskQueryBuilder.buildWhereClause(
       userId,
