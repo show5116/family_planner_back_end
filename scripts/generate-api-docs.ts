@@ -524,6 +524,22 @@ class ApiDocGenerator {
             requestBody = this.parseDtoFile(params.body) || undefined;
           }
 
+          // @ApiBody({ schema: { properties: {...} } }) 파싱 (개별 @Body 파라미터 방식 보완)
+          if (!requestBody && member.modifiers) {
+            for (const modifier of member.modifiers) {
+              if (
+                ts.isDecorator(modifier) &&
+                this.getDecoratorName(modifier) === 'ApiBody'
+              ) {
+                const apiBodySchema = this.extractApiBodySchema(modifier);
+                if (apiBodySchema) {
+                  requestBody = apiBodySchema;
+                }
+                break;
+              }
+            }
+          }
+
           // Response DTO 파싱 (2xx 성공 응답에 대해서만 스키마 파싱)
           const parsedResponses = responses.map((resp) => {
             let schema: DtoInfo | undefined;
@@ -553,6 +569,85 @@ class ApiDocGenerator {
     });
 
     return endpoints;
+  }
+
+  private extractApiBodySchema(decorator: ts.Decorator): DtoInfo | null {
+    const expression = decorator.expression as ts.CallExpression;
+    if (!expression.arguments || expression.arguments.length === 0) return null;
+
+    const arg = expression.arguments[0];
+    if (!ts.isObjectLiteralExpression(arg)) return null;
+
+    // schema 속성 찾기
+    const schemaProp = arg.properties.find(
+      (p) =>
+        ts.isPropertyAssignment(p) &&
+        ts.isIdentifier(p.name) &&
+        p.name.text === 'schema',
+    );
+    if (!schemaProp || !ts.isPropertyAssignment(schemaProp)) return null;
+    const schemaObj = schemaProp.initializer;
+    if (!ts.isObjectLiteralExpression(schemaObj)) return null;
+
+    // required 배열 추출
+    const requiredProp = schemaObj.properties.find(
+      (p) =>
+        ts.isPropertyAssignment(p) &&
+        ts.isIdentifier(p.name) &&
+        p.name.text === 'required',
+    );
+    const requiredFields: string[] = [];
+    if (requiredProp && ts.isPropertyAssignment(requiredProp)) {
+      const reqArr = requiredProp.initializer;
+      if (ts.isArrayLiteralExpression(reqArr)) {
+        reqArr.elements.forEach((el) => {
+          if (ts.isStringLiteral(el)) requiredFields.push(el.text);
+        });
+      }
+    }
+
+    // properties 속성 찾기
+    const propsProp = schemaObj.properties.find(
+      (p) =>
+        ts.isPropertyAssignment(p) &&
+        ts.isIdentifier(p.name) &&
+        p.name.text === 'properties',
+    );
+    if (!propsProp || !ts.isPropertyAssignment(propsProp)) return null;
+    const propsObj = propsProp.initializer;
+    if (!ts.isObjectLiteralExpression(propsObj)) return null;
+
+    const fields: DtoField[] = [];
+    propsObj.properties.forEach((prop) => {
+      if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) return;
+      const fieldName = prop.name.text;
+      const fieldDef = prop.initializer;
+      if (!ts.isObjectLiteralExpression(fieldDef)) return;
+
+      let type = 'string';
+      let description = '';
+      let example: any = undefined;
+
+      fieldDef.properties.forEach((p) => {
+        if (!ts.isPropertyAssignment(p) || !ts.isIdentifier(p.name)) return;
+        const key = p.name.text;
+        const val = this.extractLiteralValue(p.initializer);
+        if (key === 'type') type = val ?? 'string';
+        if (key === 'description') description = val ?? '';
+        if (key === 'example') example = val;
+      });
+
+      fields.push({
+        name: fieldName,
+        type,
+        description,
+        example,
+        required: requiredFields.includes(fieldName),
+      });
+    });
+
+    if (fields.length === 0) return null;
+    return { name: 'body', fields };
   }
 
   private getDefaultStatus(decoratorName: string): number {

@@ -245,6 +245,57 @@ export class ForceDeleteAccountResponseDto {
   message: string;
 }
 
+/**
+ * 소셜 로그인 응답 DTO
+ * - 기존 유저: isNewUser=false, accessToken/refreshToken 포함
+ * - 신규 유저: isNewUser=true, tempToken 포함, needsName/needsEmail로 추가 입력 필요 여부 안내
+ */
+export class SocialLoginResponseDto {
+  @ApiProperty({ description: '신규 유저 여부', example: false })
+  isNewUser: boolean;
+
+  @ApiProperty({
+    description: 'Access Token (기존 유저)',
+    required: false,
+  })
+  accessToken?: string;
+
+  @ApiProperty({
+    description: 'Refresh Token (기존 유저)',
+    required: false,
+  })
+  refreshToken?: string;
+
+  @ApiProperty({
+    description: '임시 토큰 (신규 유저, 10분 유효)',
+    required: false,
+  })
+  tempToken?: string;
+
+  @ApiProperty({
+    description:
+      '이름 입력 필요 여부 (신규 유저, 소셜에서 이름을 받지 못한 경우)',
+    required: false,
+    example: true,
+  })
+  needsName?: boolean;
+
+  @ApiProperty({
+    description:
+      '이메일 입력 필요 여부 (신규 유저, 이메일 없거나 Apple 비공개 이메일인 경우)',
+    required: false,
+    example: true,
+  })
+  needsEmail?: boolean;
+
+  @ApiProperty({
+    description: '사용자 정보 (기존 유저)',
+    type: UserDto,
+    required: false,
+  })
+  user?: UserDto;
+}
+
 export class GrantAdminResponseDto {
   @ApiProperty({
     description: '응답 메시지',
