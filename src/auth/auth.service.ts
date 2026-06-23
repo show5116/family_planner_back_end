@@ -779,6 +779,7 @@ export class AuthService {
         name: true,
         profileImageKey: true,
         isAdmin: true,
+        isSuperAdmin: true,
         personalColor: true,
         createdAt: true,
         password: true,
@@ -811,6 +812,7 @@ export class AuthService {
         ? this.storageService.getPublicUrl(user.profileImageKey)
         : null,
       isAdmin: user.isAdmin,
+      isSuperAdmin: user.isSuperAdmin,
       personalColor: user.personalColor,
       createdAt: user.createdAt,
       hasPassword: user.password !== null,
@@ -1606,6 +1608,64 @@ export class AuthService {
     });
 
     return { message: '계정 삭제 예약이 취소되었습니다' };
+  }
+
+  async grantAdmin(requesterId: string, targetUserId: string) {
+    if (requesterId === targetUserId) {
+      throw new BadRequestException(
+        '자기 자신에게는 권한을 부여할 수 없습니다',
+      );
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, isAdmin: true, deletedAt: true },
+    });
+
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (user.isAdmin) {
+      throw new BadRequestException('이미 운영자 권한을 가진 사용자입니다');
+    }
+
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { isAdmin: true },
+    });
+
+    return { message: '운영자 권한이 부여되었습니다' };
+  }
+
+  async revokeAdmin(requesterId: string, targetUserId: string) {
+    if (requesterId === targetUserId) {
+      throw new BadRequestException('자기 자신의 권한은 회수할 수 없습니다');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, isAdmin: true, isSuperAdmin: true, deletedAt: true },
+    });
+
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (user.isSuperAdmin) {
+      throw new ForbiddenException('슈퍼 어드민의 권한은 회수할 수 없습니다');
+    }
+
+    if (!user.isAdmin) {
+      throw new BadRequestException('운영자 권한이 없는 사용자입니다');
+    }
+
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { isAdmin: false },
+    });
+
+    return { message: '운영자 권한이 회수되었습니다' };
   }
 
   /**

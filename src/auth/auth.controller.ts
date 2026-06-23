@@ -51,12 +51,14 @@ import {
   DeleteAccountResponseDto,
   CancelDeleteAccountResponseDto,
   ForceDeleteAccountResponseDto,
+  GrantAdminResponseDto,
+  RevokeAdminResponseDto,
 } from '@/auth/dto/auth-response.dto';
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
 import { AppleAuthGuard } from '@/auth/guards/apple-auth.guard';
 import { LocalAuthGuard } from '@/auth/guards/local-auth.guard';
-import { AdminGuard } from '@/auth/admin.guard';
+import { SuperAdminGuard } from '@/auth/super-admin.guard';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiSuccess } from '@/common/decorators/api-responses.decorator';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -740,32 +742,50 @@ export class AuthController {
     return this.authService.getMyDataExport(req.user.userId);
   }
 
-  // ===== 운영자 전용 =====
+  // ===== 슈퍼 어드민 전용 =====
 
   @Delete('admin/users/:userId')
-  @UseGuards(AdminGuard)
+  @UseGuards(SuperAdminGuard)
   @ApiCommonAuthResponses()
-  @ApiOperation({ summary: '계정 삭제 예약 (운영자 전용, 7일 유예)' })
+  @ApiOperation({ summary: '계정 삭제 예약 (슈퍼 어드민 전용, 7일 유예)' })
   @ApiSuccess(DeleteAccountResponseDto, '계정 삭제 예약 성공')
   deleteAccount(@Param('userId') userId: string) {
     return this.authService.deleteAccount(userId);
   }
 
   @Post('admin/users/:userId/cancel-delete')
-  @UseGuards(AdminGuard)
+  @UseGuards(SuperAdminGuard)
   @ApiCommonAuthResponses()
-  @ApiOperation({ summary: '계정 삭제 예약 취소 (운영자 전용)' })
+  @ApiOperation({ summary: '계정 삭제 예약 취소 (슈퍼 어드민 전용)' })
   @ApiSuccess(CancelDeleteAccountResponseDto, '계정 삭제 예약 취소 성공')
   cancelDeleteAccount(@Param('userId') userId: string) {
     return this.authService.cancelDeleteAccount(userId);
   }
 
   @Delete('admin/users/:userId/force')
-  @UseGuards(AdminGuard)
+  @UseGuards(SuperAdminGuard)
   @ApiCommonAuthResponses()
-  @ApiOperation({ summary: '삭제 예약 계정 즉시 완전 삭제 (운영자 전용)' })
+  @ApiOperation({ summary: '삭제 예약 계정 즉시 완전 삭제 (슈퍼 어드민 전용)' })
   @ApiSuccess(ForceDeleteAccountResponseDto, '계정 즉시 삭제 성공')
   forceDeleteAccount(@Param('userId') userId: string) {
     return this.authService.forceDeleteAccount(userId);
+  }
+
+  @Patch('admin/users/:userId/grant-admin')
+  @UseGuards(SuperAdminGuard)
+  @ApiCommonAuthResponses()
+  @ApiOperation({ summary: '운영자 권한 부여 (슈퍼 어드민 전용)' })
+  @ApiSuccess(GrantAdminResponseDto, '운영자 권한 부여 성공')
+  grantAdmin(@Request() req: any, @Param('userId') userId: string) {
+    return this.authService.grantAdmin(req.user.userId, userId);
+  }
+
+  @Patch('admin/users/:userId/revoke-admin')
+  @UseGuards(SuperAdminGuard)
+  @ApiCommonAuthResponses()
+  @ApiOperation({ summary: '운영자 권한 회수 (슈퍼 어드민 전용)' })
+  @ApiSuccess(RevokeAdminResponseDto, '운영자 권한 회수 성공')
+  revokeAdmin(@Request() req: any, @Param('userId') userId: string) {
+    return this.authService.revokeAdmin(req.user.userId, userId);
   }
 }

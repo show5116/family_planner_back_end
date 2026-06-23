@@ -1764,6 +1764,54 @@ period=monthly 시 year 필수.
 
 ---
 
+### PATCH `auth/admin/users/:userId/grant-admin`
+
+**요약:** 운영자 권한 부여 (운영자 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 운영자 권한 부여 성공
+
+```json
+{
+  "message": "운영자 권한이 부여되었습니다" // 응답 메시지 (string)
+}
+```
+
+---
+
+### PATCH `auth/admin/users/:userId/revoke-admin`
+
+**요약:** 운영자 권한 회수 (운영자 전용)
+
+**인증/권한:**
+
+- AdminGuard
+
+**Path Parameters:**
+
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 운영자 권한 회수 성공
+
+```json
+{
+  "message": "운영자 권한이 회수되었습니다" // 응답 메시지 (string)
+}
+```
+
+---
+
 ## 육아 포인트
 
 **Base Path:** `/childcare`
