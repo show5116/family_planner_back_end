@@ -329,11 +329,18 @@ export class AuthService {
       throw new BadRequestException('auth.errors.already_verified');
     }
 
+    const trialExpiresAt = new Date();
+    trialExpiresAt.setDate(trialExpiresAt.getDate() + 14);
+
     // 이메일 인증 완료 및 Redis에서 코드 삭제
     await Promise.all([
       this.prisma.user.update({
         where: { id: user.id },
-        data: { isEmailVerified: true },
+        data: {
+          isEmailVerified: true,
+          subscriptionTier: 'ad_free',
+          subscriptionExpiresAt: trialExpiresAt,
+        },
       }),
       this.redisService.del(`email-verification:${email}`),
     ]);
@@ -564,6 +571,37 @@ export class AuthService {
   }
 
   /**
+   * 모바일 Apple 로그인 (identity token 검증)
+   * Flutter sign_in_with_apple 패키지에서 발급받은 identityToken을 Apple 공개키로 검증
+   */
+  async appleMobileLogin(identityToken: string, name?: string | null) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const appleSignin = require('apple-signin-auth');
+
+    let payload: any;
+    try {
+      payload = await appleSignin.verifyIdToken(identityToken, {
+        audience: this.configService.get<string>('oauth.apple.clientId'),
+        ignoreExpiration: false,
+      });
+    } catch {
+      throw new UnauthorizedException('auth.errors.invalid_apple_token');
+    }
+
+    const email = payload.email ?? null;
+    // Apple은 최초 로그인 시에만 name을 클라이언트에서 전달받음
+    const displayName = name?.trim() || email?.split('@')[0] || '사용자';
+
+    return this.validateSocialUser({
+      provider: 'APPLE',
+      providerId: payload.sub,
+      email,
+      name: displayName,
+      profileImage: null,
+    });
+  }
+
+  /**
    * 소셜 로그인 처리 (Google, Kakao 등)
    * - 기존 사용자: 즉시 토큰 발급
    * - 신규 사용자: 약관 동의를 위한 tempToken 반환 (계정 미생성)
@@ -700,6 +738,9 @@ export class AuthService {
       }
     }
 
+    const trialExpiresAt = new Date();
+    trialExpiresAt.setDate(trialExpiresAt.getDate() + 14);
+
     const user = await this.prisma.user.create({
       data: {
         email: payload.email,
@@ -710,6 +751,8 @@ export class AuthService {
         isEmailVerified: true,
         password: null,
         termsAgreedAt: new Date(),
+        subscriptionTier: 'ad_free',
+        subscriptionExpiresAt: trialExpiresAt,
       },
     });
 
@@ -736,6 +779,7 @@ export class AuthService {
         name: true,
         profileImageKey: true,
         isAdmin: true,
+        isSuperAdmin: true,
         personalColor: true,
         createdAt: true,
         password: true,
@@ -768,6 +812,7 @@ export class AuthService {
         ? this.storageService.getPublicUrl(user.profileImageKey)
         : null,
       isAdmin: user.isAdmin,
+      isSuperAdmin: user.isSuperAdmin,
       personalColor: user.personalColor,
       createdAt: user.createdAt,
       hasPassword: user.password !== null,
@@ -780,7 +825,7 @@ export class AuthService {
    */
   async updateProfile(
     userId: string,
-    currentPassword: string,
+    currentPassword: string | undefined,
     updates: {
       name?: string;
       phoneNumber?: string;
@@ -796,22 +841,18 @@ export class AuthService {
       throw new NotFoundException('auth.errors.user_not_found');
     }
 
-    // 소셜 로그인 사용자이고 비밀번호가 설정되지 않은 경우
-    if (!user.password && user.provider !== 'LOCAL') {
-      throw new BadRequestException('auth.errors.social_set_password_first');
-    }
-
-    // 현재 비밀번호 확인
-    if (!user.password) {
-      throw new BadRequestException('auth.errors.password_not_set');
-    }
-
-    const isPasswordValid = await this.verifyPassword(
-      currentPassword,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new ForbiddenException('auth.errors.wrong_current_password');
+    if (user.password) {
+      // 비밀번호가 있는 사용자는 현재 비밀번호 검증 필수
+      if (!currentPassword) {
+        throw new BadRequestException('auth.errors.current_password_required');
+      }
+      const isPasswordValid = await this.verifyPassword(
+        currentPassword,
+        user.password,
+      );
+      if (!isPasswordValid) {
+        throw new ForbiddenException('auth.errors.wrong_current_password');
+      }
     }
 
     // 업데이트할 데이터 준비
@@ -1567,6 +1608,64 @@ export class AuthService {
     });
 
     return { message: '계정 삭제 예약이 취소되었습니다' };
+  }
+
+  async grantAdmin(requesterId: string, targetUserId: string) {
+    if (requesterId === targetUserId) {
+      throw new BadRequestException(
+        '자기 자신에게는 권한을 부여할 수 없습니다',
+      );
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, isAdmin: true, deletedAt: true },
+    });
+
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (user.isAdmin) {
+      throw new BadRequestException('이미 운영자 권한을 가진 사용자입니다');
+    }
+
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { isAdmin: true },
+    });
+
+    return { message: '운영자 권한이 부여되었습니다' };
+  }
+
+  async revokeAdmin(requesterId: string, targetUserId: string) {
+    if (requesterId === targetUserId) {
+      throw new BadRequestException('자기 자신의 권한은 회수할 수 없습니다');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, isAdmin: true, isSuperAdmin: true, deletedAt: true },
+    });
+
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+
+    if (user.isSuperAdmin) {
+      throw new ForbiddenException('슈퍼 어드민의 권한은 회수할 수 없습니다');
+    }
+
+    if (!user.isAdmin) {
+      throw new BadRequestException('운영자 권한이 없는 사용자입니다');
+    }
+
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { isAdmin: false },
+    });
+
+    return { message: '운영자 권한이 회수되었습니다' };
   }
 
   /**

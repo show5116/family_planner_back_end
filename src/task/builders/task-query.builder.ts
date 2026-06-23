@@ -18,35 +18,35 @@ export class TaskQueryBuilder {
     userGroupIds: string[],
     query: QueryTasksDto,
   ): Prisma.TaskWhereInput {
-    const orConditions: Prisma.TaskWhereInput[] = [];
-    const includePersonal = query.includePersonal ?? true;
+    const andConditions: Prisma.TaskWhereInput[] = [{ deletedAt: null }];
 
-    // 개인 일정 포함
-    if (includePersonal) {
-      orConditions.push({ userId, groupId: null });
-    }
+    // anniversaryId 지정 시 해당 기념일 Task만 조회 (소속 그룹 검증은 서비스 레이어)
+    if (query.anniversaryId) {
+      andConditions.push({ anniversaryId: query.anniversaryId });
+    } else {
+      // 일반 조회: 개인 + 그룹 OR 조건
+      const orConditions: Prisma.TaskWhereInput[] = [];
+      const includePersonal = query.includePersonal ?? true;
 
-    // 그룹 일정 필터링
-    // groupIds가 명시적으로 전달된 경우에만 해당 그룹 일정 포함
-    // 미전달(undefined), null, 빈 배열 모두 그룹 일정 미포함
-    if (query.groupIds && query.groupIds.length > 0) {
-      const validGroupIds = query.groupIds.filter((gid) =>
-        userGroupIds.includes(gid),
-      );
-      if (validGroupIds.length > 0) {
-        orConditions.push({ groupId: { in: validGroupIds } });
+      if (includePersonal) {
+        orConditions.push({ userId, groupId: null });
       }
-    }
 
-    // 조건이 없으면 빈 결과 반환
-    if (orConditions.length === 0) {
-      return { deletedAt: null, id: 'none' };
-    }
+      // groupIds가 명시적으로 전달된 경우에만 해당 그룹 일정 포함
+      if (query.groupIds && query.groupIds.length > 0) {
+        const validGroupIds = query.groupIds.filter((gid) =>
+          userGroupIds.includes(gid),
+        );
+        if (validGroupIds.length > 0) {
+          orConditions.push({ groupId: { in: validGroupIds } });
+        }
+      }
 
-    const andConditions: Prisma.TaskWhereInput[] = [
-      { deletedAt: null },
-      { OR: orConditions },
-    ];
+      if (orConditions.length === 0) {
+        return { deletedAt: null, id: 'none' };
+      }
+      andConditions.push({ OR: orConditions });
+    }
 
     // 필터링 조건 추가
     if (query.categoryIds && query.categoryIds.length > 0) {

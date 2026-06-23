@@ -3,6 +3,8 @@ import {
   IsString,
   IsEnum,
   IsOptional,
+  IsInt,
+  Min,
   MinLength,
   MaxLength,
   IsArray,
@@ -10,7 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TaskType, TaskPriority } from '@/task/enums';
+import { TaskType, TaskPriority, AnniversaryOffsetType } from '@/task/enums';
 import { TaskReminderDto, LocationDto } from './create-task.dto';
 
 export class UpdateTaskDto {
@@ -96,4 +98,31 @@ export class UpdateTaskDto {
   @Type(() => TaskReminderDto)
   @IsOptional()
   reminders?: TaskReminderDto[];
+
+  @ApiPropertyOptional({
+    description: '기념일 ID (null 전달 시 연동 해제)',
+    example: 'uuid',
+    nullable: true,
+  })
+  @IsUUID()
+  @IsOptional()
+  anniversaryId?: string | null;
+
+  @ApiPropertyOptional({
+    description: '기념일 오프셋 값',
+    example: 100,
+  })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  offsetDays?: number;
+
+  @ApiPropertyOptional({
+    description: '오프셋 단위 (DAYS / YEARS)',
+    enum: AnniversaryOffsetType,
+    example: AnniversaryOffsetType.DAYS,
+  })
+  @IsEnum(AnniversaryOffsetType)
+  @IsOptional()
+  offsetType?: AnniversaryOffsetType;
 }

@@ -56,6 +56,7 @@ import {
   RecurringRuleType,
   RecurringGenerationType,
   TaskReminderType,
+  AnniversaryOffsetType,
 } from '@/task/enums';
 import { RecurringEndType, SkipBehavior } from '@/task/interfaces';
 
@@ -402,4 +403,31 @@ export class CreateTaskDto {
   @IsUUID('4', { each: true })
   @IsOptional()
   participantIds?: string[];
+
+  @ApiPropertyOptional({
+    description: '기념일 ID (기념일 연동 Task인 경우)',
+    example: 'uuid',
+  })
+  @IsUUID()
+  @IsOptional()
+  anniversaryId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      '기념일로부터 오프셋 값. offsetType=DAYS이면 일수, YEARS이면 연수',
+    example: 100,
+  })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  offsetDays?: number;
+
+  @ApiPropertyOptional({
+    description: '오프셋 단위 (DAYS: 일 기준, YEARS: 연 기준)',
+    enum: AnniversaryOffsetType,
+    example: AnniversaryOffsetType.DAYS,
+  })
+  @IsEnum(AnniversaryOffsetType)
+  @IsOptional()
+  offsetType?: AnniversaryOffsetType;
 }

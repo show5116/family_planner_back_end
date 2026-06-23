@@ -290,6 +290,7 @@ export class WeatherService {
       };
 
       await this.redisService.set(cacheKey, raw, WEATHER_CACHE_TTL);
+      await this.redisService.set(`weather:stale:${sido}`, raw);
       return this.translateWeatherCache(raw, lang);
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
@@ -298,6 +299,13 @@ export class WeatherService {
       this.logger.error(
         `날씨 API 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
       );
+      const stale = await this.redisService.get<WeatherRawCache>(
+        `weather:stale:${sido}`,
+      );
+      if (stale) {
+        this.logger.warn(`날씨 API 실패 — stale 캐시 반환 (${sido})`);
+        return this.translateWeatherCache(stale, lang);
+      }
       throw new BadGatewayException('weather.errors.fetch_failed');
     }
   }
@@ -343,6 +351,7 @@ export class WeatherService {
       };
 
       await this.redisService.set(cacheKey, raw, FORECAST_CACHE_TTL);
+      await this.redisService.set(`forecast:stale:${sido}`, raw);
       return this.translateForecastCache(raw, lang);
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
@@ -351,6 +360,13 @@ export class WeatherService {
       this.logger.error(
         `단기예보 API 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
       );
+      const stale = await this.redisService.get<ForecastRawCache>(
+        `forecast:stale:${sido}`,
+      );
+      if (stale) {
+        this.logger.warn(`단기예보 API 실패 — stale 캐시 반환 (${sido})`);
+        return this.translateForecastCache(stale, lang);
+      }
       throw new BadGatewayException('weather.errors.forecast_failed');
     }
   }
@@ -525,9 +541,21 @@ export class WeatherService {
       };
 
       await this.redisService.set(cacheKey, result, AIR_CACHE_TTL);
+      await this.redisService.set(`air:stale:${sidoKey}`, result);
       return result;
     } catch (error) {
       this.logger.warn(`미세먼지 API 호출 실패: ${error?.message}`);
+      const stale = await this.redisService.get<{
+        pm10: number | null;
+        pm25: number | null;
+        pm10Grade: number | null;
+        pm25Grade: number | null;
+        sidoKey: string | null;
+      }>(`air:stale:${sidoKey}`);
+      if (stale) {
+        this.logger.warn(`미세먼지 API 실패 — stale 캐시 반환 (${sidoKey})`);
+        return stale;
+      }
       return {
         pm10: null,
         pm25: null,

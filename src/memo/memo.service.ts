@@ -367,7 +367,9 @@ export class MemoService {
       throw new NotFoundException('memo.errors.memo_not_found');
     }
 
-    if (memo.userId !== userId) {
+    if (memo.groupId) {
+      await this.validateGroupMembership(userId, memo.groupId);
+    } else if (memo.userId !== userId) {
       throw new ForbiddenException('memo.errors.own_memo_only_delete');
     }
 

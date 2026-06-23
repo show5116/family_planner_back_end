@@ -18,6 +18,7 @@ model User {
   updatedAt            DateTime              @updatedAt
   isEmailVerified      Boolean               @default(false)
   isAdmin              Boolean               @default(false)
+  isSuperAdmin         Boolean               @default(false)
   lastLoginAt          DateTime?
   phoneNumber          String?               @db.VarChar(20)
   profileImageKey      String?               @db.VarChar(255)
@@ -110,6 +111,7 @@ model Group {
   savingsGoals        SavingsGoal[]
   minigameResults     MinigameResult[]
   memberReports       MemberReport[]
+  anniversaries       Anniversary[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -338,35 +340,40 @@ model Category {
 }
 
 model Task {
-  id           String            @id @default(uuid())
-  userId       String
-  groupId      String?
-  categoryId   String?
-  recurringId  String?
-  title        String            @db.VarChar(200)
-  description  String?           @db.Text
-  location     Json?
-  type         TaskType          @default(TODO_LINKED)
-  priority     TaskPriority      @default(MEDIUM)
-  scheduledAt  DateTime?
-  dueAt        DateTime?
-  status       TaskStatus        @default(PENDING)
-  completedAt  DateTime?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  deletedAt    DateTime?
-  histories    TaskHistory[]
-  participants TaskParticipant[]
-  reminders    TaskReminder[]
-  category     Category?         @relation(fields: [categoryId], references: [id])
-  group        Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  recurring    Recurring?        @relation(fields: [recurringId], references: [id])
-  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String            @id @default(uuid())
+  userId         String
+  groupId        String?
+  categoryId     String?
+  recurringId    String?
+  anniversaryId  String?
+  offsetDays     Int?
+  offsetType     AnniversaryOffsetType?
+  title          String            @db.VarChar(200)
+  description    String?           @db.Text
+  location       Json?
+  type           TaskType          @default(TODO_LINKED)
+  priority       TaskPriority      @default(MEDIUM)
+  scheduledAt    DateTime?
+  dueAt          DateTime?
+  status         TaskStatus        @default(PENDING)
+  completedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  deletedAt      DateTime?
+  histories      TaskHistory[]
+  participants   TaskParticipant[]
+  reminders      TaskReminder[]
+  category       Category?         @relation(fields: [categoryId], references: [id])
+  group          Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  recurring      Recurring?        @relation(fields: [recurringId], references: [id])
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anniversary    Anniversary?      @relation(fields: [anniversaryId], references: [id], onDelete: Cascade)
 
   @@index([userId, scheduledAt])
   @@index([groupId, scheduledAt])
   @@index([categoryId])
   @@index([recurringId])
+  @@index([anniversaryId])
   @@index([status])
   @@index([deletedAt])
   @@map("tasks")
@@ -1564,4 +1571,25 @@ enum ReportStatus {
   REVIEWING
   RESOLVED
   DISMISSED
+}
+
+model Anniversary {
+  id              String    @id @default(uuid())
+  groupId         String
+  title           String    @db.VarChar(100)
+  date            DateTime  @db.Date
+  emoji           String?   @db.VarChar(10)
+  milestoneConfig Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  group           Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  tasks           Task[]
+
+  @@index([groupId])
+  @@map("anniversaries")
+}
+
+enum AnniversaryOffsetType {
+  DAYS
+  YEARS
 }

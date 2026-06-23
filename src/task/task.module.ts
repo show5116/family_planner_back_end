@@ -7,6 +7,7 @@ import { RecurringService } from './recurring.service';
 import { TaskSchedulerService } from './task-scheduler.service';
 import { TaskHistoryListener, TaskNotificationListener } from './listeners';
 import { HolidayService } from './holiday.service';
+import { AnniversaryService } from './anniversary.service';
 import { NotificationModule } from '@/notification/notification.module';
 import { RedisModule } from '@/redis/redis.module';
 
@@ -21,7 +22,14 @@ import { RedisModule } from '@/redis/redis.module';
     TaskHistoryListener,
     TaskNotificationListener,
     HolidayService,
+    AnniversaryService,
   ],
-  exports: [TaskService, CategoryService, RecurringService, HolidayService],
+  exports: [
+    TaskService,
+    CategoryService,
+    RecurringService,
+    HolidayService,
+    AnniversaryService,
+  ],
 })
 export class TaskModule {}

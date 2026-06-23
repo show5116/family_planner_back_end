@@ -244,3 +244,19 @@ export class ForceDeleteAccountResponseDto {
   })
   message: string;
 }
+
+export class GrantAdminResponseDto {
+  @ApiProperty({
+    description: '응답 메시지',
+    example: '운영자 권한이 부여되었습니다',
+  })
+  message: string;
+}
+
+export class RevokeAdminResponseDto {
+  @ApiProperty({
+    description: '응답 메시지',
+    example: '운영자 권한이 회수되었습니다',
+  })
+  message: string;
+}

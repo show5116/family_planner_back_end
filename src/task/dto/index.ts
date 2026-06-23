@@ -9,3 +9,6 @@ export * from './skip-recurring.dto';
 export * from './task-response.dto';
 export * from './common-response.dto';
 export * from './participant-response.dto';
+export * from './create-anniversary.dto';
+export * from './update-anniversary.dto';
+export * from './anniversary-response.dto';

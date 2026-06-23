@@ -4,6 +4,7 @@ import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { RecurringService } from './recurring.service';
+import { AnniversaryService } from './anniversary.service';
 
 /**
  * Task 스케줄러 서비스
@@ -21,6 +22,7 @@ export class TaskSchedulerService {
 
   // 설정값
   private readonly LOCK_KEY = 'scheduler:recurring-tasks:lock';
+  private readonly MILESTONE_LOCK_KEY = 'scheduler:milestone-tasks:lock';
   private readonly LOCK_TTL = 60 * 10; // 10분 (작업 최대 시간)
   private readonly BATCH_SIZE = 100; // 한 번에 처리할 규칙 수
   private readonly CONCURRENCY = 10; // 동시 처리 개수
@@ -30,6 +32,7 @@ export class TaskSchedulerService {
     private prisma: PrismaService,
     private redisService: RedisService,
     private recurringService: RecurringService,
+    private anniversaryService: AnniversaryService,
   ) {}
 
   /**
@@ -118,6 +121,74 @@ export class TaskSchedulerService {
     } finally {
       // 5. 락 해제
       await this.redisService.releaseLock(this.LOCK_KEY, lockValue);
+    }
+  }
+
+  /**
+   * 매일 1시에 기념일 milestone Task 2년 범위 연장
+   * milestoneConfig가 있는 활성 기념일에 대해 아직 생성되지 않은 미래 milestone을 생성
+   */
+  @Cron('0 1 * * *')
+  async extendMilestoneTasks() {
+    if (!isSchedulerEnabled('')) return;
+
+    const lockValue = `${process.pid}-${Date.now()}`;
+    const acquired = await this.redisService.acquireLock(
+      this.MILESTONE_LOCK_KEY,
+      this.LOCK_TTL,
+      lockValue,
+    );
+
+    if (!acquired) {
+      this.logger.log('[Milestone] 다른 인스턴스에서 실행 중 - 스킵');
+      return;
+    }
+
+    this.logger.log('[Milestone] milestone Task 연장 시작');
+    const startTime = Date.now();
+
+    try {
+      let cursor: string | null = null;
+      let total = 0;
+
+      do {
+        const anniversaries = await this.prisma.anniversary.findMany({
+          where: {
+            milestoneConfig: { not: null },
+          },
+          select: { id: true },
+          take: this.BATCH_SIZE,
+          ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+          orderBy: { id: 'asc' },
+        });
+
+        if (anniversaries.length === 0) break;
+        cursor = anniversaries[anniversaries.length - 1].id;
+
+        await Promise.allSettled(
+          anniversaries.map((a) =>
+            this.anniversaryService
+              .extendMilestoneTasks(a.id)
+              .catch((e) =>
+                this.logger.error(
+                  `[Milestone] ${a.id} 연장 실패: ${e.message}`,
+                ),
+              ),
+          ),
+        );
+
+        total += anniversaries.length;
+        if (anniversaries.length < this.BATCH_SIZE) break;
+      } while (cursor);
+
+      const duration = Date.now() - startTime;
+      this.logger.log(`[Milestone] 완료 - ${total}개 처리 [${duration}ms]`);
+    } catch (error) {
+      this.logger.error(
+        `[Milestone] milestone Task 연장 실패: ${error.message}`,
+      );
+    } finally {
+      await this.redisService.releaseLock(this.MILESTONE_LOCK_KEY, lockValue);
     }
   }
 
