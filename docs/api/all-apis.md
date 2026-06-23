@@ -5420,6 +5420,39 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 
 ---
 
+### GET `household/recurring-expenses/:id/history`
+
+**요약:** 고정지출 적용 내역 조회
+
+**설명:**
+해당 고정지출에 연결된 지출 목록을 최신순으로 반환합니다. isVariable=true인 경우에는 확정(isConfirmed=true) 금액 기준 평균·합계·최솟값·최댓값도 함께 반환합니다.
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 고정지출 적용 내역 조회 성공
+
+```json
+{
+  "recurringExpenseId": "uuid-1234", // 고정지출 ID (string)
+  "isVariable": true, // 가변 여부 (boolean)
+  "history": [], // 적용 내역 목록 (최신순) (RecurringExpenseHistoryItemDto[])
+  "averageAmount": "152500.00", // 확정 금액 평균 (isVariable=true인 경우에만 존재, 확정 건수 0이면 null) (string | null)
+  "totalAmount": "915000.00", // 확정 금액 합계 (isVariable=true인 경우에만 존재) (string | null)
+  "minAmount": "130000.00", // 확정 금액 최솟값 (isVariable=true인 경우에만 존재) (string | null)
+  "maxAmount": "175000.00" // 확정 금액 최댓값 (isVariable=true인 경우에만 존재) (string | null)
+}
+```
+
+#### 404 - 고정지출을 찾을 수 없습니다
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
 ### DELETE `household/recurring-expenses/:id`
 
 **요약:** 고정지출 삭제
