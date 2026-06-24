@@ -9221,6 +9221,7 @@ R2에 파일이 존재하는지 확인합니다.
         "createdAt": "2025-12-30T00:00:00Z",
         "updatedAt": "2025-12-30T00:00:00Z"
       }, // 카테고리 (CategoryDto)
+      "allDay": false, // 종일 여부 (boolean)
       "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
       "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
       "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
@@ -9320,6 +9321,7 @@ R2에 파일이 존재하는지 확인합니다.
   "priority": null, // 우선순위 (TaskPriority?)
   "categoryId": "uuid", // 카테고리 ID (string?)
   "groupId": "uuid", // 그룹 ID (그룹 Task 생성 시) (string?)
+  "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "recurring": {
@@ -9390,6 +9392,7 @@ R2에 파일이 존재하는지 확인합니다.
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
+  "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
@@ -9454,6 +9457,7 @@ R2에 파일이 존재하는지 확인합니다.
   "categoryId": "uuid", // 카테고리 ID (string?)
   "type": null, // Task 타입 (TaskType?)
   "priority": null, // 우선순위 (TaskPriority?)
+  "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "participantIds": ["uuid-1", "uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
@@ -9498,6 +9502,7 @@ R2에 파일이 존재하는지 확인합니다.
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
+  "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
@@ -9584,6 +9589,7 @@ R2에 파일이 존재하는지 확인합니다.
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
+  "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)

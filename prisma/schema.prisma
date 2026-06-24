@@ -355,6 +355,7 @@ model Task {
   priority       TaskPriority      @default(MEDIUM)
   scheduledAt    DateTime?
   dueAt          DateTime?
+  allDay         Boolean           @default(false)
   status         TaskStatus        @default(PENDING)
   completedAt    DateTime?
   createdAt      DateTime          @default(now())

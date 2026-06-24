@@ -358,6 +358,14 @@ export class CreateTaskDto {
   groupId?: string;
 
   @ApiPropertyOptional({
+    description: '종일 여부 (true이면 시간 정보 무시)',
+    example: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  allDay?: boolean;
+
+  @ApiPropertyOptional({
     description: '수행 시작 날짜',
     example: '2025-12-30T09:00:00Z',
   })

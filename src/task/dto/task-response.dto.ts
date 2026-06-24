@@ -100,6 +100,9 @@ export class TaskDto {
   @ApiProperty({ description: '카테고리', type: CategoryDto })
   category: CategoryDto;
 
+  @ApiProperty({ description: '종일 여부', example: false })
+  allDay: boolean;
+
   @ApiProperty({ description: '수행 시작 날짜', nullable: true })
   scheduledAt: Date | null;
 

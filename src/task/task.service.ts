@@ -217,6 +217,7 @@ export class TaskService {
           location: (dto.location as unknown as Prisma.InputJsonValue) ?? null,
           type: dto.type,
           priority: dto.priority || 'MEDIUM',
+          allDay: dto.allDay ?? false,
           scheduledAt: resolvedScheduledAt,
           dueAt: dto.dueAt || null,
         },
@@ -674,6 +675,11 @@ export class TaskService {
       updateData.priority = dto.priority;
       updateManyData.priority = dto.priority;
       changesAfter.priority = dto.priority;
+    }
+    if (dto.allDay !== undefined) {
+      updateData.allDay = dto.allDay;
+      updateManyData.allDay = dto.allDay;
+      changesAfter.allDay = dto.allDay;
     }
     if (dto.scheduledAt) {
       updateData.scheduledAt = dto.scheduledAt;
