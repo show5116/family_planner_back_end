@@ -131,10 +131,24 @@ export class FirebaseService implements OnModuleInit {
     try {
       const message = {
         topic,
+        notification: {
+          title: notification.title,
+          body: notification.body,
+        },
         data: {
           title: notification.title,
           body: notification.body,
           ...(data || {}),
+        },
+        apns: {
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              alert: { title: notification.title, body: notification.body },
+              sound: 'default',
+              badge: 1,
+            },
+          },
         },
       };
 
