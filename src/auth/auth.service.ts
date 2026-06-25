@@ -589,8 +589,10 @@ export class AuthService {
     }
 
     const email = payload.email ?? null;
-    // Apple은 최초 로그인 시에만 name을 클라이언트에서 전달받음
-    const displayName = name?.trim() || email?.split('@')[0] || '사용자';
+    // privaterelay 이메일이면 이메일 기반 이름 fallback 사용 안 함 (needsName 유도)
+    const isPrivate = this.isApplePrivateEmail(email);
+    const displayName =
+      name?.trim() || (!isPrivate ? email?.split('@')[0] : null) || '사용자';
 
     return this.validateSocialUser({
       provider: 'APPLE',
@@ -601,10 +603,16 @@ export class AuthService {
     });
   }
 
+  private isApplePrivateEmail(email: string | null): boolean {
+    return !!email && email.endsWith('@privaterelay.appleid.com');
+  }
+
   /**
    * 소셜 로그인 처리 (Google, Kakao 등)
    * - 기존 사용자: 즉시 토큰 발급
    * - 신규 사용자: 약관 동의를 위한 tempToken 반환 (계정 미생성)
+   *   needsName: 이름을 소셜에서 받지 못한 경우
+   *   needsEmail: 이메일이 없거나 Apple 비공개 이메일인 경우
    */
   async validateSocialUser(socialUser: {
     provider: string;
@@ -614,7 +622,12 @@ export class AuthService {
     profileImage?: string;
   }): Promise<
     | { isNewUser: false; accessToken: string; refreshToken: string }
-    | { isNewUser: true; tempToken: string }
+    | {
+        isNewUser: true;
+        tempToken: string;
+        needsName: boolean;
+        needsEmail: boolean;
+      }
   > {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -626,6 +639,10 @@ export class AuthService {
     });
 
     if (!user) {
+      const needsName = !socialUser.name || socialUser.name === '사용자';
+      const needsEmail =
+        !socialUser.email || this.isApplePrivateEmail(socialUser.email);
+
       // 신규 유저: 계정 생성 없이 tempToken 발급 (TTL 10분)
       const tempToken = this.jwtService.sign(
         {
@@ -640,7 +657,7 @@ export class AuthService {
           secret: this.configService.get('jwt.accessSecret'),
         },
       );
-      return { isNewUser: true, tempToken };
+      return { isNewUser: true, tempToken, needsName, needsEmail };
     }
 
     // 기존 사용자: 프로필 이미지 없으면 백그라운드로 저장
@@ -677,10 +694,13 @@ export class AuthService {
   /**
    * 소셜 신규 회원가입 완료 (약관 동의 후 호출)
    * tempToken 검증 → 계정 생성 → 토큰 발급
+   * name/email: 클라이언트가 입력한 값이 tempToken의 값보다 우선 적용
    */
   async socialSignup(
     tempToken: string,
     agreedTerms: boolean,
+    inputName?: string,
+    inputEmail?: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     if (!agreedTerms) {
       throw new BadRequestException('auth.errors.terms_required');
@@ -700,6 +720,12 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('auth.errors.invalid_temp_token');
     }
+
+    // 클라이언트가 입력한 name/email 우선 적용, 없으면 소셜 데이터 사용
+    const finalName = inputName?.trim() || payload.name?.trim() || '사용자';
+    const finalEmail =
+      inputEmail?.trim() ||
+      (!this.isApplePrivateEmail(payload.email) ? payload.email : null);
 
     // 중복 가입 방지 (약관 동의 화면에서 두 번 제출하는 경우)
     const existing = await this.prisma.user.findUnique({
@@ -743,8 +769,8 @@ export class AuthService {
 
     const user = await this.prisma.user.create({
       data: {
-        email: payload.email,
-        name: payload.name,
+        email: finalEmail,
+        name: finalName,
         profileImageKey,
         provider: payload.provider as any,
         providerId: payload.providerId,

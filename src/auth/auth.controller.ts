@@ -53,6 +53,7 @@ import {
   ForceDeleteAccountResponseDto,
   GrantAdminResponseDto,
   RevokeAdminResponseDto,
+  SocialLoginResponseDto,
 } from '@/auth/dto/auth-response.dto';
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { KakaoAuthGuard } from '@/auth/guards/kakao-auth.guard';
@@ -536,7 +537,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Google 모바일 로그인 성공, 토큰 반환',
-    type: LoginResponseDto,
+    type: SocialLoginResponseDto,
   })
   @ApiResponse({ status: 401, description: '유효하지 않은 ID Token' })
   googleMobileLogin(@Body('idToken') idToken: string) {
@@ -581,7 +582,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Kakao 모바일 로그인 성공, 토큰 반환',
-    type: LoginResponseDto,
+    type: SocialLoginResponseDto,
   })
   @ApiResponse({ status: 401, description: '유효하지 않은 액세스 토큰' })
   kakaoMobileLogin(@Body('accessToken') accessToken: string) {
@@ -630,7 +631,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Apple 모바일 로그인 성공, 토큰 반환',
-    type: LoginResponseDto,
+    type: SocialLoginResponseDto,
   })
   @ApiResponse({ status: 401, description: '유효하지 않은 Identity Token' })
   appleMobileLogin(
@@ -669,7 +670,9 @@ export class AuthController {
     summary: '소셜 신규 회원가입 완료 (약관 동의)',
     description:
       '소셜 로그인 후 신규 유저가 약관에 동의하면 계정을 생성하고 토큰을 발급합니다.\n' +
-      'tempToken은 소셜 로그인 응답의 isNewUser: true일 때 함께 반환되며 10분간 유효합니다.',
+      'tempToken은 소셜 로그인 응답의 isNewUser: true일 때 함께 반환되며 10분간 유효합니다.\n' +
+      'needsName: true이면 name 필드를 함께 전송해야 합니다.\n' +
+      'needsEmail: true이면 email 필드를 선택적으로 전송할 수 있습니다.',
   })
   @ApiBody({
     schema: {
@@ -679,6 +682,15 @@ export class AuthController {
         agreedTerms: {
           type: 'boolean',
           description: '개인정보처리방침 동의 여부',
+        },
+        name: {
+          type: 'string',
+          description: '사용자 이름 (needsName: true일 때 필수)',
+        },
+        email: {
+          type: 'string',
+          description:
+            '이메일 (needsEmail: true일 때 선택, 미입력 시 비공개로 가입)',
         },
       },
       required: ['tempToken', 'agreedTerms'],
@@ -694,8 +706,10 @@ export class AuthController {
   socialSignup(
     @Body('tempToken') tempToken: string,
     @Body('agreedTerms') agreedTerms: boolean,
+    @Body('name') name?: string,
+    @Body('email') email?: string,
   ) {
-    return this.authService.socialSignup(tempToken, agreedTerms);
+    return this.authService.socialSignup(tempToken, agreedTerms, name, email);
   }
 
   @Put('location')

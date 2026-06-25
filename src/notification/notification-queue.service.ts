@@ -216,8 +216,14 @@ export class NotificationQueueService {
         notification: { channelId: category },
       },
       apns: {
+        headers: { 'apns-priority': '10' },
         payload: {
-          aps: { sound: 'default', contentAvailable: true },
+          aps: {
+            alert: { title, body },
+            sound: 'default',
+            badge: 1,
+            contentAvailable: true,
+          },
         },
       },
     };

@@ -101,6 +101,73 @@ export class RecurringExpenseDto {
   updatedAt: Date;
 }
 
+export class RecurringExpenseHistoryItemDto {
+  @ApiProperty({ description: '지출 ID', example: 'uuid-1234' })
+  id: string;
+
+  @ApiProperty({
+    description: '지출 날짜',
+    example: '2026-05-25T00:00:00.000Z',
+  })
+  date: Date;
+
+  @ApiProperty({ description: '금액', example: '155000.00' })
+  amount: string;
+
+  @ApiProperty({
+    description: '확정 여부 (false = 가변 항목으로 자동 생성된 미확정 금액)',
+    example: true,
+  })
+  isConfirmed: boolean;
+
+  @ApiProperty({ description: '메모', nullable: true, example: '5월 전기세' })
+  description: string | null;
+}
+
+export class RecurringExpenseHistoryDto {
+  @ApiProperty({ description: '고정지출 ID', example: 'uuid-1234' })
+  recurringExpenseId: string;
+
+  @ApiProperty({ description: '가변 여부', example: true })
+  isVariable: boolean;
+
+  @ApiProperty({
+    description: '적용 내역 목록 (최신순)',
+    type: () => RecurringExpenseHistoryItemDto,
+    isArray: true,
+  })
+  history: RecurringExpenseHistoryItemDto[];
+
+  @ApiProperty({
+    description:
+      '확정 금액 평균 (isVariable=true인 경우에만 존재, 확정 건수 0이면 null)',
+    example: '152500.00',
+    nullable: true,
+  })
+  averageAmount: string | null;
+
+  @ApiProperty({
+    description: '확정 금액 합계 (isVariable=true인 경우에만 존재)',
+    example: '915000.00',
+    nullable: true,
+  })
+  totalAmount: string | null;
+
+  @ApiProperty({
+    description: '확정 금액 최솟값 (isVariable=true인 경우에만 존재)',
+    example: '130000.00',
+    nullable: true,
+  })
+  minAmount: string | null;
+
+  @ApiProperty({
+    description: '확정 금액 최댓값 (isVariable=true인 경우에만 존재)',
+    example: '175000.00',
+    nullable: true,
+  })
+  maxAmount: string | null;
+}
+
 export class MerchantDto {
   @ApiProperty({ description: '소비처 ID', example: 'uuid-1234' })
   id: string;

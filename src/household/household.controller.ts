@@ -48,6 +48,7 @@ import {
   BulkBudgetResultDto,
   BulkBudgetTemplateResultDto,
   MerchantDto,
+  RecurringExpenseHistoryDto,
 } from './dto/household-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
@@ -359,6 +360,22 @@ export class HouseholdController {
       req.user.userId,
       id,
       dto,
+    );
+  }
+
+  @Get('recurring-expenses/:id/history')
+  @ApiOperation({
+    summary: '고정지출 적용 내역 조회',
+    description:
+      '해당 고정지출에 연결된 지출 목록을 최신순으로 반환합니다. isVariable=true인 경우에는 확정(isConfirmed=true) 금액 기준 평균·합계·최솟값·최댓값도 함께 반환합니다.',
+  })
+  @ApiSuccess(RecurringExpenseHistoryDto, '고정지출 적용 내역 조회 성공')
+  @ApiNotFound('고정지출을 찾을 수 없습니다')
+  @ApiForbidden('해당 그룹의 멤버가 아닙니다')
+  getRecurringExpenseHistory(@Request() req, @Param('id') id: string) {
+    return this.householdService.getRecurringExpenseHistory(
+      req.user.userId,
+      id,
     );
   }
 

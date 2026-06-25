@@ -204,6 +204,12 @@ export class HouseholdService {
       await this.validateGroupMember(dto.memberId, expense.groupId);
     }
 
+    const autoConfirm =
+      dto.amount !== undefined &&
+      dto.isConfirmed === undefined &&
+      expense.recurringExpenseId !== null &&
+      !expense.isConfirmed;
+
     return await this.prisma.expense.update({
       where: { id },
       data: {
@@ -216,7 +222,11 @@ export class HouseholdService {
           paymentMethod: dto.paymentMethod,
         }),
         ...(dto.merchantId !== undefined && { merchantId: dto.merchantId }),
-        ...(dto.isConfirmed !== undefined && { isConfirmed: dto.isConfirmed }),
+        ...(dto.isConfirmed !== undefined
+          ? { isConfirmed: dto.isConfirmed }
+          : autoConfirm
+            ? { isConfirmed: true }
+            : {}),
         ...(dto.incomeCategory !== undefined && {
           incomeCategory: dto.incomeCategory,
         }),
@@ -746,6 +756,83 @@ export class HouseholdService {
         member: { select: { id: true, name: true } },
       },
     });
+  }
+
+  async getRecurringExpenseHistory(userId: string, id: string) {
+    const rec = await this.prisma.recurringExpense.findUnique({
+      where: { id },
+    });
+
+    if (!rec) {
+      throw new NotFoundException(
+        'household.errors.recurring_expense_not_found',
+      );
+    }
+
+    if (rec.groupId) {
+      await this.validateGroupMember(userId, rec.groupId);
+    } else if (rec.userId !== userId) {
+      throw new ForbiddenException('household.errors.own_expense_only_view');
+    }
+
+    const expenses = await this.prisma.expense.findMany({
+      where: { recurringExpenseId: id },
+      select: {
+        id: true,
+        date: true,
+        amount: true,
+        isConfirmed: true,
+        description: true,
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    const history = expenses.map((e) => ({
+      id: e.id,
+      date: e.date,
+      amount: e.amount.toFixed(2),
+      isConfirmed: e.isConfirmed,
+      description: e.description,
+    }));
+
+    if (!rec.isVariable) {
+      return {
+        recurringExpenseId: id,
+        isVariable: false,
+        history,
+        averageAmount: null,
+        totalAmount: null,
+        minAmount: null,
+        maxAmount: null,
+      };
+    }
+
+    const confirmed = expenses.filter((e) => e.isConfirmed);
+    if (confirmed.length === 0) {
+      return {
+        recurringExpenseId: id,
+        isVariable: true,
+        history,
+        averageAmount: null,
+        totalAmount: null,
+        minAmount: null,
+        maxAmount: null,
+      };
+    }
+
+    const amounts = confirmed.map((e) => Number(e.amount));
+    const total = amounts.reduce((sum, a) => sum + a, 0);
+    const average = total / amounts.length;
+
+    return {
+      recurringExpenseId: id,
+      isVariable: true,
+      history,
+      averageAmount: average.toFixed(2),
+      totalAmount: total.toFixed(2),
+      minAmount: Math.min(...amounts).toFixed(2),
+      maxAmount: Math.max(...amounts).toFixed(2),
+    };
   }
 
   async removeRecurringExpense(userId: string, id: string) {

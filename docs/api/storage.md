@@ -16,6 +16,14 @@
 
 - `type` (`'qna' | 'announcements'`)
 
+**Request Body:**
+
+```json
+{
+  "file": "" // 업로드할 이미지 파일 (string)
+}
+```
+
 **Responses:**
 
 #### 201 - 이미지 업로드 성공
@@ -39,6 +47,15 @@ Cloudflare R2에 파일을 업로드합니다.
 **Query Parameters:**
 
 - `folder` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "file": "", // 업로드할 파일 (string)
+  "folder": "" // 저장할 폴더 경로 (예: avatars, documents) (string?)
+}
+```
 
 **Responses:**
 

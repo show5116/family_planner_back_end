@@ -1381,6 +1381,14 @@ period=monthly 시 year 필수.
 **설명:**
 프로필 사진을 업로드합니다. 이미지는 자동으로 300x300px로 최적화되며, 기존 사진이 있으면 삭제됩니다.
 
+**Request Body:**
+
+```json
+{
+  "photo": "" // 프로필 사진 파일 (JPEG, PNG 등) (string)
+}
+```
+
 **Responses:**
 
 #### 201 - 프로필 사진 업로드 성공
@@ -1393,12 +1401,26 @@ period=monthly 시 year 필수.
 
 **요약:** Google 모바일 로그인 (ID Token)
 
+**Request Body:**
+
+```json
+{
+  "idToken": "" // Google ID Token (string)
+}
+```
+
 **Responses:**
 
 #### 200 - Google 모바일 로그인 성공, 토큰 반환
 
 ```json
 {
+  "isNewUser": false, // 신규 유저 여부 (boolean)
+  "accessToken": "", // Access Token (기존 유저) (string?)
+  "refreshToken": "", // Refresh Token (기존 유저) (string?)
+  "tempToken": "", // 임시 토큰 (신규 유저, 10분 유효) (string?)
+  "needsName": true, // 이름 입력 필요 여부 (신규 유저, 소셜에서 이름을 받지 못한 경우) (boolean?)
+  "needsEmail": true, // 이메일 입력 필요 여부 (신규 유저, 이메일 없거나 Apple 비공개 이메일인 경우) (boolean?)
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)
@@ -1412,7 +1434,7 @@ period=monthly 시 year 필수.
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
     "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
     "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
-  } // 사용자 정보 (UserDto)
+  } // 사용자 정보 (기존 유저) (UserDto?)
 }
 ```
 
@@ -1459,12 +1481,26 @@ period=monthly 시 year 필수.
 
 **요약:** Kakao 모바일 로그인 (액세스 토큰)
 
+**Request Body:**
+
+```json
+{
+  "accessToken": "" // Kakao 액세스 토큰 (string)
+}
+```
+
 **Responses:**
 
 #### 200 - Kakao 모바일 로그인 성공, 토큰 반환
 
 ```json
 {
+  "isNewUser": false, // 신규 유저 여부 (boolean)
+  "accessToken": "", // Access Token (기존 유저) (string?)
+  "refreshToken": "", // Refresh Token (기존 유저) (string?)
+  "tempToken": "", // 임시 토큰 (신규 유저, 10분 유효) (string?)
+  "needsName": true, // 이름 입력 필요 여부 (신규 유저, 소셜에서 이름을 받지 못한 경우) (boolean?)
+  "needsEmail": true, // 이메일 입력 필요 여부 (신규 유저, 이메일 없거나 Apple 비공개 이메일인 경우) (boolean?)
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)
@@ -1478,7 +1514,7 @@ period=monthly 시 year 필수.
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
     "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
     "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
-  } // 사용자 정보 (UserDto)
+  } // 사용자 정보 (기존 유저) (UserDto?)
 }
 ```
 
@@ -1525,12 +1561,27 @@ period=monthly 시 year 필수.
 
 **요약:** Apple 모바일 로그인 (Identity Token)
 
+**Request Body:**
+
+```json
+{
+  "identityToken": "", // Apple Identity Token (string)
+  "name": "" // 사용자 이름 (최초 로그인 시에만 전달) (string?)
+}
+```
+
 **Responses:**
 
 #### 200 - Apple 모바일 로그인 성공, 토큰 반환
 
 ```json
 {
+  "isNewUser": false, // 신규 유저 여부 (boolean)
+  "accessToken": "", // Access Token (기존 유저) (string?)
+  "refreshToken": "", // Refresh Token (기존 유저) (string?)
+  "tempToken": "", // 임시 토큰 (신규 유저, 10분 유효) (string?)
+  "needsName": true, // 이름 입력 필요 여부 (신규 유저, 소셜에서 이름을 받지 못한 경우) (boolean?)
+  "needsEmail": true, // 이메일 입력 필요 여부 (신규 유저, 이메일 없거나 Apple 비공개 이메일인 경우) (boolean?)
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)
@@ -1544,7 +1595,7 @@ period=monthly 시 year 필수.
     "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
     "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
     "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
-  } // 사용자 정보 (UserDto)
+  } // 사용자 정보 (기존 유저) (UserDto?)
 }
 ```
 
@@ -1590,6 +1641,17 @@ period=monthly 시 year 필수.
 ### POST `auth/social-signup`
 
 **요약:** 소셜 신규 회원가입 완료 (약관 동의)
+
+**Request Body:**
+
+```json
+{
+  "tempToken": "", // 소셜 로그인 임시 토큰 (string)
+  "agreedTerms": false, // 개인정보처리방침 동의 여부 (boolean)
+  "name": "", // 사용자 이름 (needsName: true일 때 필수) (string?)
+  "email": "" // 이메일 (needsEmail: true일 때 선택, 미입력 시 비공개로 가입) (string?)
+}
+```
 
 **Responses:**
 
@@ -1693,11 +1755,11 @@ period=monthly 시 year 필수.
 
 ### DELETE `auth/admin/users/:userId`
 
-**요약:** 계정 삭제 예약 (운영자 전용, 7일 유예)
+**요약:** 계정 삭제 예약 (슈퍼 어드민 전용, 7일 유예)
 
 **인증/권한:**
 
-- AdminGuard
+- SuperAdminGuard
 
 **Path Parameters:**
 
@@ -1718,11 +1780,11 @@ period=monthly 시 year 필수.
 
 ### POST `auth/admin/users/:userId/cancel-delete`
 
-**요약:** 계정 삭제 예약 취소 (운영자 전용)
+**요약:** 계정 삭제 예약 취소 (슈퍼 어드민 전용)
 
 **인증/권한:**
 
-- AdminGuard
+- SuperAdminGuard
 
 **Path Parameters:**
 
@@ -1742,11 +1804,11 @@ period=monthly 시 year 필수.
 
 ### DELETE `auth/admin/users/:userId/force`
 
-**요약:** 삭제 예약 계정 즉시 완전 삭제 (운영자 전용)
+**요약:** 삭제 예약 계정 즉시 완전 삭제 (슈퍼 어드민 전용)
 
 **인증/권한:**
 
-- AdminGuard
+- SuperAdminGuard
 
 **Path Parameters:**
 
@@ -1766,11 +1828,11 @@ period=monthly 시 year 필수.
 
 ### PATCH `auth/admin/users/:userId/grant-admin`
 
-**요약:** 운영자 권한 부여 (운영자 전용)
+**요약:** 운영자 권한 부여 (슈퍼 어드민 전용)
 
 **인증/권한:**
 
-- AdminGuard
+- SuperAdminGuard
 
 **Path Parameters:**
 
@@ -1790,11 +1852,11 @@ period=monthly 시 year 필수.
 
 ### PATCH `auth/admin/users/:userId/revoke-admin`
 
-**요약:** 운영자 권한 회수 (운영자 전용)
+**요약:** 운영자 권한 회수 (슈퍼 어드민 전용)
 
 **인증/권한:**
 
-- AdminGuard
+- SuperAdminGuard
 
 **Path Parameters:**
 
@@ -5358,6 +5420,39 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 
 ---
 
+### GET `household/recurring-expenses/:id/history`
+
+**요약:** 고정지출 적용 내역 조회
+
+**설명:**
+해당 고정지출에 연결된 지출 목록을 최신순으로 반환합니다. isVariable=true인 경우에는 확정(isConfirmed=true) 금액 기준 평균·합계·최솟값·최댓값도 함께 반환합니다.
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 고정지출 적용 내역 조회 성공
+
+```json
+{
+  "recurringExpenseId": "uuid-1234", // 고정지출 ID (string)
+  "isVariable": true, // 가변 여부 (boolean)
+  "history": [], // 적용 내역 목록 (최신순) (RecurringExpenseHistoryItemDto[])
+  "averageAmount": "152500.00", // 확정 금액 평균 (isVariable=true인 경우에만 존재, 확정 건수 0이면 null) (string | null)
+  "totalAmount": "915000.00", // 확정 금액 합계 (isVariable=true인 경우에만 존재) (string | null)
+  "minAmount": "130000.00", // 확정 금액 최솟값 (isVariable=true인 경우에만 존재) (string | null)
+  "maxAmount": "175000.00" // 확정 금액 최댓값 (isVariable=true인 경우에만 존재) (string | null)
+}
+```
+
+#### 404 - 고정지출을 찾을 수 없습니다
+
+#### 403 - 해당 그룹의 멤버가 아닙니다
+
+---
+
 ### DELETE `household/recurring-expenses/:id`
 
 **요약:** 고정지출 삭제
@@ -8402,6 +8497,14 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 - `type` (`'qna' | 'announcements'`)
 
+**Request Body:**
+
+```json
+{
+  "file": "" // 업로드할 이미지 파일 (string)
+}
+```
+
 **Responses:**
 
 #### 201 - 이미지 업로드 성공
@@ -8425,6 +8528,15 @@ Cloudflare R2에 파일을 업로드합니다.
 **Query Parameters:**
 
 - `folder` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "file": "", // 업로드할 파일 (string)
+  "folder": "" // 저장할 폴더 경로 (예: avatars, documents) (string?)
+}
+```
 
 **Responses:**
 
@@ -9109,6 +9221,7 @@ R2에 파일이 존재하는지 확인합니다.
         "createdAt": "2025-12-30T00:00:00Z",
         "updatedAt": "2025-12-30T00:00:00Z"
       }, // 카테고리 (CategoryDto)
+      "allDay": false, // 종일 여부 (boolean)
       "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
       "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
       "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
@@ -9208,6 +9321,7 @@ R2에 파일이 존재하는지 확인합니다.
   "priority": null, // 우선순위 (TaskPriority?)
   "categoryId": "uuid", // 카테고리 ID (string?)
   "groupId": "uuid", // 그룹 ID (그룹 Task 생성 시) (string?)
+  "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "recurring": {
@@ -9278,6 +9392,7 @@ R2에 파일이 존재하는지 확인합니다.
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
+  "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
@@ -9342,6 +9457,7 @@ R2에 파일이 존재하는지 확인합니다.
   "categoryId": "uuid", // 카테고리 ID (string?)
   "type": null, // Task 타입 (TaskType?)
   "priority": null, // 우선순위 (TaskPriority?)
+  "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "participantIds": ["uuid-1", "uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
@@ -9386,6 +9502,7 @@ R2에 파일이 존재하는지 확인합니다.
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
+  "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
@@ -9472,6 +9589,7 @@ R2에 파일이 존재하는지 확인합니다.
     "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
     "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
   }, // 카테고리 (CategoryDto)
+  "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
