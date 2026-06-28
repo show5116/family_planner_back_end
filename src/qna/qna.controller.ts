@@ -71,6 +71,7 @@ export class QnaController {
   }
 
   @Get('questions/:id')
+  @Public()
   @UseGuards(QuestionVisibilityGuard)
   @ApiOperation({ summary: '질문 상세 조회' })
   @ApiSuccess(QuestionDetailDto, '질문 상세 조회 성공')
