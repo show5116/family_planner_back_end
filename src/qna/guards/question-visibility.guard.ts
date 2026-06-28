@@ -22,7 +22,7 @@ export class QuestionVisibilityGuard implements CanActivate {
     const userId = request.user?.userId;
     const questionId = request.params.id;
 
-    if (!userId || !questionId) {
+    if (!questionId) {
       throw new ForbiddenException('qna.errors.no_permission');
     }
 
@@ -35,6 +35,17 @@ export class QuestionVisibilityGuard implements CanActivate {
       throw new NotFoundException('qna.errors.question_not_found');
     }
 
+    // 공개 질문은 누구나 접근 가능 (비로그인 포함)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (question.visibility === QuestionVisibility.PUBLIC) {
+      return true;
+    }
+
+    // 비공개 질문은 로그인 필요
+    if (!userId) {
+      throw new ForbiddenException('qna.errors.no_permission');
+    }
+
     // ADMIN은 모든 질문 접근 가능
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -42,12 +53,6 @@ export class QuestionVisibilityGuard implements CanActivate {
     });
 
     if (user?.isAdmin) {
-      return true;
-    }
-
-    // 공개 질문은 누구나 접근 가능
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-    if (question.visibility === QuestionVisibility.PUBLIC) {
       return true;
     }
 
