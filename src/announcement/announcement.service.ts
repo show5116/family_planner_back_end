@@ -24,7 +24,7 @@ export class AnnouncementService {
   /**
    * 공지사항 목록 조회 (고정 공지 우선) + Redis 캐싱
    */
-  async findAll(userId: string, query: AnnouncementQueryDto) {
+  async findAll(userId: string | null, query: AnnouncementQueryDto) {
     // 1. 캐시 키 생성 (userId 제외 - 공지사항은 모든 사용자가 동일하게 봄)
     const cacheKey = `${query.page}:${query.limit}:${query.category || 'all'}:${query.pinnedOnly || false}`;
 
@@ -117,7 +117,7 @@ export class AnnouncementService {
   /**
    * 공지사항 상세 조회 + 자동 읽음 처리 + 조회수 카운트 + 캐싱
    */
-  async findOne(id: string, userId: string) {
+  async findOne(id: string, userId: string | null) {
     // 1. Redis 캐시 확인
     const cached = await this.redisService.getCachedAnnouncement(id);
     if (cached) {
@@ -183,13 +183,15 @@ export class AnnouncementService {
    */
   private async incrementViewCountAsync(
     announcementId: string,
-    userId: string,
+    userId: string | null,
   ): Promise<void> {
     // Redis 조회수 증가
     await this.redisService.incrementAnnouncementViewCount(announcementId);
 
-    // Redis 읽음 처리 (Write-Back 전략)
-    await this.redisService.markAnnouncementAsRead(announcementId, userId);
+    // 비로그인 사용자는 읽음 처리 생략
+    if (userId) {
+      await this.redisService.markAnnouncementAsRead(announcementId, userId);
+    }
   }
 
   /**
