@@ -30,6 +30,7 @@ import {
   ApiNotFound,
 } from '@/common/decorators/api-responses.decorator';
 import { AdminGuard } from '@/auth/admin.guard';
+import { Public } from '@/auth/decorators/public.decorator';
 
 /**
  * 공지사항 컨트롤러
@@ -42,18 +43,20 @@ export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
 
   @Get()
+  @Public()
   @ApiOperation({ summary: '공지사항 목록 조회' })
   @ApiSuccess(PaginatedAnnouncementDto, '공지사항 목록 조회 성공')
   findAll(@Request() req, @Query() query: AnnouncementQueryDto) {
-    return this.announcementService.findAll(req.user.userId, query);
+    return this.announcementService.findAll(req.user?.userId ?? null, query);
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: '공지사항 상세 조회' })
   @ApiSuccess(AnnouncementDto, '공지사항 상세 조회 성공')
   @ApiNotFound('공지사항을 찾을 수 없습니다')
   findOne(@Param('id') id: string, @Request() req) {
-    return this.announcementService.findOne(id, req.user.userId);
+    return this.announcementService.findOne(id, req.user?.userId ?? null);
   }
 
   @Post()

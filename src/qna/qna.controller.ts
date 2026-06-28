@@ -28,6 +28,25 @@ import {
   ApiNotFound,
 } from '@/common/decorators/api-responses.decorator';
 import { QuestionVisibilityGuard } from './guards/question-visibility.guard';
+import { Public } from '@/auth/decorators/public.decorator';
+
+/**
+ * Q&A 공개 컨트롤러 (비로그인 접근 가능)
+ * 소개 웹페이지 등 외부에서 공개 질문 목록을 조회할 때 사용
+ */
+@ApiTags('Q&A (Public)')
+@Controller('public/qna')
+export class QnaPublicController {
+  constructor(private readonly qnaService: QnaService) {}
+
+  @Get('questions')
+  @Public()
+  @ApiOperation({ summary: '공개 질문 목록 조회 (인증 불필요)' })
+  @ApiSuccess(PaginatedQuestionDto, '공개 질문 목록 조회 성공')
+  findPublicQuestions(@Query() query: QuestionQueryDto) {
+    return this.qnaService.findQuestions(null, { ...query, filter: 'public' });
+  }
+}
 
 /**
  * Q&A 컨트롤러 (사용자용)

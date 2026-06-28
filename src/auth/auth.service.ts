@@ -723,9 +723,29 @@ export class AuthService {
 
     // 클라이언트가 입력한 name/email 우선 적용, 없으면 소셜 데이터 사용
     const finalName = inputName?.trim() || payload.name?.trim() || '사용자';
-    const finalEmail =
+    const rawEmail =
       inputEmail?.trim() ||
       (!this.isApplePrivateEmail(payload.email) ? payload.email : null);
+
+    // 이메일 형식 검증
+    if (rawEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(rawEmail)) {
+        throw new BadRequestException('auth.errors.invalid_email_format');
+      }
+    }
+
+    const finalEmail = rawEmail;
+
+    // 이메일 중복 체크
+    if (finalEmail) {
+      const emailExists = await this.prisma.user.findUnique({
+        where: { email: finalEmail },
+      });
+      if (emailExists) {
+        throw new ConflictException('auth.errors.email_exists');
+      }
+    }
 
     // 중복 가입 방지 (약관 동의 화면에서 두 번 제출하는 경우)
     const existing = await this.prisma.user.findUnique({
