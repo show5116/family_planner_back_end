@@ -530,7 +530,7 @@ export class AuthService {
       provider: 'GOOGLE',
       providerId: payload.sub,
       email: payload.email ?? null,
-      name: payload.name ?? payload.email ?? '사용자',
+      name: payload.name ?? null,
       profileImage: payload.picture,
     });
   }
@@ -563,9 +563,7 @@ export class AuthService {
       providerId: data.id.toString(),
       email: kakaoAccount?.email ?? null,
       name:
-        kakaoAccount?.profile?.nickname ??
-        data.properties?.nickname ??
-        '사용자',
+        kakaoAccount?.profile?.nickname ?? data.properties?.nickname ?? null,
       profileImage: kakaoAccount?.profile?.profile_image_url,
     });
   }
@@ -589,16 +587,15 @@ export class AuthService {
     }
 
     const email = payload.email ?? null;
-    // privaterelay 이메일이면 이메일 기반 이름 fallback 사용 안 함 (needsName 유도)
-    const isPrivate = this.isApplePrivateEmail(email);
-    const displayName =
-      name?.trim() || (!isPrivate ? email?.split('@')[0] : null) || '사용자';
+    // Apple은 최초 로그인 시에만 이름을 제공한다 (재로그인 시 name이 없는 것이 정상).
+    // 이메일 split 같은 추정값은 실제 이름이 아니므로 fallback으로 사용하지 않는다.
+    const trimmedName = name?.trim();
 
     return this.validateSocialUser({
       provider: 'APPLE',
       providerId: payload.sub,
       email,
-      name: displayName,
+      name: trimmedName || null,
       profileImage: null,
     });
   }
@@ -608,17 +605,20 @@ export class AuthService {
   }
 
   /**
-   * 소셜 로그인 처리 (Google, Kakao 등)
+   * 소셜 로그인 처리 (Google, Kakao, Apple)
    * - 기존 사용자: 즉시 토큰 발급
    * - 신규 사용자: 약관 동의를 위한 tempToken 반환 (계정 미생성)
-   *   needsName: 이름을 소셜에서 받지 못한 경우
+   *   needsName: 소셜 제공자가 실제 이름을 주지 않은 경우 (name이 null)
    *   needsEmail: 이메일이 없거나 Apple 비공개 이메일인 경우
+   *
+   * name/email은 제공자가 실제로 준 값만 string으로, 못 받은 경우 null로 전달되어야 한다.
+   * (placeholder 문자열을 미리 채워 넣지 말 것 — '진짜로 없음'과 '우연히 같은 값'을 구분할 수 없게 됨)
    */
   async validateSocialUser(socialUser: {
     provider: string;
     providerId: string;
     email: string | null;
-    name: string;
+    name: string | null;
     profileImage?: string;
   }): Promise<
     | { isNewUser: false; accessToken: string; refreshToken: string }
@@ -639,7 +639,7 @@ export class AuthService {
     });
 
     if (!user) {
-      const needsName = !socialUser.name || socialUser.name === '사용자';
+      const needsName = !socialUser.name?.trim();
       const needsEmail =
         !socialUser.email || this.isApplePrivateEmail(socialUser.email);
 
@@ -710,7 +710,7 @@ export class AuthService {
       provider: string;
       providerId: string;
       email: string | null;
-      name: string;
+      name: string | null;
       profileImage: string | null;
     };
     try {
@@ -721,7 +721,9 @@ export class AuthService {
       throw new UnauthorizedException('auth.errors.invalid_temp_token');
     }
 
-    // 클라이언트가 입력한 name/email 우선 적용, 없으면 소셜 데이터 사용
+    // 클라이언트가 입력한 name/email 우선 적용, 없으면 소셜 데이터 사용.
+    // 여기가 placeholder('사용자')를 적용하는 유일한 지점 — 그 외 구간은 null을 그대로 전달해
+    // "값이 진짜 없음"과 "우연히 같은 문자열"을 구분 가능하게 유지한다.
     const finalName = inputName?.trim() || payload.name?.trim() || '사용자';
     const rawEmail =
       inputEmail?.trim() ||

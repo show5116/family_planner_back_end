@@ -26,15 +26,13 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     profile: any,
     done: (error: any, user?: any) => void,
   ): void {
-    // Apple은 최초 로그인 시에만 name을 제공함
+    // Apple은 최초 로그인 시에만 name을 제공함 (재로그인 시 누락이 정상 동작).
+    // 이메일 split 등 추정값은 실제 이름이 아니므로 사용하지 않고, 없으면 null로 전달한다.
     const email = idToken?.email ?? null;
     const sub = idToken?.sub;
     const firstName = profile?.name?.firstName ?? '';
     const lastName = profile?.name?.lastName ?? '';
-    const name =
-      [lastName, firstName].filter(Boolean).join('') ||
-      email?.split('@')[0] ||
-      '사용자';
+    const name = [lastName, firstName].filter(Boolean).join('') || null;
 
     done(null, {
       provider: 'APPLE',
