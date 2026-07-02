@@ -579,7 +579,7 @@ export class AuthService {
     let payload: any;
     try {
       payload = await appleSignin.verifyIdToken(identityToken, {
-        audience: this.configService.get<string>('oauth.apple.clientId'),
+        audience: this.configService.get<string>('oauth.apple.mobileClientId'),
         ignoreExpiration: false,
       });
     } catch {
