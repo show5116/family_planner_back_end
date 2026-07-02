@@ -17,6 +17,7 @@ export default registerAs('oauth', () => ({
   },
   apple: {
     clientId: process.env.APPLE_CLIENT_ID || '',
+    mobileClientId: process.env.APPLE_MOBILE_CLIENT_ID || '',
     teamId: process.env.APPLE_TEAM_ID || '',
     keyId: process.env.APPLE_KEY_ID || '',
     privateKey: process.env.APPLE_PRIVATE_KEY || '',

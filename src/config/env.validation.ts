@@ -42,6 +42,7 @@ export const validationSchema = Joi.object({
 
   // Apple OAuth (선택적)
   APPLE_CLIENT_ID: Joi.string().optional(),
+  APPLE_MOBILE_CLIENT_ID: Joi.string().optional(),
   APPLE_TEAM_ID: Joi.string().optional(),
   APPLE_KEY_ID: Joi.string().optional(),
   APPLE_PRIVATE_KEY: Joi.string().optional(),
