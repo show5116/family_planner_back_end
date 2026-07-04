@@ -54,7 +54,7 @@ Prisma schema의 `PermissionCode` enum. `Role.permissions` JSON 배열에 저장
 
 | 코드 | 설명 | 적용 엔드포인트 |
 |------|------|----------------|
-| `INVITE_MEMBER` | 초대 관련 모든 작업 | `POST /:id/regenerate-code`<br>`POST /:id/invite-by-email`<br>`GET /:id/join-requests`<br>`POST /:id/join-requests/:rid/accept`<br>`POST /:id/join-requests/:rid/reject`<br>`DELETE /:id/invites/:rid`<br>`POST /:id/invites/:rid/resend` |
+| `INVITE_MEMBER` | 초대 관련 모든 작업 | `POST /:id/regenerate-code`<br>`GET /:id/join-requests`<br>`POST /:id/join-requests/:rid/accept`<br>`POST /:id/join-requests/:rid/reject` |
 | `DELETE_GROUP` | 그룹 삭제 | `DELETE /groups/:id` |
 | `UPDATE_GROUP` | 그룹 정보 수정 | `PATCH /groups/:id` |
 | `MANAGE_ROLE` | 커스텀 역할 CRUD + 정렬 | `POST /:groupId/roles`<br>`PATCH /:groupId/roles/:id`<br>`DELETE /:groupId/roles/:id`<br>`PATCH /:groupId/roles/bulk/sort-order` |
@@ -90,13 +90,10 @@ Prisma schema의 `PermissionCode` enum. `Role.permissions` JSON 배열에 저장
 | `PATCH` | `/groups/:id/my-color` | `GroupMembershipGuard` | 멤버이기만 하면 됨 |
 | `DELETE` | `/groups/:id/members/:userId` | `GroupPermissionGuard` | `MANAGE_MEMBER` |
 | `POST` | `/groups/:id/regenerate-code` | `GroupPermissionGuard` | `INVITE_MEMBER` |
-| `POST` | `/groups/:id/invite-by-email` | `GroupPermissionGuard` | `INVITE_MEMBER` |
 | `POST` | `/groups/:id/transfer-ownership` | - (JWT only) | 서비스 레이어에서 OWNER 확인 |
 | `GET` | `/groups/:id/join-requests` | `GroupPermissionGuard` | `INVITE_MEMBER` |
 | `POST` | `/groups/:id/join-requests/:requestId/accept` | `GroupPermissionGuard` | `INVITE_MEMBER` |
 | `POST` | `/groups/:id/join-requests/:requestId/reject` | `GroupPermissionGuard` | `INVITE_MEMBER` |
-| `DELETE` | `/groups/:id/invites/:requestId` | `GroupPermissionGuard` | `INVITE_MEMBER` |
-| `POST` | `/groups/:id/invites/:requestId/resend` | `GroupPermissionGuard` | `INVITE_MEMBER` |
 
 ### 역할 관리 (`GroupRoleController`)
 

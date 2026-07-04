@@ -1,8 +1,7 @@
 {
   "subject": {
     "verification": "您的邮箱验证码",
-    "password_reset": "您的密码重置验证码",
-    "group_invite": "[Family Planner] 您已被邀请加入 {groupName} 群组"
+    "password_reset": "您的密码重置验证码"
   },
   "verification": {
     "header_subtitle": "欢迎使用 Family Planner！",
@@ -29,20 +28,5 @@
     "security_text": "如果您未申请重置密码，请立即忽略此邮件并检查您的账户安全。",
     "footer1": "此邮件在密码重置请求时自动发送。",
     "footer2": "如果您未申请重置密码，请忽略此邮件。"
-  },
-  "group_invite": {
-    "header_subtitle": "群组邀请",
-    "title": "您收到了群组邀请！",
-    "body1": "{inviterName} 邀请您加入群组。",
-    "invited_group_label": "受邀群组",
-    "body2": "您可以使用以下邀请码加入群组。",
-    "code_label": "邀请码",
-    "how_to_join_label": "加入方式",
-    "step1": "登录 Family Planner 应用程序或网站",
-    "step2": "选择加入群组菜单",
-    "step3": "输入上述邀请码",
-    "expiry_text": "邀请码有效期为7天。",
-    "footer1": "此邮件在发送群组邀请时自动发送。",
-    "footer2": "如果您不希望加入群组，请忽略此邮件。"
   }
 }

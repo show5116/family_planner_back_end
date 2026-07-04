@@ -85,12 +85,10 @@
 
 | # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
 |---|--------|------|--------|-----------|------|
-| 1 | 이메일로 그룹 초대 | 그룹 초대 | 초대받은 사용자 | 즉시 | [group-invite.service.ts](../../src/group/group-invite.service.ts) |
-| 2 | 초대 코드로 가입 요청 생성 | 그룹 가입 요청 | 그룹 OWNER | 즉시 | [group-invite.service.ts](../../src/group/group-invite.service.ts) |
-| 3 | 가입 요청 승인 | 그룹 가입 승인 | 승인된 사용자 | 즉시 | [group-invite.service.ts](../../src/group/group-invite.service.ts) |
-| 4 | 가입 요청 거부 | 그룹 가입 거부 | 거부된 사용자 | 즉시 | [group-invite.service.ts](../../src/group/group-invite.service.ts) |
-| 5 | 이메일 초대 코드로 즉시 가입 완료 | 새 멤버 가입 | 기존 그룹 멤버 전체 | 즉시 | [group-invite.service.ts](../../src/group/group-invite.service.ts) |
-| 6 | 그룹장 권한 양도 | 그룹장 권한 양도 | 새 OWNER | 즉시 | [group-member.service.ts](../../src/group/group-member.service.ts) |
+| 1 | 초대 코드로 가입 요청 생성 | 그룹 가입 요청 | 그룹 OWNER | 즉시 | [group-invite.service.ts](../../src/group/group-invite.service.ts) |
+| 2 | 가입 요청 승인 | 그룹 가입 승인 | 승인된 사용자 | 즉시 | [group-invite.service.ts](../../src/group/group-invite.service.ts) |
+| 3 | 가입 요청 거부 | 그룹 가입 거부 | 거부된 사용자 | 즉시 | [group-invite.service.ts](../../src/group/group-invite.service.ts) |
+| 4 | 그룹장 권한 양도 | 그룹장 권한 양도 | 새 OWNER | 즉시 | [group-member.service.ts](../../src/group/group-member.service.ts) |
 
 ---
 
