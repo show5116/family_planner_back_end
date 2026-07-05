@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
+  IsDateString,
   ValidateIf,
   Min,
   Max,
@@ -92,6 +93,27 @@ export class CreateRecurringExpenseDto {
   dayOfMonth: number;
 
   @ApiProperty({
+    description:
+      '시작 월 (YYYY-MM-DD, 일자는 무시되고 1일로 저장됨). 과거 월을 지정하면 등록 시점에 소급하여 오늘까지 지출 내역을 생성합니다.',
+    required: false,
+    example: '2026-03-01',
+  })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiProperty({
+    description:
+      '총 반복 개월 수 (예: 24개월 할부). 생략 시 무기한 반복됩니다. 입력 시 startDate가 함께 필요합니다.',
+    required: false,
+    example: 24,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  totalMonths?: number;
+
+  @ApiProperty({
     description: '결제 주체 ID (결제자 또는 소비자, 가정마다 다르게 활용)',
     required: false,
   })
@@ -163,6 +185,26 @@ export class UpdateRecurringExpenseDto {
   @Min(1)
   @Max(31)
   dayOfMonth?: number;
+
+  @ApiProperty({
+    description:
+      '시작 월 (YYYY-MM-DD, 일자는 무시되고 1일로 저장됨). 수정 시에는 소급 생성을 다시 수행하지 않으며, 종료 시점 재계산에만 사용됩니다.',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiProperty({
+    description: '총 반복 개월 수 (null 전달 시 무기한 반복으로 변경)',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((o) => o.totalMonths !== null)
+  @IsInt()
+  @Min(1)
+  totalMonths?: number | null;
 
   @ApiProperty({ description: '활성 여부', required: false })
   @IsOptional()

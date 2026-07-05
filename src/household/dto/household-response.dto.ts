@@ -71,6 +71,28 @@ export class RecurringExpenseDto {
   @ApiProperty({ description: '매달 발생 일(day). 1~31', example: 25 })
   dayOfMonth: number;
 
+  @ApiProperty({
+    description: '시작 월 (소급 생성 및 종료 시점 계산 기준)',
+    example: '2026-03-01T00:00:00.000Z',
+    nullable: true,
+  })
+  startDate: Date | null;
+
+  @ApiProperty({
+    description: '총 반복 개월 수 (null이면 무기한 반복)',
+    example: 24,
+    nullable: true,
+  })
+  totalMonths: number | null;
+
+  @ApiProperty({
+    description:
+      '종료 예정 월 (startDate + totalMonths 기준 계산값, 무기한이면 null)',
+    example: '2028-02-01T00:00:00.000Z',
+    nullable: true,
+  })
+  endDate: Date | null;
+
   @ApiProperty({ description: '활성 여부', example: true })
   isActive: boolean;
 

@@ -754,6 +754,8 @@ model RecurringExpense {
   merchantId     String?
   description    String?          @db.VarChar(200)
   dayOfMonth     Int
+  startDate      DateTime?        @db.Date
+  totalMonths    Int?
   isActive       Boolean          @default(true)
   memberId       String?
   createdAt      DateTime         @default(now())
