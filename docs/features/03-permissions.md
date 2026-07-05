@@ -53,8 +53,8 @@
 ```typescript
 @UseGuards(JwtAuthGuard, GroupPermissionGuard)
 @RequirePermission(PermissionCode.INVITE_MEMBER)
-@Post(':groupId/members/invite')
-async inviteByEmail(...) { ... }
+@Post(':groupId/regenerate-code')
+regenerateInviteCode(...) { ... }
 ```
 
 ---

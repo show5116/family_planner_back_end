@@ -51,21 +51,11 @@
 ### 초대 코드 방식
 - **가입** (`POST /groups/join`):
   - 8자리 코드 입력
-  - 이메일 초대인 경우: 즉시 승인 및 멤버 추가
-  - 일반 요청: REQUEST 타입으로 PENDING 상태 생성, 관리자 승인 대기
+  - REQUEST 타입으로 PENDING 상태 생성, 관리자 승인 대기
 
 - **코드 재생성** (`POST /groups/:id/regenerate-code`):
   - `INVITE_MEMBER` 권한 필요
   - 중복 검사 후 고유 코드 생성
-
-### 이메일 초대
-- **초대** (`POST /groups/:id/invite-by-email`):
-  - INVITE_MEMBER 권한 필요
-  - 초대 이메일 자동 발송 (초대 코드 포함)
-  - 초대 코드 만료 시 자동 재생성
-
-- **취소** (`DELETE /groups/:id/invites/:requestId`): INVITE 타입 PENDING 초대만 취소 가능
-- **재전송** (`POST /groups/:id/invites/:requestId/resend`): 초대 이메일 재발송
 
 ### 가입 요청 관리
 - **목록** (`GET /groups/:id/join-requests`): 상태별 필터링 가능
@@ -109,7 +99,7 @@
 
 | 코드 | 설명 | 카테고리 |
 |------|------|----------|
-| `INVITE_MEMBER` | 초대 코드 재생성, 이메일 초대, 가입 요청 승인/거부/취소/재전송 | 멤버 초대 |
+| `INVITE_MEMBER` | 초대 코드 재생성, 가입 요청 승인/거부 | 멤버 초대 |
 | `DELETE_GROUP` | 그룹 삭제 | 그룹 |
 | `UPDATE_GROUP` | 그룹 정보 수정 | 그룹 |
 | `MANAGE_ROLE` | 그룹 커스텀 역할 생성/수정/삭제/정렬 | 역할 |
@@ -249,8 +239,6 @@ model GroupJoinRequest {
 - [x] 8자리 초대 코드 자동 생성
 - [x] 초대 코드 재생성
 - [x] 초대 코드로 그룹 가입
-- [x] 이메일 초대 시스템
-- [x] 초대 취소 및 재전송
 - [x] 가입 요청 관리 (승인/거부)
 - [x] 내 가입 신청 목록 조회
 - [x] 멤버 목록 조회
@@ -286,9 +274,6 @@ model GroupJoinRequest {
 | POST   | `/groups/join`                                | 초대 코드로 가입    | JWT                |
 | GET    | `/groups/my-join-requests`                    | 내 가입 신청 목록   | JWT                |
 | POST   | `/groups/:id/regenerate-code`                 | 초대 코드 재생성    | JWT, INVITE_MEMBER |
-| POST   | `/groups/:id/invite-by-email`                 | 이메일로 초대       | JWT, INVITE_MEMBER |
-| DELETE | `/groups/:id/invites/:requestId`              | 초대 취소           | JWT, INVITE_MEMBER |
-| POST   | `/groups/:id/invites/:requestId/resend`       | 초대 재전송         | JWT, INVITE_MEMBER |
 | GET    | `/groups/:id/join-requests`                   | 가입 요청 목록 조회 | JWT, INVITE_MEMBER |
 | POST   | `/groups/:id/join-requests/:requestId/accept` | 가입 요청 승인      | JWT, INVITE_MEMBER |
 | POST   | `/groups/:id/join-requests/:requestId/reject` | 가입 요청 거부      | JWT, INVITE_MEMBER |
@@ -316,17 +301,16 @@ model GroupJoinRequest {
 
 ## 테스트
 
-### 단위 테스트 (39개 통과)
+### 단위 테스트 (33개 통과)
 - GroupService: 그룹 생성, 조회, 수정, 삭제
-- GroupInviteService: 초대 코드, 가입 요청, 이메일 초대
+- GroupInviteService: 초대 코드, 가입 요청
 - GroupController: Controller 레이어 검증
 
-### E2E 테스트 (17개 작성)
+### E2E 테스트 (14개 작성)
 - 그룹 생성 및 조회 플로우
 - 초대 코드 가입 플로우
-- 이메일 초대 플로우
 - 멤버 관리 플로우
 
 ---
 
-**Last Updated**: 2026-03-10
+**Last Updated**: 2026-07-04

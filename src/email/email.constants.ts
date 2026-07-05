@@ -1,7 +1,6 @@
 export enum EmailTemplate {
   VERIFICATION = 'verification',
   PASSWORD_RESET = 'password-reset',
-  GROUP_INVITE = 'group-invite',
 }
 
 export const EMAIL_THEME_COLORS = {
@@ -16,11 +15,5 @@ export const EMAIL_THEME_COLORS = {
     codeBoxBg: '#fff3e0',
     codeBoxBorder: '#FF5722',
     codeColor: '#FF5722',
-  },
-  [EmailTemplate.GROUP_INVITE]: {
-    headerColor: '#6366F1',
-    codeBoxBg: '#fff',
-    codeBoxBorder: '#6366F1',
-    codeColor: '#6366F1',
   },
 } as const;

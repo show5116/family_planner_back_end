@@ -10,7 +10,6 @@ import { GroupReportAdminController } from '@/group/group-report-admin.controlle
 import { PrismaModule } from '@/prisma/prisma.module';
 import { RoleService } from '@/role/role.service';
 import { StorageModule } from '@/storage/storage.module';
-import { EmailModule } from '@/email/email.module';
 import { NotificationModule } from '@/notification/notification.module';
 import { WebhookModule } from '@/webhook/webhook.module';
 import { RedisModule } from '@/redis/redis.module';
@@ -19,7 +18,6 @@ import { RedisModule } from '@/redis/redis.module';
   imports: [
     PrismaModule,
     StorageModule,
-    EmailModule,
     NotificationModule,
     WebhookModule,
     RedisModule,

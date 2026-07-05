@@ -36,26 +36,9 @@ export interface PasswordResetEmailContext extends BaseEmailContext {
   securityText: string;
 }
 
-export interface GroupInviteEmailContext extends BaseEmailContext {
-  groupName: string;
-  inviterName: string;
-  inviteCode: string;
-  title: string;
-  body1: string;
-  invitedGroupLabel: string;
-  body2: string;
-  codeLabel: string;
-  howToJoinLabel: string;
-  step1: string;
-  step2: string;
-  step3: string;
-  expiryText: string;
-}
-
 export type EmailContext =
   | VerificationEmailContext
-  | PasswordResetEmailContext
-  | GroupInviteEmailContext;
+  | PasswordResetEmailContext;
 
 export interface SendEmailOptions {
   to: string;

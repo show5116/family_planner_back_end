@@ -7,7 +7,6 @@
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
-import { EmailService } from '@/email/email.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 
@@ -16,7 +15,6 @@ export class GroupInviteService {
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
-    private emailService: EmailService,
     private notificationService: NotificationService,
     private i18n: I18nService,
   ) {}
@@ -80,33 +78,6 @@ export class GroupInviteService {
     }
 
     return code;
-  }
-
-  /**
-   * 초대 코드 유효성 확인 및 재생성
-   * 만료된 경우 자동으로 재생성하여 반환
-   */
-  private async ensureValidInviteCode(
-    groupId: string,
-  ): Promise<{ inviteCode: string; inviteCodeExpiresAt: Date }> {
-    const group = await this.prisma.group.findUnique({
-      where: { id: groupId },
-      select: { inviteCode: true, inviteCodeExpiresAt: true },
-    });
-
-    if (!group) {
-      throw new NotFoundException('group.errors.group_not_found');
-    }
-
-    // 초대 코드가 만료되었으면 재생성
-    if (group.inviteCodeExpiresAt <= new Date()) {
-      return await this.regenerateInviteCode(groupId);
-    }
-
-    return {
-      inviteCode: group.inviteCode,
-      inviteCodeExpiresAt: group.inviteCodeExpiresAt,
-    };
   }
 
   /**
@@ -558,218 +529,6 @@ export class GroupInviteService {
       message: this.i18n.t('group.success.join_rejected', {
         lang: I18nContext.current()?.lang ?? 'ko',
       }),
-    };
-  }
-
-  /**
-   * 이메일로 그룹 초대 (INVITE_MEMBER 권한 필요)
-   */
-  async inviteByEmail(groupId: string, inviterUserId: string, email: string) {
-    // 그룹 조회
-    const group = await this.prisma.group.findUnique({
-      where: { id: groupId },
-      select: { id: true, name: true },
-    });
-
-    if (!group) {
-      throw new NotFoundException('group.errors.group_not_found');
-    }
-
-    // 초대하는 사용자 정보 조회
-    const inviter = await this.prisma.user.findUnique({
-      where: { id: inviterUserId },
-    });
-
-    if (!inviter) {
-      throw new NotFoundException('group.errors.inviter_not_found');
-    }
-
-    // 초대받을 사용자 조회
-    const invitee = await this.prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!invitee) {
-      throw new BadRequestException('group.errors.user_not_found_by_email');
-    }
-
-    // 이미 그룹 멤버인지 확인
-    const existingMember = await this.prisma.groupMember.findUnique({
-      where: {
-        groupId_userId: {
-          groupId: group.id,
-          userId: invitee.id,
-        },
-      },
-    });
-
-    if (existingMember) {
-      throw new ConflictException('group.errors.already_member');
-    }
-
-    // 초대 코드 유효성 확인 및 재생성 (만료된 경우)
-    const { inviteCode, inviteCodeExpiresAt } =
-      await this.ensureValidInviteCode(groupId);
-
-    // GroupJoinRequest 생성 (INVITE 타입)
-    const joinRequest = await this.prisma.groupJoinRequest.create({
-      data: {
-        groupId: group.id,
-        email,
-        type: 'INVITE', // 관리자가 초대
-        status: 'PENDING',
-      },
-    });
-
-    // 초대 이메일 발송 (수신자 언어 기준)
-    const inviteeLangForEmail = await this.getUserLang(invitee.id);
-    await this.emailService.sendGroupInviteEmail(
-      email,
-      group.name,
-      inviter.name,
-      inviteCode,
-      inviteeLangForEmail,
-    );
-
-    // 앱 사용자에게 푸시 알림 발송
-    const inviteeLang = await this.getUserLang(invitee.id);
-    await this.notificationService.sendNotification({
-      userId: invitee.id,
-      category: NotificationCategory.GROUP,
-      title: this.t('group.notification.invite_title', inviteeLang),
-      body: this.t('group.notification.invite_body', inviteeLang, {
-        inviter: inviter.name,
-        group: group.name,
-      }),
-      data: { groupId: group.id },
-    });
-
-    return {
-      message: this.i18n.t('group.success.invite_sent', {
-        lang: I18nContext.current()?.lang ?? 'ko',
-      }),
-      email,
-      groupName: group.name,
-      inviteCode,
-      inviteCodeExpiresAt,
-      joinRequestId: joinRequest.id,
-    };
-  }
-
-  /**
-   * 초대 취소 (INVITE_MEMBER 권한 필요)
-   * INVITE 타입의 PENDING 상태 요청만 취소 가능
-   */
-  async cancelInvite(groupId: string, requestId: string) {
-    const joinRequest = await this.prisma.groupJoinRequest.findUnique({
-      where: { id: requestId },
-    });
-
-    if (!joinRequest) {
-      throw new NotFoundException('group.errors.invite_not_found');
-    }
-
-    if (joinRequest.groupId !== groupId) {
-      throw new NotFoundException('group.errors.join_request_wrong_group');
-    }
-
-    if (joinRequest.type !== 'INVITE') {
-      throw new BadRequestException('group.errors.only_invite_cancelable');
-    }
-
-    if (joinRequest.status !== 'PENDING') {
-      throw new ConflictException('group.errors.only_pending_cancelable');
-    }
-
-    // 초대 요청 삭제
-    await this.prisma.groupJoinRequest.delete({
-      where: { id: requestId },
-    });
-
-    return {
-      message: this.i18n.t('group.success.invite_cancelled', {
-        lang: I18nContext.current()?.lang ?? 'ko',
-      }),
-    };
-  }
-
-  /**
-   * 초대 재전송 (INVITE_MEMBER 권한 필요)
-   * INVITE 타입의 PENDING 상태 요청에 대해 이메일 재전송
-   */
-  async resendInvite(
-    groupId: string,
-    requestId: string,
-    inviterUserId: string,
-  ) {
-    const joinRequest = await this.prisma.groupJoinRequest.findUnique({
-      where: { id: requestId },
-    });
-
-    if (!joinRequest) {
-      throw new NotFoundException('group.errors.invite_not_found');
-    }
-
-    if (joinRequest.groupId !== groupId) {
-      throw new NotFoundException('group.errors.join_request_wrong_group');
-    }
-
-    if (joinRequest.type !== 'INVITE') {
-      throw new BadRequestException('group.errors.only_invite_cancelable');
-    }
-
-    if (joinRequest.status !== 'PENDING') {
-      throw new ConflictException('group.errors.only_pending_resendable');
-    }
-
-    // 그룹 조회
-    const group = await this.prisma.group.findUnique({
-      where: { id: groupId },
-      select: { id: true, name: true },
-    });
-
-    if (!group) {
-      throw new NotFoundException('group.errors.group_not_found');
-    }
-
-    // 초대하는 사용자 정보 조회
-    const inviter = await this.prisma.user.findUnique({
-      where: { id: inviterUserId },
-    });
-
-    if (!inviter) {
-      throw new NotFoundException('group.errors.inviter_not_found');
-    }
-
-    // 초대 코드 유효성 확인 및 재생성 (만료된 경우)
-    const { inviteCode, inviteCodeExpiresAt } =
-      await this.ensureValidInviteCode(groupId);
-
-    // 초대 이메일 재발송 (수신자 언어 기준)
-    const resendInvitee = await this.prisma.user.findUnique({
-      where: { email: joinRequest.email },
-      select: { id: true },
-    });
-    const resendLang = resendInvitee
-      ? await this.getUserLang(resendInvitee.id)
-      : 'ko';
-    await this.emailService.sendGroupInviteEmail(
-      joinRequest.email,
-      group.name,
-      inviter.name,
-      inviteCode,
-      resendLang,
-    );
-
-    return {
-      message: this.i18n.t('group.success.invite_resent', {
-        lang: I18nContext.current()?.lang ?? 'ko',
-      }),
-      email: joinRequest.email,
-      groupName: group.name,
-      inviteCode,
-      inviteCodeExpiresAt,
-      joinRequestId: joinRequest.id,
     };
   }
 }

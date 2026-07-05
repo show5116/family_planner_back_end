@@ -1,8 +1,7 @@
 {
   "subject": {
     "verification": "Your email verification code",
-    "password_reset": "Your password reset verification code",
-    "group_invite": "[Family Planner] You've been invited to the {groupName} group"
+    "password_reset": "Your password reset verification code"
   },
   "verification": {
     "header_subtitle": "Welcome to Family Planner!",
@@ -29,20 +28,5 @@
     "security_text": "If you did not request a password reset, please ignore this email and review your account security immediately.",
     "footer1": "This email was automatically sent upon a password reset request.",
     "footer2": "If you did not request a password reset, please ignore this email."
-  },
-  "group_invite": {
-    "header_subtitle": "Group Invitation",
-    "title": "You've received a group invitation!",
-    "body1": "{inviterName} has invited you to join a group.",
-    "invited_group_label": "Invited Group",
-    "body2": "You can join the group using the invite code below.",
-    "code_label": "Invite Code",
-    "how_to_join_label": "How to Join",
-    "step1": "Log in to the Family Planner app or website",
-    "step2": "Select the Join Group menu",
-    "step3": "Enter the invite code above",
-    "expiry_text": "The invite code is valid for 7 days.",
-    "footer1": "This email was automatically sent when a group invitation was made.",
-    "footer2": "If you do not wish to join the group, please ignore this email."
   }
 }

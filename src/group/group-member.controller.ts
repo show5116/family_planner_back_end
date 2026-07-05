@@ -18,7 +18,6 @@ import { UpdateMemberRoleDto } from '@/group/dto/update-member-role.dto';
 import { UpdateMyColorDto } from '@/group/dto/update-my-color.dto';
 import { TransferOwnershipDto } from '@/group/dto/transfer-ownership.dto';
 import { JoinGroupDto } from '@/group/dto/join-group.dto';
-import { InviteByEmailDto } from '@/group/dto/invite-by-email.dto';
 import { ReportMemberDto } from '@/group/dto/report-member.dto';
 import {
   GroupMemberDto,
@@ -27,13 +26,10 @@ import {
   RemoveMemberResponseDto,
   InviteCodeResponseDto,
   TransferOwnershipResponseDto,
-  InviteByEmailResponseDto,
   GroupJoinRequestDto,
   AcceptJoinRequestResponseDto,
   RejectJoinRequestResponseDto,
   JoinGroupResponseDto,
-  CancelInviteResponseDto,
-  ResendInviteResponseDto,
   MyJoinRequestDto,
   MemberReportResponseDto,
 } from '@/group/dto/group-response.dto';
@@ -184,31 +180,6 @@ export class GroupMemberController {
     return this.groupInviteService.regenerateInviteCode(id);
   }
 
-  @Post(':id/invite-by-email')
-  @UseGuards(GroupPermissionGuard)
-  @RequirePermission(PermissionCode.INVITE_MEMBER)
-  @ApiOperation({
-    summary: '이메일로 그룹 초대 (INVITE_MEMBER 권한 필요)',
-    description:
-      '초대할 사용자의 이메일로 초대 코드가 포함된 이메일을 발송합니다. 해당 이메일로 가입된 사용자가 있어야 합니다.',
-  })
-  @ApiSuccess(InviteByEmailResponseDto, '초대 이메일 발송 성공')
-  @ApiBadRequest('해당 이메일로 가입된 사용자가 없음')
-  @ApiConflict('이미 그룹 멤버임')
-  @ApiForbidden('권한 없음')
-  @ApiNotFound('그룹을 찾을 수 없음')
-  inviteByEmail(
-    @Param('id') id: string,
-    @Request() req,
-    @Body() inviteByEmailDto: InviteByEmailDto,
-  ) {
-    return this.groupInviteService.inviteByEmail(
-      id,
-      req.user.userId,
-      inviteByEmailDto.email,
-    );
-  }
-
   @Post(':id/transfer-ownership')
   @ApiOperation({
     summary: 'OWNER 권한 양도 (현재 OWNER만 가능)',
@@ -282,42 +253,6 @@ export class GroupMemberController {
     @Param('requestId') requestId: string,
   ) {
     return this.groupInviteService.rejectJoinRequest(id, requestId);
-  }
-
-  @Delete(':id/invites/:requestId')
-  @UseGuards(GroupPermissionGuard)
-  @RequirePermission(PermissionCode.INVITE_MEMBER)
-  @ApiOperation({
-    summary: '초대 취소 (INVITE_MEMBER 권한 필요)',
-    description: 'INVITE 타입의 PENDING 상태 초대를 취소합니다',
-  })
-  @ApiSuccess(CancelInviteResponseDto, '초대 취소 성공')
-  @ApiBadRequest('INVITE 타입의 요청만 취소 가능')
-  @ApiConflict('대기 중인 초대만 취소 가능')
-  @ApiForbidden('권한 없음')
-  @ApiNotFound('초대 요청을 찾을 수 없음')
-  cancelInvite(@Param('id') id: string, @Param('requestId') requestId: string) {
-    return this.groupInviteService.cancelInvite(id, requestId);
-  }
-
-  @Post(':id/invites/:requestId/resend')
-  @UseGuards(GroupPermissionGuard)
-  @RequirePermission(PermissionCode.INVITE_MEMBER)
-  @ApiOperation({
-    summary: '초대 재전송 (INVITE_MEMBER 권한 필요)',
-    description: 'INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다',
-  })
-  @ApiSuccess(ResendInviteResponseDto, '초대 이메일 재전송 성공')
-  @ApiBadRequest('INVITE 타입의 요청만 재전송 가능')
-  @ApiConflict('대기 중인 초대만 재전송 가능')
-  @ApiForbidden('권한 없음')
-  @ApiNotFound('초대 요청을 찾을 수 없음')
-  resendInvite(
-    @Param('id') id: string,
-    @Param('requestId') requestId: string,
-    @Request() req,
-  ) {
-    return this.groupInviteService.resendInvite(id, requestId, req.user.userId);
   }
 
   @Get('my-reports')
