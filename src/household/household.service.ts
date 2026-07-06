@@ -36,6 +36,8 @@ import {
   calculateRecurringExpenseEndDate,
   clampDayOfMonth,
   listMonthsFromStartToNow,
+  parseToUtcMonthStart,
+  toUtcDate,
 } from './household.util';
 
 const ALLOWED_RECEIPT_TYPES = [
@@ -647,11 +649,7 @@ export class HouseholdService {
     }
 
     const startDate = dto.startDate
-      ? new Date(
-          new Date(dto.startDate).getFullYear(),
-          new Date(dto.startDate).getMonth(),
-          1,
-        )
+      ? parseToUtcMonthStart(dto.startDate)
       : null;
 
     const rec = await this.prisma.recurringExpense.create({
@@ -700,7 +698,8 @@ export class HouseholdService {
       ({ year, month }) => {
         if (!rec.totalMonths) return true;
         const monthIndex = year * 12 + month;
-        const startIndex = startDate.getFullYear() * 12 + startDate.getMonth();
+        const startIndex =
+          startDate.getUTCFullYear() * 12 + startDate.getUTCMonth();
         return monthIndex < startIndex + rec.totalMonths;
       },
     );
@@ -709,7 +708,7 @@ export class HouseholdService {
 
     for (const { year, month } of months) {
       const day = clampDayOfMonth(year, month, rec.dayOfMonth);
-      const date = new Date(year, month, day);
+      const date = toUtcDate(year, month, day);
 
       const exists = await this.prisma.expense.findFirst({
         where: { recurringExpenseId: rec.id, date },
@@ -837,11 +836,7 @@ export class HouseholdService {
     }
 
     const startDate = dto.startDate
-      ? new Date(
-          new Date(dto.startDate).getFullYear(),
-          new Date(dto.startDate).getMonth(),
-          1,
-        )
+      ? parseToUtcMonthStart(dto.startDate)
       : undefined;
 
     const updated = await this.prisma.recurringExpense.update({

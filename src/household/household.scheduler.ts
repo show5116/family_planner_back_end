@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { HouseholdService } from './household.service';
-import { isRecurringExpenseEnded } from './household.util';
+import { isRecurringExpenseEnded, toUtcDate } from './household.util';
 
 @Injectable()
 export class HouseholdScheduler {
@@ -24,13 +24,19 @@ export class HouseholdScheduler {
   @Cron('5 0 * * *')
   async autoGenerateRecurringExpenses() {
     if (!isSchedulerEnabled('')) return;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = toUtcDate(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+    );
 
-    const thisYear = today.getFullYear();
-    const thisMonth = today.getMonth(); // 0-based
-    const todayDay = today.getDate();
-    const lastDayOfMonth = new Date(thisYear, thisMonth + 1, 0).getDate();
+    const thisYear = today.getUTCFullYear();
+    const thisMonth = today.getUTCMonth(); // 0-based
+    const todayDay = today.getUTCDate();
+    const lastDayOfMonth = new Date(
+      Date.UTC(thisYear, thisMonth + 1, 0),
+    ).getUTCDate();
 
     this.logger.log(
       `고정비용 자동 생성 실행 — 기준일: ${today.toISOString().slice(0, 10)}`,
@@ -65,7 +71,7 @@ export class HouseholdScheduler {
 
       if (targetDay !== todayDay) continue;
 
-      const targetDate = new Date(thisYear, thisMonth, targetDay);
+      const targetDate = toUtcDate(thisYear, thisMonth, targetDay);
 
       const exists = await this.prisma.expense.findFirst({
         where: {
@@ -84,7 +90,7 @@ export class HouseholdScheduler {
       return;
     }
 
-    const targetDate = new Date(thisYear, thisMonth, todayDay);
+    const targetDate = toUtcDate(thisYear, thisMonth, todayDay);
 
     const created = await this.prisma.$transaction(
       toCreate.map((rec) =>
