@@ -1,5 +1,7 @@
 {
   "errors": {
-    "user_not_found": "用户不存在"
+    "user_not_found": "用户不存在",
+    "verification_failed": "购买验证失败",
+    "missing_purchase_token": "需要购买令牌"
   }
 }

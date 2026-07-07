@@ -1,5 +1,7 @@
 {
   "errors": {
-    "user_not_found": "User not found"
+    "user_not_found": "User not found",
+    "verification_failed": "Purchase verification failed",
+    "missing_purchase_token": "Purchase token is required"
   }
 }
