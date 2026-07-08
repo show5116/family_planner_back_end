@@ -11,7 +11,6 @@ import {
   SendEmailOptions,
   VerificationEmailContext,
   PasswordResetEmailContext,
-  GroupInviteEmailContext,
 } from './email.types';
 
 @Injectable()
@@ -167,41 +166,5 @@ export class EmailService {
       this.logger.error(`Failed to send data export email to ${to}`, error);
       throw new Error('이메일 전송에 실패했습니다');
     }
-  }
-
-  async sendGroupInviteEmail(
-    to: string,
-    groupName: string,
-    inviterName: string,
-    inviteCode: string,
-    lang = 'ko',
-  ): Promise<void> {
-    const template = EmailTemplate.GROUP_INVITE;
-    const context: GroupInviteEmailContext = {
-      groupName,
-      inviterName,
-      inviteCode,
-      ...EMAIL_THEME_COLORS[template],
-      headerSubtitle: this.t('email.group_invite.header_subtitle', lang),
-      footerText1: this.t('email.group_invite.footer1', lang),
-      footerText2: this.t('email.group_invite.footer2', lang),
-      title: this.t('email.group_invite.title', lang),
-      body1: this.t('email.group_invite.body1', lang, { inviterName }),
-      invitedGroupLabel: this.t('email.group_invite.invited_group_label', lang),
-      body2: this.t('email.group_invite.body2', lang),
-      codeLabel: this.t('email.group_invite.code_label', lang),
-      howToJoinLabel: this.t('email.group_invite.how_to_join_label', lang),
-      step1: this.t('email.group_invite.step1', lang),
-      step2: this.t('email.group_invite.step2', lang),
-      step3: this.t('email.group_invite.step3', lang),
-      expiryText: this.t('email.group_invite.expiry_text', lang),
-    };
-
-    await this.sendEmail({
-      to,
-      subject: this.t('email.subject.group_invite', lang, { groupName }),
-      template,
-      context,
-    });
   }
 }

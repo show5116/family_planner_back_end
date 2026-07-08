@@ -1,6 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { NotificationTypeV2 } from '@apple/app-store-server-library';
+import { SubscriptionService } from '@/subscription/subscription.service';
+import { IosSubscriptionVerifier } from '@/subscription/verifiers/ios-subscription.verifier';
+import { AndroidSubscriptionVerifier } from '@/subscription/verifiers/android-subscription.verifier';
+
+const APPLE_EXPIRE_NOTIFICATION_TYPES = new Set<string>([
+  NotificationTypeV2.EXPIRED,
+  NotificationTypeV2.REVOKE,
+  NotificationTypeV2.GRACE_PERIOD_EXPIRED,
+]);
 
 /**
  * Webhook 서비스
@@ -13,7 +23,12 @@ export class WebhookService {
   private readonly discordQnaWebhookUrl: string;
   private readonly sentrySecret: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private readonly subscriptionService: SubscriptionService,
+    private readonly iosVerifier: IosSubscriptionVerifier,
+    private readonly androidVerifier: AndroidSubscriptionVerifier,
+  ) {
     this.discordWebhookUrl = this.configService.get<string>(
       'DISCORD_WEBHOOK_URL',
     );
@@ -301,15 +316,60 @@ export class WebhookService {
 
   /**
    * Apple App Store Server Notifications V2 처리
-   * TODO: 스토어 등록 후 구현
-   *   1. signedPayload(JWT) 서명 검증 (Apple Root CA)
-   *   2. notificationType 파싱 (SUBSCRIBED / DID_RENEW / EXPIRED / REVOKE 등)
-   *   3. SubscriptionService.applyStoreSubscription / expireSubscription 호출
    * 참고: https://developer.apple.com/documentation/appstoreservernotifications
+   * Apple/Google 모두 비-2xx 응답 시 자체적으로 재시도하므로, 내부 에러는 삼키고 항상 200을 반환한다.
    */
-  handleAppleWebhook(body: any, _signature: string) {
-    this.logger.log('Apple webhook received (미구현)', JSON.stringify(body));
-    return { message: 'Apple webhook 수신 완료 (미구현)' };
+  async handleAppleWebhook(body: { signedPayload?: string }) {
+    try {
+      const notification = await this.iosVerifier.verifyAndDecodeNotification(
+        body.signedPayload,
+      );
+
+      const signedTransactionInfo = notification.data?.signedTransactionInfo;
+      if (!signedTransactionInfo) {
+        this.logger.warn(
+          `Apple webhook: signedTransactionInfo 없음 (type=${notification.notificationType})`,
+        );
+        return { message: 'Apple webhook 수신 완료' };
+      }
+
+      const verifier = this.iosVerifier.getVerifier();
+      const transaction = await verifier.verifyAndDecodeTransaction(
+        signedTransactionInfo,
+      );
+      const verified = this.iosVerifier.toVerifiedPurchase(transaction);
+
+      const userId =
+        await this.subscriptionService.findUserIdByOriginalTransactionId(
+          verified.originalTransactionId,
+        );
+
+      if (!userId) {
+        this.logger.warn(
+          `Apple webhook: 알 수 없는 originalTransactionId=${verified.originalTransactionId}`,
+        );
+        return { message: 'Apple webhook 수신 완료' };
+      }
+
+      const occurredAt = notification.signedDate
+        ? new Date(notification.signedDate)
+        : new Date();
+
+      if (APPLE_EXPIRE_NOTIFICATION_TYPES.has(notification.notificationType)) {
+        await this.subscriptionService.expireSubscription(userId);
+      } else {
+        await this.subscriptionService.applyVerifiedPurchase(userId, verified, {
+          eventType: notification.notificationType,
+          rawPayload: body,
+          occurredAt,
+        });
+      }
+
+      return { message: 'Apple webhook 처리 완료' };
+    } catch (error) {
+      this.logger.error(`Apple webhook 처리 실패: ${error.message}`);
+      return { message: 'Apple webhook 수신 완료' };
+    }
   }
 
   /**
@@ -385,17 +445,59 @@ export class WebhookService {
 
   /**
    * Google Play Real-time Developer Notifications 처리
-   * TODO: 스토어 등록 후 구현
-   *   1. Pub/Sub 메시지 base64 디코딩
-   *   2. subscriptionNotification.notificationType 파싱
-   *      (1=RECOVERED, 2=RENEWED, 3=CANCELED, 12=PURCHASED 등)
-   *   3. Google Play Developer API로 purchaseToken 검증
-   *   4. SubscriptionService.applyStoreSubscription / expireSubscription 호출
    * 참고: https://developer.android.com/google/play/billing/rtdn-reference
+   * RTDN 페이로드 자체는 서명되어 있지 않으므로, purchaseToken을 Google Play Developer API로 재검증해야 신뢰할 수 있다.
    */
-  handleGoogleWebhook(body: any) {
-    this.logger.log('Google webhook received (미구현)', JSON.stringify(body));
-    return { message: 'Google webhook 수신 완료 (미구현)' };
+  async handleGoogleWebhook(body: { message?: { data?: string } }) {
+    try {
+      if (!body.message?.data) {
+        return { message: 'Google webhook 수신 완료' };
+      }
+
+      const decoded = JSON.parse(
+        Buffer.from(body.message.data, 'base64').toString('utf-8'),
+      );
+
+      const purchaseToken =
+        decoded.subscriptionNotification?.purchaseToken ??
+        decoded.testNotification?.purchaseToken;
+
+      if (!purchaseToken) {
+        this.logger.log('Google webhook: 구독 알림 아님 (테스트 알림 등)');
+        return { message: 'Google webhook 수신 완료' };
+      }
+
+      const verified = await this.androidVerifier.verify(purchaseToken);
+
+      const userId =
+        await this.subscriptionService.findUserIdByOriginalTransactionId(
+          purchaseToken,
+        );
+
+      if (!userId) {
+        this.logger.warn(
+          `Google webhook: 알 수 없는 purchaseToken (userId 조회 실패)`,
+        );
+        return { message: 'Google webhook 수신 완료' };
+      }
+
+      const notificationType =
+        decoded.subscriptionNotification?.notificationType;
+      const occurredAt = decoded.eventTimeMillis
+        ? new Date(Number(decoded.eventTimeMillis))
+        : new Date();
+
+      await this.subscriptionService.applyVerifiedPurchase(userId, verified, {
+        eventType: `GOOGLE_${notificationType}`,
+        rawPayload: decoded,
+        occurredAt,
+      });
+
+      return { message: 'Google webhook 처리 완료' };
+    } catch (error) {
+      this.logger.error(`Google webhook 처리 실패: ${error.message}`);
+      return { message: 'Google webhook 수신 완료' };
+    }
   }
 
   /**

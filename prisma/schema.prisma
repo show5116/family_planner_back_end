@@ -62,6 +62,7 @@ model User {
   subscriptionTier      SubscriptionTier            @default(free)
   subscriptionExpiresAt DateTime?
   inAppPurchaseToken    String?                     @db.VarChar(500)
+  subscription          Subscription?
   lastLat               Float?
   lastLon               Float?
   language              String                      @default("ko") @db.VarChar(10)
@@ -477,6 +478,52 @@ enum SubscriptionTier {
   premium
 }
 
+enum SubscriptionPlatform {
+  ANDROID
+  IOS
+}
+
+enum SubscriptionStatus {
+  active
+  expired
+  canceled
+  grace_period
+  revoked
+}
+
+model Subscription {
+  id                    String               @id @default(uuid())
+  userId                String               @unique
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform              SubscriptionPlatform
+  productId             String               @db.VarChar(200)
+  originalTransactionId String               @db.VarChar(500)
+  latestTransactionId   String?              @db.VarChar(500)
+  tier                  SubscriptionTier
+  status                SubscriptionStatus   @default(active)
+  expiresAt             DateTime?
+  autoRenewing          Boolean              @default(true)
+  lastVerifiedAt        DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  @@index([originalTransactionId])
+  @@map("subscriptions")
+}
+
+model SubscriptionEvent {
+  id                    String               @id @default(uuid())
+  userId                String
+  platform              SubscriptionPlatform
+  eventType             String               @db.VarChar(50)
+  originalTransactionId String?              @db.VarChar(500)
+  rawPayload            Json
+  processedAt           DateTime             @default(now())
+
+  @@index([userId])
+  @@map("subscription_events")
+}
+
 enum PermissionCategory {
   GROUP
   TASK
@@ -754,6 +801,8 @@ model RecurringExpense {
   merchantId     String?
   description    String?          @db.VarChar(200)
   dayOfMonth     Int
+  startDate      DateTime?        @db.Date
+  totalMonths    Int?
   isActive       Boolean          @default(true)
   memberId       String?
   createdAt      DateTime         @default(now())

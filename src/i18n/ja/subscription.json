@@ -1,5 +1,7 @@
 {
   "errors": {
-    "user_not_found": "ユーザーが見つかりません"
+    "user_not_found": "ユーザーが見つかりません",
+    "verification_failed": "購入の検証に失敗しました",
+    "missing_purchase_token": "購入トークンが必要です"
   }
 }

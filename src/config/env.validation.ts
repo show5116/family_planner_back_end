@@ -91,6 +91,18 @@ export const validationSchema = Joi.object({
 
   // 기상청 Open API
   KMA_SERVICE_KEY: Joi.string().optional(),
+
+  // 인앱 구독 검증 - Android (선택적, 스토어 등록 후 설정)
+  ANDROID_PACKAGE_NAME: Joi.string().optional(),
+  GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL: Joi.string().optional(),
+  GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY: Joi.string().optional(),
+
+  // 인앱 구독 검증 - iOS (선택적, 스토어 등록 후 설정)
+  IOS_BUNDLE_ID: Joi.string().optional(),
+  APPLE_IAP_ISSUER_ID: Joi.string().optional(),
+  APPLE_IAP_KEY_ID: Joi.string().optional(),
+  APPLE_IAP_PRIVATE_KEY: Joi.string().optional(),
+  APPLE_IAP_ENVIRONMENT: Joi.string().valid('Sandbox', 'Production').optional(),
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {

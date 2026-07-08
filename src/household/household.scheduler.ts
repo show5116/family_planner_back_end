@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { HouseholdService } from './household.service';
+import { isRecurringExpenseEnded, toUtcDate } from './household.util';
 
 @Injectable()
 export class HouseholdScheduler {
@@ -16,19 +17,26 @@ export class HouseholdScheduler {
   /**
    * 매일 00:05에 실행.
    * RecurringExpense 테이블의 활성 고정지출 중 dayOfMonth가 오늘인 항목을 Expense로 생성한다.
+   * - startDate + totalMonths 기준으로 반복이 종료된 항목은 isActive=false로 전환하고 생성 대상에서 제외
    * - dayOfMonth가 이번 달에 없으면(예: 2월에 31일) 말일로 clamp
    * - 이미 오늘 날짜로 동일 recurringExpenseId의 Expense가 있으면 skip
    */
   @Cron('5 0 * * *')
   async autoGenerateRecurringExpenses() {
     if (!isSchedulerEnabled('')) return;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = toUtcDate(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+    );
 
-    const thisYear = today.getFullYear();
-    const thisMonth = today.getMonth(); // 0-based
-    const todayDay = today.getDate();
-    const lastDayOfMonth = new Date(thisYear, thisMonth + 1, 0).getDate();
+    const thisYear = today.getUTCFullYear();
+    const thisMonth = today.getUTCMonth(); // 0-based
+    const todayDay = today.getUTCDate();
+    const lastDayOfMonth = new Date(
+      Date.UTC(thisYear, thisMonth + 1, 0),
+    ).getUTCDate();
 
     this.logger.log(
       `고정비용 자동 생성 실행 — 기준일: ${today.toISOString().slice(0, 10)}`,
@@ -41,14 +49,29 @@ export class HouseholdScheduler {
 
     if (recurringList.length === 0) return;
 
+    const toEnd = recurringList.filter((rec) =>
+      isRecurringExpenseEnded(rec, today),
+    );
+
+    if (toEnd.length > 0) {
+      await this.prisma.recurringExpense.updateMany({
+        where: { id: { in: toEnd.map((rec) => rec.id) } },
+        data: { isActive: false },
+      });
+      this.logger.log(`반복 종료 처리된 고정비용 ${toEnd.length}건`);
+    }
+
+    const endedIds = new Set(toEnd.map((rec) => rec.id));
+    const activeList = recurringList.filter((rec) => !endedIds.has(rec.id));
+
     const toCreate: (typeof recurringList)[0][] = [];
 
-    for (const rec of recurringList) {
+    for (const rec of activeList) {
       const targetDay = Math.min(rec.dayOfMonth, lastDayOfMonth);
 
       if (targetDay !== todayDay) continue;
 
-      const targetDate = new Date(thisYear, thisMonth, targetDay);
+      const targetDate = toUtcDate(thisYear, thisMonth, targetDay);
 
       const exists = await this.prisma.expense.findFirst({
         where: {
@@ -67,7 +90,7 @@ export class HouseholdScheduler {
       return;
     }
 
-    const targetDate = new Date(thisYear, thisMonth, todayDay);
+    const targetDate = toUtcDate(thisYear, thisMonth, todayDay);
 
     const created = await this.prisma.$transaction(
       toCreate.map((rec) =>

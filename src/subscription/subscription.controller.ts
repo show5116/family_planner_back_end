@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SubscriptionService } from './subscription.service';
-import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
+import { VerifyPurchaseDto } from './dto/verify-purchase.dto';
 import { SubscriptionStatusDto } from './dto/subscription-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import { ApiSuccess } from '@/common/decorators/api-responses.decorator';
@@ -20,13 +20,15 @@ export class SubscriptionController {
   }
 
   @Post('verify')
-  @ApiOperation({ summary: '구독 업데이트 (인앱 결제 후 tier/토큰 저장)' })
+  @ApiOperation({
+    summary: '인앱 구매 검증 (Google Play / App Store 서버 검증 후 tier 반영)',
+  })
   @ApiSuccess(SubscriptionStatusDto)
-  updateSubscription(
+  verifyPurchase(
     @Request() req,
-    @Body() dto: UpdateSubscriptionDto,
+    @Body() dto: VerifyPurchaseDto,
   ): Promise<SubscriptionStatusDto> {
-    return this.subscriptionService.updateSubscription(req.user.userId, dto);
+    return this.subscriptionService.verifyPurchase(req.user.userId, dto);
   }
 
   @Post('restore')

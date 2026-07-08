@@ -11,7 +11,8 @@
     "unsupported_file_type": "サポートされていないファイル形式です。(JPEG、PNG、WebP、PDF)",
     "own_receipt_only_delete": "自分が登録した支出のレシートのみ削除できます",
     "merchant_not_found": "加盟店が見つかりません",
-    "own_merchant_only": "自分が登録した加盟店のみ更新・削除できます"
+    "own_merchant_only": "自分が登録した加盟店のみ更新・削除できます",
+    "total_months_requires_start_date": "総繰り返し月数を指定する場合は開始月も入力してください"
   },
   "success": {
     "expense_deleted": "支出履歴を削除しました",

@@ -335,81 +335,6 @@ describe('Groups (e2e)', () => {
     });
   });
 
-  describe('이메일 초대 플로우', () => {
-    let groupId: string;
-    let inviteCode: string;
-
-    beforeAll(async () => {
-      // 그룹 생성
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/groups')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          name: 'Email Invite Test Group',
-          description: 'Test group for email invite flow',
-        })
-        .expect(201);
-
-      groupId = response.body.id;
-      inviteCode = response.body.inviteCode;
-    });
-
-    afterAll(async () => {
-      // 그룹 삭제
-      await request
-        .default(app.getHttpServer())
-        .delete(`/groups/${groupId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-    });
-
-    it('POST /groups/:id/invite-by-email - 이메일로 초대를 보내야 함 (INVITE_MEMBER 권한 필요)', async () => {
-      // 두 번째 사용자의 이메일 조회
-      const user = await prisma.user.findUnique({
-        where: { id: secondUserId },
-      });
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post(`/groups/${groupId}/invite-by-email`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ email: user.email })
-        .expect(201);
-
-      expect(response.body.message).toBe('초대 이메일이 발송되었습니다');
-      expect(response.body.email).toBe(user.email);
-      expect(response.body).toHaveProperty('joinRequestId');
-    });
-
-    it('POST /groups/join - 이메일로 초대받은 사용자는 즉시 가입되어야 함', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/groups/join')
-        .set('Authorization', `Bearer ${secondAuthToken}`)
-        .send({ inviteCode })
-        .expect(201);
-
-      expect(response.body.message).toBe('그룹 가입이 완료되었습니다');
-      expect(response.body.member).toBeDefined();
-    });
-
-    it('GET /groups/:id/join-requests - 초대 요청 목록을 조회해야 함', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/groups/${groupId}/join-requests`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(Array.isArray(response.body)).toBe(true);
-      // 이미 승인된 초대가 있어야 함
-      const acceptedInvite = response.body.find(
-        (req: any) => req.type === 'INVITE' && req.status === 'ACCEPTED',
-      );
-      expect(acceptedInvite).toBeDefined();
-    });
-  });
-
   describe('멤버 관리 플로우', () => {
     let groupId: string;
 
@@ -427,23 +352,20 @@ describe('Groups (e2e)', () => {
 
       groupId = response.body.id;
 
-      // 두 번째 사용자를 멤버로 추가
-      const user = await prisma.user.findUnique({
-        where: { id: secondUserId },
-      });
-
-      await request
-        .default(app.getHttpServer())
-        .post(`/groups/${groupId}/invite-by-email`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ email: user.email })
-        .expect(201);
-
-      await request
+      // 두 번째 사용자를 멤버로 추가 (초대 코드로 가입 요청 후 그룹장이 승인)
+      const joinRes = await request
         .default(app.getHttpServer())
         .post('/groups/join')
         .set('Authorization', `Bearer ${secondAuthToken}`)
         .send({ inviteCode: response.body.inviteCode })
+        .expect(201);
+
+      await request
+        .default(app.getHttpServer())
+        .post(
+          `/groups/${groupId}/join-requests/${joinRes.body.joinRequestId}/accept`,
+        )
+        .set('Authorization', `Bearer ${authToken}`)
         .expect(201);
     });
 

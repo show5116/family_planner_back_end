@@ -32,6 +32,13 @@ import {
   UpdateRecurringExpenseDto,
   RecurringExpenseQueryDto,
 } from './dto/recurring-expense.dto';
+import {
+  calculateRecurringExpenseEndDate,
+  clampDayOfMonth,
+  listMonthsFromStartToNow,
+  parseToUtcMonthStart,
+  toUtcDate,
+} from './household.util';
 
 const ALLOWED_RECEIPT_TYPES = [
   'image/jpeg',
@@ -635,7 +642,17 @@ export class HouseholdService {
       await this.validateGroupMember(dto.memberId, dto.groupId);
     }
 
-    return this.prisma.recurringExpense.create({
+    if (dto.totalMonths !== undefined && !dto.startDate) {
+      throw new BadRequestException(
+        'household.errors.total_months_requires_start_date',
+      );
+    }
+
+    const startDate = dto.startDate
+      ? parseToUtcMonthStart(dto.startDate)
+      : null;
+
+    const rec = await this.prisma.recurringExpense.create({
       data: {
         groupId: dto.groupId ?? null,
         userId,
@@ -648,6 +665,8 @@ export class HouseholdService {
         merchantId: dto.merchantId ?? null,
         description: dto.description ?? null,
         dayOfMonth: dto.dayOfMonth,
+        startDate,
+        totalMonths: dto.totalMonths ?? null,
         isActive: true,
         memberId: dto.memberId ?? null,
       },
@@ -656,6 +675,73 @@ export class HouseholdService {
         member: { select: { id: true, name: true } },
       },
     });
+
+    if (startDate) {
+      await this.backfillRecurringExpense(rec);
+    }
+
+    return {
+      ...rec,
+      endDate: calculateRecurringExpenseEndDate(rec),
+    };
+  }
+
+  /** 등록 시점에 startDate부터 이번 달까지 누락된 Expense를 소급 생성한다 */
+  private async backfillRecurringExpense(
+    rec: Awaited<ReturnType<typeof this.prisma.recurringExpense.create>>,
+  ) {
+    if (!rec.startDate) return;
+    const startDate = rec.startDate;
+
+    const now = new Date();
+    const months = listMonthsFromStartToNow(startDate, now).filter(
+      ({ year, month }) => {
+        if (!rec.totalMonths) return true;
+        const monthIndex = year * 12 + month;
+        const startIndex =
+          startDate.getUTCFullYear() * 12 + startDate.getUTCMonth();
+        return monthIndex < startIndex + rec.totalMonths;
+      },
+    );
+
+    const toCreate: { date: Date }[] = [];
+
+    for (const { year, month } of months) {
+      const day = clampDayOfMonth(year, month, rec.dayOfMonth);
+      const date = toUtcDate(year, month, day);
+
+      const exists = await this.prisma.expense.findFirst({
+        where: { recurringExpenseId: rec.id, date },
+      });
+
+      if (!exists) {
+        toCreate.push({ date });
+      }
+    }
+
+    if (toCreate.length === 0) return;
+
+    await this.prisma.$transaction(
+      toCreate.map(({ date }) =>
+        this.prisma.expense.create({
+          data: {
+            groupId: rec.groupId,
+            userId: rec.userId,
+            type: rec.type,
+            amount: rec.amount,
+            category: rec.category,
+            date,
+            description: rec.description,
+            paymentMethod: rec.paymentMethod,
+            merchantId: rec.merchantId,
+            incomeCategory: rec.incomeCategory,
+            recurringExpenseId: rec.id,
+            isConfirmed: !rec.isVariable,
+            memberId: rec.memberId,
+          },
+        }),
+      ),
+    );
   }
 
   async findRecurringExpenses(userId: string, query: RecurringExpenseQueryDto) {
@@ -674,7 +760,7 @@ export class HouseholdService {
           ...(query.includeInactive ? {} : { isActive: true }),
         };
 
-    return this.prisma.recurringExpense.findMany({
+    const recs = await this.prisma.recurringExpense.findMany({
       where,
       include: {
         merchant: true,
@@ -682,6 +768,11 @@ export class HouseholdService {
       },
       orderBy: { dayOfMonth: 'asc' },
     });
+
+    return recs.map((rec) => ({
+      ...rec,
+      endDate: calculateRecurringExpenseEndDate(rec),
+    }));
   }
 
   async findOneRecurringExpense(userId: string, id: string) {
@@ -705,7 +796,7 @@ export class HouseholdService {
       throw new ForbiddenException('household.errors.own_expense_only_view');
     }
 
-    return rec;
+    return { ...rec, endDate: calculateRecurringExpenseEndDate(rec) };
   }
 
   async updateRecurringExpense(
@@ -733,7 +824,22 @@ export class HouseholdService {
       await this.validateGroupMember(dto.memberId, rec.groupId);
     }
 
-    return this.prisma.recurringExpense.update({
+    const nextTotalMonths =
+      dto.totalMonths !== undefined ? dto.totalMonths : rec.totalMonths;
+    const nextStartDate =
+      dto.startDate !== undefined ? dto.startDate : rec.startDate;
+
+    if (nextTotalMonths && !nextStartDate) {
+      throw new BadRequestException(
+        'household.errors.total_months_requires_start_date',
+      );
+    }
+
+    const startDate = dto.startDate
+      ? parseToUtcMonthStart(dto.startDate)
+      : undefined;
+
+    const updated = await this.prisma.recurringExpense.update({
       where: { id },
       data: {
         ...(dto.amount !== undefined && { amount: dto.amount }),
@@ -748,6 +854,10 @@ export class HouseholdService {
         ...(dto.merchantId !== undefined && { merchantId: dto.merchantId }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.dayOfMonth !== undefined && { dayOfMonth: dto.dayOfMonth }),
+        ...(startDate !== undefined && { startDate }),
+        ...(dto.totalMonths !== undefined && {
+          totalMonths: dto.totalMonths,
+        }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         ...(dto.memberId !== undefined && { memberId: dto.memberId }),
       },
@@ -756,6 +866,11 @@ export class HouseholdService {
         member: { select: { id: true, name: true } },
       },
     });
+
+    return {
+      ...updated,
+      endDate: calculateRecurringExpenseEndDate(updated),
+    };
   }
 
   async getRecurringExpenseHistory(userId: string, id: string) {

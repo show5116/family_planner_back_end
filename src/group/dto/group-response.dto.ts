@@ -285,32 +285,6 @@ export class TransferOwnershipResponseDto {
   newOwner: GroupMemberDto;
 }
 
-export class InviteByEmailResponseDto {
-  @ApiProperty({ example: '초대 이메일이 발송되었습니다' })
-  message: string;
-
-  @ApiProperty({
-    description: '초대받은 사용자의 이메일',
-    example: 'user@example.com',
-  })
-  email: string;
-
-  @ApiProperty({ description: '그룹명', example: '우리 가족' })
-  groupName: string;
-
-  @ApiProperty({ description: '초대 코드', example: 'AbC123Xy' })
-  inviteCode: string;
-
-  @ApiProperty({
-    description: '초대 코드 만료 시간',
-    example: '2025-12-24T00:00:00Z',
-  })
-  inviteCodeExpiresAt: Date;
-
-  @ApiProperty({ description: '가입 요청 ID', example: 'uuid' })
-  joinRequestId: string;
-}
-
 export class GroupJoinRequestDto {
   @ApiProperty({ description: '가입 요청 ID', example: 'uuid' })
   id: string;
@@ -361,37 +335,6 @@ export class AcceptJoinRequestResponseDto {
 export class RejectJoinRequestResponseDto {
   @ApiProperty({ example: '가입 요청이 거부되었습니다' })
   message: string;
-}
-
-export class CancelInviteResponseDto {
-  @ApiProperty({ example: '초대가 취소되었습니다' })
-  message: string;
-}
-
-export class ResendInviteResponseDto {
-  @ApiProperty({ example: '초대 이메일이 재전송되었습니다' })
-  message: string;
-
-  @ApiProperty({
-    description: '초대받은 사용자의 이메일',
-    example: 'user@example.com',
-  })
-  email: string;
-
-  @ApiProperty({ description: '그룹명', example: '우리 가족' })
-  groupName: string;
-
-  @ApiProperty({ description: '초대 코드', example: 'AbC123Xy' })
-  inviteCode: string;
-
-  @ApiProperty({
-    description: '초대 코드 만료 시간',
-    example: '2025-12-24T00:00:00Z',
-  })
-  inviteCodeExpiresAt: Date;
-
-  @ApiProperty({ description: '가입 요청 ID', example: 'uuid' })
-  joinRequestId: string;
 }
 
 export class ReorderMyGroupsResponseDto {

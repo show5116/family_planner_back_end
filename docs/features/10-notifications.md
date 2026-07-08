@@ -108,9 +108,9 @@ Redis 기반 큐 시스템으로 **즉시 발송**과 **예약 발송** 두 가�
 await notificationService.sendNotification({
   userId: 'user-uuid',
   category: NotificationCategory.GROUP,
-  title: '그룹 초대',
-  body: '홍길동님이 당신을 "우리가족" 그룹에 초대했습니다.',
-  data: { groupId: 'group-uuid' },
+  title: '그룹 가입 요청',
+  body: '홍길동님이 "우리가족" 그룹 가입을 요청했습니다.',
+  data: { groupId: 'group-uuid', joinRequestId: 'request-uuid' },
 });
 ```
 - Ready Queue에 추가 → Worker가 즉시 FCM 발송 → DB에 히스토리 저장
@@ -212,8 +212,8 @@ await notificationService.sendAnnouncementNotification({
 await this.notificationService.sendNotification({
   userId: 'user-uuid',
   category: NotificationCategory.GROUP,
-  title: '새로운 그룹 초대',
-  body: '홍길동님이 당신을 "우리가족" 그룹에 초대했습니다.',
+  title: '그룹 가입 승인',
+  body: '가입 요청이 승인되었습니다',
   data: { groupId: 'group-uuid', action: 'view_group' },
 });
 ```
