@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAM_ID.BUNDLE_ID",
+        "appID": "RBUS4CRV79.com.hmncorp.familyplanner",
         "paths": [
           "/auth/callback"
         ]
