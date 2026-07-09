@@ -3697,50 +3697,6 @@ period=monthly 시 year 필수.
 
 ---
 
-### POST `groups/:id/invite-by-email`
-
-**요약:** 이메일로 그룹 초대 (INVITE_MEMBER 권한 필요)
-
-**설명:**
-초대할 사용자의 이메일로 초대 코드가 포함된 이메일을 발송합니다. 해당 이메일로 가입된 사용자가 있어야 합니다.
-
-**인증/권한:**
-
-- GroupPermissionGuard
-
-**Path Parameters:**
-
-- `id` (`string`)
-
-**Request Body:**
-
-```json
-{
-  "email": "user@example.com" // 초대할 사용자의 이메일 (string)
-}
-```
-
-**Responses:**
-
-#### 200 - 초대 이메일 발송 성공
-
-```json
-{
-  "message": "초대 이메일이 발송되었습니다", // string
-  "email": "user@example.com", // 초대받은 사용자의 이메일 (string)
-  "groupName": "우리 가족", // 그룹명 (string)
-  "inviteCode": "AbC123Xy", // 초대 코드 (string)
-  "inviteCodeExpiresAt": "2025-12-24T00:00:00Z", // 초대 코드 만료 시간 (Date)
-  "joinRequestId": "uuid" // 가입 요청 ID (string)
-}
-```
-
-#### 403 - 권한 없음
-
-#### 404 - 그룹을 찾을 수 없음
-
----
-
 ### POST `groups/:id/transfer-ownership`
 
 **요약:** OWNER 권한 양도 (현재 OWNER만 가능)
@@ -3936,75 +3892,6 @@ PENDING 상태의 가입 요청을 거부
 #### 403 - 권한 없음
 
 #### 404 - 가입 요청을 찾을 수 없음
-
----
-
-### DELETE `groups/:id/invites/:requestId`
-
-**요약:** 초대 취소 (INVITE_MEMBER 권한 필요)
-
-**설명:**
-INVITE 타입의 PENDING 상태 초대를 취소합니다
-
-**인증/권한:**
-
-- GroupPermissionGuard
-
-**Path Parameters:**
-
-- `id` (`string`)
-- `requestId` (`string`)
-
-**Responses:**
-
-#### 200 - 초대 취소 성공
-
-```json
-{
-  "message": "초대가 취소되었습니다" // string
-}
-```
-
-#### 403 - 권한 없음
-
-#### 404 - 초대 요청을 찾을 수 없음
-
----
-
-### POST `groups/:id/invites/:requestId/resend`
-
-**요약:** 초대 재전송 (INVITE_MEMBER 권한 필요)
-
-**설명:**
-INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
-
-**인증/권한:**
-
-- GroupPermissionGuard
-
-**Path Parameters:**
-
-- `id` (`string`)
-- `requestId` (`string`)
-
-**Responses:**
-
-#### 200 - 초대 이메일 재전송 성공
-
-```json
-{
-  "message": "초대 이메일이 재전송되었습니다", // string
-  "email": "user@example.com", // 초대받은 사용자의 이메일 (string)
-  "groupName": "우리 가족", // 그룹명 (string)
-  "inviteCode": "AbC123Xy", // 초대 코드 (string)
-  "inviteCodeExpiresAt": "2025-12-24T00:00:00Z", // 초대 코드 만료 시간 (Date)
-  "joinRequestId": "uuid" // 가입 요청 ID (string)
-}
-```
-
-#### 403 - 권한 없음
-
-#### 404 - 초대 요청을 찾을 수 없음
 
 ---
 
@@ -8758,15 +8645,15 @@ R2에 파일이 존재하는지 확인합니다.
 
 ### POST `subscription/verify`
 
-**요약:** 구독 업데이트 (인앱 결제 후 tier/토큰 저장)
+**요약:** 인앱 구매 검증 (Google Play / App Store 서버 검증 후 tier 반영)
 
 **Request Body:**
 
 ```json
 {
-  "tier": null, // SubscriptionTier
-  "expiresAt": "2026-12-31T23:59:59.000Z", // 구독 만료일 (ISO 8601) (string?)
-  "purchaseToken": "AEuhp4..." // 인앱 결제 토큰 (Apple receipt / Google purchase token) (string?)
+  "platform": null, // SubscriptionPlatform
+  "purchaseToken": "", // Google Play 구매 토큰 (platform=ANDROID일 때 필수) (string?)
+  "signedTransaction": "" // App Store signedTransaction (JWS, platform=IOS일 때 필수) (string?)
 }
 ```
 
@@ -10114,10 +10001,10 @@ GPS 좌표(위도/경도)로 향후 3일간 시간별 날씨 예보를 조회합
 
 ### POST `webhook/apple`
 
-**요약:** Apple App Store 구독 Webhook (미구현)
+**요약:** Apple App Store 구독 Webhook
 
 **설명:**
-스토어 등록 후 구현 예정. Apple App Store Server Notifications V2 수신.
+Apple App Store Server Notifications V2 수신.
 
 **Responses:**
 
@@ -10133,10 +10020,10 @@ GPS 좌표(위도/경도)로 향후 3일간 시간별 날씨 예보를 조회합
 
 ### POST `webhook/google`
 
-**요약:** Google Play 구독 Webhook (미구현)
+**요약:** Google Play 구독 Webhook
 
 **설명:**
-스토어 등록 후 구현 예정. Google Play Real-time Developer Notifications 수신.
+Google Play Real-time Developer Notifications 수신.
 
 **Responses:**
 

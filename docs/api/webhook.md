@@ -26,10 +26,10 @@
 
 ### POST `webhook/apple`
 
-**요약:** Apple App Store 구독 Webhook (미구현)
+**요약:** Apple App Store 구독 Webhook
 
 **설명:**
-스토어 등록 후 구현 예정. Apple App Store Server Notifications V2 수신.
+Apple App Store Server Notifications V2 수신.
 
 **Responses:**
 
@@ -45,10 +45,10 @@
 
 ### POST `webhook/google`
 
-**요약:** Google Play 구독 Webhook (미구현)
+**요약:** Google Play 구독 Webhook
 
 **설명:**
-스토어 등록 후 구현 예정. Google Play Real-time Developer Notifications 수신.
+Google Play Real-time Developer Notifications 수신.
 
 **Responses:**
 
