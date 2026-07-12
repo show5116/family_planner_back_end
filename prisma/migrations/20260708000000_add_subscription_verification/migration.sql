@@ -17,7 +17,7 @@ CREATE TABLE `subscriptions` (
     UNIQUE INDEX `subscriptions_userId_key`(`userId`),
     INDEX `subscriptions_originalTransactionId_idx`(`originalTransactionId`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `subscription_events` (
@@ -31,7 +31,7 @@ CREATE TABLE `subscription_events` (
 
     INDEX `subscription_events_userId_idx`(`userId`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
 ALTER TABLE `subscriptions` ADD CONSTRAINT `subscriptions_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
