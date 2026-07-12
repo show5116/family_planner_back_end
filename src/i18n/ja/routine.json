@@ -1,0 +1,20 @@
+{
+  "errors": {
+    "weekly_target_required": "週N回目標のルーティンには目標回数が必要です",
+    "routine_not_found": "ルーティンが見つかりません",
+    "own_routine_only_update": "自分のルーティンのみ更新できます",
+    "own_routine_only_delete": "自分のルーティンのみ削除できます",
+    "no_access": "このルーティンへのアクセス権限がありません",
+    "no_group_access": "このグループへのアクセス権限がありません",
+    "already_shared": "すでに共有されているグループです",
+    "share_not_found": "共有情報が見つかりません",
+    "future_date_not_allowed": "未来の日付はチェックできません",
+    "already_checked": "すでにチェック済みの日付です",
+    "log_not_found": "チェック記録が見つかりません"
+  },
+  "success": {
+    "routine_deleted": "ルーティンを削除しました",
+    "share_removed": "グループ共有を解除しました",
+    "check_removed": "チェックを取り消しました"
+  }
+}

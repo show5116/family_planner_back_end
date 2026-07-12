@@ -44,6 +44,7 @@ import { QnaModule } from '@/qna/qna.module';
 import { TaskModule } from '@/task/task.module';
 import { RedisModule } from '@/redis/redis.module';
 import { MemoModule } from '@/memo/memo.module';
+import { RoutineModule } from '@/routine/routine.module';
 import { LinkPreviewModule } from '@/link-preview/link-preview.module';
 import { WebhookModule } from '@/webhook/webhook.module';
 import { HouseholdModule } from '@/household/household.module';
@@ -174,6 +175,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     QnaModule,
     TaskModule,
     MemoModule,
+    RoutineModule,
     LinkPreviewModule,
     WebhookModule,
     HouseholdModule,

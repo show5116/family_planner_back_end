@@ -1,0 +1,20 @@
+{
+  "errors": {
+    "weekly_target_required": "Weekly count routines require a target count",
+    "routine_not_found": "Routine not found",
+    "own_routine_only_update": "You can only update your own routines",
+    "own_routine_only_delete": "You can only delete your own routines",
+    "no_access": "You do not have access to this routine",
+    "no_group_access": "You do not have access to this group",
+    "already_shared": "This routine is already shared with this group",
+    "share_not_found": "Share not found",
+    "future_date_not_allowed": "You cannot check a future date",
+    "already_checked": "This date is already checked",
+    "log_not_found": "Check log not found"
+  },
+  "success": {
+    "routine_deleted": "Routine deleted",
+    "share_removed": "Group share removed",
+    "check_removed": "Check removed"
+  }
+}

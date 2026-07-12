@@ -8,66 +8,67 @@ datasource db {
 }
 
 model User {
-  id                   String                @id @default(uuid())
-  email                String?               @unique
-  name                 String
-  provider             Provider              @default(LOCAL)
-  providerId           String?
-  password             String?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  isEmailVerified      Boolean               @default(false)
-  isAdmin              Boolean               @default(false)
-  isSuperAdmin         Boolean               @default(false)
-  lastLoginAt          DateTime?
-  phoneNumber          String?               @db.VarChar(20)
-  profileImageKey      String?               @db.VarChar(255)
-  personalColor        String?               @db.VarChar(7)
-  announcementReads    AnnouncementRead[]    @relation("AnnouncementReads")
-  announcements        Announcement[]        @relation("AnnouncementAuthor")
-  answers              Answer[]              @relation("AdminAnswers")
-  categories           Category[]
-  deviceTokens         DeviceToken[]
-  groupMemberships     GroupMember[]
-  notificationSettings NotificationSetting[]
-  notifications        Notification[]
-  questions            Question[]
-  recurrings           Recurring[]
-  taskHistories        TaskHistory[]
-  taskParticipants     TaskParticipant[]
-  taskReminders        TaskReminder[]
-  taskSkips            TaskSkip[]
-  tasks                Task[]
-  memos                Memo[]
-  expenses                    Expense[]
-  expensesAsMember            Expense[]             @relation("ExpenseMember")
-  recurringExpenses           RecurringExpense[]
-  recurringExpensesAsMember   RecurringExpense[]    @relation("RecurringExpenseMember")
-  budgets              Budget[]
-  budgetTemplates      BudgetTemplate[]
-  groupBudgets         GroupBudget[]
-  groupBudgetTemplates GroupBudgetTemplate[]
-  merchants            Merchant[]
-  accounts             Account[]
-  indicatorBookmarks   IndicatorBookmark[]
-  childcareAsParent    ChildcareAccount[]          @relation("ChildcareParent")
-  childcareTransactions ChildcareTransaction[]     @relation("ChildcareTransactionCreator")
-  childProfiles        Child[]                     @relation("ChildParent")
-  linkedChildProfiles  Child[]                     @relation("ChildLinkedUser")
-  votesCreated         Vote[]                      @relation("VoteCreator")
-  voteBallots          VoteBallot[]                @relation("VoteBallots")
-  reportsMade          MemberReport[]              @relation("ReporterRelation")
-  reportsReceived      MemberReport[]              @relation("ReportedRelation")
-  resolvedReports      MemberReport[]              @relation("ReportResolver")
-  subscriptionTier      SubscriptionTier            @default(free)
-  subscriptionExpiresAt DateTime?
-  inAppPurchaseToken    String?                     @db.VarChar(500)
-  subscription          Subscription?
-  lastLat               Float?
-  lastLon               Float?
-  language              String                      @default("ko") @db.VarChar(10)
-  deletedAt             DateTime?
-  termsAgreedAt         DateTime?
+  id                        String                 @id @default(uuid())
+  email                     String?                @unique
+  name                      String
+  provider                  Provider               @default(LOCAL)
+  providerId                String?
+  password                  String?
+  createdAt                 DateTime               @default(now())
+  updatedAt                 DateTime               @updatedAt
+  isEmailVerified           Boolean                @default(false)
+  isAdmin                   Boolean                @default(false)
+  isSuperAdmin              Boolean                @default(false)
+  lastLoginAt               DateTime?
+  phoneNumber               String?                @db.VarChar(20)
+  profileImageKey           String?                @db.VarChar(255)
+  personalColor             String?                @db.VarChar(7)
+  announcementReads         AnnouncementRead[]     @relation("AnnouncementReads")
+  announcements             Announcement[]         @relation("AnnouncementAuthor")
+  answers                   Answer[]               @relation("AdminAnswers")
+  categories                Category[]
+  deviceTokens              DeviceToken[]
+  groupMemberships          GroupMember[]
+  notificationSettings      NotificationSetting[]
+  notifications             Notification[]
+  questions                 Question[]
+  recurrings                Recurring[]
+  taskHistories             TaskHistory[]
+  taskParticipants          TaskParticipant[]
+  taskReminders             TaskReminder[]
+  taskSkips                 TaskSkip[]
+  tasks                     Task[]
+  memos                     Memo[]
+  routines                  Routine[]
+  expenses                  Expense[]
+  expensesAsMember          Expense[]              @relation("ExpenseMember")
+  recurringExpenses         RecurringExpense[]
+  recurringExpensesAsMember RecurringExpense[]     @relation("RecurringExpenseMember")
+  budgets                   Budget[]
+  budgetTemplates           BudgetTemplate[]
+  groupBudgets              GroupBudget[]
+  groupBudgetTemplates      GroupBudgetTemplate[]
+  merchants                 Merchant[]
+  accounts                  Account[]
+  indicatorBookmarks        IndicatorBookmark[]
+  childcareAsParent         ChildcareAccount[]     @relation("ChildcareParent")
+  childcareTransactions     ChildcareTransaction[] @relation("ChildcareTransactionCreator")
+  childProfiles             Child[]                @relation("ChildParent")
+  linkedChildProfiles       Child[]                @relation("ChildLinkedUser")
+  votesCreated              Vote[]                 @relation("VoteCreator")
+  voteBallots               VoteBallot[]           @relation("VoteBallots")
+  reportsMade               MemberReport[]         @relation("ReporterRelation")
+  reportsReceived           MemberReport[]         @relation("ReportedRelation")
+  resolvedReports           MemberReport[]         @relation("ReportResolver")
+  subscriptionTier          SubscriptionTier       @default(free)
+  subscriptionExpiresAt     DateTime?
+  inAppPurchaseToken        String?                @db.VarChar(500)
+  subscription              Subscription?
+  lastLat                   Float?
+  lastLon                   Float?
+  language                  String                 @default("ko") @db.VarChar(10)
+  deletedAt                 DateTime?
+  termsAgreedAt             DateTime?
 
   @@unique([provider, providerId])
   @@index([email])
@@ -76,13 +77,13 @@ model User {
 }
 
 model Group {
-  id                  String             @id @default(uuid())
-  name                String             @db.VarChar(100)
-  description         String?            @db.Text
-  inviteCode          String             @unique @db.VarChar(8)
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  defaultColor        String             @default("#6366F1") @db.VarChar(7)
+  id                  String               @id @default(uuid())
+  name                String               @db.VarChar(100)
+  description         String?              @db.Text
+  inviteCode          String               @unique @db.VarChar(8)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  defaultColor        String               @default("#6366F1") @db.VarChar(7)
   inviteCodeExpiresAt DateTime
   categories          Category[]
   joinRequests        GroupJoinRequest[]
@@ -113,6 +114,7 @@ model Group {
   minigameResults     MinigameResult[]
   memberReports       MemberReport[]
   anniversaries       Anniversary[]
+  routineShares       RoutineShare[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -341,35 +343,35 @@ model Category {
 }
 
 model Task {
-  id             String            @id @default(uuid())
-  userId         String
-  groupId        String?
-  categoryId     String?
-  recurringId    String?
-  anniversaryId  String?
-  offsetDays     Int?
-  offsetType     AnniversaryOffsetType?
-  title          String            @db.VarChar(200)
-  description    String?           @db.Text
-  location       Json?
-  type           TaskType          @default(TODO_LINKED)
-  priority       TaskPriority      @default(MEDIUM)
-  scheduledAt    DateTime?
-  dueAt          DateTime?
-  allDay         Boolean           @default(false)
-  status         TaskStatus        @default(PENDING)
-  completedAt    DateTime?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  deletedAt      DateTime?
-  histories      TaskHistory[]
-  participants   TaskParticipant[]
-  reminders      TaskReminder[]
-  category       Category?         @relation(fields: [categoryId], references: [id])
-  group          Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  recurring      Recurring?        @relation(fields: [recurringId], references: [id])
-  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  anniversary    Anniversary?      @relation(fields: [anniversaryId], references: [id], onDelete: Cascade)
+  id            String                 @id @default(uuid())
+  userId        String
+  groupId       String?
+  categoryId    String?
+  recurringId   String?
+  anniversaryId String?
+  offsetDays    Int?
+  offsetType    AnniversaryOffsetType?
+  title         String                 @db.VarChar(200)
+  description   String?                @db.Text
+  location      Json?
+  type          TaskType               @default(TODO_LINKED)
+  priority      TaskPriority           @default(MEDIUM)
+  scheduledAt   DateTime?
+  dueAt         DateTime?
+  allDay        Boolean                @default(false)
+  status        TaskStatus             @default(PENDING)
+  completedAt   DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  deletedAt     DateTime?
+  histories     TaskHistory[]
+  participants  TaskParticipant[]
+  reminders     TaskReminder[]
+  category      Category?              @relation(fields: [categoryId], references: [id])
+  group         Group?                 @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  recurring     Recurring?             @relation(fields: [recurringId], references: [id])
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anniversary   Anniversary?           @relation(fields: [anniversaryId], references: [id], onDelete: Cascade)
 
   @@index([userId, scheduledAt])
   @@index([groupId, scheduledAt])
@@ -661,20 +663,20 @@ enum notifications_category {
 }
 
 model Memo {
-  id            String         @id @default(uuid())
-  userId        String
-  groupId       String?
-  title         String         @db.VarChar(200)
-  content       String         @db.Text
-  plainText     String?        @db.Text
-  format        MemoFormat     @default(DELTA)
-  visibility    MemoVisibility @default(PRIVATE)
-  isPinned      Boolean        @default(false)
-  checkedCount  Int            @default(0)
-  totalCount    Int            @default(0)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  deletedAt     DateTime?
+  id           String         @id @default(uuid())
+  userId       String
+  groupId      String?
+  title        String         @db.VarChar(200)
+  content      String         @db.Text
+  plainText    String?        @db.Text
+  format       MemoFormat     @default(DELTA)
+  visibility   MemoVisibility @default(PRIVATE)
+  isPinned     Boolean        @default(false)
+  checkedCount Int            @default(0)
+  totalCount   Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
 
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   group       Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -690,10 +692,10 @@ model Memo {
 }
 
 model MemoTag {
-  id     String  @id @default(uuid())
+  id     String @id @default(uuid())
   memoId String
-  name   String  @db.VarChar(50)
-  memo   Memo    @relation(fields: [memoId], references: [id], onDelete: Cascade)
+  name   String @db.VarChar(50)
+  memo   Memo   @relation(fields: [memoId], references: [id], onDelete: Cascade)
 
   @@unique([memoId, name])
   @@index([memoId])
@@ -728,12 +730,12 @@ enum MemoVisibility {
 }
 
 model Merchant {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   groupId   String?
   userId    String?
-  name      String    @db.VarChar(100)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   group             Group?             @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -746,34 +748,34 @@ model Merchant {
 }
 
 model Expense {
-  id                  String            @id @default(uuid())
-  groupId             String?
-  userId              String
-  type                TransactionType   @default(EXPENSE)
-  amount              Decimal           @db.Decimal(10, 2)
-  category            ExpenseCategory?
-  date                DateTime          @db.Date
-  description         String?           @db.VarChar(200)
-  paymentMethod       PaymentMethod?
-  merchantId          String?
-  recurringExpenseId  String?
-  isConfirmed         Boolean           @default(true)
-  incomeCategory      IncomeCategory?
-  refundedExpenseId   String?
-  shoppingHistoryId   String?           @unique
-  memberId            String?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  id                 String           @id @default(uuid())
+  groupId            String?
+  userId             String
+  type               TransactionType  @default(EXPENSE)
+  amount             Decimal          @db.Decimal(10, 2)
+  category           ExpenseCategory?
+  date               DateTime         @db.Date
+  description        String?          @db.VarChar(200)
+  paymentMethod      PaymentMethod?
+  merchantId         String?
+  recurringExpenseId String?
+  isConfirmed        Boolean          @default(true)
+  incomeCategory     IncomeCategory?
+  refundedExpenseId  String?
+  shoppingHistoryId  String?          @unique
+  memberId           String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  group             Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  merchant          Merchant?         @relation(fields: [merchantId], references: [id], onDelete: SetNull)
-  recurringExpense  RecurringExpense? @relation(fields: [recurringExpenseId], references: [id], onDelete: SetNull)
-  refundedExpense   Expense?          @relation("ExpenseRefund", fields: [refundedExpenseId], references: [id], onDelete: Cascade)
-  refunds           Expense[]         @relation("ExpenseRefund")
-  receipts          ExpenseReceipt[]
-  shoppingHistory   ShoppingHistory?  @relation(fields: [shoppingHistoryId], references: [id])
-  member            User?             @relation("ExpenseMember", fields: [memberId], references: [id], onDelete: SetNull)
+  group            Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant         Merchant?         @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+  recurringExpense RecurringExpense? @relation(fields: [recurringExpenseId], references: [id], onDelete: SetNull)
+  refundedExpense  Expense?          @relation("ExpenseRefund", fields: [refundedExpenseId], references: [id], onDelete: Cascade)
+  refunds          Expense[]         @relation("ExpenseRefund")
+  receipts         ExpenseReceipt[]
+  shoppingHistory  ShoppingHistory?  @relation(fields: [shoppingHistoryId], references: [id])
+  member           User?             @relation("ExpenseMember", fields: [memberId], references: [id], onDelete: SetNull)
 
   @@index([groupId, date(sort: Desc)])
   @@index([userId, date(sort: Desc)])
@@ -832,7 +834,7 @@ model ExpenseReceipt {
   mimeType  String   @db.VarChar(100)
   createdAt DateTime @default(now())
 
-  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
 
   @@index([expenseId])
   @@map("expense_receipts")
@@ -848,8 +850,8 @@ model Budget {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
-  group     Group?          @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId, category, month])
   @@index([groupId, month])
@@ -866,8 +868,8 @@ model BudgetTemplate {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
-  group     Group?          @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId, category])
   @@index([groupId])
@@ -885,8 +887,8 @@ model GroupBudget {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  group     Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId, month])
   @@index([groupId, month])
@@ -903,8 +905,8 @@ model GroupBudgetTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  group     Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("group_budget_templates")
 }
@@ -950,23 +952,23 @@ enum PaymentMethod {
 }
 
 model Account {
-  id            String              @id @default(uuid())
-  groupId       String
-  userId        String
-  name          String              @db.VarChar(100)
-  accountNumber String?             @db.VarChar(50)
-  institution   String?             @db.VarChar(100)
-  type                AccountType
-  sortOrder           Int                 @default(0)
-  recordReminderDay   Int?
-  createdAt           DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id                String      @id @default(uuid())
+  groupId           String
+  userId            String
+  name              String      @db.VarChar(100)
+  accountNumber     String?     @db.VarChar(50)
+  institution       String?     @db.VarChar(100)
+  type              AccountType
+  sortOrder         Int         @default(0)
+  recordReminderDay Int?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
-  group         Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  records         AccountRecord[]
-  withdrawals     AccountWithdrawal[]
-  holdingRecords  AccountHoldingRecord[]
+  group          Group                  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  records        AccountRecord[]
+  withdrawals    AccountWithdrawal[]
+  holdingRecords AccountHoldingRecord[]
 
   @@index([groupId, sortOrder])
   @@index([userId])
@@ -984,27 +986,27 @@ enum AccountType {
 }
 
 model AccountRecord {
-  id           String             @id @default(uuid())
+  id           String   @id @default(uuid())
   accountId    String
-  recordDate   DateTime           @db.Date
-  balance      Decimal            @db.Decimal(15, 2)
-  principal    Decimal            @db.Decimal(15, 2)
-  profit       Decimal            @db.Decimal(15, 2)
-  gramWeight   Decimal?           @db.Decimal(10, 4)
-  note         String?            @db.VarChar(200)
-  withdrawalId String?            @unique
-  createdAt    DateTime           @default(now())
+  recordDate   DateTime @db.Date
+  balance      Decimal  @db.Decimal(15, 2)
+  principal    Decimal  @db.Decimal(15, 2)
+  profit       Decimal  @db.Decimal(15, 2)
+  gramWeight   Decimal? @db.Decimal(10, 4)
+  note         String?  @db.VarChar(200)
+  withdrawalId String?  @unique
+  createdAt    DateTime @default(now())
 
-  account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  withdrawal   AccountWithdrawal? @relation(fields: [withdrawalId], references: [id], onDelete: SetNull)
+  account    Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  withdrawal AccountWithdrawal? @relation(fields: [withdrawalId], references: [id], onDelete: SetNull)
 
   @@index([accountId, recordDate(sort: Desc)])
   @@map("account_records")
 }
 
 enum WithdrawalType {
-  PRINCIPAL  // 원금 인출
-  PROFIT     // 수익 인출
+  PRINCIPAL // 원금 인출
+  PROFIT // 수익 인출
 }
 
 model AccountWithdrawal {
@@ -1016,8 +1018,8 @@ model AccountWithdrawal {
   note           String?        @db.VarChar(200)
   createdAt      DateTime       @default(now())
 
-  account        Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  record         AccountRecord?
+  account Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  record  AccountRecord?
 
   @@index([accountId, withdrawalDate(sort: Desc)])
   @@map("account_withdrawals")
@@ -1033,7 +1035,7 @@ model AccountHoldingRecord {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@unique([accountId, recordDate, name])
   @@index([accountId, recordDate(sort: Desc)])
@@ -1074,16 +1076,16 @@ enum IndicatorCategory {
 }
 
 model IndicatorPrice {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   indicatorId String
-  price       Decimal   @db.Decimal(20, 6)
-  prevPrice   Decimal?  @db.Decimal(20, 6)
-  change      Decimal?  @db.Decimal(20, 6)
-  changeRate  Decimal?  @db.Decimal(10, 4)
+  price       Decimal  @db.Decimal(20, 6)
+  prevPrice   Decimal? @db.Decimal(20, 6)
+  change      Decimal? @db.Decimal(20, 6)
+  changeRate  Decimal? @db.Decimal(10, 4)
   recordedAt  DateTime
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
-  indicator   Indicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+  indicator Indicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
 
   @@index([indicatorId, recordedAt(sort: Desc)])
   @@index([recordedAt(sort: Desc)])
@@ -1091,14 +1093,14 @@ model IndicatorPrice {
 }
 
 model IndicatorBookmark {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   userId      String
   indicatorId String
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  indicator   Indicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  indicator Indicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
 
   @@unique([userId, indicatorId])
   @@index([userId])
@@ -1110,18 +1112,18 @@ model IndicatorBookmark {
 // ============================================================
 
 model Child {
-  id           String    @id @default(uuid())
+  id           String   @id @default(uuid())
   groupId      String
   parentUserId String
-  name         String    @db.VarChar(50)
-  birthDate    DateTime  @db.Date
+  name         String   @db.VarChar(50)
+  birthDate    DateTime @db.Date
   userId       String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  group         Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  parentUser    User              @relation("ChildParent", fields: [parentUserId], references: [id], onDelete: Cascade)
-  linkedUser    User?             @relation("ChildLinkedUser", fields: [userId], references: [id], onDelete: SetNull)
+  group         Group               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  parentUser    User                @relation("ChildParent", fields: [parentUserId], references: [id], onDelete: Cascade)
+  linkedUser    User?               @relation("ChildLinkedUser", fields: [userId], references: [id], onDelete: SetNull)
   account       ChildcareAccount?
   allowancePlan ChildAllowancePlan?
 
@@ -1154,18 +1156,18 @@ model ChildcareAccount {
 }
 
 model ChildcareSavingsPlan {
-  id             String                  @id @default(uuid())
-  accountId      String                  @unique
-  monthlyAmount  Int                     // 월 적금액 (포인트)
-  interestRate   Decimal                 @db.Decimal(5, 2) // 연 이자율 (%)
-  interestType   SavingsInterestType     // SIMPLE: 단리, COMPOUND: 복리
-  startDate      DateTime
-  endDate        DateTime                // 만기일
-  status         SavingsPlanStatus       @default(ACTIVE)
-  maturedAt      DateTime?               // 만기 처리 일시
-  cancelledAt    DateTime?               // 해지 일시
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
+  id            String              @id @default(uuid())
+  accountId     String              @unique
+  monthlyAmount Int // 월 적금액 (포인트)
+  interestRate  Decimal             @db.Decimal(5, 2) // 연 이자율 (%)
+  interestType  SavingsInterestType // SIMPLE: 단리, COMPOUND: 복리
+  startDate     DateTime
+  endDate       DateTime // 만기일
+  status        SavingsPlanStatus   @default(ACTIVE)
+  maturedAt     DateTime? // 만기 처리 일시
+  cancelledAt   DateTime? // 해지 일시
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   account ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
@@ -1173,40 +1175,40 @@ model ChildcareSavingsPlan {
 }
 
 enum SavingsInterestType {
-  SIMPLE    // 단리
-  COMPOUND  // 복리
+  SIMPLE // 단리
+  COMPOUND // 복리
 }
 
 enum SavingsPlanStatus {
-  ACTIVE     // 진행 중
-  MATURED    // 만기 완료
-  CANCELLED  // 중도 해지
+  ACTIVE // 진행 중
+  MATURED // 만기 완료
+  CANCELLED // 중도 해지
 }
 
 model ChildAllowancePlan {
-  id                   String    @id @default(uuid())
-  childId              String    @unique
-  monthlyPoints        Int
-  payDay               Int
-  pointToMoneyRatio    Int
-  nextNegotiationDate  DateTime? @db.Date
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id                  String    @id @default(uuid())
+  childId             String    @unique
+  monthlyPoints       Int
+  payDay              Int
+  pointToMoneyRatio   Int
+  nextNegotiationDate DateTime? @db.Date
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  child    Child                      @relation(fields: [childId], references: [id], onDelete: Cascade)
+  child     Child                       @relation(fields: [childId], references: [id], onDelete: Cascade)
   histories ChildAllowancePlanHistory[]
 
   @@map("child_allowance_plans")
 }
 
 model ChildAllowancePlanHistory {
-  id                   String    @id @default(uuid())
-  planId               String
-  monthlyPoints        Int
-  payDay               Int
-  pointToMoneyRatio    Int
-  nextNegotiationDate  DateTime? @db.Date
-  changedAt            DateTime  @default(now())
+  id                  String    @id @default(uuid())
+  planId              String
+  monthlyPoints       Int
+  payDay              Int
+  pointToMoneyRatio   Int
+  nextNegotiationDate DateTime? @db.Date
+  changedAt           DateTime  @default(now())
 
   plan ChildAllowancePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
@@ -1223,7 +1225,7 @@ model ChildcareTransaction {
   createdBy   String?
   createdAt   DateTime                 @default(now())
 
-  account User? @relation("ChildcareTransactionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  account          User?            @relation("ChildcareTransactionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   childcareAccount ChildcareAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId, createdAt(sort: Desc)])
@@ -1232,15 +1234,15 @@ model ChildcareTransaction {
 }
 
 enum ChildcareTransactionType {
-  ALLOWANCE        // 월 용돈 자동 지급 (스케줄러)
-  REWARD           // 규칙 PLUS 적용 — 잘한 행동 포인트 지급
-  BONUS            // 부모가 자유롭게 주는 특별 보너스
-  PENALTY          // 규칙 MINUS 적용 — 못한 행동 포인트 차감
-  PURCHASE         // 상점 아이템 구매 — 포인트 소비
-  CASHOUT          // 포인트 현금화 — 부모가 실제 돈으로 지급
-  SAVINGS_DEPOSIT  // 적금 입금 — 잔액 → 적금
+  ALLOWANCE // 월 용돈 자동 지급 (스케줄러)
+  REWARD // 규칙 PLUS 적용 — 잘한 행동 포인트 지급
+  BONUS // 부모가 자유롭게 주는 특별 보너스
+  PENALTY // 규칙 MINUS 적용 — 못한 행동 포인트 차감
+  PURCHASE // 상점 아이템 구매 — 포인트 소비
+  CASHOUT // 포인트 현금화 — 부모가 실제 돈으로 지급
+  SAVINGS_DEPOSIT // 적금 입금 — 잔액 → 적금
   SAVINGS_WITHDRAW // 적금 출금 — 적금 → 잔액
-  INTEREST         // 이자 지급 (스케줄러)
+  INTEREST // 이자 지급 (스케줄러)
 }
 
 model ChildcareShopItem {
@@ -1266,7 +1268,7 @@ model ChildcareRule {
   name        String            @db.VarChar(100)
   description String?           @db.VarChar(200)
   type        ChildcareRuleType
-  points      Int?              // INFO 타입일 경우 null
+  points      Int? // INFO 타입일 경우 null
   order       Int               @default(0)
   isActive    Boolean           @default(true)
   createdAt   DateTime          @default(now())
@@ -1279,9 +1281,9 @@ model ChildcareRule {
 }
 
 enum ChildcareRuleType {
-  PLUS   // 잘한 행동 → 포인트 지급
-  MINUS  // 못한 행동 → 포인트 차감
-  INFO   // 메모성 규칙 → 포인트 없음
+  PLUS // 잘한 행동 → 포인트 지급
+  MINUS // 못한 행동 → 포인트 차감
+  INFO // 메모성 규칙 → 포인트 없음
 }
 
 // ============================================================
@@ -1299,7 +1301,7 @@ model MinigameResult {
   createdBy    String
   createdAt    DateTime     @default(now())
 
-  group        Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId, createdAt(sort: Desc)])
   @@index([groupId, gameType])
@@ -1317,20 +1319,20 @@ enum MinigameType {
 // ============================================================
 
 model Vote {
-  id          String       @id @default(uuid())
+  id          String    @id @default(uuid())
   groupId     String
   createdBy   String
-  title       String       @db.VarChar(200)
-  description String?      @db.Text
-  isMultiple  Boolean      @default(false)
-  isAnonymous Boolean      @default(false)
+  title       String    @db.VarChar(200)
+  description String?   @db.Text
+  isMultiple  Boolean   @default(false)
+  isAnonymous Boolean   @default(false)
   endsAt      DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  group       Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  creator     User         @relation("VoteCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  options     VoteOption[]
+  group   Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator User         @relation("VoteCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  options VoteOption[]
 
   @@index([groupId, createdAt(sort: Desc)])
   @@index([createdBy])
@@ -1338,9 +1340,9 @@ model Vote {
 }
 
 model VoteOption {
-  id      String       @id @default(uuid())
-  voteId  String
-  label   String       @db.VarChar(100)
+  id     String @id @default(uuid())
+  voteId String
+  label  String @db.VarChar(100)
 
   vote    Vote         @relation(fields: [voteId], references: [id], onDelete: Cascade)
   ballots VoteBallot[]
@@ -1350,13 +1352,13 @@ model VoteOption {
 }
 
 model VoteBallot {
-  id       String     @id @default(uuid())
+  id       String   @id @default(uuid())
   optionId String
   userId   String
-  votedAt  DateTime   @default(now())
+  votedAt  DateTime @default(now())
 
-  option   VoteOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  user     User       @relation("VoteBallots", fields: [userId], references: [id], onDelete: Cascade)
+  option VoteOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   User       @relation("VoteBallots", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([optionId, userId])
   @@index([optionId])
@@ -1370,35 +1372,35 @@ enum VoteStatus {
 }
 
 model SavingsGoal {
-  id            String             @id @default(uuid())
-  groupId       String
-  name          String             @db.VarChar(100)
-  description   String?            @db.VarChar(300)
-  targetAmount  Decimal?           @db.Decimal(12, 2)
-  currentAmount Decimal            @default(0) @db.Decimal(12, 2)
-  autoDeposit      Boolean            @default(false)
-  monthlyAmount    Decimal?           @db.Decimal(12, 2)
-  depositDay       Int                @default(1)
-  includeInAssets  Boolean            @default(false)
-  status           SavingsGoalStatus  @default(ACTIVE)
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  id              String            @id @default(uuid())
+  groupId         String
+  name            String            @db.VarChar(100)
+  description     String?           @db.VarChar(300)
+  targetAmount    Decimal?          @db.Decimal(12, 2)
+  currentAmount   Decimal           @default(0) @db.Decimal(12, 2)
+  autoDeposit     Boolean           @default(false)
+  monthlyAmount   Decimal?          @db.Decimal(12, 2)
+  depositDay      Int               @default(1)
+  includeInAssets Boolean           @default(false)
+  status          SavingsGoalStatus @default(ACTIVE)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
-  group         Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  transactions  SavingsTransaction[]
+  group        Group                @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  transactions SavingsTransaction[]
 
   @@index([groupId])
 }
 
 model SavingsTransaction {
-  id          String       @id @default(uuid())
+  id          String      @id @default(uuid())
   goalId      String
   type        SavingsType
-  amount      Decimal      @db.Decimal(12, 2)
-  description String?      @db.VarChar(200)
-  createdAt   DateTime     @default(now())
+  amount      Decimal     @db.Decimal(12, 2)
+  description String?     @db.VarChar(200)
+  createdAt   DateTime    @default(now())
 
-  goal        SavingsGoal  @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goal SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
   @@index([goalId, createdAt])
 }
@@ -1425,13 +1427,13 @@ enum StorageType {
 }
 
 model StorageLocation {
-  id        String      @id @default(uuid())
+  id        String       @id @default(uuid())
   groupId   String
-  name      String      @db.VarChar(50)
+  name      String       @db.VarChar(50)
   type      StorageType
-  sortOrder Int         @default(0)
-  createdAt DateTime    @default(now())
-  group     Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  group     Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
   items     FridgeItem[]
 
   @@index([groupId])
@@ -1439,22 +1441,22 @@ model StorageLocation {
 }
 
 model FridgeItem {
-  id                String           @id @default(uuid())
+  id                String          @id @default(uuid())
   groupId           String
   storageLocationId String
-  name              String           @db.VarChar(100)
-  quantity          Decimal          @db.Decimal(10, 2)
-  unit              String?          @db.VarChar(20)
-  registeredAt      DateTime         @default(now())
+  name              String          @db.VarChar(100)
+  quantity          Decimal         @db.Decimal(10, 2)
+  unit              String?         @db.VarChar(20)
+  registeredAt      DateTime        @default(now())
   expiresAt         DateTime?
-  alertDaysBefore   Int              @default(3)
-  memo              String?          @db.VarChar(200)
+  alertDaysBefore   Int             @default(3)
+  memo              String?         @db.VarChar(200)
   frequentItemId    String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  group             Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  storageLocation   StorageLocation  @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
-  frequentItem      FrequentItem?    @relation(fields: [frequentItemId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  group             Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  storageLocation   StorageLocation @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
+  frequentItem      FrequentItem?   @relation(fields: [frequentItemId], references: [id])
 
   @@index([groupId])
   @@index([storageLocationId])
@@ -1463,17 +1465,17 @@ model FridgeItem {
 }
 
 model FrequentItem {
-  id           String             @id @default(uuid())
-  groupId      String
-  name         String             @db.VarChar(100)
-  defaultUnit  String?            @db.VarChar(20)
-  autoAdd      Boolean            @default(false)
-  sortOrder    Int                @default(0)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  group        Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  fridgeItems  FridgeItem[]
-  cartItems    ShoppingCartItem[]
+  id          String             @id @default(uuid())
+  groupId     String
+  name        String             @db.VarChar(100)
+  defaultUnit String?            @db.VarChar(20)
+  autoAdd     Boolean            @default(false)
+  sortOrder   Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  group       Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fridgeItems FridgeItem[]
+  cartItems   ShoppingCartItem[]
 
   @@unique([groupId, name])
   @@index([groupId])
@@ -1566,13 +1568,13 @@ model GlobalExpiryPreset {
 
 // 그룹별 유통기한 커스텀 오버라이드 (품목 단위)
 model GroupExpiryPreset {
-  id             String            @id @default(uuid())
+  id             String             @id @default(uuid())
   groupId        String
   globalPresetId String
   customDays     Int
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  group          Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  group          Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
   globalPreset   GlobalExpiryPreset @relation(fields: [globalPresetId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, globalPresetId])
@@ -1594,10 +1596,10 @@ model MemberReport {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  group      Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  reporter   User   @relation("ReporterRelation", fields: [reporterId], references: [id], onDelete: Cascade)
-  reported   User   @relation("ReportedRelation", fields: [reportedId], references: [id], onDelete: Cascade)
-  resolvedBy User?  @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  group      Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  reporter   User  @relation("ReporterRelation", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported   User  @relation("ReportedRelation", fields: [reportedId], references: [id], onDelete: Cascade)
+  resolvedBy User? @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   @@unique([groupId, reporterId, reportedId])
   @@index([groupId])
@@ -1624,15 +1626,15 @@ enum ReportStatus {
 }
 
 model Anniversary {
-  id              String    @id @default(uuid())
+  id              String   @id @default(uuid())
   groupId         String
-  title           String    @db.VarChar(100)
-  date            DateTime  @db.Date
-  emoji           String?   @db.VarChar(10)
+  title           String   @db.VarChar(100)
+  date            DateTime @db.Date
+  emoji           String?  @db.VarChar(10)
   milestoneConfig Json?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  group           Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  group           Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   tasks           Task[]
 
   @@index([groupId])
@@ -1642,4 +1644,71 @@ model Anniversary {
 enum AnniversaryOffsetType {
   DAYS
   YEARS
+}
+
+// ============================================================
+// 루틴 (Routine)
+// ============================================================
+
+model Routine {
+  id            String               @id @default(uuid())
+  userId        String
+  title         String               @db.VarChar(100)
+  emoji         String?              @db.VarChar(10)
+  color         String?              @db.VarChar(7)
+  frequencyType RoutineFrequencyType @default(WEEKLY_COUNT)
+  targetCount   Int?
+  targetDays    Json?
+  startDate     DateTime             @db.Date
+  endDate       DateTime?            @db.Date
+  isActive      Boolean              @default(true)
+  sortOrder     Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  deletedAt     DateTime?
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs   RoutineLog[]
+  shares RoutineShare[]
+
+  @@index([userId, isActive])
+  @@index([userId, sortOrder])
+  @@index([deletedAt])
+  @@map("routines")
+}
+
+model RoutineLog {
+  id          String   @id @default(uuid())
+  routineId   String
+  userId      String
+  checkedDate DateTime @db.Date
+  note        String?  @db.VarChar(200)
+  createdAt   DateTime @default(now())
+
+  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  @@unique([routineId, checkedDate])
+  @@index([routineId, checkedDate])
+  @@index([userId, checkedDate])
+  @@map("routine_logs")
+}
+
+model RoutineShare {
+  id        String   @id @default(uuid())
+  routineId String
+  groupId   String
+  createdAt DateTime @default(now())
+
+  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([routineId, groupId])
+  @@index([groupId])
+  @@map("routine_shares")
+}
+
+enum RoutineFrequencyType {
+  WEEKLY_COUNT
+  DAILY
+  DAYS_OF_WEEK
 }

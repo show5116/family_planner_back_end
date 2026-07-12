@@ -8,6 +8,7 @@
 - 공지사항 작업 → `docs/features/11-announcements.md`만
 - 알림 작업 → `docs/features/10-notifications.md`만
 - Q&A 작업 → `docs/features/12-qna.md`만
+- 루틴 작업 → `docs/features/20-routine.md`만
 
 **절대 전체 문서를 읽지 마세요!** 토큰 낭비입니다.
 

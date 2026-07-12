@@ -1,0 +1,20 @@
+{
+  "errors": {
+    "weekly_target_required": "주 N회 목표 루틴은 목표 횟수가 필요합니다",
+    "routine_not_found": "루틴을 찾을 수 없습니다",
+    "own_routine_only_update": "본인의 루틴만 수정할 수 있습니다",
+    "own_routine_only_delete": "본인의 루틴만 삭제할 수 있습니다",
+    "no_access": "이 루틴에 접근할 권한이 없습니다",
+    "no_group_access": "이 그룹에 접근할 권한이 없습니다",
+    "already_shared": "이미 공유된 그룹입니다",
+    "share_not_found": "공유 정보를 찾을 수 없습니다",
+    "future_date_not_allowed": "미래 날짜는 체크할 수 없습니다",
+    "already_checked": "이미 체크된 날짜입니다",
+    "log_not_found": "체크 기록을 찾을 수 없습니다"
+  },
+  "success": {
+    "routine_deleted": "루틴이 삭제되었습니다",
+    "share_removed": "그룹 공유가 해제되었습니다",
+    "check_removed": "체크가 취소되었습니다"
+  }
+}
