@@ -16,5 +16,13 @@
     "routine_deleted": "루틴이 삭제되었습니다",
     "share_removed": "그룹 공유가 해제되었습니다",
     "check_removed": "체크가 취소되었습니다"
+  },
+  "notification": {
+    "daily_reminder_title": "오늘의 루틴을 확인해보세요",
+    "daily_reminder_body": "오늘 아직 체크하지 않은 루틴이 {count}개 있어요",
+    "weekly_summary_title": "이번 주 루틴 리포트",
+    "weekly_summary_body": "이번 주 루틴 달성률 {rate}%예요. 다음 주도 화이팅!",
+    "badge_earned_title": "새 배지를 획득했어요!",
+    "badge_earned_body": "{badgeTitle}을(를) 획득했어요! {iconEmoji}"
   }
 }

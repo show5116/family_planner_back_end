@@ -39,4 +39,16 @@ export class UpdateSettingsDto {
   @Min(0)
   @Max(23)
   weatherAlertHour?: number;
+
+  @ApiPropertyOptional({
+    description: 'ROUTINE 카테고리 전용: 루틴 리마인드 수신 시각 (0~23시)',
+    example: 21,
+    minimum: 0,
+    maximum: 23,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(23)
+  routineReminderHour?: number;
 }

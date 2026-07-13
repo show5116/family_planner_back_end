@@ -16,5 +16,13 @@
     "routine_deleted": "例行任务已删除",
     "share_removed": "已取消群组共享",
     "check_removed": "已取消打卡"
+  },
+  "notification": {
+    "daily_reminder_title": "看看今天的例行任务吧",
+    "daily_reminder_body": "您今天还有{count}个例行任务未打卡",
+    "weekly_summary_title": "本周例行任务报告",
+    "weekly_summary_body": "本周例行任务达成率为{rate}%，下周继续加油!",
+    "badge_earned_title": "获得新徽章!",
+    "badge_earned_body": "您获得了{badgeTitle}! {iconEmoji}"
   }
 }

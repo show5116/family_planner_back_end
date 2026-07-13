@@ -16,5 +16,13 @@
     "routine_deleted": "ルーティンを削除しました",
     "share_removed": "グループ共有を解除しました",
     "check_removed": "チェックを取り消しました"
+  },
+  "notification": {
+    "daily_reminder_title": "今日のルーティンを確認しましょう",
+    "daily_reminder_body": "今日まだチェックしていないルーティンが{count}件あります",
+    "weekly_summary_title": "今週のルーティンレポート",
+    "weekly_summary_body": "今週のルーティン達成率は{rate}%です。来週も頑張りましょう!",
+    "badge_earned_title": "新しいバッジを獲得しました!",
+    "badge_earned_body": "{badgeTitle}を獲得しました! {iconEmoji}"
   }
 }

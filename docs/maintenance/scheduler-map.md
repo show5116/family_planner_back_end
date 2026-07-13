@@ -132,6 +132,17 @@
 
 ---
 
+### `routine` — 루틴 리마인더
+
+파일: [src/routine/routine-reminder.scheduler.ts](../../src/routine/routine-reminder.scheduler.ts)
+
+| 메서드 | 주기 | 설명 |
+|--------|------|------|
+| `sendDailyReminders` | 매 정시 (`0 * * * *`, KST) | `routineReminderHour` 설정된 유저 중 오늘 미체크 루틴 있으면 발송 |
+| `sendWeeklySummary` | 매주 일요일 20:00 KST (`0 20 * * 0`) | 이번 주 평균 달성률 요약 발송 |
+
+---
+
 ### `qna` — Q&A
 
 파일: [src/qna/qna.scheduler.ts](../../src/qna/qna.scheduler.ts)

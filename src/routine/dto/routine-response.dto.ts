@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RoutineFrequencyType } from '@/routine/enums';
+import { UserRoutineBadgeDto } from './routine-badge-response.dto';
 
 export class RoutineDto {
   @ApiProperty({ description: '루틴 ID', example: 'uuid-1234' })
@@ -57,6 +58,12 @@ export class RoutineLogDto {
 
   @ApiProperty({ description: '생성일' })
   createdAt: Date;
+
+  @ApiProperty({
+    description: '이번 체크로 새로 획득한 배지 목록',
+    type: [UserRoutineBadgeDto],
+  })
+  newlyEarnedBadges: UserRoutineBadgeDto[];
 }
 
 export class RoutineShareDto {

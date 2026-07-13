@@ -64,6 +64,12 @@ export class NotificationSettingsService {
     ) {
       updateData.weatherAlertHour = dto.weatherAlertHour;
     }
+    if (
+      dto.category === NotificationCategory.ROUTINE &&
+      dto.routineReminderHour !== undefined
+    ) {
+      updateData.routineReminderHour = dto.routineReminderHour;
+    }
 
     const result = await this.prisma.notificationSetting.upsert({
       where: {
@@ -80,6 +86,10 @@ export class NotificationSettingsService {
         ...(dto.category === NotificationCategory.WEATHER &&
         dto.weatherAlertHour !== undefined
           ? { weatherAlertHour: dto.weatherAlertHour }
+          : {}),
+        ...(dto.category === NotificationCategory.ROUTINE &&
+        dto.routineReminderHour !== undefined
+          ? { routineReminderHour: dto.routineReminderHour }
           : {}),
       },
     });

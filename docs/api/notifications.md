@@ -89,7 +89,8 @@
 {
   "category": null, // 알림 카테고리 (NotificationCategory)
   "enabled": true, // 알림 활성화 여부 (boolean)
-  "weatherAlertHour": 7 // WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시) (number?)
+  "weatherAlertHour": 7, // WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시) (number?)
+  "routineReminderHour": 21 // ROUTINE 카테고리 전용: 루틴 리마인드 수신 시각 (0~23시) (number?)
 }
 ```
 

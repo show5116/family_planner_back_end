@@ -16,5 +16,13 @@
     "routine_deleted": "Routine deleted",
     "share_removed": "Group share removed",
     "check_removed": "Check removed"
+  },
+  "notification": {
+    "daily_reminder_title": "Check your routines today",
+    "daily_reminder_body": "You have {count} routine(s) not checked today",
+    "weekly_summary_title": "Your weekly routine report",
+    "weekly_summary_body": "Your routine achievement rate this week is {rate}%. Keep it up next week!",
+    "badge_earned_title": "New badge earned!",
+    "badge_earned_body": "You earned {badgeTitle}! {iconEmoji}"
   }
 }

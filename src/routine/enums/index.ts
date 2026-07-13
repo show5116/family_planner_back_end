@@ -1,1 +1,1 @@
-export { RoutineFrequencyType } from '@prisma/client';
+export { RoutineFrequencyType, BadgeCriteriaType } from '@prisma/client';

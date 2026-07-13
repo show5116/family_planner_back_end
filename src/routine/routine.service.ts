@@ -1,5 +1,8 @@
 import {
+  forwardRef,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
@@ -14,6 +17,7 @@ import { RoutineQueryDto } from './dto/routine-query.dto';
 import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
+import { RoutineBadgeService } from './routine-badge.service';
 
 function todayDateOnly(): Date {
   const now = new Date();
@@ -28,9 +32,13 @@ function parseDateOnly(dateStr: string): Date {
 
 @Injectable()
 export class RoutineService {
+  private readonly logger = new Logger(RoutineService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService,
+    @Inject(forwardRef(() => RoutineBadgeService))
+    private readonly routineBadgeService: RoutineBadgeService,
   ) {}
 
   private t(key: string) {
@@ -177,7 +185,7 @@ export class RoutineService {
       throw new ConflictException(this.t('errors.already_checked'));
     }
 
-    return this.prisma.routineLog.create({
+    const log = await this.prisma.routineLog.create({
       data: {
         routineId: id,
         userId,
@@ -185,6 +193,15 @@ export class RoutineService {
         note: dto.note,
       },
     });
+
+    const newlyEarnedBadges = await this.routineBadgeService
+      .evaluateAndAward(userId, id)
+      .catch((err) => {
+        this.logger.error(`배지 평가 실패 (routineId=${id}): ${err.message}`);
+        return [];
+      });
+
+    return { ...log, newlyEarnedBadges };
   }
 
   async uncheck(userId: string, id: string, dateStr?: string) {

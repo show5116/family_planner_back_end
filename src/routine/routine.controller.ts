@@ -13,6 +13,8 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 import { RoutineService } from './routine.service';
 import { RoutineStatsService } from './routine-stats.service';
+import { RoutineBadgeService } from './routine-badge.service';
+import { RoutineLeaderboardService } from './routine-leaderboard.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { RoutineQueryDto } from './dto/routine-query.dto';
@@ -20,6 +22,7 @@ import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { HeatmapQueryDto, RateQueryDto } from './dto/routine-stats-query.dto';
+import { LeaderboardQueryDto } from './dto/routine-leaderboard-query.dto';
 import {
   RoutineDto,
   RoutineLogDto,
@@ -32,6 +35,11 @@ import {
   RateResponseDto,
   RoutineSummaryDto,
 } from './dto/routine-stats-response.dto';
+import {
+  RoutineBadgeDto,
+  UserRoutineBadgeDto,
+} from './dto/routine-badge-response.dto';
+import { LeaderboardResponseDto } from './dto/routine-leaderboard-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
@@ -49,6 +57,8 @@ export class RoutineController {
   constructor(
     private readonly routineService: RoutineService,
     private readonly routineStatsService: RoutineStatsService,
+    private readonly routineBadgeService: RoutineBadgeService,
+    private readonly routineLeaderboardService: RoutineLeaderboardService,
   ) {}
 
   @Post()
@@ -74,6 +84,20 @@ export class RoutineController {
     return this.routineStatsService.getSummary(req.user.userId);
   }
 
+  @Get('badges')
+  @ApiOperation({ summary: '전체 배지 카탈로그 조회 (활성 배지만)' })
+  @ApiSuccess(RoutineBadgeDto, '배지 카탈로그 조회 성공', { isArray: true })
+  getBadgeCatalog() {
+    return this.routineBadgeService.findCatalog();
+  }
+
+  @Get('me/badges')
+  @ApiOperation({ summary: '내가 전체 루틴에서 획득한 통산 배지 목록 조회' })
+  @ApiSuccess(UserRoutineBadgeDto, '내 배지 목록 조회 성공', { isArray: true })
+  getMyBadges(@Request() req) {
+    return this.routineBadgeService.findMine(req.user.userId);
+  }
+
   @Get('groups/:groupId/members')
   @ApiOperation({
     summary: '그룹에 공유된 멤버별 루틴 + 오늘/이번주 달성 현황 조회',
@@ -84,6 +108,24 @@ export class RoutineController {
   @ApiForbidden('그룹 멤버가 아닙니다')
   findGroupMembers(@Request() req, @Param('groupId') groupId: string) {
     return this.routineService.findGroupMembers(req.user.userId, groupId);
+  }
+
+  @Get('groups/:groupId/leaderboard')
+  @ApiOperation({
+    summary: '그룹 랭킹보드 (공유된 루틴 기준 체크 횟수/달성률 순위)',
+  })
+  @ApiSuccess(LeaderboardResponseDto, '랭킹보드 조회 성공')
+  @ApiForbidden('그룹 멤버가 아닙니다')
+  getLeaderboard(
+    @Request() req,
+    @Param('groupId') groupId: string,
+    @Query() query: LeaderboardQueryDto,
+  ) {
+    return this.routineLeaderboardService.getLeaderboard(
+      req.user.userId,
+      groupId,
+      query,
+    );
   }
 
   @Get('groups/:groupId/members/:userId')
@@ -195,9 +237,22 @@ export class RoutineController {
     return this.routineService.findShares(req.user.userId, id);
   }
 
+  @Get(':id/badges')
+  @ApiOperation({
+    summary: '특정 루틴에서 획득한 배지 목록 조회 (본인 또는 공유 그룹원)',
+  })
+  @ApiSuccess(UserRoutineBadgeDto, '루틴별 배지 조회 성공', { isArray: true })
+  @ApiNotFound('루틴을 찾을 수 없습니다')
+  @ApiForbidden('루틴에 접근할 권한이 없습니다')
+  getRoutineBadges(@Request() req, @Param('id') id: string) {
+    return this.routineBadgeService.findByRoutine(req.user.userId, id);
+  }
+
   @Get(':id/stats/heatmap')
   @ApiOperation({ summary: '루틴 달력 히트맵 (날짜별 달성 여부)' })
   @ApiSuccess(HeatmapResponseDto, '히트맵 조회 성공')
+  @ApiNotFound('루틴을 찾을 수 없습니다')
+  @ApiForbidden('루틴에 접근할 권한이 없습니다')
   getHeatmap(
     @Request() req,
     @Param('id') id: string,
@@ -209,6 +264,8 @@ export class RoutineController {
   @Get(':id/stats/streak')
   @ApiOperation({ summary: '루틴 스트릭 조회 (현재/최장, 주 단위 + 일 단위)' })
   @ApiSuccess(StreakResponseDto, '스트릭 조회 성공')
+  @ApiNotFound('루틴을 찾을 수 없습니다')
+  @ApiForbidden('루틴에 접근할 권한이 없습니다')
   getStreak(@Request() req, @Param('id') id: string) {
     return this.routineStatsService.getStreak(req.user.userId, id);
   }
@@ -216,6 +273,8 @@ export class RoutineController {
   @Get(':id/stats/rate')
   @ApiOperation({ summary: '루틴 기간별 달성률 조회' })
   @ApiSuccess(RateResponseDto, '달성률 조회 성공')
+  @ApiNotFound('루틴을 찾을 수 없습니다')
+  @ApiForbidden('루틴에 접근할 권한이 없습니다')
   getRate(
     @Request() req,
     @Param('id') id: string,

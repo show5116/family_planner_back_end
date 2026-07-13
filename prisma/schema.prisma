@@ -40,6 +40,7 @@ model User {
   tasks                     Task[]
   memos                     Memo[]
   routines                  Routine[]
+  routineBadges             UserRoutineBadge[]
   expenses                  Expense[]
   expensesAsMember          Expense[]              @relation("ExpenseMember")
   recurringExpenses         RecurringExpense[]
@@ -209,14 +210,15 @@ model DeviceToken {
 }
 
 model NotificationSetting {
-  id               String                         @id @default(uuid())
-  userId           String
-  category         notification_settings_category
-  enabled          Boolean                        @default(true)
-  weatherAlertHour Int                            @default(7)
-  createdAt        DateTime                       @default(now())
-  updatedAt        DateTime                       @updatedAt
-  user             User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String                         @id @default(uuid())
+  userId              String
+  category            notification_settings_category
+  enabled             Boolean                        @default(true)
+  weatherAlertHour    Int                            @default(7)
+  routineReminderHour Int                            @default(21)
+  createdAt           DateTime                       @default(now())
+  updatedAt           DateTime                       @updatedAt
+  user                User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, category])
   @@index([userId])
@@ -647,6 +649,7 @@ enum notification_settings_category {
   SYSTEM
   WEATHER
   FRIDGE
+  ROUTINE
 }
 
 enum notifications_category {
@@ -660,6 +663,7 @@ enum notifications_category {
   SYSTEM
   WEATHER
   FRIDGE
+  ROUTINE
 }
 
 model Memo {
@@ -1667,9 +1671,10 @@ model Routine {
   updatedAt     DateTime             @updatedAt
   deletedAt     DateTime?
 
-  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   logs   RoutineLog[]
   shares RoutineShare[]
+  badges UserRoutineBadge[]
 
   @@index([userId, isActive])
   @@index([userId, sortOrder])
@@ -1711,4 +1716,48 @@ enum RoutineFrequencyType {
   WEEKLY_COUNT
   DAILY
   DAYS_OF_WEEK
+}
+
+model RoutineBadge {
+  id            String            @id @default(uuid())
+  code          String            @unique @db.VarChar(50)
+  title         String            @db.VarChar(100)
+  description   String?           @db.VarChar(200)
+  iconEmoji     String?           @db.VarChar(10)
+  criteriaType  BadgeCriteriaType
+  criteriaValue Int
+  sortOrder     Int               @default(0)
+  isActive      Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  userBadges UserRoutineBadge[]
+
+  @@index([criteriaType])
+  @@index([isActive, sortOrder])
+  @@map("routine_badges")
+}
+
+model UserRoutineBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  badgeId   String
+  routineId String?
+  earnedAt  DateTime @default(now())
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge   RoutineBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  routine Routine?     @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId, routineId])
+  @@index([userId])
+  @@index([badgeId])
+  @@index([routineId])
+  @@map("user_routine_badges")
+}
+
+enum BadgeCriteriaType {
+  STREAK_DAYS
+  STREAK_WEEKS
+  TOTAL_CHECKS
 }

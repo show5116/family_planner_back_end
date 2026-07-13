@@ -110,6 +110,57 @@
 
 ---
 
+### GET `routines/badges`
+
+**요약:** 전체 배지 카탈로그 조회 (활성 배지만)
+
+**Responses:**
+
+#### 200 - 배지 카탈로그 조회 성공
+
+```json
+{
+  "id": "", // 배지 ID (string)
+  "code": "STREAK_DAYS_7", // 배지 코드 (string)
+  "title": "7일 연속 달성", // 배지 제목 (string)
+  "description": null, // 배지 설명 (string | null)
+  "iconEmoji": null, // 아이콘 이모지 (string | null)
+  "criteriaType": null, // 판정 기준 타입 (BadgeCriteriaType)
+  "criteriaValue": 7 // 판정 기준값 (number)
+}
+```
+
+---
+
+### GET `routines/me/badges`
+
+**요약:** 내가 전체 루틴에서 획득한 통산 배지 목록 조회
+
+**Responses:**
+
+#### 200 - 내 배지 목록 조회 성공
+
+```json
+{
+  "id": "", // 획득 기록 ID (string)
+  "badgeId": "", // 배지 ID (string)
+  "badge": {
+    "id": "", // 배지 ID (string)
+    "code": "STREAK_DAYS_7", // 배지 코드 (string)
+    "title": "7일 연속 달성", // 배지 제목 (string)
+    "description": null, // 배지 설명 (string | null)
+    "iconEmoji": null, // 아이콘 이모지 (string | null)
+    "criteriaType": null, // 판정 기준 타입 (BadgeCriteriaType)
+    "criteriaValue": 7 // 판정 기준값 (number)
+  }, // 배지 정보 (RoutineBadgeDto)
+  "routineId": null, // 획득 기준이 된 루틴 ID (string | null)
+  "routineTitle": null, // 획득 기준이 된 루틴 제목 (string | null)
+  "earnedAt": "2025-01-01T00:00:00Z" // 획득 일시 (Date)
+}
+```
+
+---
+
 ### GET `routines/groups/:groupId/members`
 
 **요약:** 그룹에 공유된 멤버별 루틴 + 오늘/이번주 달성 현황 조회
@@ -143,6 +194,44 @@
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
     }
   ] // 공유된 루틴 목록 (RoutineDto[])
+}
+```
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### GET `routines/groups/:groupId/leaderboard`
+
+**요약:** 그룹 랭킹보드 (공유된 루틴 기준 체크 횟수/달성률 순위)
+
+**Path Parameters:**
+
+- `groupId` (`string`)
+
+**Query Parameters:**
+
+- `period` (`LeaderboardPeriod`): 집계 기간
+- `metric` (`LeaderboardMetric`): 정렬 기준
+
+**Responses:**
+
+#### 200 - 랭킹보드 조회 성공
+
+```json
+{
+  "groupId": "", // 그룹 ID (string)
+  "period": "", // 집계 기간 (string)
+  "metric": "", // 정렬 기준 (string)
+  "rankings": [
+    {
+      "rank": 0, // 순위 (number)
+      "userId": "", // 사용자 ID (string)
+      "userName": "", // 사용자 이름 (string)
+      "checkCount": 0, // 기간 내 체크 횟수 (number)
+      "achievementRate": 0 // 기간 내 평균 달성률 (%) (number)
+    }
+  ] // 순위 목록 (LeaderboardEntryDto[])
 }
 ```
 
@@ -357,7 +446,25 @@
   "routineId": "", // 루틴 ID (string)
   "checkedDate": "2025-01-01T00:00:00Z", // 체크한 날짜 (Date)
   "note": null, // 메모 (string | null)
-  "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "newlyEarnedBadges": [
+    {
+      "id": "", // 획득 기록 ID (string)
+      "badgeId": "", // 배지 ID (string)
+      "badge": {
+        "id": "",
+        "code": "STREAK_DAYS_7",
+        "title": "7일 연속 달성",
+        "description": null,
+        "iconEmoji": null,
+        "criteriaType": null,
+        "criteriaValue": 7
+      }, // 배지 정보 (RoutineBadgeDto)
+      "routineId": null, // 획득 기준이 된 루틴 ID (string | null)
+      "routineTitle": null, // 획득 기준이 된 루틴 제목 (string | null)
+      "earnedAt": "2025-01-01T00:00:00Z" // 획득 일시 (Date)
+    }
+  ] // 이번 체크로 새로 획득한 배지 목록 (UserRoutineBadgeDto[])
 }
 ```
 
@@ -476,6 +583,43 @@
 
 ---
 
+### GET `routines/:id/badges`
+
+**요약:** 특정 루틴에서 획득한 배지 목록 조회 (본인 또는 공유 그룹원)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴별 배지 조회 성공
+
+```json
+{
+  "id": "", // 획득 기록 ID (string)
+  "badgeId": "", // 배지 ID (string)
+  "badge": {
+    "id": "", // 배지 ID (string)
+    "code": "STREAK_DAYS_7", // 배지 코드 (string)
+    "title": "7일 연속 달성", // 배지 제목 (string)
+    "description": null, // 배지 설명 (string | null)
+    "iconEmoji": null, // 아이콘 이모지 (string | null)
+    "criteriaType": null, // 판정 기준 타입 (BadgeCriteriaType)
+    "criteriaValue": 7 // 판정 기준값 (number)
+  }, // 배지 정보 (RoutineBadgeDto)
+  "routineId": null, // 획득 기준이 된 루틴 ID (string | null)
+  "routineTitle": null, // 획득 기준이 된 루틴 제목 (string | null)
+  "earnedAt": "2025-01-01T00:00:00Z" // 획득 일시 (Date)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 루틴에 접근할 권한이 없습니다
+
+---
+
 ### GET `routines/:id/stats/heatmap`
 
 **요약:** 루틴 달력 히트맵 (날짜별 달성 여부)
@@ -501,6 +645,10 @@
   "checkedDates": ["2026-01-02", "2026-01-03"] // 체크된 날짜 목록 (YYYY-MM-DD) (string[])
 }
 ```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 루틴에 접근할 권한이 없습니다
 
 ---
 
@@ -529,6 +677,10 @@
   } // 이번 주 진행 상황 (ThisWeekProgressDto)
 }
 ```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 루틴에 접근할 권한이 없습니다
 
 ---
 
@@ -562,5 +714,9 @@
   "achievementRate": 76 // 달성률 (%) (number)
 }
 ```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 루틴에 접근할 권한이 없습니다
 
 ---
