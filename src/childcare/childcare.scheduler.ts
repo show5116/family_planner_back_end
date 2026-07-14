@@ -8,6 +8,7 @@ import { NotificationQueueService } from '@/notification/notification-queue.serv
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { SavingsPlanStatus } from '@prisma/client';
 import { calculateSavingsInterest } from './constants/savings.constant';
+import { todayInKst, thisMonthStartInKst } from '@/common/utils/date-kst.util';
 
 const LOCK_TTL = {
   allowance: 5 * 60, // 5분
@@ -39,10 +40,10 @@ export class ChildcareScheduler {
   }
 
   /**
-   * 용돈 자동 지급 — 매일 오전 9시 KST (00:00 UTC)
-   * payDay가 오늘 날짜와 일치하는 자녀에게 포인트 지급 + 알림
+   * 용돈 자동 지급 — 매일 UTC 00:00(KST 09:00) 실행
+   * payDay가 오늘(KST) 날짜와 일치하는 자녀에게 포인트 지급 + 알림
    */
-  @Cron('0 0 * * *')
+  @Cron('0 0 * * *', { timeZone: 'UTC' })
   async dispatchAllowance() {
     if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:childcare:allowance';
@@ -55,13 +56,11 @@ export class ChildcareScheduler {
     if (!acquired) return;
 
     try {
-      const today = new Date();
-      const todayDay = today.getDate();
+      const today = todayInKst();
+      const todayDay = today.getUTCDate();
       const lastDayOfMonth = new Date(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        0,
-      ).getDate();
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0),
+      ).getUTCDate();
       const isLastDay = todayDay === lastDayOfMonth;
 
       const plans = await this.prisma.childAllowancePlan.findMany({
@@ -90,15 +89,17 @@ export class ChildcareScheduler {
         const account = child.account;
 
         // 이번 달 중복 지급 방지
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const monthStart = thisMonthStartInKst();
         const monthEnd = new Date(
-          today.getFullYear(),
-          today.getMonth() + 1,
-          0,
-          23,
-          59,
-          59,
-          999,
+          Date.UTC(
+            today.getUTCFullYear(),
+            today.getUTCMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999,
+          ),
         );
         const alreadyPaid = await this.prisma.childcareTransaction.findFirst({
           where: {
@@ -227,11 +228,11 @@ export class ChildcareScheduler {
   }
 
   /**
-   * 연봉 협상일 알림 — 매일 오전 9시 KST (00:00 UTC)
+   * 연봉 협상일 알림 — 매일 UTC 00:00(KST 09:00) 실행
    * 협상일 전날 → 내일 협상일 알림
    * 협상일 당일 → 오늘 협상일 알림
    */
-  @Cron('0 0 * * *')
+  @Cron('0 0 * * *', { timeZone: 'UTC' })
   async notifyNegotiationDate() {
     if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:childcare:negotiation';
@@ -244,8 +245,7 @@ export class ChildcareScheduler {
     if (!acquired) return;
 
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = todayInKst();
 
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -343,10 +343,10 @@ export class ChildcareScheduler {
   }
 
   /**
-   * 적금 만기 자동 정산 — 매일 오전 9시 KST (00:00 UTC)
-   * 만기일이 오늘인 ACTIVE 플랜 → 원금 + 이자 잔액 합산
+   * 적금 만기 자동 정산 — 매일 UTC 00:00(KST 09:00) 실행
+   * 만기일이 오늘(KST)인 ACTIVE 플랜 → 원금 + 이자 잔액 합산
    */
-  @Cron('0 0 * * *')
+  @Cron('0 0 * * *', { timeZone: 'UTC' })
   async matureSavingsPlans() {
     if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:childcare:savings';
@@ -359,8 +359,7 @@ export class ChildcareScheduler {
     if (!acquired) return;
 
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = todayInKst();
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 

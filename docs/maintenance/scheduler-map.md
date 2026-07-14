@@ -95,7 +95,7 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `runAutoDeposit` | 매일 00:10 (`10 0 * * *`) | 자동 저축 납입 처리 및 목표 달성 알림 |
+| `runAutoDeposit` | 매일 00:10 UTC (KST 09:10) (`10 0 * * *`) | 자동 저축 납입 처리 및 목표 달성 알림 |
 
 ---
 
@@ -105,9 +105,9 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `dispatchAllowance` | 매일 자정 (`0 0 * * *`) | 용돈 지급일인 자녀에게 포인트 지급 |
-| `notifyNegotiationDate` | 매일 자정 (`0 0 * * *`) | 용돈 협상일 알림 발송 |
-| `matureSavingsPlans` | 매일 자정 (`0 0 * * *`) | 만기된 저축 플랜 처리 |
+| `dispatchAllowance` | 매일 00:00 UTC (KST 09:00) (`0 0 * * *`) | 용돈 지급일인 자녀에게 포인트 지급 |
+| `notifyNegotiationDate` | 매일 00:00 UTC (KST 09:00) (`0 0 * * *`) | 용돈 협상일 알림 발송 |
+| `matureSavingsPlans` | 매일 00:00 UTC (KST 09:00) (`0 0 * * *`) | 만기된 저축 플랜 처리 |
 
 ---
 
@@ -128,7 +128,8 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `generateRecurringTasks` | 매일 자정 (`EVERY_DAY_AT_MIDNIGHT`) | 반복 규칙 기반 일정 자동 생성 |
+| `generateRecurringTasks` | 매일 00:00 UTC (KST 09:00) (`EVERY_DAY_AT_MIDNIGHT`) | 반복 규칙 기반 일정 자동 생성 |
+| `extendMilestoneTasks` | 매일 01:00 UTC (KST 10:00) (`0 1 * * *`) | 기념일 milestone Task 2년 범위 연장 |
 
 ---
 

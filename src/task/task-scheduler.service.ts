@@ -36,9 +36,9 @@ export class TaskSchedulerService {
   ) {}
 
   /**
-   * 매일 0시에 반복 일정 자동 생성
+   * 매일 UTC 0시(KST 9시)에 반복 일정 자동 생성
    */
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: 'UTC' })
   async generateRecurringTasks() {
     if (!isSchedulerEnabled('')) return;
     // 1. 분산 락 획득 시도 (중복 실행 방지)
