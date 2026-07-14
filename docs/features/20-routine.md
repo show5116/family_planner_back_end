@@ -17,6 +17,7 @@
 - **반복 주기**: 1차는 `WEEKLY_COUNT`(주 N회, 요일 무관)만 지원. `frequencyType`/`targetDays` 필드로 향후 `DAILY`, `DAYS_OF_WEEK` 확장 여지를 마련해 둠.
 - **스케줄러 없음**: 매일 인스턴스를 미리 생성하지 않고, 체크한 날짜만 `RoutineLog`에 기록. 스트릭/달성률은 조회 시점에 실시간 계산.
 - **주 계산 기준**: 월요일 시작 ISO 주. 미래 날짜 체크는 차단.
+- **타임존**: "오늘"/"이번 주" 계산은 항상 KST(Asia/Seoul) 기준(`src/routine/utils/routine-date.util.ts`의 `todayInKst()`). 서버가 UTC로 실행되므로 `new Date()`의 UTC getter를 직접 쓰지 말고 반드시 이 함수를 통해 "오늘 날짜"를 구할 것.
 - **그룹 공유(N:M)**: 하나의 루틴을 여러 그룹에 동시 공유 가능. 공유된 그룹의 멤버는 서로의 루틴과 달성 현황을 조회 가능(수정 권한 공유는 없음, 체크는 본인만).
 - **삭제 정책**: 루틴 soft delete 시 `RoutineLog`는 보존(통계/이력 보존 목적).
 - **배지**: 체크 직후 동기적으로 판정(스트릭/누적 체크 기준). 한 번 획득한 배지는 체크 취소로도 회수되지 않음.
@@ -290,6 +291,7 @@ src/routine/
     index.ts                        — RoutineFrequencyType, BadgeCriteriaType re-export
   utils/
     routine-stats.util.ts            — 주차 계산, 스트릭/달성률 순수 함수
+    routine-date.util.ts             — todayInKst(), parseDateOnly() (KST 기준 날짜 계산, 필수 사용)
   routine.controller.ts
   routine.service.ts                 — CRUD, 체크/체크취소(배지 판정 연동), 공유 관리
   routine-stats.service.ts           — 히트맵/스트릭/달성률/요약

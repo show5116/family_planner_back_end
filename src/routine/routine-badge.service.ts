@@ -9,13 +9,7 @@ import {
   calculateWeekStreak,
 } from './utils/routine-stats.util';
 import { RoutineService } from './routine.service';
-
-function todayDateOnly(): Date {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-}
+import { todayInKst } from './utils/routine-date.util';
 
 @Injectable()
 export class RoutineBadgeService {
@@ -84,7 +78,7 @@ export class RoutineBadgeService {
       select: { checkedDate: true },
     });
     const logDates = logs.map((l) => l.checkedDate);
-    const today = todayDateOnly();
+    const today = todayInKst();
     const targetCount = routine.targetCount ?? 7;
 
     const dayStreak = calculateDayStreak(logDates, today);

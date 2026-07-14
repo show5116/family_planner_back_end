@@ -11,13 +11,7 @@ import {
   calculateAchievementRate,
   getWeekStart,
 } from './utils/routine-stats.util';
-
-function todayDateOnly(): Date {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-}
+import { todayInKst } from './utils/routine-date.util';
 
 @Injectable()
 export class RoutineReminderScheduler {
@@ -64,7 +58,7 @@ export class RoutineReminderScheduler {
       });
       if (settings.length === 0) return;
 
-      const today = todayDateOnly();
+      const today = todayInKst();
 
       for (const { userId } of settings) {
         const routines = await this.prisma.routine.findMany({
@@ -128,7 +122,7 @@ export class RoutineReminderScheduler {
       });
       if (settings.length === 0) return;
 
-      const today = todayDateOnly();
+      const today = todayInKst();
       const weekStart = getWeekStart(today);
 
       for (const { userId } of settings) {

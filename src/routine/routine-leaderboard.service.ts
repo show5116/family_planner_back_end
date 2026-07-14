@@ -10,13 +10,7 @@ import {
   getWeekStart,
   calculateAchievementRate,
 } from './utils/routine-stats.util';
-
-function todayDateOnly(): Date {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-}
+import { todayInKst } from './utils/routine-date.util';
 
 @Injectable()
 export class RoutineLeaderboardService {
@@ -43,7 +37,7 @@ export class RoutineLeaderboardService {
       throw new ForbiddenException(this.t('errors.no_group_access'));
     }
 
-    const today = todayDateOnly();
+    const today = todayInKst();
     const { from, to } = this.resolveRange(query.period, today);
 
     const shares = await this.prisma.routineShare.findMany({

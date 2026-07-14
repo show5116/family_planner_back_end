@@ -14,20 +14,10 @@ import {
   calculateAchievementRate,
   getThisWeekProgress,
 } from './utils/routine-stats.util';
+import { todayInKst, parseDateOnly } from './utils/routine-date.util';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MAX_RANGE_DAYS = 366;
-
-function todayDateOnly(): Date {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-}
-
-function parseDateOnly(dateStr: string): Date {
-  return new Date(`${dateStr}T00:00:00.000Z`);
-}
 
 @Injectable()
 export class RoutineStatsService {
@@ -67,7 +57,7 @@ export class RoutineStatsService {
       userId,
       routineId,
     );
-    const today = todayDateOnly();
+    const today = todayInKst();
 
     const logs = await this.prisma.routineLog.findMany({
       where: { routineId },
@@ -100,7 +90,7 @@ export class RoutineStatsService {
       userId,
       routineId,
     );
-    const today = todayDateOnly();
+    const today = todayInKst();
 
     const { from, to } = this.resolveRateRange(query, today);
 
@@ -133,7 +123,7 @@ export class RoutineStatsService {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    const today = todayDateOnly();
+    const today = todayInKst();
     const routineIds = routines.map((r) => r.id);
     const logs = await this.prisma.routineLog.findMany({
       where: { routineId: { in: routineIds } },

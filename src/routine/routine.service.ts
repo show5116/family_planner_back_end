@@ -18,17 +18,7 @@ import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { RoutineBadgeService } from './routine-badge.service';
-
-function todayDateOnly(): Date {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-}
-
-function parseDateOnly(dateStr: string): Date {
-  return new Date(`${dateStr}T00:00:00.000Z`);
-}
+import { todayInKst, parseDateOnly } from './utils/routine-date.util';
 
 @Injectable()
 export class RoutineService {
@@ -86,7 +76,7 @@ export class RoutineService {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    const today = todayDateOnly();
+    const today = todayInKst();
     const todayLogs = await this.prisma.routineLog.findMany({
       where: {
         routineId: { in: routines.map((r) => r.id) },
@@ -101,7 +91,7 @@ export class RoutineService {
 
   async findOne(userId: string, id: string) {
     const routine = await this.findRoutineWithAccess(userId, id);
-    const today = todayDateOnly();
+    const today = todayInKst();
     const log = await this.prisma.routineLog.findUnique({
       where: { routineId_checkedDate: { routineId: id, checkedDate: today } },
     });
@@ -138,7 +128,7 @@ export class RoutineService {
       },
     });
 
-    const today = todayDateOnly();
+    const today = todayInKst();
     const log = await this.prisma.routineLog.findUnique({
       where: { routineId_checkedDate: { routineId: id, checkedDate: today } },
     });
@@ -173,8 +163,8 @@ export class RoutineService {
   async check(userId: string, id: string, dto: CheckRoutineDto) {
     await this.findOwnRoutine(userId, id);
 
-    const checkedDate = dto.date ? parseDateOnly(dto.date) : todayDateOnly();
-    if (checkedDate.getTime() > todayDateOnly().getTime()) {
+    const checkedDate = dto.date ? parseDateOnly(dto.date) : todayInKst();
+    if (checkedDate.getTime() > todayInKst().getTime()) {
       throw new BadRequestException(this.t('errors.future_date_not_allowed'));
     }
 
@@ -207,7 +197,7 @@ export class RoutineService {
   async uncheck(userId: string, id: string, dateStr?: string) {
     await this.findOwnRoutine(userId, id);
 
-    const checkedDate = dateStr ? parseDateOnly(dateStr) : todayDateOnly();
+    const checkedDate = dateStr ? parseDateOnly(dateStr) : todayInKst();
 
     const log = await this.prisma.routineLog.findUnique({
       where: { routineId_checkedDate: { routineId: id, checkedDate } },
@@ -292,7 +282,7 @@ export class RoutineService {
 
     const activeShares = shares.filter((s) => !s.routine.deletedAt);
     const routineIds = activeShares.map((s) => s.routineId);
-    const today = todayDateOnly();
+    const today = todayInKst();
     const todayLogs = await this.prisma.routineLog.findMany({
       where: { routineId: { in: routineIds }, checkedDate: today },
       select: { routineId: true },
@@ -336,7 +326,7 @@ export class RoutineService {
     });
 
     const routineIds = shares.map((s) => s.routineId);
-    const today = todayDateOnly();
+    const today = todayInKst();
     const todayLogs = await this.prisma.routineLog.findMany({
       where: { routineId: { in: routineIds }, checkedDate: today },
       select: { routineId: true },
