@@ -117,8 +117,8 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `autoGenerateRecurringExpenses` | 매일 00:05 (`5 0 * * *`) | 고정비용 자동 복사 |
-| `autoGenerateBudgetsFromTemplates` | 매월 1일 00:10 (`10 0 1 * *`) | 예산 템플릿으로 월별 예산 자동 생성 |
+| `autoGenerateRecurringExpenses` | 매일 00:05 KST (`5 0 * * *`) | 고정비용 자동 복사 |
+| `autoGenerateBudgetsFromTemplates` | 매월 1일 00:10 KST (`10 0 1 * *`) | 예산 템플릿으로 월별 예산 자동 생성 |
 
 ---
 

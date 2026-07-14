@@ -5,6 +5,7 @@ import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
+import { todayInKst } from '@/common/utils/date-kst.util';
 
 @Injectable()
 export class FridgeScheduler {
@@ -33,8 +34,7 @@ export class FridgeScheduler {
     if (!isSchedulerEnabled('')) return;
     this.logger.log('유통기한 알림 스케줄러 실행');
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = todayInKst();
 
     // 오늘부터 최대 30일 이내 만료되는 품목 조회
     const maxAlert = new Date(today);

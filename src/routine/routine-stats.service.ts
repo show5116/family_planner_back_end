@@ -14,7 +14,7 @@ import {
   calculateAchievementRate,
   getThisWeekProgress,
 } from './utils/routine-stats.util';
-import { todayInKst, parseDateOnly } from './utils/routine-date.util';
+import { todayInKst, parseDateOnly } from '@/common/utils/date-kst.util';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MAX_RANGE_DAYS = 366;

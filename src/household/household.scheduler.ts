@@ -4,6 +4,7 @@ import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { HouseholdService } from './household.service';
 import { isRecurringExpenseEnded, toUtcDate } from './household.util';
+import { todayInKst, thisMonthStartInKst } from '@/common/utils/date-kst.util';
 
 @Injectable()
 export class HouseholdScheduler {
@@ -15,21 +16,16 @@ export class HouseholdScheduler {
   ) {}
 
   /**
-   * 매일 00:05에 실행.
+   * 매일 00:05 KST에 실행.
    * RecurringExpense 테이블의 활성 고정지출 중 dayOfMonth가 오늘인 항목을 Expense로 생성한다.
    * - startDate + totalMonths 기준으로 반복이 종료된 항목은 isActive=false로 전환하고 생성 대상에서 제외
    * - dayOfMonth가 이번 달에 없으면(예: 2월에 31일) 말일로 clamp
    * - 이미 오늘 날짜로 동일 recurringExpenseId의 Expense가 있으면 skip
    */
-  @Cron('5 0 * * *')
+  @Cron('5 0 * * *', { timeZone: 'Asia/Seoul' })
   async autoGenerateRecurringExpenses() {
     if (!isSchedulerEnabled('')) return;
-    const now = new Date();
-    const today = toUtcDate(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-    );
+    const today = todayInKst();
 
     const thisYear = today.getUTCFullYear();
     const thisMonth = today.getUTCMonth(); // 0-based
@@ -140,17 +136,16 @@ export class HouseholdScheduler {
   }
 
   /**
-   * 매월 1일 00:10에 실행.
+   * 매월 1일 00:10 KST에 실행.
    * BudgetTemplate에 등록된 그룹별 카테고리 예산을 이번 달 Budget으로 자동 생성한다.
    * - 이미 해당 월에 Budget이 존재하면 skip (수동 설정 우선)
    */
-  @Cron('10 0 1 * *')
+  @Cron('10 0 1 * *', { timeZone: 'Asia/Seoul' })
   async autoGenerateBudgetsFromTemplates() {
     if (!isSchedulerEnabled('')) return;
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const month = now.getUTCMonth(); // 0-based
-    const monthDate = new Date(Date.UTC(year, month, 1));
+    const monthDate = thisMonthStartInKst();
+    const year = monthDate.getUTCFullYear();
+    const month = monthDate.getUTCMonth(); // 0-based
 
     this.logger.log(
       `예산 자동 생성 실행 — 기준월: ${year}-${String(month + 1).padStart(2, '0')}`,

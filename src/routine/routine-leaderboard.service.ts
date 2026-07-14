@@ -10,7 +10,7 @@ import {
   getWeekStart,
   calculateAchievementRate,
 } from './utils/routine-stats.util';
-import { todayInKst } from './utils/routine-date.util';
+import { todayInKst } from '@/common/utils/date-kst.util';
 
 @Injectable()
 export class RoutineLeaderboardService {

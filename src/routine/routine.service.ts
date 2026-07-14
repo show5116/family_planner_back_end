@@ -18,7 +18,7 @@ import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { RoutineBadgeService } from './routine-badge.service';
-import { todayInKst, parseDateOnly } from './utils/routine-date.util';
+import { todayInKst, parseDateOnly } from '@/common/utils/date-kst.util';
 
 @Injectable()
 export class RoutineService {
