@@ -7681,7 +7681,8 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "frequencyType": null, // 반복 타입 (1차: WEEKLY_COUNT만 지원) (RoutineFrequencyType?)
   "targetCount": 3, // 주 목표 횟수 (frequencyType=WEEKLY_COUNT일 때 필수) (number?)
   "startDate": "2026-07-01", // 시작일 (YYYY-MM-DD) (string)
-  "endDate": "" // 종료일 (YYYY-MM-DD, 없으면 무기한) (string?)
+  "endDate": "", // 종료일 (YYYY-MM-DD, 없으면 무기한) (string?)
+  "routineGroupId": "" // 소속시킬 루틴 그룹 ID (없으면 독립 습관) (string?)
 }
 ```
 
@@ -7702,6 +7703,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -7716,6 +7718,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 **Query Parameters:**
 
 - `isActive` (`boolean`) (Optional): 활성 루틴만 조회
+- `routineGroupId` (`string`) (Optional): 특정 루틴 그룹 소속만 조회
 
 **Responses:**
 
@@ -7734,6 +7737,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -7788,6 +7792,212 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "criteriaValue": 7 // 판정 기준값 (number)
 }
 ```
+
+---
+
+### POST `routines/routine-groups`
+
+**요약:** 루틴 그룹 생성 (여러 습관을 묶는 그룹)
+
+**Request Body:**
+
+```json
+{
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": "🌅", // 이모지 (string?)
+  "color": "#6366F1" // 색상 (HEX) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 루틴 그룹 생성 성공
+
+```json
+{
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/routine-groups`
+
+**요약:** 내 루틴 그룹 목록 조회 (그룹별 오늘 진행률 포함)
+
+**Responses:**
+
+#### 200 - 루틴 그룹 목록 조회 성공
+
+```json
+{
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### PATCH `routines/routine-groups/sort-order`
+
+**요약:** 루틴 그룹 순서 일괄 변경
+
+**Request Body:**
+
+```json
+{
+  "items": [
+    {
+      "id": "", // 그룹 ID (string)
+      "sortOrder": 0 // 정렬 순서 (number)
+    }
+  ] // 그룹 순서 목록 (RoutineGroupSortOrderItemDto[])
+}
+```
+
+**Responses:**
+
+#### 200 - 순서 변경 성공
+
+```json
+{
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/routine-groups/:id`
+
+**요약:** 루틴 그룹 상세 조회 (소속 습관 목록 + 오늘 진행률)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 그룹 상세 조회 성공
+
+```json
+{
+  "routines": [
+    {
+      "id": "uuid-1234", // 루틴 ID (string)
+      "title": "아침 스트레칭", // 루틴 제목 (string)
+      "emoji": null, // 이모지 (string | null)
+      "color": null, // 색상 (string | null)
+      "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+      "targetCount": null, // 주 목표 횟수 (number | null)
+      "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+      "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+      "isActive": false, // 활성 여부 (boolean)
+      "sortOrder": 0, // 정렬 순서 (number)
+      "checkedToday": false, // 오늘 체크 여부 (boolean)
+      "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+    }
+  ] // 소속 습관 목록 (RoutineDto[])
+}
+```
+
+#### 404 - 루틴 그룹을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴 그룹만 조회할 수 있습니다
+
+---
+
+### PATCH `routines/routine-groups/:id`
+
+**요약:** 루틴 그룹 수정
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Responses:**
+
+#### 200 - 루틴 그룹 수정 성공
+
+```json
+{
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴 그룹을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴 그룹만 수정할 수 있습니다
+
+---
+
+### DELETE `routines/routine-groups/:id`
+
+**요약:** 루틴 그룹 삭제 (soft delete, 소속 습관은 그룹 소속만 해제되고 유지)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 그룹 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 루틴 그룹을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴 그룹만 삭제할 수 있습니다
 
 ---
 
@@ -7849,6 +8059,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "isActive": false, // 활성 여부 (boolean)
       "sortOrder": 0, // 정렬 순서 (number)
       "checkedToday": false, // 오늘 체크 여부 (boolean)
+      "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
       "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
     }
@@ -7924,6 +8135,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -7967,6 +8179,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -7999,6 +8212,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
@@ -8022,7 +8236,8 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ```json
 {
-  "isActive": false // 활성 여부 (boolean?)
+  "isActive": false, // 활성 여부 (boolean?)
+  "routineGroupId": null // 소속시킬 루틴 그룹 ID (null 전달 시 그룹 소속 해제) (string | null?)
 }
 ```
 
@@ -8043,6 +8258,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }

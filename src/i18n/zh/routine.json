@@ -10,12 +10,16 @@
     "share_not_found": "共享信息不存在",
     "future_date_not_allowed": "无法勾选未来的日期",
     "already_checked": "该日期已勾选",
-    "log_not_found": "打卡记录不存在"
+    "log_not_found": "打卡记录不存在",
+    "routine_group_not_found": "例行任务分组不存在",
+    "own_routine_group_only_update": "只能修改自己的例行任务分组",
+    "own_routine_group_only_delete": "只能删除自己的例行任务分组"
   },
   "success": {
     "routine_deleted": "例行任务已删除",
     "share_removed": "已取消群组共享",
-    "check_removed": "已取消打卡"
+    "check_removed": "已取消打卡",
+    "routine_group_deleted": "例行任务分组已删除（所属例行任务将保留）"
   },
   "notification": {
     "daily_reminder_title": "看看今天的例行任务吧",

@@ -36,6 +36,9 @@ export class RoutineDto {
   @ApiProperty({ description: '오늘 체크 여부' })
   checkedToday: boolean;
 
+  @ApiProperty({ description: '소속 루틴 그룹 ID', nullable: true })
+  routineGroupId: string | null;
+
   @ApiProperty({ description: '생성일' })
   createdAt: Date;
 

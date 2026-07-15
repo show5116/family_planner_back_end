@@ -75,4 +75,12 @@ export class CreateRoutineDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
+
+  @ApiProperty({
+    description: '소속시킬 루틴 그룹 ID (없으면 독립 습관)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  routineGroupId?: string;
 }

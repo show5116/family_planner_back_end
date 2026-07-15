@@ -10,12 +10,16 @@
     "share_not_found": "Share not found",
     "future_date_not_allowed": "You cannot check a future date",
     "already_checked": "This date is already checked",
-    "log_not_found": "Check log not found"
+    "log_not_found": "Check log not found",
+    "routine_group_not_found": "Routine group not found",
+    "own_routine_group_only_update": "You can only update your own routine groups",
+    "own_routine_group_only_delete": "You can only delete your own routine groups"
   },
   "success": {
     "routine_deleted": "Routine deleted",
     "share_removed": "Group share removed",
-    "check_removed": "Check removed"
+    "check_removed": "Check removed",
+    "routine_group_deleted": "Routine group deleted (routines are kept)"
   },
   "notification": {
     "daily_reminder_title": "Check your routines today",

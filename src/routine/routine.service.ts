@@ -48,9 +48,14 @@ export class RoutineService {
       throw new BadRequestException(this.t('errors.weekly_target_required'));
     }
 
+    if (dto.routineGroupId) {
+      await this.findOwnRoutineGroup(userId, dto.routineGroupId);
+    }
+
     const routine = await this.prisma.routine.create({
       data: {
         userId,
+        groupId: dto.routineGroupId,
         title: dto.title,
         emoji: dto.emoji,
         color: dto.color,
@@ -69,6 +74,9 @@ export class RoutineService {
       userId,
       deletedAt: null,
       ...(query.isActive !== undefined && { isActive: query.isActive }),
+      ...(query.routineGroupId !== undefined && {
+        groupId: query.routineGroupId,
+      }),
     };
 
     const routines = await this.prisma.routine.findMany({
@@ -108,6 +116,10 @@ export class RoutineService {
       throw new BadRequestException(this.t('errors.weekly_target_required'));
     }
 
+    if (dto.routineGroupId) {
+      await this.findOwnRoutineGroup(userId, dto.routineGroupId);
+    }
+
     const updated = await this.prisma.routine.update({
       where: { id },
       data: {
@@ -125,6 +137,9 @@ export class RoutineService {
           endDate: dto.endDate ? parseDateOnly(dto.endDate) : null,
         }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+        ...(dto.routineGroupId !== undefined && {
+          groupId: dto.routineGroupId,
+        }),
       },
     });
 
@@ -397,6 +412,7 @@ export class RoutineService {
   private toResponse(
     routine: {
       id: string;
+      groupId: string | null;
       title: string;
       emoji: string | null;
       color: string | null;
@@ -423,8 +439,25 @@ export class RoutineService {
       isActive: routine.isActive,
       sortOrder: routine.sortOrder,
       checkedToday,
+      routineGroupId: routine.groupId,
       createdAt: routine.createdAt,
       updatedAt: routine.updatedAt,
     };
+  }
+
+  /** 그룹 소속 검증용: RoutineGroupService에서도 재사용 */
+  async findOwnRoutineGroup(userId: string, groupId: string) {
+    const group = await this.prisma.routineGroup.findFirst({
+      where: { id: groupId, deletedAt: null },
+    });
+    if (!group) {
+      throw new NotFoundException(this.t('errors.routine_group_not_found'));
+    }
+    if (group.userId !== userId) {
+      throw new ForbiddenException(
+        this.t('errors.own_routine_group_only_update'),
+      );
+    }
+    return group;
   }
 }

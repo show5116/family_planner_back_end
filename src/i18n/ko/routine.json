@@ -10,12 +10,16 @@
     "share_not_found": "공유 정보를 찾을 수 없습니다",
     "future_date_not_allowed": "미래 날짜는 체크할 수 없습니다",
     "already_checked": "이미 체크된 날짜입니다",
-    "log_not_found": "체크 기록을 찾을 수 없습니다"
+    "log_not_found": "체크 기록을 찾을 수 없습니다",
+    "routine_group_not_found": "루틴 그룹을 찾을 수 없습니다",
+    "own_routine_group_only_update": "본인의 루틴 그룹만 수정할 수 있습니다",
+    "own_routine_group_only_delete": "본인의 루틴 그룹만 삭제할 수 있습니다"
   },
   "success": {
     "routine_deleted": "루틴이 삭제되었습니다",
     "share_removed": "그룹 공유가 해제되었습니다",
-    "check_removed": "체크가 취소되었습니다"
+    "check_removed": "체크가 취소되었습니다",
+    "routine_group_deleted": "루틴 그룹이 삭제되었습니다 (소속 루틴은 유지됩니다)"
   },
   "notification": {
     "daily_reminder_title": "오늘의 루틴을 확인해보세요",

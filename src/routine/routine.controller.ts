@@ -15,12 +15,16 @@ import { RoutineService } from './routine.service';
 import { RoutineStatsService } from './routine-stats.service';
 import { RoutineBadgeService } from './routine-badge.service';
 import { RoutineLeaderboardService } from './routine-leaderboard.service';
+import { RoutineGroupService } from './routine-group.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { RoutineQueryDto } from './dto/routine-query.dto';
 import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
+import { CreateRoutineGroupDto } from './dto/create-routine-group.dto';
+import { UpdateRoutineGroupDto } from './dto/update-routine-group.dto';
+import { ReorderRoutineGroupDto } from './dto/reorder-routine-group.dto';
 import { HeatmapQueryDto, RateQueryDto } from './dto/routine-stats-query.dto';
 import { LeaderboardQueryDto } from './dto/routine-leaderboard-query.dto';
 import {
@@ -29,6 +33,10 @@ import {
   RoutineShareDto,
   RoutineMemberSummaryDto,
 } from './dto/routine-response.dto';
+import {
+  RoutineGroupDto,
+  RoutineGroupDetailDto,
+} from './dto/routine-group-response.dto';
 import {
   HeatmapResponseDto,
   StreakResponseDto,
@@ -59,6 +67,7 @@ export class RoutineController {
     private readonly routineStatsService: RoutineStatsService,
     private readonly routineBadgeService: RoutineBadgeService,
     private readonly routineLeaderboardService: RoutineLeaderboardService,
+    private readonly routineGroupService: RoutineGroupService,
   ) {}
 
   @Post()
@@ -89,6 +98,63 @@ export class RoutineController {
   @ApiSuccess(RoutineBadgeDto, '배지 카탈로그 조회 성공', { isArray: true })
   getBadgeCatalog() {
     return this.routineBadgeService.findCatalog();
+  }
+
+  @Post('routine-groups')
+  @ApiOperation({ summary: '루틴 그룹 생성 (여러 습관을 묶는 그룹)' })
+  @ApiCreated(RoutineGroupDto, '루틴 그룹 생성 성공')
+  createRoutineGroup(@Request() req, @Body() dto: CreateRoutineGroupDto) {
+    return this.routineGroupService.create(req.user.userId, dto);
+  }
+
+  @Get('routine-groups')
+  @ApiOperation({ summary: '내 루틴 그룹 목록 조회 (그룹별 오늘 진행률 포함)' })
+  @ApiSuccess(RoutineGroupDto, '루틴 그룹 목록 조회 성공', { isArray: true })
+  findRoutineGroups(@Request() req) {
+    return this.routineGroupService.findAll(req.user.userId);
+  }
+
+  @Patch('routine-groups/sort-order')
+  @ApiOperation({ summary: '루틴 그룹 순서 일괄 변경' })
+  @ApiSuccess(RoutineGroupDto, '순서 변경 성공', { isArray: true })
+  reorderRoutineGroups(@Request() req, @Body() dto: ReorderRoutineGroupDto) {
+    return this.routineGroupService.reorder(req.user.userId, dto);
+  }
+
+  @Get('routine-groups/:id')
+  @ApiOperation({
+    summary: '루틴 그룹 상세 조회 (소속 습관 목록 + 오늘 진행률)',
+  })
+  @ApiSuccess(RoutineGroupDetailDto, '루틴 그룹 상세 조회 성공')
+  @ApiNotFound('루틴 그룹을 찾을 수 없습니다')
+  @ApiForbidden('본인의 루틴 그룹만 조회할 수 있습니다')
+  findRoutineGroupOne(@Request() req, @Param('id') id: string) {
+    return this.routineGroupService.findOne(req.user.userId, id);
+  }
+
+  @Patch('routine-groups/:id')
+  @ApiOperation({ summary: '루틴 그룹 수정' })
+  @ApiSuccess(RoutineGroupDto, '루틴 그룹 수정 성공')
+  @ApiNotFound('루틴 그룹을 찾을 수 없습니다')
+  @ApiForbidden('본인의 루틴 그룹만 수정할 수 있습니다')
+  updateRoutineGroup(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateRoutineGroupDto,
+  ) {
+    return this.routineGroupService.update(req.user.userId, id, dto);
+  }
+
+  @Delete('routine-groups/:id')
+  @ApiOperation({
+    summary:
+      '루틴 그룹 삭제 (soft delete, 소속 습관은 그룹 소속만 해제되고 유지)',
+  })
+  @ApiSuccess(MessageResponseDto, '루틴 그룹 삭제 성공')
+  @ApiNotFound('루틴 그룹을 찾을 수 없습니다')
+  @ApiForbidden('본인의 루틴 그룹만 삭제할 수 있습니다')
+  removeRoutineGroup(@Request() req, @Param('id') id: string) {
+    return this.routineGroupService.remove(req.user.userId, id);
   }
 
   @Get('me/badges')

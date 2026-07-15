@@ -10,12 +10,16 @@
     "share_not_found": "共有情報が見つかりません",
     "future_date_not_allowed": "未来の日付はチェックできません",
     "already_checked": "すでにチェック済みの日付です",
-    "log_not_found": "チェック記録が見つかりません"
+    "log_not_found": "チェック記録が見つかりません",
+    "routine_group_not_found": "ルーティングループが見つかりません",
+    "own_routine_group_only_update": "自分のルーティングループのみ更新できます",
+    "own_routine_group_only_delete": "自分のルーティングループのみ削除できます"
   },
   "success": {
     "routine_deleted": "ルーティンを削除しました",
     "share_removed": "グループ共有を解除しました",
-    "check_removed": "チェックを取り消しました"
+    "check_removed": "チェックを取り消しました",
+    "routine_group_deleted": "ルーティングループを削除しました(所属ルーティンは維持されます)"
   },
   "notification": {
     "daily_reminder_title": "今日のルーティンを確認しましょう",

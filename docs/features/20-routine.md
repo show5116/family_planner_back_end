@@ -13,15 +13,16 @@
 
 ## 핵심 개념
 
-- **루틴 1개 = 습관 1개**: Task처럼 하위 체크리스트 항목을 두지 않는 심플한 구조.
+- **루틴 1개 = 습관 1개**: Task처럼 하위 체크리스트 항목을 두지 않는 심플한 구조. 여러 습관을 묶어서 관리하고 싶으면 `RoutineGroup`(아래 참고)을 사용.
 - **반복 주기**: 1차는 `WEEKLY_COUNT`(주 N회, 요일 무관)만 지원. `frequencyType`/`targetDays` 필드로 향후 `DAILY`, `DAYS_OF_WEEK` 확장 여지를 마련해 둠.
 - **스케줄러 없음**: 매일 인스턴스를 미리 생성하지 않고, 체크한 날짜만 `RoutineLog`에 기록. 스트릭/달성률은 조회 시점에 실시간 계산.
 - **주 계산 기준**: 월요일 시작 ISO 주. 미래 날짜 체크는 차단.
-- **타임존**: "오늘"/"이번 주" 계산은 항상 KST(Asia/Seoul) 기준(`src/routine/utils/routine-date.util.ts`의 `todayInKst()`). 서버가 UTC로 실행되므로 `new Date()`의 UTC getter를 직접 쓰지 말고 반드시 이 함수를 통해 "오늘 날짜"를 구할 것.
+- **타임존**: "오늘"/"이번 주" 계산은 항상 KST(Asia/Seoul) 기준(`src/common/utils/date-kst.util.ts`의 `todayInKst()`). 서버가 UTC로 실행되므로 `new Date()`의 UTC getter를 직접 쓰지 말고 반드시 이 함수를 통해 "오늘 날짜"를 구할 것.
 - **그룹 공유(N:M)**: 하나의 루틴을 여러 그룹에 동시 공유 가능. 공유된 그룹의 멤버는 서로의 루틴과 달성 현황을 조회 가능(수정 권한 공유는 없음, 체크는 본인만).
 - **삭제 정책**: 루틴 soft delete 시 `RoutineLog`는 보존(통계/이력 보존 목적).
 - **배지**: 체크 직후 동기적으로 판정(스트릭/누적 체크 기준). 한 번 획득한 배지는 체크 취소로도 회수되지 않음.
 - **랭킹보드**: 그룹에 공유된 루틴만 집계 대상(비공유 루틴은 익명으로도 포함하지 않음 — 공유하지 않았다는 의사표시 존중).
+- **루틴 그룹**: 여러 습관을 "아침 루틴"처럼 하나의 컨테이너로 묶는 얇은 레이어(`RoutineGroup`). 습관은 최대 1개 그룹에만 소속되며, 그룹 밖에서도 독립적으로 조회/체크 가능. 체크/배지/스트릭/공유는 전부 개별 습관 단위 그대로 유지 — 그룹은 "오늘 3/5 완료" 같은 진행률 뷰만 제공.
 
 ---
 
@@ -53,6 +54,14 @@
 - 판정 기준 3종: `STREAK_DAYS`(연속 체크일), `STREAK_WEEKS`(연속 주간 목표 달성), `TOTAL_CHECKS`(누적 체크 횟수) — 카탈로그 9종 시드값은 아래 참고
 - 배지 평가 실패는 체크 자체를 막지 않음(에러 격리), 체크 취소 시에도 이미 획득한 배지는 회수하지 않음
 - 배지 획득 시 `ROUTINE_STREAK_MILESTONE` 알림 자동 발송
+
+### 루틴 그룹
+- 여러 습관을 하나의 컨테이너(`RoutineGroup`)로 묶어 "아침 루틴"처럼 관리. 습관은 최대 1개 그룹에만 소속(선택적 FK), 그룹 밖에서도 독립 조회/체크 가능
+- 그룹 CRUD + 순서 일괄 변경 (`/routines/routine-groups/*`)
+- 그룹 목록/상세 조회 시 오늘 기준 진행률(`todayProgress: { checked, total }`) 포함 — 그룹 내 활성 습관 대비 오늘 체크 완료 수
+- 그룹 삭제는 soft delete, 소속 습관은 삭제되지 않고 `groupId`만 `null`로 해제(습관 자체와 `RoutineLog` 이력은 그대로 유지)
+- 습관 생성/수정 시 `routineGroupId`로 소속 지정/변경 가능, 수정 시 `null` 전달로 소속 해제 가능
+- 체크/체크취소/배지/스트릭/공유는 전부 기존 개별 루틴 로직 그대로 — 그룹은 진행률 집계 뷰만 추가하는 얇은 레이어(1차는 그룹 단위 배지/스트릭/랭킹보드 없음)
 
 ### 그룹 랭킹보드
 - `GET /routines/groups/:groupId/leaderboard?period=week|month&metric=checkCount|achievementRate`
@@ -179,7 +188,27 @@ enum BadgeCriteriaType {
   STREAK_WEEKS
   TOTAL_CHECKS
 }
+
+model RoutineGroup {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String    @db.VarChar(100)
+  emoji     String?   @db.VarChar(10)
+  color     String?   @db.VarChar(7)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routines Routine[]
+
+  @@index([userId, deletedAt])
+  @@map("routine_groups")
+}
 ```
+
+`Routine`에는 선택적 FK `groupId String?` + `group RoutineGroup? @relation(..., onDelete: SetNull)`가 추가되어 있음 — 그룹 삭제 시 소속 습관은 유지되고 `groupId`만 `null`로 해제됨. 기존 `RoutineShare.groupId`(가족 `Group` 참조)와 필드명이 겹치지만 참조 모델이 달라 문제없고, DTO/컨트롤러 레벨에서는 `routineGroupId`로 구분해 혼동을 방지함.
 
 ### 배지 카탈로그 (9종 시드)
 
@@ -212,6 +241,7 @@ enum BadgeCriteriaType {
 - [x] 배지 시스템 (카탈로그 9종, 체크 시 동기 판정, 체크 응답에 신규 획득 포함)
 - [x] 그룹 랭킹보드 (공유 루틴 기준 체크 횟수/달성률 순위)
 - [x] 알림/리마인더 (일일 미체크 리마인드, 배지 획득 알림, 주간 요약)
+- [x] 루틴 그룹 (`RoutineGroup`) — 여러 습관 묶음 관리, 진행률 조회, 개별 습관 소속 지정/해제
 
 ### ⬜ 향후 고려
 - [ ] `DAILY`, `DAYS_OF_WEEK` 반복 타입 지원
@@ -232,6 +262,19 @@ enum BadgeCriteriaType {
 | PATCH  | `/routines/:id`         | 루틴 수정                     | JWT, Owner |
 | DELETE | `/routines/:id`         | 루틴 삭제 (soft delete)       | JWT, Owner |
 | PATCH  | `/routines/sort-order`  | 순서 일괄 변경                | JWT        |
+
+### 루틴 그룹
+
+| Method | Endpoint                              | 설명                                 | 권한       |
+| ------ | -------------------------------------- | ------------------------------------ | ---------- |
+| POST   | `/routines/routine-groups`             | 그룹 생성                            | JWT        |
+| GET    | `/routines/routine-groups`             | 내 그룹 목록 (진행률 포함)           | JWT        |
+| PATCH  | `/routines/routine-groups/sort-order`  | 그룹 순서 일괄 변경                  | JWT        |
+| GET    | `/routines/routine-groups/:id`         | 그룹 상세 (소속 습관 목록 + 진행률)  | JWT, Owner |
+| PATCH  | `/routines/routine-groups/:id`         | 그룹 수정 (제목/이모지/색상)         | JWT, Owner |
+| DELETE | `/routines/routine-groups/:id`         | 그룹 삭제 (soft delete, 습관은 소속만 해제) | JWT, Owner |
+
+> `/routines/groups/:groupId/*`(가족 그룹 공유)와 네임스페이스가 겹치지 않도록 루틴 그룹은 `/routines/routine-groups`를 별도로 사용.
 
 ### 체크
 
@@ -275,30 +318,37 @@ enum BadgeCriteriaType {
 ```
 src/routine/
   dto/
-    create-routine.dto.ts
-    update-routine.dto.ts
-    routine-query.dto.ts
+    create-routine.dto.ts             — routineGroupId 필드 포함
+    update-routine.dto.ts             — routineGroupId?: string | null (그룹 해제용 오버라이드)
+    routine-query.dto.ts              — routineGroupId 필터 포함
     check-routine.dto.ts
     create-routine-share.dto.ts
     reorder-routine.dto.ts
+    create-routine-group.dto.ts
+    update-routine-group.dto.ts
+    reorder-routine-group.dto.ts
     routine-stats-query.dto.ts       — HeatmapQueryDto, RateQueryDto
     routine-leaderboard-query.dto.ts  — LeaderboardQueryDto
     routine-leaderboard-response.dto.ts — LeaderboardResponseDto, LeaderboardEntryDto
     routine-badge-response.dto.ts    — RoutineBadgeDto, UserRoutineBadgeDto
-    routine-response.dto.ts          — RoutineDto, RoutineLogDto(+newlyEarnedBadges), RoutineShareDto, RoutineMemberSummaryDto
+    routine-response.dto.ts          — RoutineDto(+routineGroupId), RoutineLogDto(+newlyEarnedBadges), RoutineShareDto, RoutineMemberSummaryDto
+    routine-group-response.dto.ts    — RoutineGroupDto(+todayProgress), RoutineGroupDetailDto(+routines)
     routine-stats-response.dto.ts    — HeatmapResponseDto, StreakResponseDto, RateResponseDto, RoutineSummaryDto
   enums/
     index.ts                        — RoutineFrequencyType, BadgeCriteriaType re-export
   utils/
     routine-stats.util.ts            — 주차 계산, 스트릭/달성률 순수 함수
-    routine-date.util.ts             — todayInKst(), parseDateOnly() (KST 기준 날짜 계산, 필수 사용)
   routine.controller.ts
-  routine.service.ts                 — CRUD, 체크/체크취소(배지 판정 연동), 공유 관리
+  routine.service.ts                 — CRUD, 체크/체크취소(배지 판정 연동), 공유 관리, routineGroupId 연동
+  routine-group.service.ts           — 루틴 그룹 CRUD, 오늘 진행률 계산
   routine-stats.service.ts           — 히트맵/스트릭/달성률/요약
   routine-badge.service.ts           — 배지 카탈로그 조회, evaluateAndAward()
   routine-leaderboard.service.ts     — 그룹 랭킹보드 집계
   routine-reminder.scheduler.ts      — 일일 리마인더 + 주간 요약 크론
   routine.module.ts
+
+src/common/utils/
+  date-kst.util.ts                   — todayInKst(), thisMonthStartInKst(), parseDateOnly() (KST 기준 날짜 계산, 프로젝트 공용)
 ```
 
-**Last Updated**: 2026-07-14
+**Last Updated**: 2026-07-16

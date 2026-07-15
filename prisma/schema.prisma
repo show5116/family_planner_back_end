@@ -40,6 +40,7 @@ model User {
   tasks                     Task[]
   memos                     Memo[]
   routines                  Routine[]
+  routineGroups             RoutineGroup[]
   routineBadges             UserRoutineBadge[]
   expenses                  Expense[]
   expensesAsMember          Expense[]              @relation("ExpenseMember")
@@ -1657,6 +1658,7 @@ enum AnniversaryOffsetType {
 model Routine {
   id            String               @id @default(uuid())
   userId        String
+  groupId       String?
   title         String               @db.VarChar(100)
   emoji         String?              @db.VarChar(10)
   color         String?              @db.VarChar(7)
@@ -1672,6 +1674,7 @@ model Routine {
   deletedAt     DateTime?
 
   user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group  RoutineGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
   logs   RoutineLog[]
   shares RoutineShare[]
   badges UserRoutineBadge[]
@@ -1679,7 +1682,26 @@ model Routine {
   @@index([userId, isActive])
   @@index([userId, sortOrder])
   @@index([deletedAt])
+  @@index([groupId])
   @@map("routines")
+}
+
+model RoutineGroup {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String    @db.VarChar(100)
+  emoji     String?   @db.VarChar(10)
+  color     String?   @db.VarChar(7)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routines Routine[]
+
+  @@index([userId, deletedAt])
+  @@map("routine_groups")
 }
 
 model RoutineLog {
