@@ -10,7 +10,9 @@ import { NotificationCategory } from '@/notification/enums/notification-category
 import {
   calculateAchievementRate,
   getWeekStart,
+  isScheduledDayForRoutine,
 } from './utils/routine-stats.util';
+import { RoutineFrequencyType, RoutineStatus } from '@/routine/enums';
 import { todayInKst } from '@/common/utils/date-kst.util';
 
 @Injectable()
@@ -62,12 +64,30 @@ export class RoutineReminderScheduler {
 
       for (const { userId } of settings) {
         const routines = await this.prisma.routine.findMany({
-          where: { userId, isActive: true, deletedAt: null },
-          select: { id: true },
+          where: { userId, status: RoutineStatus.ACTIVE, deletedAt: null },
+          select: {
+            id: true,
+            frequencyType: true,
+            weeklyMode: true,
+            targetDays: true,
+          },
         });
         if (routines.length === 0) continue;
 
-        const routineIds = routines.map((r) => r.id);
+        // FIXED_DAYS 루틴은 오늘이 스케줄된 요일이 아니면 미체크 집계에서 제외
+        const scheduledRoutines = routines.filter((r) =>
+          isScheduledDayForRoutine(
+            {
+              frequencyType: r.frequencyType,
+              weeklyMode: r.weeklyMode,
+              targetDays: r.targetDays,
+            },
+            today,
+          ),
+        );
+        if (scheduledRoutines.length === 0) continue;
+
+        const routineIds = scheduledRoutines.map((r) => r.id);
         const todayLogs = await this.prisma.routineLog.findMany({
           where: { routineId: { in: routineIds }, checkedDate: today },
           select: { routineId: true },
@@ -126,9 +146,13 @@ export class RoutineReminderScheduler {
       const weekStart = getWeekStart(today);
 
       for (const { userId } of settings) {
-        const routines = await this.prisma.routine.findMany({
-          where: { userId, isActive: true, deletedAt: null },
+        const allRoutines = await this.prisma.routine.findMany({
+          where: { userId, status: RoutineStatus.ACTIVE, deletedAt: null },
         });
+        // MONTHLY 루틴은 주 단위 달성률 개념이 맞지 않으므로 주간 요약 평균에서 제외
+        const routines = allRoutines.filter(
+          (r) => r.frequencyType !== RoutineFrequencyType.MONTHLY,
+        );
         if (routines.length === 0) continue;
 
         const routineIds = routines.map((r) => r.id);

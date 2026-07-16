@@ -5,6 +5,7 @@ import { RoutineStatsService } from './routine-stats.service';
 import { RoutineBadgeService } from './routine-badge.service';
 import { RoutineLeaderboardService } from './routine-leaderboard.service';
 import { RoutineGroupService } from './routine-group.service';
+import { RoutineCategoryService } from './routine-category.service';
 import { RoutineReminderScheduler } from './routine-reminder.scheduler';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { NotificationModule } from '@/notification/notification.module';
@@ -18,6 +19,7 @@ import { NotificationModule } from '@/notification/notification.module';
     RoutineBadgeService,
     RoutineLeaderboardService,
     RoutineGroupService,
+    RoutineCategoryService,
     RoutineReminderScheduler,
   ],
   exports: [RoutineService],

@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RoutineFrequencyType } from '@/routine/enums';
+import {
+  RoutineFrequencyType,
+  RoutineWeeklyMode,
+  RoutineImportance,
+  RoutineTimeFilter,
+  RoutineRecordType,
+  RoutineStatus,
+} from '@/routine/enums';
 import { UserRoutineBadgeDto } from './routine-badge-response.dto';
 
 export class RoutineDto {
@@ -15,20 +22,53 @@ export class RoutineDto {
   @ApiProperty({ description: '색상', nullable: true })
   color: string | null;
 
+  @ApiProperty({ description: '루틴 메모', nullable: true })
+  memo: string | null;
+
+  @ApiProperty({ description: '중요도', enum: RoutineImportance })
+  importance: RoutineImportance;
+
+  @ApiProperty({
+    description: '시간대 분류',
+    enum: RoutineTimeFilter,
+    nullable: true,
+  })
+  timeFilter: RoutineTimeFilter | null;
+
+  @ApiProperty({ description: '소속 루틴 카테고리 ID', nullable: true })
+  categoryId: string | null;
+
+  @ApiProperty({ description: '기록 방식', enum: RoutineRecordType })
+  recordType: RoutineRecordType;
+
+  @ApiProperty({ description: '상태', enum: RoutineStatus })
+  status: RoutineStatus;
+
   @ApiProperty({ description: '반복 타입', enum: RoutineFrequencyType })
   frequencyType: RoutineFrequencyType;
 
-  @ApiProperty({ description: '주 목표 횟수', nullable: true })
+  @ApiProperty({
+    description: '주 반복 세부 방식',
+    enum: RoutineWeeklyMode,
+    nullable: true,
+  })
+  weeklyMode: RoutineWeeklyMode | null;
+
+  @ApiProperty({ description: '목표 횟수 (주/월)', nullable: true })
   targetCount: number | null;
+
+  @ApiProperty({
+    description: '반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용)',
+    type: [Number],
+    nullable: true,
+  })
+  targetDays: number[] | null;
 
   @ApiProperty({ description: '시작일' })
   startDate: Date;
 
   @ApiProperty({ description: '종료일', nullable: true })
   endDate: Date | null;
-
-  @ApiProperty({ description: '활성 여부' })
-  isActive: boolean;
 
   @ApiProperty({ description: '정렬 순서' })
   sortOrder: number;
@@ -58,6 +98,15 @@ export class RoutineLogDto {
 
   @ApiProperty({ description: '메모', nullable: true })
   note: string | null;
+
+  @ApiProperty({ description: '텍스트 기록 값', nullable: true })
+  textValue: string | null;
+
+  @ApiProperty({ description: '수치 기록 값', nullable: true })
+  numericValue: number | null;
+
+  @ApiProperty({ description: '시각 기록 값 (HH:mm)', nullable: true })
+  timeValue: string | null;
 
   @ApiProperty({ description: '생성일' })
   createdAt: Date;

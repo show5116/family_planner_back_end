@@ -9,7 +9,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { I18nService, I18nContext } from 'nestjs-i18n';
-import { Prisma, RoutineFrequencyType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
@@ -18,6 +18,12 @@ import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { RoutineBadgeService } from './routine-badge.service';
+import {
+  RoutineFrequencyType,
+  RoutineWeeklyMode,
+  RoutineRecordType,
+  RoutineStatus,
+} from '@/routine/enums';
 import { todayInKst, parseDateOnly } from '@/common/utils/date-kst.util';
 
 @Injectable()
@@ -37,30 +43,93 @@ export class RoutineService {
     });
   }
 
-  async create(userId: string, dto: CreateRoutineDto) {
-    const frequencyType =
-      dto.frequencyType ?? RoutineFrequencyType.WEEKLY_COUNT;
+  /** frequencyType/weeklyMode/targetCount/targetDays 조합이 유효한지 검증 */
+  private validateFrequencyCombo(input: {
+    frequencyType: RoutineFrequencyType;
+    weeklyMode?: RoutineWeeklyMode | null;
+    targetCount?: number | null;
+    targetDays?: number[] | null;
+  }) {
+    const { frequencyType, weeklyMode, targetCount, targetDays } = input;
 
-    if (
-      frequencyType === RoutineFrequencyType.WEEKLY_COUNT &&
-      !dto.targetCount
-    ) {
-      throw new BadRequestException(this.t('errors.weekly_target_required'));
+    if (frequencyType === RoutineFrequencyType.DAILY) {
+      if (weeklyMode || targetCount || (targetDays && targetDays.length > 0)) {
+        throw new BadRequestException(this.t('errors.invalid_frequency_combo'));
+      }
+      return;
     }
+
+    if (frequencyType === RoutineFrequencyType.WEEKLY) {
+      if (!weeklyMode) {
+        throw new BadRequestException(this.t('errors.weekly_mode_required'));
+      }
+      if (weeklyMode === RoutineWeeklyMode.COUNT_ONLY) {
+        if (!targetCount) {
+          throw new BadRequestException(
+            this.t('errors.weekly_target_required'),
+          );
+        }
+        if (targetDays && targetDays.length > 0) {
+          throw new BadRequestException(
+            this.t('errors.invalid_frequency_combo'),
+          );
+        }
+      } else {
+        if (!targetDays || targetDays.length === 0) {
+          throw new BadRequestException(this.t('errors.fixed_days_required'));
+        }
+        if (targetCount) {
+          throw new BadRequestException(
+            this.t('errors.invalid_frequency_combo'),
+          );
+        }
+      }
+      return;
+    }
+
+    if (frequencyType === RoutineFrequencyType.MONTHLY) {
+      if (!targetCount) {
+        throw new BadRequestException(this.t('errors.monthly_target_required'));
+      }
+      if (weeklyMode || (targetDays && targetDays.length > 0)) {
+        throw new BadRequestException(this.t('errors.invalid_frequency_combo'));
+      }
+    }
+  }
+
+  async create(userId: string, dto: CreateRoutineDto) {
+    const frequencyType = dto.frequencyType ?? RoutineFrequencyType.WEEKLY;
+
+    this.validateFrequencyCombo({
+      frequencyType,
+      weeklyMode: dto.weeklyMode,
+      targetCount: dto.targetCount,
+      targetDays: dto.targetDays,
+    });
 
     if (dto.routineGroupId) {
       await this.findOwnRoutineGroup(userId, dto.routineGroupId);
+    }
+    if (dto.categoryId) {
+      await this.findOwnRoutineCategory(userId, dto.categoryId);
     }
 
     const routine = await this.prisma.routine.create({
       data: {
         userId,
         groupId: dto.routineGroupId,
+        categoryId: dto.categoryId,
         title: dto.title,
         emoji: dto.emoji,
         color: dto.color,
+        memo: dto.memo,
+        importance: dto.importance,
+        timeFilter: dto.timeFilter,
+        recordType: dto.recordType,
         frequencyType,
+        weeklyMode: dto.weeklyMode,
         targetCount: dto.targetCount,
+        targetDays: dto.targetDays,
         startDate: parseDateOnly(dto.startDate),
         endDate: dto.endDate ? parseDateOnly(dto.endDate) : undefined,
       },
@@ -73,10 +142,11 @@ export class RoutineService {
     const where: Prisma.RoutineWhereInput = {
       userId,
       deletedAt: null,
-      ...(query.isActive !== undefined && { isActive: query.isActive }),
+      ...(query.status !== undefined && { status: query.status }),
       ...(query.routineGroupId !== undefined && {
         groupId: query.routineGroupId,
       }),
+      ...(query.categoryId !== undefined && { categoryId: query.categoryId }),
     };
 
     const routines = await this.prisma.routine.findMany({
@@ -111,13 +181,27 @@ export class RoutineService {
     const routine = await this.findOwnRoutine(userId, id);
 
     const frequencyType = dto.frequencyType ?? routine.frequencyType;
-    const targetCount = dto.targetCount ?? routine.targetCount;
-    if (frequencyType === RoutineFrequencyType.WEEKLY_COUNT && !targetCount) {
-      throw new BadRequestException(this.t('errors.weekly_target_required'));
-    }
+    const weeklyMode =
+      dto.weeklyMode !== undefined ? dto.weeklyMode : routine.weeklyMode;
+    const targetCount =
+      dto.targetCount !== undefined ? dto.targetCount : routine.targetCount;
+    const targetDays =
+      dto.targetDays !== undefined
+        ? dto.targetDays
+        : (routine.targetDays as number[] | null);
+
+    this.validateFrequencyCombo({
+      frequencyType,
+      weeklyMode,
+      targetCount,
+      targetDays,
+    });
 
     if (dto.routineGroupId) {
       await this.findOwnRoutineGroup(userId, dto.routineGroupId);
+    }
+    if (dto.categoryId) {
+      await this.findOwnRoutineCategory(userId, dto.categoryId);
     }
 
     const updated = await this.prisma.routine.update({
@@ -126,20 +210,26 @@ export class RoutineService {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.emoji !== undefined && { emoji: dto.emoji }),
         ...(dto.color !== undefined && { color: dto.color }),
+        ...(dto.memo !== undefined && { memo: dto.memo }),
+        ...(dto.importance !== undefined && { importance: dto.importance }),
+        ...(dto.timeFilter !== undefined && { timeFilter: dto.timeFilter }),
+        ...(dto.recordType !== undefined && { recordType: dto.recordType }),
         ...(dto.frequencyType !== undefined && {
           frequencyType: dto.frequencyType,
         }),
+        ...(dto.weeklyMode !== undefined && { weeklyMode: dto.weeklyMode }),
         ...(dto.targetCount !== undefined && { targetCount: dto.targetCount }),
+        ...(dto.targetDays !== undefined && { targetDays: dto.targetDays }),
         ...(dto.startDate !== undefined && {
           startDate: parseDateOnly(dto.startDate),
         }),
         ...(dto.endDate !== undefined && {
           endDate: dto.endDate ? parseDateOnly(dto.endDate) : null,
         }),
-        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         ...(dto.routineGroupId !== undefined && {
           groupId: dto.routineGroupId,
         }),
+        ...(dto.categoryId !== undefined && { categoryId: dto.categoryId }),
       },
     });
 
@@ -151,13 +241,93 @@ export class RoutineService {
     return this.toResponse(updated, !!log);
   }
 
-  async remove(userId: string, id: string) {
-    await this.findOwnRoutine(userId, id);
+  async pause(userId: string, id: string) {
+    const routine = await this.findOwnRoutine(userId, id);
 
-    await this.prisma.routine.update({
-      where: { id },
-      data: { deletedAt: new Date(), isActive: false },
+    if (routine.status === RoutineStatus.ENDED) {
+      throw new BadRequestException(this.t('errors.cannot_pause_ended'));
+    }
+    if (routine.status === RoutineStatus.PAUSED) {
+      throw new ConflictException(this.t('errors.already_paused'));
+    }
+
+    const today = todayInKst();
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.routine.update({
+        where: { id },
+        data: { status: RoutineStatus.PAUSED },
+      }),
+      this.prisma.routinePause.create({
+        data: { routineId: id, pausedFrom: today },
+      }),
+    ]);
+
+    return this.toResponse(updated, false);
+  }
+
+  async resume(userId: string, id: string) {
+    const routine = await this.findOwnRoutine(userId, id);
+
+    if (routine.status !== RoutineStatus.PAUSED) {
+      throw new ConflictException(this.t('errors.not_paused'));
+    }
+
+    const openPause = await this.prisma.routinePause.findFirst({
+      where: { routineId: id, pausedTo: null },
+      orderBy: { pausedFrom: 'desc' },
     });
+
+    const today = todayInKst();
+    const ops = [
+      this.prisma.routine.update({
+        where: { id },
+        data: { status: RoutineStatus.ACTIVE },
+      }),
+    ];
+    if (openPause) {
+      ops.push(
+        this.prisma.routinePause.update({
+          where: { id: openPause.id },
+          data: { pausedTo: today },
+        }) as unknown as (typeof ops)[number],
+      );
+    }
+    const [updated] = await this.prisma.$transaction(ops);
+
+    const log = await this.prisma.routineLog.findUnique({
+      where: { routineId_checkedDate: { routineId: id, checkedDate: today } },
+    });
+
+    return this.toResponse(updated, !!log);
+  }
+
+  /** 루틴 종료 (soft delete, 체크 기록은 보존) */
+  async end(userId: string, id: string) {
+    const routine = await this.findOwnRoutine(userId, id);
+
+    const today = todayInKst();
+    const ops = [
+      this.prisma.routine.update({
+        where: { id },
+        data: { status: RoutineStatus.ENDED, deletedAt: new Date() },
+      }),
+    ];
+    if (routine.status === RoutineStatus.PAUSED) {
+      const openPause = await this.prisma.routinePause.findFirst({
+        where: { routineId: id, pausedTo: null },
+        orderBy: { pausedFrom: 'desc' },
+      });
+      if (openPause) {
+        ops.push(
+          this.prisma.routinePause.update({
+            where: { id: openPause.id },
+            data: { pausedTo: today },
+          }) as unknown as (typeof ops)[number],
+        );
+      }
+    }
+
+    await this.prisma.$transaction(ops);
 
     return { message: this.t('success.routine_deleted') };
   }
@@ -176,7 +346,16 @@ export class RoutineService {
   }
 
   async check(userId: string, id: string, dto: CheckRoutineDto) {
-    await this.findOwnRoutine(userId, id);
+    const routine = await this.findOwnRoutine(userId, id);
+
+    if (routine.status === RoutineStatus.PAUSED) {
+      throw new BadRequestException(this.t('errors.routine_paused'));
+    }
+    if (routine.status === RoutineStatus.ENDED) {
+      throw new BadRequestException(this.t('errors.routine_ended'));
+    }
+
+    this.validateRecordValue(routine.recordType, dto);
 
     const checkedDate = dto.date ? parseDateOnly(dto.date) : todayInKst();
     if (checkedDate.getTime() > todayInKst().getTime()) {
@@ -196,6 +375,9 @@ export class RoutineService {
         userId,
         checkedDate,
         note: dto.note,
+        textValue: dto.textValue,
+        numericValue: dto.numericValue,
+        timeValue: dto.timeValue,
       },
     });
 
@@ -207,6 +389,44 @@ export class RoutineService {
       });
 
     return { ...log, newlyEarnedBadges };
+  }
+
+  /** recordType에 맞는 값만 제공됐는지 검증 (BOOLEAN=값 없음, 그 외=해당 값 필수+나머지 없음) */
+  private validateRecordValue(
+    recordType: RoutineRecordType,
+    dto: CheckRoutineDto,
+  ) {
+    const provided = {
+      textValue: dto.textValue !== undefined,
+      numericValue: dto.numericValue !== undefined,
+      timeValue: dto.timeValue !== undefined,
+    };
+    const anyProvided =
+      provided.textValue || provided.numericValue || provided.timeValue;
+
+    if (recordType === RoutineRecordType.BOOLEAN) {
+      if (anyProvided) {
+        throw new BadRequestException(this.t('errors.record_type_mismatch'));
+      }
+      return;
+    }
+
+    const requiredField =
+      recordType === RoutineRecordType.TEXT
+        ? 'textValue'
+        : recordType === RoutineRecordType.NUMERIC
+          ? 'numericValue'
+          : 'timeValue';
+
+    if (!provided[requiredField]) {
+      throw new BadRequestException(this.t('errors.record_value_required'));
+    }
+    const otherFields = (
+      ['textValue', 'numericValue', 'timeValue'] as const
+    ).filter((f) => f !== requiredField);
+    if (otherFields.some((f) => provided[f])) {
+      throw new BadRequestException(this.t('errors.record_type_mismatch'));
+    }
   }
 
   async uncheck(userId: string, id: string, dateStr?: string) {
@@ -413,14 +633,21 @@ export class RoutineService {
     routine: {
       id: string;
       groupId: string | null;
+      categoryId: string | null;
       title: string;
       emoji: string | null;
       color: string | null;
-      frequencyType: RoutineFrequencyType;
+      memo: string | null;
+      importance: string;
+      timeFilter: string | null;
+      recordType: string;
+      status: string;
+      frequencyType: string;
+      weeklyMode: string | null;
       targetCount: number | null;
+      targetDays: Prisma.JsonValue;
       startDate: Date;
       endDate: Date | null;
-      isActive: boolean;
       sortOrder: number;
       createdAt: Date;
       updatedAt: Date;
@@ -432,11 +659,18 @@ export class RoutineService {
       title: routine.title,
       emoji: routine.emoji,
       color: routine.color,
+      memo: routine.memo,
+      importance: routine.importance,
+      timeFilter: routine.timeFilter,
+      categoryId: routine.categoryId,
+      recordType: routine.recordType,
+      status: routine.status,
       frequencyType: routine.frequencyType,
+      weeklyMode: routine.weeklyMode,
       targetCount: routine.targetCount,
+      targetDays: (routine.targetDays as number[] | null) ?? null,
       startDate: routine.startDate,
       endDate: routine.endDate,
-      isActive: routine.isActive,
       sortOrder: routine.sortOrder,
       checkedToday,
       routineGroupId: routine.groupId,
@@ -459,5 +693,21 @@ export class RoutineService {
       );
     }
     return group;
+  }
+
+  /** 카테고리 소속 검증용: RoutineCategoryService에서도 재사용 */
+  async findOwnRoutineCategory(userId: string, categoryId: string) {
+    const category = await this.prisma.routineCategory.findFirst({
+      where: { id: categoryId, deletedAt: null },
+    });
+    if (!category) {
+      throw new NotFoundException(this.t('errors.routine_category_not_found'));
+    }
+    if (category.userId !== userId) {
+      throw new ForbiddenException(
+        this.t('errors.own_routine_category_only_update'),
+      );
+    }
+    return category;
   }
 }

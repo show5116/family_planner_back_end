@@ -13,13 +13,30 @@
     "log_not_found": "チェック記録が見つかりません",
     "routine_group_not_found": "ルーティングループが見つかりません",
     "own_routine_group_only_update": "自分のルーティングループのみ更新できます",
-    "own_routine_group_only_delete": "自分のルーティングループのみ削除できます"
+    "own_routine_group_only_delete": "自分のルーティングループのみ削除できます",
+    "invalid_frequency_combo": "選択した反復タイプに合わない値です",
+    "weekly_mode_required": "週次反復は方式(週N回/曜日指定)を選択する必要があります",
+    "fixed_days_required": "曜日指定反復は対象曜日を選択する必要があります",
+    "monthly_target_required": "月次反復には月間目標回数が必要です",
+    "record_type_mismatch": "このルーティンの記録方式と一致しない値です",
+    "record_value_required": "このルーティンには記録値が必要です",
+    "routine_paused": "一時停止中のルーティンはチェックできません",
+    "routine_ended": "終了したルーティンはチェックできません",
+    "already_paused": "すでに一時停止中のルーティンです",
+    "not_paused": "一時停止状態ではありません",
+    "cannot_pause_ended": "終了したルーティンは一時停止できません",
+    "routine_category_not_found": "ルーティンカテゴリーが見つかりません",
+    "own_routine_category_only_update": "自分のカテゴリーのみ更新できます",
+    "own_routine_category_only_delete": "自分のカテゴリーのみ削除できます"
   },
   "success": {
-    "routine_deleted": "ルーティンを削除しました",
+    "routine_deleted": "ルーティンを終了しました(チェック記録は維持されます)",
     "share_removed": "グループ共有を解除しました",
     "check_removed": "チェックを取り消しました",
-    "routine_group_deleted": "ルーティングループを削除しました(所属ルーティンは維持されます)"
+    "routine_group_deleted": "ルーティングループを削除しました(所属ルーティンは維持されます)",
+    "routine_paused": "ルーティンを一時停止しました",
+    "routine_resumed": "ルーティンを再開しました",
+    "routine_category_deleted": "ルーティンカテゴリーを削除しました(所属ルーティンは維持されます)"
   },
   "notification": {
     "daily_reminder_title": "今日のルーティンを確認しましょう",

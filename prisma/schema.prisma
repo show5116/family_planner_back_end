@@ -41,6 +41,7 @@ model User {
   memos                     Memo[]
   routines                  Routine[]
   routineGroups             RoutineGroup[]
+  routineCategories         RoutineCategory[]
   routineBadges             UserRoutineBadge[]
   expenses                  Expense[]
   expensesAsMember          Expense[]              @relation("ExpenseMember")
@@ -1659,30 +1660,39 @@ model Routine {
   id            String               @id @default(uuid())
   userId        String
   groupId       String?
+  categoryId    String?
   title         String               @db.VarChar(100)
   emoji         String?              @db.VarChar(10)
   color         String?              @db.VarChar(7)
-  frequencyType RoutineFrequencyType @default(WEEKLY_COUNT)
+  memo          String?              @db.VarChar(500)
+  importance    RoutineImportance    @default(MEDIUM)
+  timeFilter    RoutineTimeFilter?
+  frequencyType RoutineFrequencyType @default(WEEKLY)
+  weeklyMode    RoutineWeeklyMode?
   targetCount   Int?
   targetDays    Json?
+  recordType    RoutineRecordType    @default(BOOLEAN)
+  status        RoutineStatus        @default(ACTIVE)
   startDate     DateTime             @db.Date
   endDate       DateTime?            @db.Date
-  isActive      Boolean              @default(true)
   sortOrder     Int                  @default(0)
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   deletedAt     DateTime?
 
-  user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group  RoutineGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  logs   RoutineLog[]
-  shares RoutineShare[]
-  badges UserRoutineBadge[]
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group    RoutineGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  category RoutineCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  logs     RoutineLog[]
+  shares   RoutineShare[]
+  badges   UserRoutineBadge[]
+  pauses   RoutinePause[]
 
-  @@index([userId, isActive])
+  @@index([userId, status])
   @@index([userId, sortOrder])
   @@index([deletedAt])
   @@index([groupId])
+  @@index([categoryId])
   @@map("routines")
 }
 
@@ -1704,13 +1714,47 @@ model RoutineGroup {
   @@map("routine_groups")
 }
 
+model RoutineCategory {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String    @db.VarChar(50)
+  emoji     String?   @db.VarChar(10)
+  color     String?   @db.VarChar(7)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routines Routine[]
+
+  @@index([userId, deletedAt])
+  @@map("routine_categories")
+}
+
+model RoutinePause {
+  id         String    @id @default(uuid())
+  routineId  String
+  pausedFrom DateTime  @db.Date
+  pausedTo   DateTime? @db.Date
+  createdAt  DateTime  @default(now())
+
+  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  @@index([routineId, pausedFrom])
+  @@map("routine_pauses")
+}
+
 model RoutineLog {
-  id          String   @id @default(uuid())
-  routineId   String
-  userId      String
-  checkedDate DateTime @db.Date
-  note        String?  @db.VarChar(200)
-  createdAt   DateTime @default(now())
+  id           String   @id @default(uuid())
+  routineId    String
+  userId       String
+  checkedDate  DateTime @db.Date
+  note         String?  @db.VarChar(200)
+  textValue    String?  @db.VarChar(500)
+  numericValue Decimal? @db.Decimal(10, 2)
+  timeValue    String?  @db.VarChar(5)
+  createdAt    DateTime @default(now())
 
   routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
 
@@ -1735,9 +1779,39 @@ model RoutineShare {
 }
 
 enum RoutineFrequencyType {
-  WEEKLY_COUNT
   DAILY
-  DAYS_OF_WEEK
+  WEEKLY
+  MONTHLY
+}
+
+enum RoutineWeeklyMode {
+  COUNT_ONLY
+  FIXED_DAYS
+}
+
+enum RoutineImportance {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RoutineTimeFilter {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum RoutineRecordType {
+  BOOLEAN
+  TEXT
+  TIME
+  NUMERIC
+}
+
+enum RoutineStatus {
+  ACTIVE
+  PAUSED
+  ENDED
 }
 
 model RoutineBadge {

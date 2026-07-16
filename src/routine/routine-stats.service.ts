@@ -10,10 +10,21 @@ import {
   formatDate,
   getWeekStart,
   calculateWeekStreak,
-  calculateDayStreak,
+  calculateScheduledDayStreak,
   calculateAchievementRate,
+  calculateMonthStreak,
+  calculateMonthlyAchievementRate,
   getThisWeekProgress,
+  getThisMonthProgress,
+  isScheduledDayForRoutine,
+  pauseToDateRange,
+  DateRange,
 } from './utils/routine-stats.util';
+import {
+  RoutineFrequencyType,
+  RoutineWeeklyMode,
+  RoutineStatus,
+} from '@/routine/enums';
 import { todayInKst, parseDateOnly } from '@/common/utils/date-kst.util';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -59,20 +70,81 @@ export class RoutineStatsService {
     );
     const today = todayInKst();
 
-    const logs = await this.prisma.routineLog.findMany({
-      where: { routineId },
-      select: { checkedDate: true },
-    });
+    const [logs, excludedRanges] = await Promise.all([
+      this.prisma.routineLog.findMany({
+        where: { routineId },
+        select: { checkedDate: true },
+      }),
+      this.getExcludedRanges(routineId, today),
+    ]);
     const logDates = logs.map((l) => l.checkedDate);
 
-    const targetCount = routine.targetCount ?? 7;
+    if (routine.frequencyType === RoutineFrequencyType.MONTHLY) {
+      const targetCount = routine.targetCount ?? 1;
+      const dayStreak = calculateScheduledDayStreak(
+        routine.startDate,
+        today,
+        logDates,
+        () => true,
+        excludedRanges,
+      );
+      const monthStreak = calculateMonthStreak(
+        routine.startDate,
+        today,
+        targetCount,
+        logDates,
+        excludedRanges,
+      );
+      const thisMonthProgress = getThisMonthProgress(
+        today,
+        targetCount,
+        logDates,
+      );
+
+      return {
+        routineId,
+        currentStreakWeeks: monthStreak.currentStreakMonths,
+        longestStreakWeeks: monthStreak.longestStreakMonths,
+        currentStreakDays: dayStreak.currentStreakDays,
+        longestStreakDays: dayStreak.longestStreakDays,
+        thisWeekProgress: thisMonthProgress,
+      };
+    }
+
+    const isFixedDays =
+      routine.frequencyType === RoutineFrequencyType.WEEKLY &&
+      routine.weeklyMode === RoutineWeeklyMode.FIXED_DAYS;
+    const targetDays = Array.isArray(routine.targetDays)
+      ? (routine.targetDays as number[])
+      : [];
+    const targetCount = isFixedDays
+      ? targetDays.length
+      : (routine.targetCount ?? 7);
+
+    const isScheduledDay = (date: Date) =>
+      isScheduledDayForRoutine(
+        {
+          frequencyType: routine.frequencyType,
+          weeklyMode: routine.weeklyMode,
+          targetDays: routine.targetDays,
+        },
+        date,
+      );
+
     const weekStreak = calculateWeekStreak(
       routine.startDate,
       today,
       targetCount,
       logDates,
+      excludedRanges,
     );
-    const dayStreak = calculateDayStreak(logDates, today);
+    const dayStreak = calculateScheduledDayStreak(
+      routine.startDate,
+      today,
+      logDates,
+      isScheduledDay,
+      excludedRanges,
+    );
     const thisWeekProgress = getThisWeekProgress(today, targetCount, logDates);
 
     return {
@@ -94,18 +166,40 @@ export class RoutineStatsService {
 
     const { from, to } = this.resolveRateRange(query, today);
 
-    const logs = await this.prisma.routineLog.findMany({
-      where: { routineId, checkedDate: { gte: from, lte: to } },
-      select: { checkedDate: true },
-    });
+    const [logs, excludedRanges] = await Promise.all([
+      this.prisma.routineLog.findMany({
+        where: { routineId, checkedDate: { gte: from, lte: to } },
+        select: { checkedDate: true },
+      }),
+      this.getExcludedRanges(routineId, today),
+    ]);
 
-    const targetCount = routine.targetCount ?? 7;
-    const result = calculateAchievementRate(
-      from,
-      to,
-      targetCount,
-      logs.map((l) => l.checkedDate),
-    );
+    const isFixedDays =
+      routine.frequencyType === RoutineFrequencyType.WEEKLY &&
+      routine.weeklyMode === RoutineWeeklyMode.FIXED_DAYS;
+    const targetDays = Array.isArray(routine.targetDays)
+      ? (routine.targetDays as number[])
+      : [];
+    const targetCount = isFixedDays
+      ? targetDays.length
+      : (routine.targetCount ?? 7);
+
+    const result =
+      routine.frequencyType === RoutineFrequencyType.MONTHLY
+        ? calculateMonthlyAchievementRate(
+            from,
+            to,
+            routine.targetCount ?? 1,
+            logs.map((l) => l.checkedDate),
+            excludedRanges,
+          )
+        : calculateAchievementRate(
+            from,
+            to,
+            targetCount,
+            logs.map((l) => l.checkedDate),
+            excludedRanges,
+          );
 
     return {
       routineId,
@@ -119,16 +213,21 @@ export class RoutineStatsService {
 
   async getSummary(userId: string) {
     const routines = await this.prisma.routine.findMany({
-      where: { userId, deletedAt: null, isActive: true },
+      where: { userId, deletedAt: null, status: RoutineStatus.ACTIVE },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
     const today = todayInKst();
     const routineIds = routines.map((r) => r.id);
-    const logs = await this.prisma.routineLog.findMany({
-      where: { routineId: { in: routineIds } },
-      select: { routineId: true, checkedDate: true },
-    });
+    const [logs, allPauses] = await Promise.all([
+      this.prisma.routineLog.findMany({
+        where: { routineId: { in: routineIds } },
+        select: { routineId: true, checkedDate: true },
+      }),
+      this.prisma.routinePause.findMany({
+        where: { routineId: { in: routineIds } },
+      }),
+    ]);
 
     const logsByRoutine = new Map<string, Date[]>();
     for (const log of logs) {
@@ -140,18 +239,53 @@ export class RoutineStatsService {
       }
     }
 
+    const pausesByRoutine = new Map<string, DateRange[]>();
+    for (const pause of allPauses) {
+      const ranges = pausesByRoutine.get(pause.routineId) ?? [];
+      ranges.push(pauseToDateRange(pause, today));
+      pausesByRoutine.set(pause.routineId, ranges);
+    }
+
     const todayStr = formatDate(today);
 
     return {
       routines: routines.map((routine) => {
         const routineLogs = logsByRoutine.get(routine.id) ?? [];
-        const targetCount = routine.targetCount ?? 7;
-        const dayStreak = calculateDayStreak(routineLogs, today);
-        const thisWeekProgress = getThisWeekProgress(
+        const excludedRanges = pausesByRoutine.get(routine.id) ?? [];
+        const isMonthly =
+          routine.frequencyType === RoutineFrequencyType.MONTHLY;
+        const isFixedDays =
+          routine.frequencyType === RoutineFrequencyType.WEEKLY &&
+          routine.weeklyMode === RoutineWeeklyMode.FIXED_DAYS;
+        const targetDays = Array.isArray(routine.targetDays)
+          ? (routine.targetDays as number[])
+          : [];
+        const targetCount = isMonthly
+          ? (routine.targetCount ?? 1)
+          : isFixedDays
+            ? targetDays.length
+            : (routine.targetCount ?? 7);
+
+        const isScheduledDay = (date: Date) =>
+          isScheduledDayForRoutine(
+            {
+              frequencyType: routine.frequencyType,
+              weeklyMode: routine.weeklyMode,
+              targetDays: routine.targetDays,
+            },
+            date,
+          );
+
+        const dayStreak = calculateScheduledDayStreak(
+          routine.startDate,
           today,
-          targetCount,
           routineLogs,
+          isScheduledDay,
+          excludedRanges,
         );
+        const thisWeekProgress = isMonthly
+          ? getThisMonthProgress(today, targetCount, routineLogs)
+          : getThisWeekProgress(today, targetCount, routineLogs);
         const checkedToday = routineLogs.some(
           (d) => formatDate(d) === todayStr,
         );
@@ -166,6 +300,16 @@ export class RoutineStatsService {
         };
       }),
     };
+  }
+
+  private async getExcludedRanges(
+    routineId: string,
+    today: Date,
+  ): Promise<DateRange[]> {
+    const pauses = await this.prisma.routinePause.findMany({
+      where: { routineId },
+    });
+    return pauses.map((p) => pauseToDateRange(p, today));
   }
 
   private resolveRateRange(

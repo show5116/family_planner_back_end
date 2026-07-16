@@ -13,13 +13,30 @@
     "log_not_found": "체크 기록을 찾을 수 없습니다",
     "routine_group_not_found": "루틴 그룹을 찾을 수 없습니다",
     "own_routine_group_only_update": "본인의 루틴 그룹만 수정할 수 있습니다",
-    "own_routine_group_only_delete": "본인의 루틴 그룹만 삭제할 수 있습니다"
+    "own_routine_group_only_delete": "본인의 루틴 그룹만 삭제할 수 있습니다",
+    "invalid_frequency_combo": "선택한 반복 유형에 맞지 않는 값입니다",
+    "weekly_mode_required": "주 반복은 세부 방식(주 N회/요일 지정)을 선택해야 합니다",
+    "fixed_days_required": "요일 지정 반복은 대상 요일을 선택해야 합니다",
+    "monthly_target_required": "월 반복은 월 목표 횟수가 필요합니다",
+    "record_type_mismatch": "이 루틴의 기록 방식과 일치하지 않는 값입니다",
+    "record_value_required": "이 루틴은 기록 값이 필요합니다",
+    "routine_paused": "일시정지된 루틴은 체크할 수 없습니다",
+    "routine_ended": "종료된 루틴은 체크할 수 없습니다",
+    "already_paused": "이미 일시정지된 루틴입니다",
+    "not_paused": "일시정지 상태가 아닙니다",
+    "cannot_pause_ended": "종료된 루틴은 일시정지할 수 없습니다",
+    "routine_category_not_found": "루틴 카테고리를 찾을 수 없습니다",
+    "own_routine_category_only_update": "본인의 카테고리만 수정할 수 있습니다",
+    "own_routine_category_only_delete": "본인의 카테고리만 삭제할 수 있습니다"
   },
   "success": {
-    "routine_deleted": "루틴이 삭제되었습니다",
+    "routine_deleted": "루틴이 종료되었습니다 (체크 기록은 유지됩니다)",
     "share_removed": "그룹 공유가 해제되었습니다",
     "check_removed": "체크가 취소되었습니다",
-    "routine_group_deleted": "루틴 그룹이 삭제되었습니다 (소속 루틴은 유지됩니다)"
+    "routine_group_deleted": "루틴 그룹이 삭제되었습니다 (소속 루틴은 유지됩니다)",
+    "routine_paused": "루틴이 일시정지되었습니다",
+    "routine_resumed": "루틴이 재개되었습니다",
+    "routine_category_deleted": "루틴 카테고리가 삭제되었습니다 (소속 루틴은 유지됩니다)"
   },
   "notification": {
     "daily_reminder_title": "오늘의 루틴을 확인해보세요",

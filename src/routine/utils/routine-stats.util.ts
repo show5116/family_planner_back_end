@@ -10,6 +10,37 @@ export function formatDate(date: Date): string {
   return toDateOnly(date).toISOString().slice(0, 10);
 }
 
+/**
+ * 일시정지 등으로 스트릭 계산에서 제외할 날짜 구간.
+ * from(일시정지 시작일)은 포함, to(재개일 = 다시 활성화된 날)는 미포함 — 재개 당일부터는 정상적으로 카운트된다.
+ */
+export interface DateRange {
+  from: Date;
+  to: Date;
+}
+
+function isExcluded(date: Date, excludedRanges: DateRange[]): boolean {
+  const t = toDateOnly(date).getTime();
+  return excludedRanges.some(
+    (r) => t >= toDateOnly(r.from).getTime() && t < toDateOnly(r.to).getTime(),
+  );
+}
+
+/**
+ * RoutinePause 레코드를 DateRange로 변환. 아직 재개하지 않은(pausedTo=null) 진행 중인
+ * 일시정지는 "오늘도 아직 제외 구간"이므로 today의 다음 날을 배타적 상한으로 사용한다.
+ */
+export function pauseToDateRange(
+  pause: { pausedFrom: Date; pausedTo: Date | null },
+  today: Date,
+): DateRange {
+  if (pause.pausedTo) {
+    return { from: pause.pausedFrom, to: pause.pausedTo };
+  }
+  const tomorrow = new Date(toDateOnly(today).getTime() + MS_PER_DAY);
+  return { from: pause.pausedFrom, to: tomorrow };
+}
+
 /** 월요일 시작 ISO 주의 월요일 날짜를 반환 */
 export function getWeekStart(date: Date): Date {
   const d = toDateOnly(date);
@@ -40,6 +71,20 @@ export function listWeekStarts(from: Date, to: Date): Date[] {
   return weeks;
 }
 
+/** 해당 주(월~일)가 통째로 제외 구간에 포함되는지 확인 */
+function isWeekExcluded(weekStart: Date, excludedRanges: DateRange[]): boolean {
+  if (excludedRanges.length === 0) return false;
+  const weekEnd = new Date(weekStart.getTime() + 6 * MS_PER_DAY);
+  for (
+    let cursor = weekStart;
+    cursor.getTime() <= weekEnd.getTime();
+    cursor = new Date(cursor.getTime() + MS_PER_DAY)
+  ) {
+    if (!isExcluded(cursor, excludedRanges)) return false;
+  }
+  return true;
+}
+
 export interface WeekStreakResult {
   currentStreakWeeks: number;
   longestStreakWeeks: number;
@@ -48,12 +93,14 @@ export interface WeekStreakResult {
 /**
  * 시작일부터 현재까지 "주 목표 달성"이 연속된 주 수를 계산.
  * 이번 주는 아직 진행 중이므로 currentStreakWeeks 계산에서 제외한다.
+ * excludedRanges(일시정지 구간)에 완전히 포함된 주는 "미스"로 세지 않고 건너뛴다(스트릭 유지).
  */
 export function calculateWeekStreak(
   startDate: Date,
   today: Date,
   targetCount: number,
   logDates: Date[],
+  excludedRanges: DateRange[] = [],
 ): WeekStreakResult {
   const weekCounts = groupDatesByWeek(logDates);
   const currentWeekStart = getWeekStart(today);
@@ -69,6 +116,7 @@ export function calculateWeekStreak(
   let longest = 0;
   let running = 0;
   for (const week of weeks) {
+    if (isWeekExcluded(week, excludedRanges)) continue;
     const count = weekCounts.get(formatDate(week)) ?? 0;
     if (count >= targetCount) {
       running += 1;
@@ -80,6 +128,7 @@ export function calculateWeekStreak(
 
   let current = 0;
   for (let i = weeks.length - 1; i >= 0; i -= 1) {
+    if (isWeekExcluded(weeks[i], excludedRanges)) continue;
     const count = weekCounts.get(formatDate(weeks[i])) ?? 0;
     if (count >= targetCount) {
       current += 1;
@@ -100,47 +149,83 @@ export interface DayStreakResult {
 export function calculateDayStreak(
   logDates: Date[],
   today: Date,
+  excludedRanges: DateRange[] = [],
+): DayStreakResult {
+  return calculateScheduledDayStreak(
+    // startDate는 day-streak 계산에서 직접 쓰이지 않으므로(logDates 기반) 임의의 과거일로 대체
+    new Date(0),
+    today,
+    logDates,
+    () => true,
+    excludedRanges,
+  );
+}
+
+/**
+ * 요일 스케줄(FIXED_DAYS)과 일시정지 구간을 인지하는 day streak 계산.
+ * isScheduledDay: 해당 캘린더 날짜가 "체크가 요구되는 날"인지 판단하는 predicate.
+ *   - DAILY 등 매일 스케줄: () => true
+ *   - WEEKLY/FIXED_DAYS: targetDays(0=일~6=토)에 포함된 요일만 true
+ * 스케줄되지 않은 날과 일시정지 구간에 속한 날은 "미스"로 계산하지 않고 건너뛴다.
+ */
+export function calculateScheduledDayStreak(
+  startDate: Date,
+  today: Date,
+  logDates: Date[],
+  isScheduledDay: (date: Date) => boolean,
+  excludedRanges: DateRange[] = [],
 ): DayStreakResult {
   if (logDates.length === 0) {
     return { currentStreakDays: 0, longestStreakDays: 0 };
   }
 
-  const sortedDays = Array.from(new Set(logDates.map((d) => formatDate(d))))
-    .sort()
-    .map((s) => new Date(`${s}T00:00:00.000Z`));
+  const checkedSet = new Set(logDates.map((d) => formatDate(d)));
+  const todayOnly = toDateOnly(today);
 
-  let longest = 1;
-  let running = 1;
-  for (let i = 1; i < sortedDays.length; i += 1) {
-    const diffDays = Math.round(
-      (sortedDays[i].getTime() - sortedDays[i - 1].getTime()) / MS_PER_DAY,
-    );
-    if (diffDays === 1) {
+  // 가장 이른 체크일부터 오늘까지 하루씩 순회하며 "스케줄된 날"만 평가 대상으로 삼는다.
+  const firstCheckedStr = Array.from(checkedSet).sort()[0];
+  const cursorStart = new Date(`${firstCheckedStr}T00:00:00.000Z`);
+
+  let longest = 0;
+  let running = 0;
+  const scheduledDayResults: boolean[] = [];
+
+  for (
+    let cursor = cursorStart;
+    cursor.getTime() <= todayOnly.getTime();
+    cursor = new Date(cursor.getTime() + MS_PER_DAY)
+  ) {
+    if (isExcluded(cursor, excludedRanges)) continue;
+    if (!isScheduledDay(cursor)) continue;
+
+    const checked = checkedSet.has(formatDate(cursor));
+    scheduledDayResults.push(checked);
+    if (checked) {
       running += 1;
       longest = Math.max(longest, running);
     } else {
-      running = 1;
+      running = 0;
     }
   }
 
-  const todayOnly = toDateOnly(today);
-  const lastChecked = sortedDays[sortedDays.length - 1];
-  const diffFromToday = Math.round(
-    (todayOnly.getTime() - lastChecked.getTime()) / MS_PER_DAY,
-  );
-
+  // currentStreakDays: 마지막 스케줄일부터 역순으로 연속 체크된 날 수.
+  // 단, 오늘이 스케줄일인데 아직 미체크라면 "어제까지" 기준으로 봐야 하므로
+  // scheduledDayResults의 끝에서부터 훑되 오늘 미체크는 0 취급하지 않고 그 앞(어제)부터 판단한다.
   let current = 0;
-  if (diffFromToday <= 1) {
-    current = 1;
-    for (let i = sortedDays.length - 1; i > 0; i -= 1) {
-      const diffDays = Math.round(
-        (sortedDays[i].getTime() - sortedDays[i - 1].getTime()) / MS_PER_DAY,
-      );
-      if (diffDays === 1) {
-        current += 1;
-      } else {
-        break;
-      }
+  const todayScheduled =
+    isScheduledDay(todayOnly) && !isExcluded(todayOnly, excludedRanges);
+  const todayChecked = checkedSet.has(formatDate(todayOnly));
+
+  let idx = scheduledDayResults.length - 1;
+  if (todayScheduled && !todayChecked) {
+    // 오늘 스케줄일인데 미체크면 오늘을 제외하고 어제부터 카운트
+    idx -= 1;
+  }
+  for (; idx >= 0; idx -= 1) {
+    if (scheduledDayResults[idx]) {
+      current += 1;
+    } else {
+      break;
     }
   }
 
@@ -157,18 +242,22 @@ export interface RateResult {
  * [from, to] 범위와 겹치는 모든 주(월~일 기준)를 대상으로 달성률을 계산.
  * 진행 중인 주(이번 주 등 to가 주 중간인 경우)도 포함하되, 기대치는 항상 주당 targetCount로 고정한다.
  * (예: "이번 주 진행률"처럼 부분 주 조회도 의미 있는 값을 반환해야 하므로 완전한 주만 인정하지 않는다.)
+ * excludedRanges에 완전히 포함된 주는 기대치/실적 계산에서 모두 제외한다.
  */
 export function calculateAchievementRate(
   from: Date,
   to: Date,
   targetCount: number,
   logDates: Date[],
+  excludedRanges: DateRange[] = [],
 ): RateResult {
   const weekCounts = groupDatesByWeek(logDates);
   const fromWeekStart = getWeekStart(from);
   const toWeekStart = getWeekStart(to);
 
-  const overlappingWeeks = listWeekStarts(fromWeekStart, toWeekStart);
+  const overlappingWeeks = listWeekStarts(fromWeekStart, toWeekStart).filter(
+    (week) => !isWeekExcluded(week, excludedRanges),
+  );
 
   const expectedCount = overlappingWeeks.length * targetCount;
   const totalChecked = overlappingWeeks.reduce(
@@ -192,4 +281,188 @@ export function getThisWeekProgress(
   const weekCounts = groupDatesByWeek(logDates);
   const checked = weekCounts.get(formatDate(getWeekStart(today))) ?? 0;
   return { checked, target: targetCount };
+}
+
+// ============================================================
+// 월 단위 통계 (MONTHLY frequencyType 전용)
+// ============================================================
+
+/** 월 시작일(1일)을 반환 */
+export function getMonthStart(date: Date): Date {
+  const d = toDateOnly(date);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+}
+
+function addMonths(date: Date, months: number): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1),
+  );
+}
+
+/** [from, to] 사이 모든 "월 시작일(1일)" 목록을 오름차순으로 반환 */
+export function listMonthStarts(from: Date, to: Date): Date[] {
+  const months: Date[] = [];
+  let cursor = getMonthStart(from);
+  const lastMonthStart = getMonthStart(to);
+  while (cursor.getTime() <= lastMonthStart.getTime()) {
+    months.push(cursor);
+    cursor = addMonths(cursor, 1);
+  }
+  return months;
+}
+
+function formatMonth(date: Date): string {
+  return formatDate(date).slice(0, 7); // 'YYYY-MM'
+}
+
+/** 해당 월이 통째로 제외 구간에 포함되는지 확인 */
+function isMonthExcluded(
+  monthStart: Date,
+  excludedRanges: DateRange[],
+): boolean {
+  if (excludedRanges.length === 0) return false;
+  const monthEnd = new Date(addMonths(monthStart, 1).getTime() - MS_PER_DAY);
+  for (
+    let cursor = monthStart;
+    cursor.getTime() <= monthEnd.getTime();
+    cursor = new Date(cursor.getTime() + MS_PER_DAY)
+  ) {
+    if (!isExcluded(cursor, excludedRanges)) return false;
+  }
+  return true;
+}
+
+/** 월 시작일 문자열(YYYY-MM)을 키로 사용해 로그를 월 단위로 그룹핑 */
+export function groupDatesByMonth(dates: Date[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const date of dates) {
+    const monthKey = formatMonth(date);
+    map.set(monthKey, (map.get(monthKey) ?? 0) + 1);
+  }
+  return map;
+}
+
+export interface MonthStreakResult {
+  currentStreakMonths: number;
+  longestStreakMonths: number;
+}
+
+/**
+ * 월별 목표 달성 연속 개월 수 계산. calculateWeekStreak과 동일한 구조이나 월 단위.
+ * 일시정지된 달은 통째로 스킵(성공/실패 어느 쪽으로도 세지 않음)한다.
+ */
+export function calculateMonthStreak(
+  startDate: Date,
+  today: Date,
+  targetCount: number,
+  logDates: Date[],
+  excludedRanges: DateRange[] = [],
+): MonthStreakResult {
+  const monthCounts = groupDatesByMonth(logDates);
+  const currentMonthStart = getMonthStart(today);
+  const startMonthStart = getMonthStart(startDate);
+
+  if (startMonthStart.getTime() >= currentMonthStart.getTime()) {
+    return { currentStreakMonths: 0, longestStreakMonths: 0 };
+  }
+
+  const pastMonthStart = addMonths(currentMonthStart, -1);
+  const months = listMonthStarts(startMonthStart, pastMonthStart);
+
+  let longest = 0;
+  let running = 0;
+  for (const month of months) {
+    if (isMonthExcluded(month, excludedRanges)) continue;
+    const count = monthCounts.get(formatMonth(month)) ?? 0;
+    if (count >= targetCount) {
+      running += 1;
+      longest = Math.max(longest, running);
+    } else {
+      running = 0;
+    }
+  }
+
+  let current = 0;
+  for (let i = months.length - 1; i >= 0; i -= 1) {
+    if (isMonthExcluded(months[i], excludedRanges)) continue;
+    const count = monthCounts.get(formatMonth(months[i])) ?? 0;
+    if (count >= targetCount) {
+      current += 1;
+    } else {
+      break;
+    }
+  }
+
+  return { currentStreakMonths: current, longestStreakMonths: longest };
+}
+
+/** [from, to] 범위와 겹치는 모든 월을 대상으로 달성률을 계산 (calculateAchievementRate의 월 버전) */
+export function calculateMonthlyAchievementRate(
+  from: Date,
+  to: Date,
+  targetCount: number,
+  logDates: Date[],
+  excludedRanges: DateRange[] = [],
+): RateResult {
+  const monthCounts = groupDatesByMonth(logDates);
+  const fromMonthStart = getMonthStart(from);
+  const toMonthStart = getMonthStart(to);
+
+  const overlappingMonths = listMonthStarts(
+    fromMonthStart,
+    toMonthStart,
+  ).filter((month) => !isMonthExcluded(month, excludedRanges));
+
+  const expectedCount = overlappingMonths.length * targetCount;
+  const totalChecked = overlappingMonths.reduce(
+    (sum, month) => sum + (monthCounts.get(formatMonth(month)) ?? 0),
+    0,
+  );
+
+  const achievementRate =
+    expectedCount > 0
+      ? Math.round((totalChecked / expectedCount) * 1000) / 10
+      : 0;
+
+  return { totalChecked, expectedCount, achievementRate };
+}
+
+export function getThisMonthProgress(
+  today: Date,
+  targetCount: number,
+  logDates: Date[],
+): { checked: number; target: number } {
+  const monthCounts = groupDatesByMonth(logDates);
+  const checked = monthCounts.get(formatMonth(getMonthStart(today))) ?? 0;
+  return { checked, target: targetCount };
+}
+
+// ============================================================
+// 반복 주기별 "오늘이 스케줄된 날인가" 판정
+// ============================================================
+
+export interface RoutineFrequencyInfo {
+  frequencyType: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  weeklyMode: 'COUNT_ONLY' | 'FIXED_DAYS' | null;
+  targetDays: unknown;
+}
+
+/**
+ * DAILY/WEEKLY-COUNT_ONLY는 항상 true(매일이 스케줄일), WEEKLY-FIXED_DAYS는
+ * targetDays(0=일~6=토 배열) 포함 여부로 판단. MONTHLY는 요일 스케줄 개념이 없으므로 항상 true.
+ */
+export function isScheduledDayForRoutine(
+  routine: RoutineFrequencyInfo,
+  date: Date,
+): boolean {
+  if (
+    routine.frequencyType === 'WEEKLY' &&
+    routine.weeklyMode === 'FIXED_DAYS'
+  ) {
+    const targetDays = Array.isArray(routine.targetDays)
+      ? (routine.targetDays as number[])
+      : [];
+    return targetDays.includes(toDateOnly(date).getUTCDay());
+  }
+  return true;
 }

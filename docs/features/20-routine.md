@@ -14,13 +14,20 @@
 ## 핵심 개념
 
 - **루틴 1개 = 습관 1개**: Task처럼 하위 체크리스트 항목을 두지 않는 심플한 구조. 여러 습관을 묶어서 관리하고 싶으면 `RoutineGroup`(아래 참고)을 사용.
-- **반복 주기**: 1차는 `WEEKLY_COUNT`(주 N회, 요일 무관)만 지원. `frequencyType`/`targetDays` 필드로 향후 `DAILY`, `DAYS_OF_WEEK` 확장 여지를 마련해 둠.
+- **반복 주기(2단계 구조)**: `frequencyType: DAILY | WEEKLY | MONTHLY` + `WEEKLY`일 때만 `weeklyMode: COUNT_ONLY | FIXED_DAYS` 부가 지정.
+  - `DAILY`: 매일 반복, `targetCount`/`weeklyMode`/`targetDays` 없음
+  - `WEEKLY` + `COUNT_ONLY`: 요일 무관 주 N회(`targetCount` 1~7)
+  - `WEEKLY` + `FIXED_DAYS`: 특정 요일 지정(`targetDays: number[]`, 0=일요일~6=토요일 — `src/task`의 `Recurring.daysOfWeek`와 동일 컨벤션)
+  - `MONTHLY`: 요일/날짜 무관 월 N회(`targetCount` 1~31)
 - **스케줄러 없음**: 매일 인스턴스를 미리 생성하지 않고, 체크한 날짜만 `RoutineLog`에 기록. 스트릭/달성률은 조회 시점에 실시간 계산.
 - **주 계산 기준**: 월요일 시작 ISO 주. 미래 날짜 체크는 차단.
-- **타임존**: "오늘"/"이번 주" 계산은 항상 KST(Asia/Seoul) 기준(`src/common/utils/date-kst.util.ts`의 `todayInKst()`). 서버가 UTC로 실행되므로 `new Date()`의 UTC getter를 직접 쓰지 말고 반드시 이 함수를 통해 "오늘 날짜"를 구할 것.
+- **타임존**: "오늘"/"이번 주"/"이번 달" 계산은 항상 KST(Asia/Seoul) 기준(`src/common/utils/date-kst.util.ts`의 `todayInKst()`). 서버가 UTC로 실행되므로 `new Date()`의 UTC getter를 직접 쓰지 말고 반드시 이 함수를 통해 "오늘 날짜"를 구할 것.
+- **기록 타입(고정)**: 루틴 생성 시 `recordType`을 하나로 고정(체크마다 바꿀 수 없음). `BOOLEAN`(단순 체크, 기본값) / `TEXT`(텍스트) / `TIME`(시각 "HH:mm") / `NUMERIC`(수치). 체크 시 `recordType`과 일치하는 값 필드만 허용.
+- **상태(ACTIVE/PAUSED/ENDED)**: `isActive` 불리언 대신 `status` enum으로 통합. `PAUSED`/`ENDED` 상태의 루틴은 체크 불가(400). `ENDED`는 기존 soft delete(`deletedAt`)와 동일 — 데이터는 보존되고 목록에서만 제외. `PAUSED` 기간은 `RoutinePause` 이력 테이블에 별도 기록되며, 스트릭 계산에서 "결석"이 아니라 통째로 건너뛰는 구간으로 취급(재개 후에도 스트릭이 끊기지 않음).
+- **카테고리(개인 커스텀)**: 사용자가 직접 만드는 태그(`RoutineCategory`, 예: "규칙적인 삶", "운동", "건강"). `RoutineGroup`과 동일한 개인 소유/soft delete 패턴이며, 가족 그룹 공유와는 무관.
 - **그룹 공유(N:M)**: 하나의 루틴을 여러 그룹에 동시 공유 가능. 공유된 그룹의 멤버는 서로의 루틴과 달성 현황을 조회 가능(수정 권한 공유는 없음, 체크는 본인만).
-- **삭제 정책**: 루틴 soft delete 시 `RoutineLog`는 보존(통계/이력 보존 목적).
-- **배지**: 체크 직후 동기적으로 판정(스트릭/누적 체크 기준). 한 번 획득한 배지는 체크 취소로도 회수되지 않음.
+- **삭제 정책**: 루틴 종료(soft delete) 시 `RoutineLog`는 보존(통계/이력 보존 목적).
+- **배지**: 체크 직후 동기적으로 판정(스트릭/누적 체크 기준). 한 번 획득한 배지는 체크 취소로도 회수되지 않음. `MONTHLY` 루틴은 월-스트릭이 `STREAK_WEEKS` 배지 기준 슬롯에 매핑됨(주 개념이 없으므로).
 - **랭킹보드**: 그룹에 공유된 루틴만 집계 대상(비공유 루틴은 익명으로도 포함하지 않음 — 공유하지 않았다는 의사표시 존중).
 - **루틴 그룹**: 여러 습관을 "아침 루틴"처럼 하나의 컨테이너로 묶는 얇은 레이어(`RoutineGroup`). 습관은 최대 1개 그룹에만 소속되며, 그룹 밖에서도 독립적으로 조회/체크 가능. 체크/배지/스트릭/공유는 전부 개별 습관 단위 그대로 유지 — 그룹은 "오늘 3/5 완료" 같은 진행률 뷰만 제공.
 
@@ -29,14 +36,28 @@
 ## 주요 기능
 
 ### 루틴 등록/관리
-- 제목, 이모지, 색상, 반복 타입(`frequencyType`), 주 목표 횟수(`targetCount`), 시작일/종료일
+- 제목, 이모지, 색상, 메모(`memo`), 중요도(`importance`: LOW/MEDIUM/HIGH), 시간대 분류(`timeFilter`: MORNING/AFTERNOON/EVENING, 분류용 — 알림 시각과는 무관), 카테고리(`categoryId`), 기록 타입(`recordType`), 반복 타입(`frequencyType`/`weeklyMode`/`targetCount`/`targetDays`), 시작일/종료일
 - 목록 조회 시 정렬 순서(`sortOrder`) 및 오늘 체크 여부(`checkedToday`) 포함
 - 순서 일괄 변경 (`PATCH /routines/sort-order`)
+- `GET /routines`는 `status`/`routineGroupId`/`categoryId` 쿼리로 필터링 가능
+
+### 상태 관리 (일시정지/종료)
+- `PATCH /routines/:id/pause`: 일시정지. `RoutinePause{routineId, pausedFrom}` 이력 생성 + `status: PAUSED`. 이미 일시정지 중이면 409, 종료된 루틴이면 400
+- `PATCH /routines/:id/resume`: 재개. 열린 `RoutinePause`를 `pausedTo`로 마감 + `status: ACTIVE`. 일시정지 상태가 아니면 409
+- `DELETE /routines/:id`: 종료(soft delete). `status: ENDED` + `deletedAt` 설정, 체크 기록은 보존. 열려있던 일시정지도 함께 마감
+- `PAUSED`/`ENDED` 상태에서는 체크(`POST /routines/:id/check`) 시도 시 400
+- 일시정지 기간은 스트릭 계산에서 완전히 제외(끊기지 않음) — `RoutineBadgeService`/`RoutineStatsService` 모두 `RoutinePause` 이력을 조회해 제외 구간으로 반영
 
 ### 체크/체크취소
 - 날짜 미지정 시 오늘 기준으로 체크 (`POST /routines/:id/check`)
 - 하루 1건만 허용 (중복 체크 시 409), 미래 날짜 체크 시 400
+- 체크 시 `recordType`에 맞는 값만 허용: `BOOLEAN`은 값 없이 체크만, `TEXT`는 `textValue`, `NUMERIC`은 `numericValue`, `TIME`은 `timeValue`("HH:mm") — 불일치 시 400
 - 체크 취소는 하드 삭제 (`DELETE /routines/:id/check`)
+
+### 루틴 카테고리
+- 사용자가 직접 만드는 개인 커스텀 태그(`RoutineCategory`). CRUD + 순서 일괄 변경 (`/routines/categories/*`)
+- 루틴 생성/수정 시 `categoryId`로 소속 지정/변경 가능, 수정 시 `null` 전달로 해제 가능
+- 카테고리 삭제는 soft delete, 소속 루틴은 `categoryId`만 `null`로 해제되고 유지(가족 그룹 공유 `Category`와 무관한 순수 개인 소유 태그)
 
 ### 그룹 공유
 - 루틴 소유자가 자신이 속한 그룹에 공유 추가/해제 (`RoutineShare`, N:M)
@@ -45,9 +66,13 @@
 
 ### 통계
 - **달력 히트맵**: 기간 내 체크된 날짜 목록 (최대 1년)
-- **스트릭**: 주 단위(목표 달성 연속 주 수) + 일 단위(연속 체크일) 병행 제공, 이번 주 진행 상황 포함
-- **기간별 달성률**: `week`/`month`/`custom` 기준, 기간과 겹치는 주(월~일) 단위로 기대 체크 횟수(주당 targetCount) 대비 실제 체크 횟수(%) 계산. 진행 중인 주(이번 주 등)도 포함해 부분 기간 조회에도 값이 나옴
-- **대시보드 요약**: 전체 활성 루틴의 오늘 체크 여부 + 현재 스트릭 + 이번 주 진행 상황을 한 번에 조회 (위젯용)
+- **스트릭**: `frequencyType`에 따라 계산 방식이 분기됨
+  - `DAILY`, `WEEKLY/COUNT_ONLY`: 기존과 동일(주 단위 목표 달성 연속 주 수 + 일 단위 연속 체크일)
+  - `WEEKLY/FIXED_DAYS`: 스케줄된 요일만 평가 대상(비스케줄 요일은 "미스"로 세지 않음), 주 단위 목표는 `targetDays.length`
+  - `MONTHLY`: 월 단위 연속 달성 개월 수(`currentStreakWeeks`/`longestStreakWeeks` 필드에 월-스트릭 값이 담겨 응답됨), 일 단위 스트릭은 매일 스케줄 기준으로 별도 계산
+  - 모든 경우에 `RoutinePause` 이력이 "제외 구간"으로 반영되어 일시정지 기간은 스트릭을 끊지 않음
+- **기간별 달성률**: `week`/`month`/`custom` 기준. `MONTHLY` 루틴은 월 단위로, 그 외는 주(월~일) 단위로 기대 체크 횟수 대비 실제 체크 횟수(%) 계산. 진행 중인 기간(이번 주/이번 달 등)도 포함해 부분 조회에도 값이 나옴
+- **대시보드 요약**: 전체 `ACTIVE` 루틴의 오늘 체크 여부 + 현재 스트릭 + 이번 주(또는 월간 루틴은 이번 달) 진행 상황을 한 번에 조회 (위젯용)
 
 ### 배지
 - 체크(`POST /routines/:id/check`) 성공 직후 `RoutineBadgeService.evaluateAndAward()`가 동기적으로 판정, 응답의 `newlyEarnedBadges`에 신규 획득 배지 포함
@@ -71,9 +96,10 @@
 ### 알림/리마인더
 - `NotificationCategory.ROUTINE` 신설, `PUT /notifications/settings`에서 `routineReminderHour`(0~23시, 기본 21시)로 개인화된 리마인드 시각 설정 (WEATHER의 `weatherAlertHour`와 동일 패턴)
 - 트리거 3종:
-  - `ROUTINE_DAILY_REMINDER`: 설정 시각에 오늘 미체크 루틴이 있으면 발송 (매 정시 크론 + 시각 필터링)
+  - `ROUTINE_DAILY_REMINDER`: 설정 시각에 오늘 미체크 루틴이 있으면 발송 (매 정시 크론 + 시각 필터링). `status: ACTIVE` 루틴만 대상(PAUSED/ENDED 제외), `WEEKLY/FIXED_DAYS` 루틴은 오늘이 스케줄된 요일이 아니면 집계에서 제외
   - `ROUTINE_STREAK_MILESTONE`: 배지 획득 시점에 발송
-  - `ROUTINE_WEEKLY_SUMMARY`: 매주 일요일 20시(KST), 이번 주 평균 달성률 요약 발송
+  - `ROUTINE_WEEKLY_SUMMARY`: 매주 일요일 20시(KST), 이번 주 평균 달성률 요약 발송. `MONTHLY` 루틴은 주 단위 달성률 개념이 맞지 않아 평균 계산에서 제외
+- `timeFilter`(오전/오후/저녁)는 분류용으로만 사용되며 리마인더 발송 시각에는 영향을 주지 않음(단일 `routineReminderHour` 시각 유지)
 - 그룹원 간 미체크 알림(사회적 압박 알림)은 1차 범위 제외
 
 ---
@@ -84,37 +110,85 @@
 model Routine {
   id            String               @id @default(uuid())
   userId        String
+  groupId       String?
+  categoryId    String?
   title         String               @db.VarChar(100)
   emoji         String?              @db.VarChar(10)
   color         String?              @db.VarChar(7)
-  frequencyType RoutineFrequencyType @default(WEEKLY_COUNT)
-  targetCount   Int?                 // WEEKLY_COUNT: 주 N회 목표
-  targetDays    Json?                // DAYS_OF_WEEK 확장용 (1차 미사용)
+  memo          String?              @db.VarChar(500)
+  importance    RoutineImportance    @default(MEDIUM)
+  timeFilter    RoutineTimeFilter?
+  frequencyType RoutineFrequencyType @default(WEEKLY)
+  weeklyMode    RoutineWeeklyMode?   // frequencyType=WEEKLY일 때만 사용
+  targetCount   Int?                 // WEEKLY/COUNT_ONLY: 주 N회, MONTHLY: 월 N회
+  targetDays    Json?                // WEEKLY/FIXED_DAYS: number[] (0=일~6=토)
+  recordType    RoutineRecordType    @default(BOOLEAN)
+  status        RoutineStatus        @default(ACTIVE)
   startDate     DateTime             @db.Date
   endDate       DateTime?            @db.Date
-  isActive      Boolean              @default(true)
   sortOrder     Int                  @default(0)
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   deletedAt     DateTime?
 
-  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logs   RoutineLog[]
-  shares RoutineShare[]
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group    RoutineGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  category RoutineCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  logs     RoutineLog[]
+  shares   RoutineShare[]
+  badges   UserRoutineBadge[]
+  pauses   RoutinePause[]
 
-  @@index([userId, isActive])
+  @@index([userId, status])
   @@index([userId, sortOrder])
   @@index([deletedAt])
+  @@index([groupId])
+  @@index([categoryId])
   @@map("routines")
 }
 
+model RoutineCategory {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String    @db.VarChar(50)
+  emoji     String?   @db.VarChar(10)
+  color     String?   @db.VarChar(7)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routines Routine[]
+
+  @@index([userId, deletedAt])
+  @@map("routine_categories")
+}
+
+// 일시정지 이력 (재일시정지 가능하므로 단일 컬럼이 아닌 이력 테이블)
+model RoutinePause {
+  id         String    @id @default(uuid())
+  routineId  String
+  pausedFrom DateTime  @db.Date
+  pausedTo   DateTime? @db.Date   // null = 아직 재개 안 함(현재 일시정지 중)
+  createdAt  DateTime  @default(now())
+
+  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  @@index([routineId, pausedFrom])
+  @@map("routine_pauses")
+}
+
 model RoutineLog {
-  id          String   @id @default(uuid())
-  routineId   String
-  userId      String              // 비정규화: 그룹 조회 시 join 최소화
-  checkedDate DateTime @db.Date   // 하루 1건
-  note        String?  @db.VarChar(200)
-  createdAt   DateTime @default(now())
+  id           String   @id @default(uuid())
+  routineId    String
+  userId       String              // 비정규화: 그룹 조회 시 join 최소화
+  checkedDate  DateTime @db.Date   // 하루 1건
+  note         String?  @db.VarChar(200)
+  textValue    String?  @db.VarChar(500)   // recordType=TEXT
+  numericValue Decimal? @db.Decimal(10, 2) // recordType=NUMERIC
+  timeValue    String?  @db.VarChar(5)     // recordType=TIME, "HH:mm"
+  createdAt    DateTime @default(now())
 
   routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
 
@@ -140,9 +214,39 @@ model RoutineShare {
 }
 
 enum RoutineFrequencyType {
-  WEEKLY_COUNT   // 주 N회, 요일 무관 (1차 구현 대상)
-  DAILY          // 매일 (향후)
-  DAYS_OF_WEEK   // 특정 요일 지정 (향후, targetDays 사용)
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum RoutineWeeklyMode {
+  COUNT_ONLY   // 요일 무관 주 N회
+  FIXED_DAYS   // 특정 요일 지정
+}
+
+enum RoutineImportance {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RoutineTimeFilter {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum RoutineRecordType {
+  BOOLEAN   // 단순 체크 (기본값)
+  TEXT
+  TIME      // "HH:mm" 시각
+  NUMERIC
+}
+
+enum RoutineStatus {
+  ACTIVE
+  PAUSED
+  ENDED     // 기존 soft delete와 동일 의미, deletedAt과 함께 설정됨
 }
 
 model RoutineBadge {
@@ -242,11 +346,17 @@ model RoutineGroup {
 - [x] 그룹 랭킹보드 (공유 루틴 기준 체크 횟수/달성률 순위)
 - [x] 알림/리마인더 (일일 미체크 리마인드, 배지 획득 알림, 주간 요약)
 - [x] 루틴 그룹 (`RoutineGroup`) — 여러 습관 묶음 관리, 진행률 조회, 개별 습관 소속 지정/해제
+- [x] 반복 주기 재설계 — `DAILY`/`WEEKLY`(COUNT_ONLY/FIXED_DAYS)/`MONTHLY` 전 종류 실제 구현 및 스트릭/달성률 연동
+- [x] 기록 타입 (`BOOLEAN`/`TEXT`/`TIME`/`NUMERIC`) — 루틴 생성 시 고정, 체크 시 타입별 값 검증
+- [x] 상태 관리 (`ACTIVE`/`PAUSED`/`ENDED`) — 일시정지 이력(`RoutinePause`) 기반 스트릭 유지
+- [x] 루틴 카테고리 (`RoutineCategory`) — 개인 커스텀 태그, CRUD + 소속 지정/해제
+- [x] 중요도/메모/시간대 분류 필드 추가
 
 ### ⬜ 향후 고려
-- [ ] `DAILY`, `DAYS_OF_WEEK` 반복 타입 지원
 - [ ] 그룹원 간 미체크 알림(사회적 압박 vs 동기부여, 옵트인 필요)
 - [ ] 랭킹보드 동순위 처리 정책
+- [ ] 시간대 분류(`timeFilter`)와 리마인더 시각 연동
+- [ ] 그룹/카테고리 단위 배지·스트릭·랭킹보드 확장
 
 ---
 
@@ -257,11 +367,24 @@ model RoutineGroup {
 | Method | Endpoint               | 설명                          | 권한       |
 | ------ | ---------------------- | ----------------------------- | ---------- |
 | POST   | `/routines`             | 루틴 생성                     | JWT        |
-| GET    | `/routines`             | 내 루틴 목록                  | JWT        |
+| GET    | `/routines`             | 내 루틴 목록 (status/routineGroupId/categoryId 필터) | JWT |
 | GET    | `/routines/:id`         | 루틴 상세 (본인 또는 공유 그룹원) | JWT     |
 | PATCH  | `/routines/:id`         | 루틴 수정                     | JWT, Owner |
-| DELETE | `/routines/:id`         | 루틴 삭제 (soft delete)       | JWT, Owner |
+| DELETE | `/routines/:id`         | 루틴 종료 (soft delete)       | JWT, Owner |
+| PATCH  | `/routines/:id/pause`   | 루틴 일시정지                 | JWT, Owner |
+| PATCH  | `/routines/:id/resume`  | 루틴 재개                     | JWT, Owner |
 | PATCH  | `/routines/sort-order`  | 순서 일괄 변경                | JWT        |
+
+### 루틴 카테고리
+
+| Method | Endpoint                          | 설명                                 | 권한       |
+| ------ | ----------------------------------- | ------------------------------------ | ---------- |
+| POST   | `/routines/categories`              | 카테고리 생성                        | JWT        |
+| GET    | `/routines/categories`              | 내 카테고리 목록                     | JWT        |
+| PATCH  | `/routines/categories/sort-order`   | 카테고리 순서 일괄 변경              | JWT        |
+| GET    | `/routines/categories/:id`          | 카테고리 상세 (소속 습관 목록 포함)  | JWT, Owner |
+| PATCH  | `/routines/categories/:id`          | 카테고리 수정                        | JWT, Owner |
+| DELETE | `/routines/categories/:id`          | 카테고리 삭제 (soft delete, 습관은 소속만 해제) | JWT, Owner |
 
 ### 루틴 그룹
 
@@ -318,33 +441,38 @@ model RoutineGroup {
 ```
 src/routine/
   dto/
-    create-routine.dto.ts             — routineGroupId 필드 포함
-    update-routine.dto.ts             — routineGroupId?: string | null (그룹 해제용 오버라이드)
-    routine-query.dto.ts              — routineGroupId 필터 포함
-    check-routine.dto.ts
+    create-routine.dto.ts             — memo/importance/timeFilter/categoryId/recordType/frequencyType/weeklyMode/targetCount/targetDays 등 전체 필드
+    update-routine.dto.ts             — routineGroupId?/categoryId?: string | null (해제용 오버라이드), isActive 제거(status는 pause/resume/end 전용 엔드포인트로만 전환)
+    routine-query.dto.ts              — status/routineGroupId/categoryId 필터
+    check-routine.dto.ts              — textValue/numericValue/timeValue (recordType별 값)
     create-routine-share.dto.ts
     reorder-routine.dto.ts
     create-routine-group.dto.ts
     update-routine-group.dto.ts
     reorder-routine-group.dto.ts
+    create-routine-category.dto.ts
+    update-routine-category.dto.ts
+    reorder-routine-category.dto.ts
     routine-stats-query.dto.ts       — HeatmapQueryDto, RateQueryDto
     routine-leaderboard-query.dto.ts  — LeaderboardQueryDto
     routine-leaderboard-response.dto.ts — LeaderboardResponseDto, LeaderboardEntryDto
     routine-badge-response.dto.ts    — RoutineBadgeDto, UserRoutineBadgeDto
-    routine-response.dto.ts          — RoutineDto(+routineGroupId), RoutineLogDto(+newlyEarnedBadges), RoutineShareDto, RoutineMemberSummaryDto
+    routine-response.dto.ts          — RoutineDto(+memo/importance/timeFilter/categoryId/recordType/status/weeklyMode/targetDays), RoutineLogDto(+textValue/numericValue/timeValue), RoutineShareDto, RoutineMemberSummaryDto
     routine-group-response.dto.ts    — RoutineGroupDto(+todayProgress), RoutineGroupDetailDto(+routines)
+    routine-category-response.dto.ts — RoutineCategoryDto, RoutineCategoryDetailDto(+routines)
     routine-stats-response.dto.ts    — HeatmapResponseDto, StreakResponseDto, RateResponseDto, RoutineSummaryDto
   enums/
-    index.ts                        — RoutineFrequencyType, BadgeCriteriaType re-export
+    index.ts                        — RoutineFrequencyType, RoutineWeeklyMode, RoutineImportance, RoutineTimeFilter, RoutineRecordType, RoutineStatus, BadgeCriteriaType re-export
   utils/
-    routine-stats.util.ts            — 주차 계산, 스트릭/달성률 순수 함수
+    routine-stats.util.ts            — 주/월 단위 스트릭·달성률 순수 함수, 일시정지 구간 인지 day-streak, FIXED_DAYS 스케줄 판정
   routine.controller.ts
-  routine.service.ts                 — CRUD, 체크/체크취소(배지 판정 연동), 공유 관리, routineGroupId 연동
+  routine.service.ts                 — CRUD, pause/resume/end, 체크/체크취소(배지 판정 연동, 기록타입 검증), 공유 관리
   routine-group.service.ts           — 루틴 그룹 CRUD, 오늘 진행률 계산
-  routine-stats.service.ts           — 히트맵/스트릭/달성률/요약
-  routine-badge.service.ts           — 배지 카탈로그 조회, evaluateAndAward()
+  routine-category.service.ts        — 루틴 카테고리 CRUD (개인 커스텀 태그)
+  routine-stats.service.ts           — 히트맵/스트릭/달성률/요약 (frequencyType별 분기, 일시정지 구간 반영)
+  routine-badge.service.ts           — 배지 카탈로그 조회, evaluateAndAward() (frequencyType별 스트릭 분기)
   routine-leaderboard.service.ts     — 그룹 랭킹보드 집계
-  routine-reminder.scheduler.ts      — 일일 리마인더 + 주간 요약 크론
+  routine-reminder.scheduler.ts      — 일일 리마인더 + 주간 요약 크론 (status/FIXED_DAYS/MONTHLY 인지)
   routine.module.ts
 
 src/common/utils/

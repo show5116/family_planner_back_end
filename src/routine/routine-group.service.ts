@@ -11,6 +11,7 @@ import { CreateRoutineGroupDto } from './dto/create-routine-group.dto';
 import { UpdateRoutineGroupDto } from './dto/update-routine-group.dto';
 import { ReorderRoutineGroupDto } from './dto/reorder-routine-group.dto';
 import { RoutineService } from './routine.service';
+import { RoutineStatus } from '@/routine/enums';
 import { todayInKst } from '@/common/utils/date-kst.util';
 
 @Injectable()
@@ -64,8 +65,12 @@ export class RoutineGroupService {
       routineGroupId: id,
     });
 
-    const total = routines.filter((r) => r.isActive).length;
-    const checked = routines.filter((r) => r.isActive && r.checkedToday).length;
+    const total = routines.filter(
+      (r) => r.status === RoutineStatus.ACTIVE,
+    ).length;
+    const checked = routines.filter(
+      (r) => r.status === RoutineStatus.ACTIVE && r.checkedToday,
+    ).length;
 
     return {
       ...this.toResponse(group, { checked, total }),
@@ -145,7 +150,7 @@ export class RoutineGroupService {
       where: {
         userId,
         groupId: { in: groupIds },
-        isActive: true,
+        status: RoutineStatus.ACTIVE,
         deletedAt: null,
       },
       select: { id: true, groupId: true },

@@ -19,8 +19,15 @@
   "title": "아침 스트레칭", // 루틴 제목 (string)
   "emoji": "🧘", // 이모지 (string?)
   "color": "#6366F1", // 색상 (HEX) (string?)
-  "frequencyType": null, // 반복 타입 (1차: WEEKLY_COUNT만 지원) (RoutineFrequencyType?)
-  "targetCount": 3, // 주 목표 횟수 (frequencyType=WEEKLY_COUNT일 때 필수) (number?)
+  "memo": "", // 루틴 메모 (체크별 note와 별개로, 루틴 자체에 대한 설명) (string?)
+  "importance": null, // 중요도 (RoutineImportance?)
+  "timeFilter": null, // 시간대 분류 (오전/오후/저녁, 알림과는 무관한 분류용) (RoutineTimeFilter?)
+  "categoryId": "", // 소속시킬 루틴 카테고리 ID (없으면 미분류) (string?)
+  "recordType": null, // 기록 방식 (BOOLEAN=단순 체크, TEXT=텍스트, TIME=시각(HH:mm), NUMERIC=수치). 루틴 생성 시 고정되며 체크마다 바꿀 수 없음 (RoutineRecordType?)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType?)
+  "weeklyMode": null, // 주 반복 세부 방식 (frequencyType=WEEKLY일 때 필수). COUNT_ONLY=요일 무관 주 N회, FIXED_DAYS=특정 요일 지정 (RoutineWeeklyMode?)
+  "targetCount": 3, // 목표 횟수. WEEKLY+COUNT_ONLY=주 목표 횟수(1~7), MONTHLY=월 목표 횟수(1~31) (number?)
+  "targetDays": [1, 3, 5], // 반복 요일 목록 (frequencyType=WEEKLY, weeklyMode=FIXED_DAYS일 때 필수, 0=일요일~6=토요일) (number[]?)
   "startDate": "2026-07-01", // 시작일 (YYYY-MM-DD) (string)
   "endDate": "", // 종료일 (YYYY-MM-DD, 없으면 무기한) (string?)
   "routineGroupId": "" // 소속시킬 루틴 그룹 ID (없으면 독립 습관) (string?)
@@ -37,11 +44,18 @@
   "title": "아침 스트레칭", // 루틴 제목 (string)
   "emoji": null, // 이모지 (string | null)
   "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
-  "targetCount": null, // 주 목표 횟수 (number | null)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
-  "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
@@ -58,8 +72,9 @@
 
 **Query Parameters:**
 
-- `isActive` (`boolean`) (Optional): 활성 루틴만 조회
+- `status` (`RoutineStatus`) (Optional): 상태 필터 (ACTIVE/PAUSED만 의미 있음, ENDED는 항상 목록에서 제외됨)
 - `routineGroupId` (`string`) (Optional): 특정 루틴 그룹 소속만 조회
+- `categoryId` (`string`) (Optional): 특정 루틴 카테고리 소속만 조회
 
 **Responses:**
 
@@ -71,11 +86,18 @@
   "title": "아침 스트레칭", // 루틴 제목 (string)
   "emoji": null, // 이모지 (string | null)
   "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
-  "targetCount": null, // 주 목표 횟수 (number | null)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
-  "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
@@ -133,6 +155,203 @@
   "criteriaValue": 7 // 판정 기준값 (number)
 }
 ```
+
+---
+
+### POST `routines/categories`
+
+**요약:** 루틴 카테고리 생성 (사용자 커스텀 태그)
+
+**Request Body:**
+
+```json
+{
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": "📅", // 이모지 (string?)
+  "color": "#22C55E" // 색상 (HEX) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 루틴 카테고리 생성 성공
+
+```json
+{
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/categories`
+
+**요약:** 내 루틴 카테고리 목록 조회
+
+**Responses:**
+
+#### 200 - 루틴 카테고리 목록 조회 성공
+
+```json
+{
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### PATCH `routines/categories/sort-order`
+
+**요약:** 루틴 카테고리 순서 일괄 변경
+
+**Request Body:**
+
+```json
+{
+  "items": [
+    {
+      "id": "", // 카테고리 ID (string)
+      "sortOrder": 0 // 정렬 순서 (number)
+    }
+  ] // 카테고리 순서 목록 (RoutineCategorySortOrderItemDto[])
+}
+```
+
+**Responses:**
+
+#### 200 - 순서 변경 성공
+
+```json
+{
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/categories/:id`
+
+**요약:** 루틴 카테고리 상세 조회 (소속 습관 목록 포함)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 카테고리 상세 조회 성공
+
+```json
+{
+  "routines": [
+    {
+      "id": "uuid-1234", // 루틴 ID (string)
+      "title": "아침 스트레칭", // 루틴 제목 (string)
+      "emoji": null, // 이모지 (string | null)
+      "color": null, // 색상 (string | null)
+      "memo": null, // 루틴 메모 (string | null)
+      "importance": null, // 중요도 (RoutineImportance)
+      "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+      "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+      "recordType": null, // 기록 방식 (RoutineRecordType)
+      "status": null, // 상태 (RoutineStatus)
+      "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+      "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+      "targetCount": null, // 목표 횟수 (주/월) (number | null)
+      "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+      "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+      "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+      "sortOrder": 0, // 정렬 순서 (number)
+      "checkedToday": false, // 오늘 체크 여부 (boolean)
+      "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+    }
+  ] // 소속 습관 목록 (RoutineDto[])
+}
+```
+
+#### 404 - 루틴 카테고리를 찾을 수 없습니다
+
+#### 403 - 본인의 카테고리만 조회할 수 있습니다
+
+---
+
+### PATCH `routines/categories/:id`
+
+**요약:** 루틴 카테고리 수정
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Responses:**
+
+#### 200 - 루틴 카테고리 수정 성공
+
+```json
+{
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴 카테고리를 찾을 수 없습니다
+
+#### 403 - 본인의 카테고리만 수정할 수 있습니다
+
+---
+
+### DELETE `routines/categories/:id`
+
+**요약:** 루틴 카테고리 삭제 (soft delete, 소속 습관은 카테고리만 해제)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 카테고리 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 루틴 카테고리를 찾을 수 없습니다
+
+#### 403 - 본인의 카테고리만 삭제할 수 있습니다
 
 ---
 
@@ -257,11 +476,18 @@
       "title": "아침 스트레칭", // 루틴 제목 (string)
       "emoji": null, // 이모지 (string | null)
       "color": null, // 색상 (string | null)
+      "memo": null, // 루틴 메모 (string | null)
+      "importance": null, // 중요도 (RoutineImportance)
+      "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+      "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+      "recordType": null, // 기록 방식 (RoutineRecordType)
+      "status": null, // 상태 (RoutineStatus)
       "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
-      "targetCount": null, // 주 목표 횟수 (number | null)
+      "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+      "targetCount": null, // 목표 횟수 (주/월) (number | null)
+      "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
       "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
-      "isActive": false, // 활성 여부 (boolean)
       "sortOrder": 0, // 정렬 순서 (number)
       "checkedToday": false, // 오늘 체크 여부 (boolean)
       "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
@@ -393,11 +619,18 @@
       "title": "아침 스트레칭", // 루틴 제목 (string)
       "emoji": null, // 이모지 (string | null)
       "color": null, // 색상 (string | null)
+      "memo": null, // 루틴 메모 (string | null)
+      "importance": null, // 중요도 (RoutineImportance)
+      "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+      "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+      "recordType": null, // 기록 방식 (RoutineRecordType)
+      "status": null, // 상태 (RoutineStatus)
       "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
-      "targetCount": null, // 주 목표 횟수 (number | null)
+      "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+      "targetCount": null, // 목표 횟수 (주/월) (number | null)
+      "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
       "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
-      "isActive": false, // 활성 여부 (boolean)
       "sortOrder": 0, // 정렬 순서 (number)
       "checkedToday": false, // 오늘 체크 여부 (boolean)
       "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
@@ -469,11 +702,18 @@
   "title": "아침 스트레칭", // 루틴 제목 (string)
   "emoji": null, // 이모지 (string | null)
   "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
-  "targetCount": null, // 주 목표 횟수 (number | null)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
-  "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
@@ -513,11 +753,18 @@
   "title": "아침 스트레칭", // 루틴 제목 (string)
   "emoji": null, // 이모지 (string | null)
   "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
-  "targetCount": null, // 주 목표 횟수 (number | null)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
-  "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
@@ -546,11 +793,18 @@
   "title": "아침 스트레칭", // 루틴 제목 (string)
   "emoji": null, // 이모지 (string | null)
   "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
-  "targetCount": null, // 주 목표 횟수 (number | null)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
-  "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
@@ -577,8 +831,8 @@
 
 ```json
 {
-  "isActive": false, // 활성 여부 (boolean?)
-  "routineGroupId": null // 소속시킬 루틴 그룹 ID (null 전달 시 그룹 소속 해제) (string | null?)
+  "routineGroupId": null, // 소속시킬 루틴 그룹 ID (null 전달 시 그룹 소속 해제) (string | null?)
+  "categoryId": null // 소속시킬 루틴 카테고리 ID (null 전달 시 카테고리 소속 해제) (string | null?)
 }
 ```
 
@@ -592,11 +846,18 @@
   "title": "아침 스트레칭", // 루틴 제목 (string)
   "emoji": null, // 이모지 (string | null)
   "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
-  "targetCount": null, // 주 목표 횟수 (number | null)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
-  "isActive": false, // 활성 여부 (boolean)
   "sortOrder": 0, // 정렬 순서 (number)
   "checkedToday": false, // 오늘 체크 여부 (boolean)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
@@ -613,7 +874,7 @@
 
 ### DELETE `routines/:id`
 
-**요약:** 루틴 삭제 (soft delete, 체크 기록은 보존)
+**요약:** 루틴 종료 (soft delete, 체크 기록은 보존)
 
 **Path Parameters:**
 
@@ -621,7 +882,7 @@
 
 **Responses:**
 
-#### 200 - 루틴 삭제 성공
+#### 200 - 루틴 종료 성공
 
 ```json
 {
@@ -631,7 +892,95 @@
 
 #### 404 - 루틴을 찾을 수 없습니다
 
-#### 403 - 본인의 루틴만 삭제할 수 있습니다
+#### 403 - 본인의 루틴만 종료할 수 있습니다
+
+---
+
+### PATCH `routines/:id/pause`
+
+**요약:** 루틴 일시정지 (체크 불가, 스트릭은 끊기지 않음)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 일시정지 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴만 일시정지할 수 있습니다
+
+---
+
+### PATCH `routines/:id/resume`
+
+**요약:** 루틴 재개
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 재개 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴만 재개할 수 있습니다
 
 ---
 
@@ -648,7 +997,10 @@
 ```json
 {
   "date": "", // 체크할 날짜 (YYYY-MM-DD, 미지정 시 오늘) (string?)
-  "note": "" // 메모 (string?)
+  "note": "", // 메모 (string?)
+  "textValue": "", // 텍스트 기록 값 (recordType=TEXT인 루틴만 사용) (string?)
+  "numericValue": 0, // 수치 기록 값 (recordType=NUMERIC인 루틴만 사용) (number?)
+  "timeValue": "07:30" // 시각 기록 값 "HH:mm" (recordType=TIME인 루틴만 사용) (string?)
 }
 ```
 
@@ -662,6 +1014,9 @@
   "routineId": "", // 루틴 ID (string)
   "checkedDate": "2025-01-01T00:00:00Z", // 체크한 날짜 (Date)
   "note": null, // 메모 (string | null)
+  "textValue": null, // 텍스트 기록 값 (string | null)
+  "numericValue": null, // 수치 기록 값 (number | null)
+  "timeValue": null, // 시각 기록 값 (HH:mm) (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "newlyEarnedBadges": [
     {

@@ -3,10 +3,18 @@ import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
-import { BadgeCriteriaType } from '@/routine/enums';
 import {
-  calculateDayStreak,
+  BadgeCriteriaType,
+  RoutineFrequencyType,
+  RoutineWeeklyMode,
+} from '@/routine/enums';
+import {
+  calculateScheduledDayStreak,
   calculateWeekStreak,
+  calculateMonthStreak,
+  isScheduledDayForRoutine,
+  pauseToDateRange,
+  DateRange,
 } from './utils/routine-stats.util';
 import { RoutineService } from './routine.service';
 import { todayInKst } from '@/common/utils/date-kst.util';
@@ -73,26 +81,98 @@ export class RoutineBadgeService {
     const candidates = catalog.filter((b) => !earnedBadgeIds.has(b.id));
     if (candidates.length === 0) return [];
 
-    const logs = await this.prisma.routineLog.findMany({
-      where: { routineId },
-      select: { checkedDate: true },
-    });
+    const [logs, pauses] = await Promise.all([
+      this.prisma.routineLog.findMany({
+        where: { routineId },
+        select: { checkedDate: true },
+      }),
+      this.prisma.routinePause.findMany({ where: { routineId } }),
+    ]);
     const logDates = logs.map((l) => l.checkedDate);
     const today = todayInKst();
-    const targetCount = routine.targetCount ?? 7;
-
-    const dayStreak = calculateDayStreak(logDates, today);
-    const weekStreak = calculateWeekStreak(
-      routine.startDate,
-      today,
-      targetCount,
-      logDates,
+    const excludedRanges: DateRange[] = pauses.map((p) =>
+      pauseToDateRange(p, today),
     );
+
+    let currentStreakDays: number;
+    let currentStreakWeeks: number; // MONTHLY 루틴은 월-스트릭을 이 슬롯에 매핑
+
+    if (routine.frequencyType === RoutineFrequencyType.MONTHLY) {
+      const targetCount = routine.targetCount ?? 1;
+      const dayStreak = calculateScheduledDayStreak(
+        routine.startDate,
+        today,
+        logDates,
+        () => true,
+        excludedRanges,
+      );
+      const monthStreak = calculateMonthStreak(
+        routine.startDate,
+        today,
+        targetCount,
+        logDates,
+        excludedRanges,
+      );
+      currentStreakDays = dayStreak.currentStreakDays;
+      currentStreakWeeks = monthStreak.currentStreakMonths;
+    } else if (
+      routine.frequencyType === RoutineFrequencyType.WEEKLY &&
+      routine.weeklyMode === RoutineWeeklyMode.FIXED_DAYS
+    ) {
+      const targetDays = Array.isArray(routine.targetDays)
+        ? (routine.targetDays as number[])
+        : [];
+      const isScheduledDay = (date: Date) =>
+        isScheduledDayForRoutine(
+          {
+            frequencyType: routine.frequencyType,
+            weeklyMode: routine.weeklyMode,
+            targetDays: routine.targetDays,
+          },
+          date,
+        );
+      const dayStreak = calculateScheduledDayStreak(
+        routine.startDate,
+        today,
+        logDates,
+        isScheduledDay,
+        excludedRanges,
+      );
+      const weekStreak = calculateWeekStreak(
+        routine.startDate,
+        today,
+        targetDays.length,
+        logDates,
+        excludedRanges,
+      );
+      currentStreakDays = dayStreak.currentStreakDays;
+      currentStreakWeeks = weekStreak.currentStreakWeeks;
+    } else {
+      // DAILY, WEEKLY/COUNT_ONLY
+      const targetCount = routine.targetCount ?? 7;
+      const dayStreak = calculateScheduledDayStreak(
+        routine.startDate,
+        today,
+        logDates,
+        () => true,
+        excludedRanges,
+      );
+      const weekStreak = calculateWeekStreak(
+        routine.startDate,
+        today,
+        targetCount,
+        logDates,
+        excludedRanges,
+      );
+      currentStreakDays = dayStreak.currentStreakDays;
+      currentStreakWeeks = weekStreak.currentStreakWeeks;
+    }
+
     const totalChecks = logDates.length;
 
     const currentValue = (type: BadgeCriteriaType): number => {
-      if (type === 'STREAK_DAYS') return dayStreak.currentStreakDays;
-      if (type === 'STREAK_WEEKS') return weekStreak.currentStreakWeeks;
+      if (type === 'STREAK_DAYS') return currentStreakDays;
+      if (type === 'STREAK_WEEKS') return currentStreakWeeks;
       return totalChecks;
     };
 

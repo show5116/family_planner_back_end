@@ -16,6 +16,7 @@ import { RoutineStatsService } from './routine-stats.service';
 import { RoutineBadgeService } from './routine-badge.service';
 import { RoutineLeaderboardService } from './routine-leaderboard.service';
 import { RoutineGroupService } from './routine-group.service';
+import { RoutineCategoryService } from './routine-category.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { RoutineQueryDto } from './dto/routine-query.dto';
@@ -25,6 +26,9 @@ import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { CreateRoutineGroupDto } from './dto/create-routine-group.dto';
 import { UpdateRoutineGroupDto } from './dto/update-routine-group.dto';
 import { ReorderRoutineGroupDto } from './dto/reorder-routine-group.dto';
+import { CreateRoutineCategoryDto } from './dto/create-routine-category.dto';
+import { UpdateRoutineCategoryDto } from './dto/update-routine-category.dto';
+import { ReorderRoutineCategoryDto } from './dto/reorder-routine-category.dto';
 import { HeatmapQueryDto, RateQueryDto } from './dto/routine-stats-query.dto';
 import { LeaderboardQueryDto } from './dto/routine-leaderboard-query.dto';
 import {
@@ -37,6 +41,10 @@ import {
   RoutineGroupDto,
   RoutineGroupDetailDto,
 } from './dto/routine-group-response.dto';
+import {
+  RoutineCategoryDto,
+  RoutineCategoryDetailDto,
+} from './dto/routine-category-response.dto';
 import {
   HeatmapResponseDto,
   StreakResponseDto,
@@ -68,6 +76,7 @@ export class RoutineController {
     private readonly routineBadgeService: RoutineBadgeService,
     private readonly routineLeaderboardService: RoutineLeaderboardService,
     private readonly routineGroupService: RoutineGroupService,
+    private readonly routineCategoryService: RoutineCategoryService,
   ) {}
 
   @Post()
@@ -98,6 +107,62 @@ export class RoutineController {
   @ApiSuccess(RoutineBadgeDto, '배지 카탈로그 조회 성공', { isArray: true })
   getBadgeCatalog() {
     return this.routineBadgeService.findCatalog();
+  }
+
+  @Post('categories')
+  @ApiOperation({ summary: '루틴 카테고리 생성 (사용자 커스텀 태그)' })
+  @ApiCreated(RoutineCategoryDto, '루틴 카테고리 생성 성공')
+  createCategory(@Request() req, @Body() dto: CreateRoutineCategoryDto) {
+    return this.routineCategoryService.create(req.user.userId, dto);
+  }
+
+  @Get('categories')
+  @ApiOperation({ summary: '내 루틴 카테고리 목록 조회' })
+  @ApiSuccess(RoutineCategoryDto, '루틴 카테고리 목록 조회 성공', {
+    isArray: true,
+  })
+  findCategories(@Request() req) {
+    return this.routineCategoryService.findAll(req.user.userId);
+  }
+
+  @Patch('categories/sort-order')
+  @ApiOperation({ summary: '루틴 카테고리 순서 일괄 변경' })
+  @ApiSuccess(RoutineCategoryDto, '순서 변경 성공', { isArray: true })
+  reorderCategories(@Request() req, @Body() dto: ReorderRoutineCategoryDto) {
+    return this.routineCategoryService.reorder(req.user.userId, dto);
+  }
+
+  @Get('categories/:id')
+  @ApiOperation({ summary: '루틴 카테고리 상세 조회 (소속 습관 목록 포함)' })
+  @ApiSuccess(RoutineCategoryDetailDto, '루틴 카테고리 상세 조회 성공')
+  @ApiNotFound('루틴 카테고리를 찾을 수 없습니다')
+  @ApiForbidden('본인의 카테고리만 조회할 수 있습니다')
+  findCategoryOne(@Request() req, @Param('id') id: string) {
+    return this.routineCategoryService.findOne(req.user.userId, id);
+  }
+
+  @Patch('categories/:id')
+  @ApiOperation({ summary: '루틴 카테고리 수정' })
+  @ApiSuccess(RoutineCategoryDto, '루틴 카테고리 수정 성공')
+  @ApiNotFound('루틴 카테고리를 찾을 수 없습니다')
+  @ApiForbidden('본인의 카테고리만 수정할 수 있습니다')
+  updateCategory(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateRoutineCategoryDto,
+  ) {
+    return this.routineCategoryService.update(req.user.userId, id, dto);
+  }
+
+  @Delete('categories/:id')
+  @ApiOperation({
+    summary: '루틴 카테고리 삭제 (soft delete, 소속 습관은 카테고리만 해제)',
+  })
+  @ApiSuccess(MessageResponseDto, '루틴 카테고리 삭제 성공')
+  @ApiNotFound('루틴 카테고리를 찾을 수 없습니다')
+  @ApiForbidden('본인의 카테고리만 삭제할 수 있습니다')
+  removeCategory(@Request() req, @Param('id') id: string) {
+    return this.routineCategoryService.remove(req.user.userId, id);
   }
 
   @Post('routine-groups')
@@ -240,12 +305,32 @@ export class RoutineController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: '루틴 삭제 (soft delete, 체크 기록은 보존)' })
-  @ApiSuccess(MessageResponseDto, '루틴 삭제 성공')
+  @ApiOperation({ summary: '루틴 종료 (soft delete, 체크 기록은 보존)' })
+  @ApiSuccess(MessageResponseDto, '루틴 종료 성공')
   @ApiNotFound('루틴을 찾을 수 없습니다')
-  @ApiForbidden('본인의 루틴만 삭제할 수 있습니다')
-  remove(@Request() req, @Param('id') id: string) {
-    return this.routineService.remove(req.user.userId, id);
+  @ApiForbidden('본인의 루틴만 종료할 수 있습니다')
+  end(@Request() req, @Param('id') id: string) {
+    return this.routineService.end(req.user.userId, id);
+  }
+
+  @Patch(':id/pause')
+  @ApiOperation({ summary: '루틴 일시정지 (체크 불가, 스트릭은 끊기지 않음)' })
+  @ApiSuccess(RoutineDto, '일시정지 성공')
+  @ApiNotFound('루틴을 찾을 수 없습니다')
+  @ApiForbidden('본인의 루틴만 일시정지할 수 있습니다')
+  @ApiConflict('이미 일시정지된 루틴입니다')
+  pause(@Request() req, @Param('id') id: string) {
+    return this.routineService.pause(req.user.userId, id);
+  }
+
+  @Patch(':id/resume')
+  @ApiOperation({ summary: '루틴 재개' })
+  @ApiSuccess(RoutineDto, '재개 성공')
+  @ApiNotFound('루틴을 찾을 수 없습니다')
+  @ApiForbidden('본인의 루틴만 재개할 수 있습니다')
+  @ApiConflict('일시정지 상태가 아닙니다')
+  resume(@Request() req, @Param('id') id: string) {
+    return this.routineService.resume(req.user.userId, id);
   }
 
   @Post(':id/check')
