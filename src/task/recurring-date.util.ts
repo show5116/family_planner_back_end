@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import KoreanLunarCalendar from 'korean-lunar-calendar';
 import { RecurringRuleType } from '@/task/enums';
 import {
@@ -8,6 +9,11 @@ import {
   MonthlyRuleConfig,
   YearlyRuleConfig,
 } from '@/task/interfaces';
+import {
+  toKstDateOnly,
+  getKstDay,
+  addKstDays,
+} from '@/common/utils/date-kst.util';
 
 /**
  * 반복 일정 날짜 계산 유틸리티
@@ -34,24 +40,18 @@ export class RecurringDateUtil {
   }
 
   /**
-   * DST(썸머타임) 이슈를 방지하기 위해 날짜의 시간을 정오(12:00)로 설정
-   * 이렇게 하면 +/- 1시간 변동이 있어도 날짜가 바뀌지 않음
+   * 날짜를 KST 기준 자정(UTC 자정으로 정규화된 순수 날짜)으로 변환
+   * 서버가 UTC로 실행되어도 KST 캘린더 날짜/요일이 어긋나지 않도록 보장
    */
   private static normalizeDate(date: Date): Date {
-    const normalized = new Date(date);
-    normalized.setHours(12, 0, 0, 0);
-    return normalized;
+    return toKstDateOnly(date);
   }
 
   /**
-   * 날짜를 안전하게 n일 후로 이동 (DST 고려)
+   * 날짜를 안전하게 n일 후로 이동 (KST 캘린더 기준)
    */
   private static addDays(date: Date, days: number): Date {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    // DST로 인한 시간 변동 보정
-    result.setHours(12, 0, 0, 0);
-    return result;
+    return addKstDays(date, days);
   }
 
   /**
@@ -79,8 +79,10 @@ export class RecurringDateUtil {
       interval: this.sanitizeInterval(ruleConfig.interval),
     };
 
-    const endDate = new Date(fromDate);
-    endDate.setMonth(endDate.getMonth() + monthsAhead);
+    const endDate = dayjs(fromDate)
+      .tz('Asia/Seoul')
+      .add(monthsAhead, 'month')
+      .toDate();
 
     // 종료 조건 확인
     const {
@@ -161,7 +163,7 @@ export class RecurringDateUtil {
    * 주말/공휴일 여부 확인
    */
   private static isWeekend(date: Date): boolean {
-    const day = date.getDay();
+    const day = getKstDay(date);
     return day === 0 || day === 6;
   }
 
@@ -286,10 +288,8 @@ export class RecurringDateUtil {
     let weekCount = 0;
     let iterationCount = 0;
 
-    // 현재 주의 시작(일요일)으로 이동
-    const startOfWeek = new Date(fromDate);
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-    startOfWeek.setHours(12, 0, 0, 0);
+    // 현재 주의 시작(일요일, KST 기준)으로 이동
+    const startOfWeek = this.addDays(fromDate, -getKstDay(fromDate));
 
     while (
       addedCount < remainingCount &&
@@ -358,15 +358,11 @@ export class RecurringDateUtil {
       addedCount < remainingCount &&
       iterationCount < this.MAX_DATES_PER_CALCULATION
     ) {
-      const targetMonth = new Date(
-        fromDate.getFullYear(),
-        fromDate.getMonth() + monthCount * interval,
-        1,
-        12,
-        0,
-        0,
-        0,
-      );
+      const targetMonthIndex = fromDate.getUTCMonth() + monthCount * interval;
+      const targetYear =
+        fromDate.getUTCFullYear() + Math.floor(targetMonthIndex / 12);
+      const targetMonthOfYear = ((targetMonthIndex % 12) + 12) % 12;
+      const targetMonth = this.getDateOfMonth(targetYear, targetMonthOfYear, 1);
 
       if (targetMonth > endDate) break;
 
@@ -375,8 +371,8 @@ export class RecurringDateUtil {
       if (monthlyType === 'dayOfMonth' && dayOfMonth) {
         // 날짜 기준
         targetDate = this.getDateOfMonth(
-          targetMonth.getFullYear(),
-          targetMonth.getMonth(),
+          targetYear,
+          targetMonthOfYear,
           dayOfMonth,
         );
       } else if (
@@ -386,8 +382,8 @@ export class RecurringDateUtil {
       ) {
         // 주차/요일 기준
         targetDate = this.getNthDayOfMonth(
-          targetMonth.getFullYear(),
-          targetMonth.getMonth(),
+          targetYear,
+          targetMonthOfYear,
           weekOfMonth,
           dayOfWeek,
         );
@@ -439,9 +435,7 @@ export class RecurringDateUtil {
       );
       const solar = cal.getSolarCalendar();
       if (!solar || !solar.year) return null;
-      const date = new Date(solar.year, solar.month - 1, solar.day);
-      date.setHours(12, 0, 0, 0);
-      return date;
+      return new Date(Date.UTC(solar.year, solar.month - 1, solar.day));
     } catch {
       return null;
     }
@@ -473,7 +467,7 @@ export class RecurringDateUtil {
       isLeapMonth = false,
     } = config;
 
-    const currentYear = fromDate.getFullYear();
+    const currentYear = fromDate.getUTCFullYear();
     let addedCount = 0;
     let yearCount = 0;
     let iterationCount = 0;
@@ -539,21 +533,21 @@ export class RecurringDateUtil {
 
   /**
    * 특정 월의 n일 반환 (해당 월에 없는 날짜면 마지막 날 반환)
+   * KST 캘린더 필드(year/month/day) -> UTC 자정 순수 날짜로 변환 (서버 타임존 무관)
    */
   private static getDateOfMonth(
     year: number,
     month: number,
     day: number,
   ): Date {
-    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+    const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
     const actualDay = Math.min(day, lastDayOfMonth);
-    const date = new Date(year, month, actualDay);
-    date.setHours(12, 0, 0, 0); // DST 보정
-    return date;
+    return new Date(Date.UTC(year, month, actualDay));
   }
 
   /**
    * 특정 월의 n번째 요일 반환
+   * KST 캘린더 필드(year/month/day) -> UTC 자정 순수 날짜로 변환 (서버 타임존 무관)
    * @param year 연도
    * @param month 월 (0-11)
    * @param week 주차 (1-5, 5는 마지막 주)
@@ -567,38 +561,31 @@ export class RecurringDateUtil {
   ): Date | null {
     if (week === 5) {
       // 마지막 주
-      const lastDay = new Date(year, month + 1, 0);
-      const lastDayOfWeek = lastDay.getDay();
+      const lastDay = new Date(Date.UTC(year, month + 1, 0));
+      const lastDayOfWeek = lastDay.getUTCDay();
       const diff = lastDayOfWeek - dayOfWeek;
-      const targetDate = new Date(lastDay);
-      targetDate.setDate(lastDay.getDate() - (diff >= 0 ? diff : 7 + diff));
-      targetDate.setHours(12, 0, 0, 0); // DST 보정
-      return targetDate;
+      const targetDay = lastDay.getUTCDate() - (diff >= 0 ? diff : 7 + diff);
+      return new Date(Date.UTC(year, month, targetDay));
     }
 
-    const firstDay = new Date(year, month, 1);
-    const firstDayOfWeek = firstDay.getDay();
+    const firstDayOfWeek = new Date(Date.UTC(year, month, 1)).getUTCDay();
     let diff = dayOfWeek - firstDayOfWeek;
     if (diff < 0) diff += 7;
 
     const targetDay = 1 + diff + (week - 1) * 7;
-    const targetDate = new Date(year, month, targetDay);
+    const targetDate = new Date(Date.UTC(year, month, targetDay));
 
     // 해당 월을 벗어나면 null
-    if (targetDate.getMonth() !== month) return null;
+    if (targetDate.getUTCMonth() !== month) return null;
 
-    targetDate.setHours(12, 0, 0, 0); // DST 보정
     return targetDate;
   }
 
   /**
-   * 날짜를 YYYY-MM-DD 형식으로 포맷
+   * 날짜를 YYYY-MM-DD 형식으로 포맷 (KST 기준)
    */
   static formatDateString(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return dayjs(date).tz('Asia/Seoul').format('YYYY-MM-DD');
   }
 
   /**
@@ -625,7 +612,7 @@ export class RecurringDateUtil {
         const maxDays = 7 * interval;
         for (let i = 1; i <= maxDays; i++) {
           const checkDate = this.addDays(fromDate, i);
-          if (daysOfWeek.includes(checkDate.getDay())) {
+          if (daysOfWeek.includes(getKstDay(checkDate))) {
             return checkDate;
           }
         }
@@ -634,24 +621,24 @@ export class RecurringDateUtil {
 
       case RecurringRuleType.MONTHLY: {
         // 월말 Clamp 처리: 1월 31일 + 1개월 = 2월 28일 (JS 기본: 3월 3일로 overflow)
-        const targetMonth = nextDate.getMonth() + interval;
+        const targetMonth = nextDate.getUTCMonth() + interval;
         const targetYear =
-          nextDate.getFullYear() + Math.floor(targetMonth / 12);
-        const normalizedMonth = targetMonth % 12;
+          nextDate.getUTCFullYear() + Math.floor(targetMonth / 12);
+        const normalizedMonth = ((targetMonth % 12) + 12) % 12;
         return this.getDateOfMonth(
           targetYear,
           normalizedMonth,
-          nextDate.getDate(),
+          nextDate.getUTCDate(),
         );
       }
 
       case RecurringRuleType.YEARLY: {
         // 윤년 Clamp 처리: 2024년 2월 29일 + 1년 = 2025년 2월 28일
-        const targetYear = nextDate.getFullYear() + interval;
+        const targetYear = nextDate.getUTCFullYear() + interval;
         return this.getDateOfMonth(
           targetYear,
-          nextDate.getMonth(),
-          nextDate.getDate(),
+          nextDate.getUTCMonth(),
+          nextDate.getUTCDate(),
         );
       }
 
