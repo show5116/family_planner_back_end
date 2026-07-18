@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 import { CreateRoutineDto } from './create-routine.dto';
 
 export class UpdateRoutineDto extends PartialType(CreateRoutineDto) {
@@ -13,11 +13,13 @@ export class UpdateRoutineDto extends PartialType(CreateRoutineDto) {
   routineGroupId?: string | null;
 
   @ApiProperty({
-    description: '소속시킬 루틴 카테고리 ID (null 전달 시 카테고리 소속 해제)',
+    description:
+      '전체 카테고리 목록을 이 배열로 교체 (빈 배열 [] 전달 시 전체 해제). 미전달 시 기존 연결 유지',
     required: false,
-    nullable: true,
+    type: [String],
   })
   @IsOptional()
-  @IsString()
-  categoryId?: string | null;
+  @IsArray()
+  @IsString({ each: true })
+  categoryIds?: string[];
 }

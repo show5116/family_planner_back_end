@@ -27,7 +27,9 @@
     "cannot_pause_ended": "已结束的例行任务无法暂停",
     "routine_category_not_found": "例行任务分类不存在",
     "own_routine_category_only_update": "只能修改自己的分类",
-    "own_routine_category_only_delete": "只能删除自己的分类"
+    "own_routine_category_only_delete": "只能删除自己的分类",
+    "already_categorized": "该分类已连接",
+    "category_link_not_found": "连接信息不存在"
   },
   "success": {
     "routine_deleted": "例行任务已结束（打卡记录将保留）",
@@ -36,7 +38,8 @@
     "routine_group_deleted": "例行任务分组已删除（所属例行任务将保留）",
     "routine_paused": "例行任务已暂停",
     "routine_resumed": "例行任务已恢复",
-    "routine_category_deleted": "例行任务分类已删除（所属例行任务将保留）"
+    "routine_category_deleted": "例行任务分类已删除（所属例行任务将保留）",
+    "category_link_removed": "已取消分类连接"
   },
   "notification": {
     "daily_reminder_title": "看看今天的例行任务吧",

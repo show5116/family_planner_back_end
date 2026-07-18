@@ -27,7 +27,9 @@
     "cannot_pause_ended": "終了したルーティンは一時停止できません",
     "routine_category_not_found": "ルーティンカテゴリーが見つかりません",
     "own_routine_category_only_update": "自分のカテゴリーのみ更新できます",
-    "own_routine_category_only_delete": "自分のカテゴリーのみ削除できます"
+    "own_routine_category_only_delete": "自分のカテゴリーのみ削除できます",
+    "already_categorized": "すでに連結されているカテゴリーです",
+    "category_link_not_found": "連結情報が見つかりません"
   },
   "success": {
     "routine_deleted": "ルーティンを終了しました(チェック記録は維持されます)",
@@ -36,7 +38,8 @@
     "routine_group_deleted": "ルーティングループを削除しました(所属ルーティンは維持されます)",
     "routine_paused": "ルーティンを一時停止しました",
     "routine_resumed": "ルーティンを再開しました",
-    "routine_category_deleted": "ルーティンカテゴリーを削除しました(所属ルーティンは維持されます)"
+    "routine_category_deleted": "ルーティンカテゴリーを削除しました(所属ルーティンは維持されます)",
+    "category_link_removed": "カテゴリー連結を解除しました"
   },
   "notification": {
     "daily_reminder_title": "今日のルーティンを確認しましょう",

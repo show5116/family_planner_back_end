@@ -27,7 +27,9 @@
     "cannot_pause_ended": "Ended routines cannot be paused",
     "routine_category_not_found": "Routine category not found",
     "own_routine_category_only_update": "You can only update your own categories",
-    "own_routine_category_only_delete": "You can only delete your own categories"
+    "own_routine_category_only_delete": "You can only delete your own categories",
+    "already_categorized": "This category is already linked",
+    "category_link_not_found": "Category link not found"
   },
   "success": {
     "routine_deleted": "Routine ended (check logs are kept)",
@@ -36,7 +38,8 @@
     "routine_group_deleted": "Routine group deleted (routines are kept)",
     "routine_paused": "Routine paused",
     "routine_resumed": "Routine resumed",
-    "routine_category_deleted": "Routine category deleted (routines are kept)"
+    "routine_category_deleted": "Routine category deleted (routines are kept)",
+    "category_link_removed": "Category link removed"
   },
   "notification": {
     "daily_reminder_title": "Check your routines today",

@@ -22,6 +22,7 @@ import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { RoutineQueryDto } from './dto/routine-query.dto';
 import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
+import { CreateRoutineCategoryLinkDto } from './dto/create-routine-category-link.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { CreateRoutineGroupDto } from './dto/create-routine-group.dto';
 import { UpdateRoutineGroupDto } from './dto/update-routine-group.dto';
@@ -35,6 +36,7 @@ import {
   RoutineDto,
   RoutineLogDto,
   RoutineShareDto,
+  RoutineCategoryLinkDto,
   RoutineMemberSummaryDto,
 } from './dto/routine-response.dto';
 import {
@@ -386,6 +388,42 @@ export class RoutineController {
   @ApiForbidden('본인의 루틴만 조회할 수 있습니다')
   findShares(@Request() req, @Param('id') id: string) {
     return this.routineService.findShares(req.user.userId, id);
+  }
+
+  @Post(':id/categories')
+  @ApiOperation({ summary: '루틴에 카테고리 연결' })
+  @ApiCreated(RoutineCategoryLinkDto, '연결 성공')
+  @ApiNotFound('루틴 또는 카테고리를 찾을 수 없습니다')
+  @ApiForbidden('본인의 루틴만 카테고리를 연결할 수 있습니다')
+  @ApiConflict('이미 연결된 카테고리입니다')
+  addCategoryLink(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: CreateRoutineCategoryLinkDto,
+  ) {
+    return this.routineService.addCategory(req.user.userId, id, dto);
+  }
+
+  @Delete(':id/categories/:categoryId')
+  @ApiOperation({ summary: '루틴에서 카테고리 연결 해제' })
+  @ApiSuccess(MessageResponseDto, '연결 해제 성공')
+  @ApiNotFound('연결 정보를 찾을 수 없습니다')
+  removeCategoryLink(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string,
+  ) {
+    return this.routineService.removeCategory(req.user.userId, id, categoryId);
+  }
+
+  @Get(':id/categories')
+  @ApiOperation({ summary: '루틴에 연결된 카테고리 목록 조회' })
+  @ApiSuccess(RoutineCategoryLinkDto, '연결된 카테고리 목록 조회 성공', {
+    isArray: true,
+  })
+  @ApiForbidden('본인의 루틴만 조회할 수 있습니다')
+  findCategoryLinks(@Request() req, @Param('id') id: string) {
+    return this.routineService.findCategories(req.user.userId, id);
   }
 
   @Get(':id/badges')

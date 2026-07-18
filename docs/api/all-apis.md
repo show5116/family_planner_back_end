@@ -7681,7 +7681,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": "", // 루틴 메모 (체크별 note와 별개로, 루틴 자체에 대한 설명) (string?)
   "importance": null, // 중요도 (RoutineImportance?)
   "timeFilter": null, // 시간대 분류 (오전/오후/저녁, 알림과는 무관한 분류용) (RoutineTimeFilter?)
-  "categoryId": "", // 소속시킬 루틴 카테고리 ID (없으면 미분류) (string?)
+  "categoryIds": "<String>", // 초기 연결할 루틴 카테고리 ID 목록 (없으면 미분류) (string[]?)
   "recordType": null, // 기록 방식 (BOOLEAN=단순 체크, TEXT=텍스트, TIME=시각(HH:mm), NUMERIC=수치). 루틴 생성 시 고정되며 체크마다 바꿀 수 없음 (RoutineRecordType?)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType?)
   "weeklyMode": null, // 주 반복 세부 방식 (frequencyType=WEEKLY일 때 필수). COUNT_ONLY=요일 무관 주 N회, FIXED_DAYS=특정 요일 지정 (RoutineWeeklyMode?)
@@ -7706,7 +7706,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": null, // 루틴 메모 (string | null)
   "importance": null, // 중요도 (RoutineImportance)
   "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
   "recordType": null, // 기록 방식 (RoutineRecordType)
   "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -7748,7 +7748,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": null, // 루틴 메모 (string | null)
   "importance": null, // 중요도 (RoutineImportance)
   "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
   "recordType": null, // 기록 방식 (RoutineRecordType)
   "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -7929,7 +7929,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "memo": null, // 루틴 메모 (string | null)
       "importance": null, // 중요도 (RoutineImportance)
       "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-      "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+      "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
       "recordType": null, // 기록 방식 (RoutineRecordType)
       "status": null, // 상태 (RoutineStatus)
       "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8138,7 +8138,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "memo": null, // 루틴 메모 (string | null)
       "importance": null, // 중요도 (RoutineImportance)
       "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-      "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+      "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
       "recordType": null, // 기록 방식 (RoutineRecordType)
       "status": null, // 상태 (RoutineStatus)
       "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8281,7 +8281,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "memo": null, // 루틴 메모 (string | null)
       "importance": null, // 중요도 (RoutineImportance)
       "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-      "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+      "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
       "recordType": null, // 기록 방식 (RoutineRecordType)
       "status": null, // 상태 (RoutineStatus)
       "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8364,7 +8364,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": null, // 루틴 메모 (string | null)
   "importance": null, // 중요도 (RoutineImportance)
   "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
   "recordType": null, // 기록 방식 (RoutineRecordType)
   "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8415,7 +8415,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": null, // 루틴 메모 (string | null)
   "importance": null, // 중요도 (RoutineImportance)
   "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
   "recordType": null, // 기록 방식 (RoutineRecordType)
   "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8455,7 +8455,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": null, // 루틴 메모 (string | null)
   "importance": null, // 중요도 (RoutineImportance)
   "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
   "recordType": null, // 기록 방식 (RoutineRecordType)
   "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8491,7 +8491,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 ```json
 {
   "routineGroupId": null, // 소속시킬 루틴 그룹 ID (null 전달 시 그룹 소속 해제) (string | null?)
-  "categoryId": null // 소속시킬 루틴 카테고리 ID (null 전달 시 카테고리 소속 해제) (string | null?)
+  "categoryIds": "<String>" // 전체 카테고리 목록을 이 배열로 교체 (빈 배열 [] 전달 시 전체 해제). 미전달 시 기존 연결 유지 (string[]?)
 }
 ```
 
@@ -8508,7 +8508,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": null, // 루틴 메모 (string | null)
   "importance": null, // 중요도 (RoutineImportance)
   "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
   "recordType": null, // 기록 방식 (RoutineRecordType)
   "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8576,7 +8576,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": null, // 루틴 메모 (string | null)
   "importance": null, // 중요도 (RoutineImportance)
   "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
   "recordType": null, // 기록 방식 (RoutineRecordType)
   "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8620,7 +8620,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "memo": null, // 루틴 메모 (string | null)
   "importance": null, // 중요도 (RoutineImportance)
   "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
-  "categoryId": null, // 소속 루틴 카테고리 ID (string | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
   "recordType": null, // 기록 방식 (RoutineRecordType)
   "status": null, // 상태 (RoutineStatus)
   "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
@@ -8806,6 +8806,91 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "groupId": "", // 그룹 ID (string)
   "groupName": "", // 그룹 이름 (string)
   "createdAt": "2025-01-01T00:00:00Z" // 공유 생성일 (Date)
+}
+```
+
+#### 403 - 본인의 루틴만 조회할 수 있습니다
+
+---
+
+### POST `routines/:id/categories`
+
+**요약:** 루틴에 카테고리 연결
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "categoryId": "" // 연결할 카테고리 ID (string)
+}
+```
+
+**Responses:**
+
+#### 201 - 연결 성공
+
+```json
+{
+  "id": "", // 연결 ID (string)
+  "routineId": "", // 루틴 ID (string)
+  "categoryId": "", // 카테고리 ID (string)
+  "categoryTitle": "", // 카테고리 제목 (string)
+  "createdAt": "2025-01-01T00:00:00Z" // 연결 생성일 (Date)
+}
+```
+
+#### 404 - 루틴 또는 카테고리를 찾을 수 없습니다
+
+#### 403 - 본인의 루틴만 카테고리를 연결할 수 있습니다
+
+---
+
+### DELETE `routines/:id/categories/:categoryId`
+
+**요약:** 루틴에서 카테고리 연결 해제
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `categoryId` (`string`)
+
+**Responses:**
+
+#### 200 - 연결 해제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 연결 정보를 찾을 수 없습니다
+
+---
+
+### GET `routines/:id/categories`
+
+**요약:** 루틴에 연결된 카테고리 목록 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 연결된 카테고리 목록 조회 성공
+
+```json
+{
+  "id": "", // 연결 ID (string)
+  "routineId": "", // 루틴 ID (string)
+  "categoryId": "", // 카테고리 ID (string)
+  "categoryTitle": "", // 카테고리 제목 (string)
+  "createdAt": "2025-01-01T00:00:00Z" // 연결 생성일 (Date)
 }
 ```
 

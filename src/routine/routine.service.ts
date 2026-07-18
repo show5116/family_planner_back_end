@@ -16,6 +16,7 @@ import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { RoutineQueryDto } from './dto/routine-query.dto';
 import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
+import { CreateRoutineCategoryLinkDto } from './dto/create-routine-category-link.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { RoutineBadgeService } from './routine-badge.service';
 import {
@@ -110,15 +111,16 @@ export class RoutineService {
     if (dto.routineGroupId) {
       await this.findOwnRoutineGroup(userId, dto.routineGroupId);
     }
-    if (dto.categoryId) {
-      await this.findOwnRoutineCategory(userId, dto.categoryId);
+    if (dto.categoryIds?.length) {
+      for (const categoryId of dto.categoryIds) {
+        await this.findOwnRoutineCategory(userId, categoryId);
+      }
     }
 
     const routine = await this.prisma.routine.create({
       data: {
         userId,
         groupId: dto.routineGroupId,
-        categoryId: dto.categoryId,
         title: dto.title,
         emoji: dto.emoji,
         color: dto.color,
@@ -132,10 +134,15 @@ export class RoutineService {
         targetDays: dto.targetDays,
         startDate: parseDateOnly(dto.startDate),
         endDate: dto.endDate ? parseDateOnly(dto.endDate) : undefined,
+        ...(dto.categoryIds?.length && {
+          categoryLinks: {
+            create: dto.categoryIds.map((categoryId) => ({ categoryId })),
+          },
+        }),
       },
     });
 
-    return this.toResponse(routine, false);
+    return this.toResponse(routine, false, dto.categoryIds ?? []);
   }
 
   async findAll(userId: string, query: RoutineQueryDto) {
@@ -146,7 +153,9 @@ export class RoutineService {
       ...(query.routineGroupId !== undefined && {
         groupId: query.routineGroupId,
       }),
-      ...(query.categoryId !== undefined && { categoryId: query.categoryId }),
+      ...(query.categoryId !== undefined && {
+        categoryLinks: { some: { categoryId: query.categoryId } },
+      }),
     };
 
     const routines = await this.prisma.routine.findMany({
@@ -163,8 +172,17 @@ export class RoutineService {
       select: { routineId: true },
     });
     const checkedRoutineIds = new Set(todayLogs.map((l) => l.routineId));
+    const categoryIdsByRoutine = await this.batchFetchCategoryIds(
+      routines.map((r) => r.id),
+    );
 
-    return routines.map((r) => this.toResponse(r, checkedRoutineIds.has(r.id)));
+    return routines.map((r) =>
+      this.toResponse(
+        r,
+        checkedRoutineIds.has(r.id),
+        categoryIdsByRoutine.get(r.id) ?? [],
+      ),
+    );
   }
 
   async findOne(userId: string, id: string) {
@@ -173,8 +191,9 @@ export class RoutineService {
     const log = await this.prisma.routineLog.findUnique({
       where: { routineId_checkedDate: { routineId: id, checkedDate: today } },
     });
+    const categoryIds = await this.fetchCategoryIds(id);
 
-    return this.toResponse(routine, !!log);
+    return this.toResponse(routine, !!log, categoryIds);
   }
 
   async update(userId: string, id: string, dto: UpdateRoutineDto) {
@@ -200,45 +219,71 @@ export class RoutineService {
     if (dto.routineGroupId) {
       await this.findOwnRoutineGroup(userId, dto.routineGroupId);
     }
-    if (dto.categoryId) {
-      await this.findOwnRoutineCategory(userId, dto.categoryId);
+    if (dto.categoryIds?.length) {
+      for (const categoryId of dto.categoryIds) {
+        await this.findOwnRoutineCategory(userId, categoryId);
+      }
     }
 
-    const updated = await this.prisma.routine.update({
-      where: { id },
-      data: {
-        ...(dto.title !== undefined && { title: dto.title }),
-        ...(dto.emoji !== undefined && { emoji: dto.emoji }),
-        ...(dto.color !== undefined && { color: dto.color }),
-        ...(dto.memo !== undefined && { memo: dto.memo }),
-        ...(dto.importance !== undefined && { importance: dto.importance }),
-        ...(dto.timeFilter !== undefined && { timeFilter: dto.timeFilter }),
-        ...(dto.recordType !== undefined && { recordType: dto.recordType }),
-        ...(dto.frequencyType !== undefined && {
-          frequencyType: dto.frequencyType,
-        }),
-        ...(dto.weeklyMode !== undefined && { weeklyMode: dto.weeklyMode }),
-        ...(dto.targetCount !== undefined && { targetCount: dto.targetCount }),
-        ...(dto.targetDays !== undefined && { targetDays: dto.targetDays }),
-        ...(dto.startDate !== undefined && {
-          startDate: parseDateOnly(dto.startDate),
-        }),
-        ...(dto.endDate !== undefined && {
-          endDate: dto.endDate ? parseDateOnly(dto.endDate) : null,
-        }),
-        ...(dto.routineGroupId !== undefined && {
-          groupId: dto.routineGroupId,
-        }),
-        ...(dto.categoryId !== undefined && { categoryId: dto.categoryId }),
-      },
-    });
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.routine.update({
+        where: { id },
+        data: {
+          ...(dto.title !== undefined && { title: dto.title }),
+          ...(dto.emoji !== undefined && { emoji: dto.emoji }),
+          ...(dto.color !== undefined && { color: dto.color }),
+          ...(dto.memo !== undefined && { memo: dto.memo }),
+          ...(dto.importance !== undefined && { importance: dto.importance }),
+          ...(dto.timeFilter !== undefined && { timeFilter: dto.timeFilter }),
+          ...(dto.recordType !== undefined && { recordType: dto.recordType }),
+          ...(dto.frequencyType !== undefined && {
+            frequencyType: dto.frequencyType,
+          }),
+          ...(dto.weeklyMode !== undefined && { weeklyMode: dto.weeklyMode }),
+          ...(dto.targetCount !== undefined && {
+            targetCount: dto.targetCount,
+          }),
+          ...(dto.targetDays !== undefined && { targetDays: dto.targetDays }),
+          ...(dto.startDate !== undefined && {
+            startDate: parseDateOnly(dto.startDate),
+          }),
+          ...(dto.endDate !== undefined && {
+            endDate: dto.endDate ? parseDateOnly(dto.endDate) : null,
+          }),
+          ...(dto.routineGroupId !== undefined && {
+            groupId: dto.routineGroupId,
+          }),
+        },
+      }),
+      ...(dto.categoryIds !== undefined
+        ? [
+            this.prisma.routineCategoryLink.deleteMany({
+              where: { routineId: id },
+            }),
+            ...(dto.categoryIds.length
+              ? [
+                  this.prisma.routineCategoryLink.createMany({
+                    data: dto.categoryIds.map((categoryId) => ({
+                      routineId: id,
+                      categoryId,
+                    })),
+                  }),
+                ]
+              : []),
+          ]
+        : []),
+    ]);
 
     const today = todayInKst();
     const log = await this.prisma.routineLog.findUnique({
       where: { routineId_checkedDate: { routineId: id, checkedDate: today } },
     });
+    const categoryIds =
+      dto.categoryIds !== undefined
+        ? dto.categoryIds
+        : await this.fetchCategoryIds(id);
 
-    return this.toResponse(updated, !!log);
+    return this.toResponse(updated, !!log, categoryIds);
   }
 
   async pause(userId: string, id: string) {
@@ -262,7 +307,8 @@ export class RoutineService {
       }),
     ]);
 
-    return this.toResponse(updated, false);
+    const categoryIds = await this.fetchCategoryIds(id);
+    return this.toResponse(updated, false, categoryIds);
   }
 
   async resume(userId: string, id: string) {
@@ -297,8 +343,9 @@ export class RoutineService {
     const log = await this.prisma.routineLog.findUnique({
       where: { routineId_checkedDate: { routineId: id, checkedDate: today } },
     });
+    const categoryIds = await this.fetchCategoryIds(id);
 
-    return this.toResponse(updated, !!log);
+    return this.toResponse(updated, !!log, categoryIds);
   }
 
   /** 루틴 종료 (soft delete, 체크 기록은 보존) */
@@ -503,6 +550,97 @@ export class RoutineService {
     }));
   }
 
+  async addCategory(
+    userId: string,
+    id: string,
+    dto: CreateRoutineCategoryLinkDto,
+  ) {
+    await this.findOwnRoutine(userId, id);
+    await this.findOwnRoutineCategory(userId, dto.categoryId);
+
+    const existing = await this.prisma.routineCategoryLink.findUnique({
+      where: {
+        routineId_categoryId: { routineId: id, categoryId: dto.categoryId },
+      },
+    });
+    if (existing) {
+      throw new ConflictException(this.t('errors.already_categorized'));
+    }
+
+    const link = await this.prisma.routineCategoryLink.create({
+      data: { routineId: id, categoryId: dto.categoryId },
+      include: { category: { select: { title: true } } },
+    });
+
+    return {
+      id: link.id,
+      routineId: link.routineId,
+      categoryId: link.categoryId,
+      categoryTitle: link.category.title,
+      createdAt: link.createdAt,
+    };
+  }
+
+  async removeCategory(userId: string, id: string, categoryId: string) {
+    await this.findOwnRoutine(userId, id);
+
+    const link = await this.prisma.routineCategoryLink.findUnique({
+      where: { routineId_categoryId: { routineId: id, categoryId } },
+    });
+    if (!link) {
+      throw new NotFoundException(this.t('errors.category_link_not_found'));
+    }
+
+    await this.prisma.routineCategoryLink.delete({ where: { id: link.id } });
+
+    return { message: this.t('success.category_link_removed') };
+  }
+
+  async findCategories(userId: string, id: string) {
+    await this.findOwnRoutine(userId, id);
+
+    const links = await this.prisma.routineCategoryLink.findMany({
+      where: { routineId: id },
+      include: { category: { select: { title: true } } },
+    });
+
+    return links.map((l) => ({
+      id: l.id,
+      routineId: l.routineId,
+      categoryId: l.categoryId,
+      categoryTitle: l.category.title,
+      createdAt: l.createdAt,
+    }));
+  }
+
+  /** 단일 루틴의 연결된 카테고리 ID 목록 조회 */
+  private async fetchCategoryIds(routineId: string): Promise<string[]> {
+    const links = await this.prisma.routineCategoryLink.findMany({
+      where: { routineId },
+      select: { categoryId: true },
+    });
+    return links.map((l) => l.categoryId);
+  }
+
+  /** 여러 루틴의 카테고리 ID 목록을 한 번에 배치 조회 (N+1 방지) */
+  private async batchFetchCategoryIds(
+    routineIds: string[],
+  ): Promise<Map<string, string[]>> {
+    const map = new Map<string, string[]>();
+    if (routineIds.length === 0) return map;
+
+    const links = await this.prisma.routineCategoryLink.findMany({
+      where: { routineId: { in: routineIds } },
+      select: { routineId: true, categoryId: true },
+    });
+    for (const link of links) {
+      const list = map.get(link.routineId) ?? [];
+      list.push(link.categoryId);
+      map.set(link.routineId, list);
+    }
+    return map;
+  }
+
   async findGroupMembers(userId: string, groupId: string) {
     await this.validateGroupMembership(userId, groupId);
 
@@ -523,6 +661,7 @@ export class RoutineService {
       select: { routineId: true },
     });
     const checkedRoutineIds = new Set(todayLogs.map((l) => l.routineId));
+    const categoryIdsByRoutine = await this.batchFetchCategoryIds(routineIds);
 
     const memberMap = new Map<
       string,
@@ -541,7 +680,11 @@ export class RoutineService {
         memberMap.set(owner.id, member);
       }
       member.routines.push(
-        this.toResponse(share.routine, checkedRoutineIds.has(share.routineId)),
+        this.toResponse(
+          share.routine,
+          checkedRoutineIds.has(share.routineId),
+          categoryIdsByRoutine.get(share.routineId) ?? [],
+        ),
       );
     }
 
@@ -567,9 +710,14 @@ export class RoutineService {
       select: { routineId: true },
     });
     const checkedRoutineIds = new Set(todayLogs.map((l) => l.routineId));
+    const categoryIdsByRoutine = await this.batchFetchCategoryIds(routineIds);
 
     return shares.map((s) =>
-      this.toResponse(s.routine, checkedRoutineIds.has(s.routineId)),
+      this.toResponse(
+        s.routine,
+        checkedRoutineIds.has(s.routineId),
+        categoryIdsByRoutine.get(s.routineId) ?? [],
+      ),
     );
   }
 
@@ -633,7 +781,6 @@ export class RoutineService {
     routine: {
       id: string;
       groupId: string | null;
-      categoryId: string | null;
       title: string;
       emoji: string | null;
       color: string | null;
@@ -653,6 +800,7 @@ export class RoutineService {
       updatedAt: Date;
     },
     checkedToday: boolean,
+    categoryIds: string[],
   ) {
     return {
       id: routine.id,
@@ -662,7 +810,7 @@ export class RoutineService {
       memo: routine.memo,
       importance: routine.importance,
       timeFilter: routine.timeFilter,
-      categoryId: routine.categoryId,
+      categoryIds,
       recordType: routine.recordType,
       status: routine.status,
       frequencyType: routine.frequencyType,

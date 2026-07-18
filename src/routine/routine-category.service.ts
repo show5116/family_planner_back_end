@@ -77,10 +77,10 @@ export class RoutineCategoryService {
   async remove(userId: string, id: string) {
     await this.findOwnCategory(userId, id);
 
+    // 소프트 삭제라 DB ON DELETE CASCADE는 발동하지 않으므로(실제 행 삭제가 아님) 조인행을 명시적으로 제거
     await this.prisma.$transaction([
-      this.prisma.routine.updateMany({
+      this.prisma.routineCategoryLink.deleteMany({
         where: { categoryId: id },
-        data: { categoryId: null },
       }),
       this.prisma.routineCategory.update({
         where: { id },

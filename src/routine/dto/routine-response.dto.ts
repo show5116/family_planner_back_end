@@ -35,8 +35,8 @@ export class RoutineDto {
   })
   timeFilter: RoutineTimeFilter | null;
 
-  @ApiProperty({ description: '소속 루틴 카테고리 ID', nullable: true })
-  categoryId: string | null;
+  @ApiProperty({ description: '소속 루틴 카테고리 ID 목록', type: [String] })
+  categoryIds: string[];
 
   @ApiProperty({ description: '기록 방식', enum: RoutineRecordType })
   recordType: RoutineRecordType;
@@ -132,6 +132,23 @@ export class RoutineShareDto {
   groupName: string;
 
   @ApiProperty({ description: '공유 생성일' })
+  createdAt: Date;
+}
+
+export class RoutineCategoryLinkDto {
+  @ApiProperty({ description: '연결 ID' })
+  id: string;
+
+  @ApiProperty({ description: '루틴 ID' })
+  routineId: string;
+
+  @ApiProperty({ description: '카테고리 ID' })
+  categoryId: string;
+
+  @ApiProperty({ description: '카테고리 제목' })
+  categoryTitle: string;
+
+  @ApiProperty({ description: '연결 생성일' })
   createdAt: Date;
 }
 

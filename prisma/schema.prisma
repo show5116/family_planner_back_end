@@ -1660,7 +1660,6 @@ model Routine {
   id            String               @id @default(uuid())
   userId        String
   groupId       String?
-  categoryId    String?
   title         String               @db.VarChar(100)
   emoji         String?              @db.VarChar(10)
   color         String?              @db.VarChar(7)
@@ -1680,19 +1679,18 @@ model Routine {
   updatedAt     DateTime             @updatedAt
   deletedAt     DateTime?
 
-  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group    RoutineGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  category RoutineCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  logs     RoutineLog[]
-  shares   RoutineShare[]
-  badges   UserRoutineBadge[]
-  pauses   RoutinePause[]
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group         RoutineGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  logs          RoutineLog[]
+  shares        RoutineShare[]
+  badges        UserRoutineBadge[]
+  pauses        RoutinePause[]
+  categoryLinks RoutineCategoryLink[]
 
   @@index([userId, status])
   @@index([userId, sortOrder])
   @@index([deletedAt])
   @@index([groupId])
-  @@index([categoryId])
   @@map("routines")
 }
 
@@ -1725,8 +1723,8 @@ model RoutineCategory {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  routines Routine[]
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineLinks RoutineCategoryLink[]
 
   @@index([userId, deletedAt])
   @@map("routine_categories")
@@ -1776,6 +1774,20 @@ model RoutineShare {
   @@unique([routineId, groupId])
   @@index([groupId])
   @@map("routine_shares")
+}
+
+model RoutineCategoryLink {
+  id         String   @id @default(uuid())
+  routineId  String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  routine  Routine         @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  category RoutineCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([routineId, categoryId])
+  @@index([categoryId])
+  @@map("routine_category_links")
 }
 
 enum RoutineFrequencyType {

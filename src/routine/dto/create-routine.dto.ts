@@ -69,7 +69,7 @@ export class CreateRoutineDto {
   })
   @IsOptional()
   @IsEnum(RoutineImportance)
-  importance?: RoutineImportance = RoutineImportance.MEDIUM;
+  importance?: RoutineImportance;
 
   @ApiProperty({
     description: '시간대 분류 (오전/오후/저녁, 알림과는 무관한 분류용)',
@@ -82,12 +82,14 @@ export class CreateRoutineDto {
   timeFilter?: RoutineTimeFilter;
 
   @ApiProperty({
-    description: '소속시킬 루틴 카테고리 ID (없으면 미분류)',
+    description: '초기 연결할 루틴 카테고리 ID 목록 (없으면 미분류)',
     required: false,
+    type: [String],
   })
   @IsOptional()
-  @IsString()
-  categoryId?: string;
+  @IsArray()
+  @IsString({ each: true })
+  categoryIds?: string[];
 
   @ApiProperty({
     description:
@@ -98,7 +100,7 @@ export class CreateRoutineDto {
   })
   @IsOptional()
   @IsEnum(RoutineRecordType)
-  recordType?: RoutineRecordType = RoutineRecordType.BOOLEAN;
+  recordType?: RoutineRecordType;
 
   @ApiProperty({
     description: '반복 타입',
@@ -108,7 +110,7 @@ export class CreateRoutineDto {
   })
   @IsOptional()
   @IsEnum(RoutineFrequencyType)
-  frequencyType?: RoutineFrequencyType = RoutineFrequencyType.WEEKLY;
+  frequencyType?: RoutineFrequencyType;
 
   @ApiProperty({
     description:

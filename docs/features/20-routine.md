@@ -24,7 +24,7 @@
 - **타임존**: "오늘"/"이번 주"/"이번 달" 계산은 항상 KST(Asia/Seoul) 기준(`src/common/utils/date-kst.util.ts`의 `todayInKst()`). 서버가 UTC로 실행되므로 `new Date()`의 UTC getter를 직접 쓰지 말고 반드시 이 함수를 통해 "오늘 날짜"를 구할 것.
 - **기록 타입(고정)**: 루틴 생성 시 `recordType`을 하나로 고정(체크마다 바꿀 수 없음). `BOOLEAN`(단순 체크, 기본값) / `TEXT`(텍스트) / `TIME`(시각 "HH:mm") / `NUMERIC`(수치). 체크 시 `recordType`과 일치하는 값 필드만 허용.
 - **상태(ACTIVE/PAUSED/ENDED)**: `isActive` 불리언 대신 `status` enum으로 통합. `PAUSED`/`ENDED` 상태의 루틴은 체크 불가(400). `ENDED`는 기존 soft delete(`deletedAt`)와 동일 — 데이터는 보존되고 목록에서만 제외. `PAUSED` 기간은 `RoutinePause` 이력 테이블에 별도 기록되며, 스트릭 계산에서 "결석"이 아니라 통째로 건너뛰는 구간으로 취급(재개 후에도 스트릭이 끊기지 않음).
-- **카테고리(개인 커스텀)**: 사용자가 직접 만드는 태그(`RoutineCategory`, 예: "규칙적인 삶", "운동", "건강"). `RoutineGroup`과 동일한 개인 소유/soft delete 패턴이며, 가족 그룹 공유와는 무관.
+- **카테고리(개인 커스텀, 다중 선택)**: 사용자가 직접 만드는 태그(`RoutineCategory`, 예: "규칙적인 삶", "운동", "건강"). 카테고리 자체는 `RoutineGroup`과 동일한 개인 소유/soft delete 패턴이지만, 루틴과의 연결은 `RoutineShare`(루틴↔가족그룹)와 동일한 N:M 조인 테이블(`RoutineCategoryLink`) 방식 — 한 루틴에 여러 카테고리를 자유롭게 태그처럼 붙일 수 있음. 가족 그룹 공유와는 무관.
 - **그룹 공유(N:M)**: 하나의 루틴을 여러 그룹에 동시 공유 가능. 공유된 그룹의 멤버는 서로의 루틴과 달성 현황을 조회 가능(수정 권한 공유는 없음, 체크는 본인만).
 - **삭제 정책**: 루틴 종료(soft delete) 시 `RoutineLog`는 보존(통계/이력 보존 목적).
 - **배지**: 체크 직후 동기적으로 판정(스트릭/누적 체크 기준). 한 번 획득한 배지는 체크 취소로도 회수되지 않음. `MONTHLY` 루틴은 월-스트릭이 `STREAK_WEEKS` 배지 기준 슬롯에 매핑됨(주 개념이 없으므로).
@@ -36,10 +36,10 @@
 ## 주요 기능
 
 ### 루틴 등록/관리
-- 제목, 이모지, 색상, 메모(`memo`), 중요도(`importance`: LOW/MEDIUM/HIGH), 시간대 분류(`timeFilter`: MORNING/AFTERNOON/EVENING, 분류용 — 알림 시각과는 무관), 카테고리(`categoryId`), 기록 타입(`recordType`), 반복 타입(`frequencyType`/`weeklyMode`/`targetCount`/`targetDays`), 시작일/종료일
+- 제목, 이모지, 색상, 메모(`memo`), 중요도(`importance`: LOW/MEDIUM/HIGH), 시간대 분류(`timeFilter`: MORNING/AFTERNOON/EVENING, 분류용 — 알림 시각과는 무관), 카테고리(`categoryIds`, 생성 시 초기 연결용 배열), 기록 타입(`recordType`), 반복 타입(`frequencyType`/`weeklyMode`/`targetCount`/`targetDays`), 시작일/종료일
 - 목록 조회 시 정렬 순서(`sortOrder`) 및 오늘 체크 여부(`checkedToday`) 포함
 - 순서 일괄 변경 (`PATCH /routines/sort-order`)
-- `GET /routines`는 `status`/`routineGroupId`/`categoryId` 쿼리로 필터링 가능
+- `GET /routines`는 `status`/`routineGroupId`/`categoryId`(카테고리 하나를 기준으로 필터, 여러 카테고리 중 하나만 있어도 매칭) 쿼리로 필터링 가능
 
 ### 상태 관리 (일시정지/종료)
 - `PATCH /routines/:id/pause`: 일시정지. `RoutinePause{routineId, pausedFrom}` 이력 생성 + `status: PAUSED`. 이미 일시정지 중이면 409, 종료된 루틴이면 400
@@ -56,8 +56,10 @@
 
 ### 루틴 카테고리
 - 사용자가 직접 만드는 개인 커스텀 태그(`RoutineCategory`). CRUD + 순서 일괄 변경 (`/routines/categories/*`)
-- 루틴 생성/수정 시 `categoryId`로 소속 지정/변경 가능, 수정 시 `null` 전달로 해제 가능
-- 카테고리 삭제는 soft delete, 소속 루틴은 `categoryId`만 `null`로 해제되고 유지(가족 그룹 공유 `Category`와 무관한 순수 개인 소유 태그)
+- 루틴과 카테고리는 N:M(`RoutineCategoryLink` 조인 테이블, `RoutineShare`와 동일 패턴) — 한 루틴에 여러 카테고리를 동시에 붙일 수 있음
+- 루틴별 카테고리 연결 관리는 전용 엔드포인트로: `POST /routines/:id/categories`(연결 추가), `DELETE /routines/:id/categories/:categoryId`(연결 해제), `GET /routines/:id/categories`(연결 목록 조회)
+- 루틴 생성 시 `categoryIds` 배열로 초기 연결 가능. 수정 시 `categoryIds` 배열을 전달하면 전체 교체(빈 배열 `[]` 전달 시 전체 해제), 미전달 시 기존 연결 유지 — 개별 추가/삭제는 위 전용 엔드포인트로 하고, 전체를 한 번에 바꾸고 싶을 때만 `categoryIds`를 사용
+- 카테고리 삭제(soft delete)는 해당 카테고리의 조인 행만 제거 — 여러 카테고리가 달린 루틴은 삭제된 카테고리만 빠지고 나머지 카테고리는 그대로 유지(가족 그룹 공유 `Category`와 무관한 순수 개인 소유 태그)
 
 ### 그룹 공유
 - 루틴 소유자가 자신이 속한 그룹에 공유 추가/해제 (`RoutineShare`, N:M)
@@ -111,7 +113,6 @@ model Routine {
   id            String               @id @default(uuid())
   userId        String
   groupId       String?
-  categoryId    String?
   title         String               @db.VarChar(100)
   emoji         String?              @db.VarChar(10)
   color         String?              @db.VarChar(7)
@@ -131,19 +132,18 @@ model Routine {
   updatedAt     DateTime             @updatedAt
   deletedAt     DateTime?
 
-  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group    RoutineGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  category RoutineCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  logs     RoutineLog[]
-  shares   RoutineShare[]
-  badges   UserRoutineBadge[]
-  pauses   RoutinePause[]
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group         RoutineGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  logs          RoutineLog[]
+  shares        RoutineShare[]
+  badges        UserRoutineBadge[]
+  pauses        RoutinePause[]
+  categoryLinks RoutineCategoryLink[]
 
   @@index([userId, status])
   @@index([userId, sortOrder])
   @@index([deletedAt])
   @@index([groupId])
-  @@index([categoryId])
   @@map("routines")
 }
 
@@ -158,11 +158,26 @@ model RoutineCategory {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  routines Routine[]
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineLinks RoutineCategoryLink[]
 
   @@index([userId, deletedAt])
   @@map("routine_categories")
+}
+
+// 루틴 ↔ 카테고리 (N:M, RoutineShare와 동일한 조인 테이블 패턴)
+model RoutineCategoryLink {
+  id         String   @id @default(uuid())
+  routineId  String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  routine  Routine         @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  category RoutineCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([routineId, categoryId])
+  @@index([categoryId])
+  @@map("routine_category_links")
 }
 
 // 일시정지 이력 (재일시정지 가능하므로 단일 컬럼이 아닌 이력 테이블)
@@ -349,7 +364,8 @@ model RoutineGroup {
 - [x] 반복 주기 재설계 — `DAILY`/`WEEKLY`(COUNT_ONLY/FIXED_DAYS)/`MONTHLY` 전 종류 실제 구현 및 스트릭/달성률 연동
 - [x] 기록 타입 (`BOOLEAN`/`TEXT`/`TIME`/`NUMERIC`) — 루틴 생성 시 고정, 체크 시 타입별 값 검증
 - [x] 상태 관리 (`ACTIVE`/`PAUSED`/`ENDED`) — 일시정지 이력(`RoutinePause`) 기반 스트릭 유지
-- [x] 루틴 카테고리 (`RoutineCategory`) — 개인 커스텀 태그, CRUD + 소속 지정/해제
+- [x] 루틴 카테고리 (`RoutineCategory`) — 개인 커스텀 태그, CRUD
+- [x] 루틴-카테고리 N:M 연결 (`RoutineCategoryLink`) — 한 루틴에 여러 카테고리 태그, 추가/해제/전체교체 지원
 - [x] 중요도/메모/시간대 분류 필드 추가
 
 ### ⬜ 향후 고려
@@ -417,6 +433,14 @@ model RoutineGroup {
 | GET    | `/routines/groups/:groupId/members/:userId` | 특정 그룹원 공유 루틴 상세 | JWT, Member |
 | GET    | `/routines/groups/:groupId/leaderboard?period=&metric=` | 그룹 랭킹보드 | JWT, Member |
 
+### 루틴-카테고리 연결
+
+| Method | Endpoint                                | 설명                       | 권한       |
+| ------ | ---------------------------------------- | -------------------------- | ---------- |
+| POST   | `/routines/:id/categories`               | 카테고리 연결 추가         | JWT, Owner |
+| DELETE | `/routines/:id/categories/:categoryId`   | 카테고리 연결 해제         | JWT, Owner |
+| GET    | `/routines/:id/categories`               | 연결된 카테고리 목록       | JWT, Owner |
+
 ### 통계
 
 | Method | Endpoint                             | 설명                              | 권한        |
@@ -441,11 +465,12 @@ model RoutineGroup {
 ```
 src/routine/
   dto/
-    create-routine.dto.ts             — memo/importance/timeFilter/categoryId/recordType/frequencyType/weeklyMode/targetCount/targetDays 등 전체 필드
-    update-routine.dto.ts             — routineGroupId?/categoryId?: string | null (해제용 오버라이드), isActive 제거(status는 pause/resume/end 전용 엔드포인트로만 전환)
+    create-routine.dto.ts             — memo/importance/timeFilter/categoryIds/recordType/frequencyType/weeklyMode/targetCount/targetDays 등 전체 필드
+    update-routine.dto.ts             — routineGroupId?: string | null (해제용 오버라이드), categoryIds?: string[] (전체 교체용), isActive 제거(status는 pause/resume/end 전용 엔드포인트로만 전환)
     routine-query.dto.ts              — status/routineGroupId/categoryId 필터
     check-routine.dto.ts              — textValue/numericValue/timeValue (recordType별 값)
     create-routine-share.dto.ts
+    create-routine-category-link.dto.ts — { categoryId } (루틴-카테고리 개별 연결용)
     reorder-routine.dto.ts
     create-routine-group.dto.ts
     update-routine-group.dto.ts
@@ -457,7 +482,7 @@ src/routine/
     routine-leaderboard-query.dto.ts  — LeaderboardQueryDto
     routine-leaderboard-response.dto.ts — LeaderboardResponseDto, LeaderboardEntryDto
     routine-badge-response.dto.ts    — RoutineBadgeDto, UserRoutineBadgeDto
-    routine-response.dto.ts          — RoutineDto(+memo/importance/timeFilter/categoryId/recordType/status/weeklyMode/targetDays), RoutineLogDto(+textValue/numericValue/timeValue), RoutineShareDto, RoutineMemberSummaryDto
+    routine-response.dto.ts          — RoutineDto(+memo/importance/timeFilter/categoryIds/recordType/status/weeklyMode/targetDays), RoutineLogDto(+textValue/numericValue/timeValue), RoutineShareDto, RoutineCategoryLinkDto, RoutineMemberSummaryDto
     routine-group-response.dto.ts    — RoutineGroupDto(+todayProgress), RoutineGroupDetailDto(+routines)
     routine-category-response.dto.ts — RoutineCategoryDto, RoutineCategoryDetailDto(+routines)
     routine-stats-response.dto.ts    — HeatmapResponseDto, StreakResponseDto, RateResponseDto, RoutineSummaryDto
@@ -466,9 +491,9 @@ src/routine/
   utils/
     routine-stats.util.ts            — 주/월 단위 스트릭·달성률 순수 함수, 일시정지 구간 인지 day-streak, FIXED_DAYS 스케줄 판정
   routine.controller.ts
-  routine.service.ts                 — CRUD, pause/resume/end, 체크/체크취소(배지 판정 연동, 기록타입 검증), 공유 관리
+  routine.service.ts                 — CRUD, pause/resume/end, 체크/체크취소(배지 판정 연동, 기록타입 검증), 그룹 공유 관리, 카테고리 연결 관리(addCategory/removeCategory/findCategories)
   routine-group.service.ts           — 루틴 그룹 CRUD, 오늘 진행률 계산
-  routine-category.service.ts        — 루틴 카테고리 CRUD (개인 커스텀 태그)
+  routine-category.service.ts        — 루틴 카테고리 CRUD (개인 커스텀 태그, 루틴과의 연결 자체는 routine.service.ts가 담당)
   routine-stats.service.ts           — 히트맵/스트릭/달성률/요약 (frequencyType별 분기, 일시정지 구간 반영)
   routine-badge.service.ts           — 배지 카탈로그 조회, evaluateAndAward() (frequencyType별 스트릭 분기)
   routine-leaderboard.service.ts     — 그룹 랭킹보드 집계
@@ -479,4 +504,4 @@ src/common/utils/
   date-kst.util.ts                   — todayInKst(), thisMonthStartInKst(), parseDateOnly() (KST 기준 날짜 계산, 프로젝트 공용)
 ```
 
-**Last Updated**: 2026-07-16
+**Last Updated**: 2026-07-18
