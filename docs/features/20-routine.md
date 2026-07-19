@@ -37,9 +37,10 @@
 
 ### 루틴 등록/관리
 - 제목, 이모지, 색상, 메모(`memo`), 중요도(`importance`: LOW/MEDIUM/HIGH), 시간대 분류(`timeFilter`: MORNING/AFTERNOON/EVENING, 분류용 — 알림 시각과는 무관), 카테고리(`categoryIds`, 생성 시 초기 연결용 배열), 기록 타입(`recordType`), 반복 타입(`frequencyType`/`weeklyMode`/`targetCount`/`targetDays`), 시작일/종료일
-- 목록 조회 시 정렬 순서(`sortOrder`) 및 오늘 체크 여부(`checkedToday`) 포함
+- 목록 조회 시 정렬 순서(`sortOrder`) 및 체크 여부(`checkedToday`) + 실제 기록값(`checkedLog`) 포함
 - 순서 일괄 변경 (`PATCH /routines/sort-order`)
-- `GET /routines`는 `status`/`routineGroupId`/`categoryId`(카테고리 하나를 기준으로 필터, 여러 카테고리 중 하나만 있어도 매칭) 쿼리로 필터링 가능
+- `GET /routines`는 `status`/`routineGroupId`/`categoryId`(카테고리 하나를 기준으로 필터, 여러 카테고리 중 하나만 있어도 매칭)/`date`(YYYY-MM-DD, 미지정 시 오늘 — `checkedToday`/`checkedLog`의 조회 기준일) 쿼리로 필터링 가능
+- `checkedLog`는 조회 기준일에 체크한 기록의 실제 값(`note`/`textValue`/`numericValue`/`timeValue`)을 담은 객체 — 미체크 시 `null`, BOOLEAN 루틴은 체크했어도 값 필드가 전부 `null`인 객체. "체크했다"는 사실뿐 아니라 몇 시에/몇 개를 기록했는지까지 목록에서 바로 확인 가능
 
 ### 상태 관리 (일시정지/종료)
 - `PATCH /routines/:id/pause`: 일시정지. `RoutinePause{routineId, pausedFrom}` 이력 생성 + `status: PAUSED`. 이미 일시정지 중이면 409, 종료된 루틴이면 400
@@ -383,7 +384,7 @@ model RoutineGroup {
 | Method | Endpoint               | 설명                          | 권한       |
 | ------ | ---------------------- | ----------------------------- | ---------- |
 | POST   | `/routines`             | 루틴 생성                     | JWT        |
-| GET    | `/routines`             | 내 루틴 목록 (status/routineGroupId/categoryId 필터) | JWT |
+| GET    | `/routines`             | 내 루틴 목록 (status/routineGroupId/categoryId/date 필터, checkedLog 포함) | JWT |
 | GET    | `/routines/:id`         | 루틴 상세 (본인 또는 공유 그룹원) | JWT     |
 | PATCH  | `/routines/:id`         | 루틴 수정                     | JWT, Owner |
 | DELETE | `/routines/:id`         | 루틴 종료 (soft delete)       | JWT, Owner |
@@ -467,7 +468,7 @@ src/routine/
   dto/
     create-routine.dto.ts             — memo/importance/timeFilter/categoryIds/recordType/frequencyType/weeklyMode/targetCount/targetDays 등 전체 필드
     update-routine.dto.ts             — routineGroupId?: string | null (해제용 오버라이드), categoryIds?: string[] (전체 교체용), isActive 제거(status는 pause/resume/end 전용 엔드포인트로만 전환)
-    routine-query.dto.ts              — status/routineGroupId/categoryId 필터
+    routine-query.dto.ts              — status/routineGroupId/categoryId/date 필터
     check-routine.dto.ts              — textValue/numericValue/timeValue (recordType별 값)
     create-routine-share.dto.ts
     create-routine-category-link.dto.ts — { categoryId } (루틴-카테고리 개별 연결용)
@@ -482,7 +483,7 @@ src/routine/
     routine-leaderboard-query.dto.ts  — LeaderboardQueryDto
     routine-leaderboard-response.dto.ts — LeaderboardResponseDto, LeaderboardEntryDto
     routine-badge-response.dto.ts    — RoutineBadgeDto, UserRoutineBadgeDto
-    routine-response.dto.ts          — RoutineDto(+memo/importance/timeFilter/categoryIds/recordType/status/weeklyMode/targetDays), RoutineLogDto(+textValue/numericValue/timeValue), RoutineShareDto, RoutineCategoryLinkDto, RoutineMemberSummaryDto
+    routine-response.dto.ts          — RoutineDto(+memo/importance/timeFilter/categoryIds/recordType/status/weeklyMode/targetDays/checkedLog), RoutineCheckedLogDto(조회 기준일 기록값), RoutineLogDto(+textValue/numericValue/timeValue), RoutineShareDto, RoutineCategoryLinkDto, RoutineMemberSummaryDto
     routine-group-response.dto.ts    — RoutineGroupDto(+todayProgress), RoutineGroupDetailDto(+routines)
     routine-category-response.dto.ts — RoutineCategoryDto, RoutineCategoryDetailDto(+routines)
     routine-stats-response.dto.ts    — HeatmapResponseDto, StreakResponseDto, RateResponseDto, RoutineSummaryDto
@@ -504,4 +505,4 @@ src/common/utils/
   date-kst.util.ts                   — todayInKst(), thisMonthStartInKst(), parseDateOnly() (KST 기준 날짜 계산, 프로젝트 공용)
 ```
 
-**Last Updated**: 2026-07-18
+**Last Updated**: 2026-07-20

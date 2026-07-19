@@ -7716,7 +7716,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
-  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -7734,6 +7740,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 - `status` (`RoutineStatus`) (Optional): 상태 필터 (ACTIVE/PAUSED만 의미 있음, ENDED는 항상 목록에서 제외됨)
 - `routineGroupId` (`string`) (Optional): 특정 루틴 그룹 소속만 조회
 - `categoryId` (`string`) (Optional): 특정 루틴 카테고리 소속만 조회
+- `date` (`string`) (Optional): 체크 여부/기록값 조회 기준 날짜 (YYYY-MM-DD, 미지정 시 오늘)
 
 **Responses:**
 
@@ -7758,7 +7765,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
-  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -7939,7 +7952,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
-      "checkedToday": false, // 오늘 체크 여부 (boolean)
+      "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+      "checkedLog": {
+        "note": null,
+        "textValue": null,
+        "numericValue": null,
+        "timeValue": null
+      }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
       "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
       "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -8148,7 +8167,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
-      "checkedToday": false, // 오늘 체크 여부 (boolean)
+      "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+      "checkedLog": {
+        "note": null,
+        "textValue": null,
+        "numericValue": null,
+        "timeValue": null
+      }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
       "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
       "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -8291,7 +8316,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
-      "checkedToday": false, // 오늘 체크 여부 (boolean)
+      "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+      "checkedLog": {
+        "note": null,
+        "textValue": null,
+        "numericValue": null,
+        "timeValue": null
+      }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
       "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
       "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
       "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -8374,7 +8405,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
-  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -8425,7 +8462,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
-  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -8465,7 +8508,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
-  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -8518,7 +8567,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
-  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -8586,7 +8641,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
-  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
@@ -8630,7 +8691,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
-  "checkedToday": false, // 오늘 체크 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
   "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)

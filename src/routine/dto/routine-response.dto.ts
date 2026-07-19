@@ -9,6 +9,20 @@ import {
 } from '@/routine/enums';
 import { UserRoutineBadgeDto } from './routine-badge-response.dto';
 
+export class RoutineCheckedLogDto {
+  @ApiProperty({ description: '메모', nullable: true })
+  note: string | null;
+
+  @ApiProperty({ description: '텍스트 기록 값', nullable: true })
+  textValue: string | null;
+
+  @ApiProperty({ description: '수치 기록 값', nullable: true })
+  numericValue: number | null;
+
+  @ApiProperty({ description: '시각 기록 값 (HH:mm)', nullable: true })
+  timeValue: string | null;
+}
+
 export class RoutineDto {
   @ApiProperty({ description: '루틴 ID', example: 'uuid-1234' })
   id: string;
@@ -73,8 +87,18 @@ export class RoutineDto {
   @ApiProperty({ description: '정렬 순서' })
   sortOrder: number;
 
-  @ApiProperty({ description: '오늘 체크 여부' })
+  @ApiProperty({
+    description: '조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부',
+  })
   checkedToday: boolean;
+
+  @ApiProperty({
+    description:
+      '조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체)',
+    type: RoutineCheckedLogDto,
+    nullable: true,
+  })
+  checkedLog: RoutineCheckedLogDto | null;
 
   @ApiProperty({ description: '소속 루틴 그룹 ID', nullable: true })
   routineGroupId: string | null;

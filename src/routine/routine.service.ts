@@ -142,7 +142,7 @@ export class RoutineService {
       },
     });
 
-    return this.toResponse(routine, false, dto.categoryIds ?? []);
+    return this.toResponse(routine, null, dto.categoryIds ?? []);
   }
 
   async findAll(userId: string, query: RoutineQueryDto) {
@@ -163,15 +163,14 @@ export class RoutineService {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    const today = todayInKst();
-    const todayLogs = await this.prisma.routineLog.findMany({
+    const targetDate = query.date ? parseDateOnly(query.date) : todayInKst();
+    const logs = await this.prisma.routineLog.findMany({
       where: {
         routineId: { in: routines.map((r) => r.id) },
-        checkedDate: today,
+        checkedDate: targetDate,
       },
-      select: { routineId: true },
     });
-    const checkedRoutineIds = new Set(todayLogs.map((l) => l.routineId));
+    const logsByRoutine = new Map(logs.map((l) => [l.routineId, l]));
     const categoryIdsByRoutine = await this.batchFetchCategoryIds(
       routines.map((r) => r.id),
     );
@@ -179,7 +178,7 @@ export class RoutineService {
     return routines.map((r) =>
       this.toResponse(
         r,
-        checkedRoutineIds.has(r.id),
+        logsByRoutine.get(r.id) ?? null,
         categoryIdsByRoutine.get(r.id) ?? [],
       ),
     );
@@ -193,7 +192,7 @@ export class RoutineService {
     });
     const categoryIds = await this.fetchCategoryIds(id);
 
-    return this.toResponse(routine, !!log, categoryIds);
+    return this.toResponse(routine, log, categoryIds);
   }
 
   async update(userId: string, id: string, dto: UpdateRoutineDto) {
@@ -283,7 +282,7 @@ export class RoutineService {
         ? dto.categoryIds
         : await this.fetchCategoryIds(id);
 
-    return this.toResponse(updated, !!log, categoryIds);
+    return this.toResponse(updated, log, categoryIds);
   }
 
   async pause(userId: string, id: string) {
@@ -308,7 +307,7 @@ export class RoutineService {
     ]);
 
     const categoryIds = await this.fetchCategoryIds(id);
-    return this.toResponse(updated, false, categoryIds);
+    return this.toResponse(updated, null, categoryIds);
   }
 
   async resume(userId: string, id: string) {
@@ -345,7 +344,7 @@ export class RoutineService {
     });
     const categoryIds = await this.fetchCategoryIds(id);
 
-    return this.toResponse(updated, !!log, categoryIds);
+    return this.toResponse(updated, log, categoryIds);
   }
 
   /** 루틴 종료 (soft delete, 체크 기록은 보존) */
@@ -658,9 +657,8 @@ export class RoutineService {
     const today = todayInKst();
     const todayLogs = await this.prisma.routineLog.findMany({
       where: { routineId: { in: routineIds }, checkedDate: today },
-      select: { routineId: true },
     });
-    const checkedRoutineIds = new Set(todayLogs.map((l) => l.routineId));
+    const logsByRoutine = new Map(todayLogs.map((l) => [l.routineId, l]));
     const categoryIdsByRoutine = await this.batchFetchCategoryIds(routineIds);
 
     const memberMap = new Map<
@@ -682,7 +680,7 @@ export class RoutineService {
       member.routines.push(
         this.toResponse(
           share.routine,
-          checkedRoutineIds.has(share.routineId),
+          logsByRoutine.get(share.routineId) ?? null,
           categoryIdsByRoutine.get(share.routineId) ?? [],
         ),
       );
@@ -707,15 +705,14 @@ export class RoutineService {
     const today = todayInKst();
     const todayLogs = await this.prisma.routineLog.findMany({
       where: { routineId: { in: routineIds }, checkedDate: today },
-      select: { routineId: true },
     });
-    const checkedRoutineIds = new Set(todayLogs.map((l) => l.routineId));
+    const logsByRoutine = new Map(todayLogs.map((l) => [l.routineId, l]));
     const categoryIdsByRoutine = await this.batchFetchCategoryIds(routineIds);
 
     return shares.map((s) =>
       this.toResponse(
         s.routine,
-        checkedRoutineIds.has(s.routineId),
+        logsByRoutine.get(s.routineId) ?? null,
         categoryIdsByRoutine.get(s.routineId) ?? [],
       ),
     );
@@ -799,7 +796,12 @@ export class RoutineService {
       createdAt: Date;
       updatedAt: Date;
     },
-    checkedToday: boolean,
+    checkedLog: {
+      note: string | null;
+      textValue: string | null;
+      numericValue: Prisma.Decimal | null;
+      timeValue: string | null;
+    } | null,
     categoryIds: string[],
   ) {
     return {
@@ -820,7 +822,17 @@ export class RoutineService {
       startDate: routine.startDate,
       endDate: routine.endDate,
       sortOrder: routine.sortOrder,
-      checkedToday,
+      checkedToday: !!checkedLog,
+      checkedLog: checkedLog
+        ? {
+            note: checkedLog.note,
+            textValue: checkedLog.textValue,
+            numericValue: checkedLog.numericValue
+              ? Number(checkedLog.numericValue)
+              : null,
+            timeValue: checkedLog.timeValue,
+          }
+        : null,
       routineGroupId: routine.groupId,
       createdAt: routine.createdAt,
       updatedAt: routine.updatedAt,

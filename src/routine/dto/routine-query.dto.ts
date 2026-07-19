@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
 import { RoutineStatus } from '@/routine/enums';
 
 export class RoutineQueryDto {
@@ -25,4 +25,12 @@ export class RoutineQueryDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @ApiProperty({
+    description: '체크 여부/기록값 조회 기준 날짜 (YYYY-MM-DD, 미지정 시 오늘)',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString()
+  date?: string;
 }
