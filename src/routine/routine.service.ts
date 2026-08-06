@@ -117,10 +117,16 @@ export class RoutineService {
       }
     }
 
+    const sortOrder = await this.getNextRoutineSortOrder(
+      userId,
+      dto.routineGroupId,
+    );
+
     const routine = await this.prisma.routine.create({
       data: {
         userId,
         groupId: dto.routineGroupId,
+        sortOrder,
         title: dto.title,
         emoji: dto.emoji,
         color: dto.color,
@@ -772,6 +778,22 @@ export class RoutineService {
     if (!member) {
       throw new ForbiddenException(this.t('errors.no_group_access'));
     }
+  }
+
+  /** 같은 스코프(routineGroupId 소속 여부) 내 현재 최댓값+1을 신규 루틴의 정렬 순서로 반환 */
+  private async getNextRoutineSortOrder(
+    userId: string,
+    routineGroupId?: string,
+  ): Promise<number> {
+    const result = await this.prisma.routine.aggregate({
+      where: {
+        userId,
+        deletedAt: null,
+        groupId: routineGroupId ?? null,
+      },
+      _max: { sortOrder: true },
+    });
+    return (result._max.sortOrder ?? -1) + 1;
   }
 
   private toResponse(

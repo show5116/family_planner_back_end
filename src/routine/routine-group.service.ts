@@ -30,12 +30,15 @@ export class RoutineGroupService {
   }
 
   async create(userId: string, dto: CreateRoutineGroupDto) {
+    const sortOrder = await this.getNextSortOrder(userId);
+
     const group = await this.prisma.routineGroup.create({
       data: {
         userId,
         title: dto.title,
         emoji: dto.emoji,
         color: dto.color,
+        sortOrder,
       },
     });
 
@@ -125,6 +128,15 @@ export class RoutineGroupService {
     );
 
     return this.findAll(userId);
+  }
+
+  /** 사용자 소유 그룹 중 현재 최댓값+1을 신규 그룹의 정렬 순서로 반환 */
+  private async getNextSortOrder(userId: string): Promise<number> {
+    const result = await this.prisma.routineGroup.aggregate({
+      where: { userId, deletedAt: null },
+      _max: { sortOrder: true },
+    });
+    return (result._max.sortOrder ?? -1) + 1;
   }
 
   private async findOwnGroup(userId: string, id: string) {

@@ -28,12 +28,15 @@ export class RoutineCategoryService {
   }
 
   async create(userId: string, dto: CreateRoutineCategoryDto) {
+    const sortOrder = await this.getNextSortOrder(userId);
+
     const category = await this.prisma.routineCategory.create({
       data: {
         userId,
         title: dto.title,
         emoji: dto.emoji,
         color: dto.color,
+        sortOrder,
       },
     });
 
@@ -106,6 +109,15 @@ export class RoutineCategoryService {
 
   private async findOwnCategory(userId: string, id: string) {
     return this.routineService.findOwnRoutineCategory(userId, id);
+  }
+
+  /** 사용자 소유 카테고리 중 현재 최댓값+1을 신규 카테고리의 정렬 순서로 반환 */
+  private async getNextSortOrder(userId: string): Promise<number> {
+    const result = await this.prisma.routineCategory.aggregate({
+      where: { userId, deletedAt: null },
+      _max: { sortOrder: true },
+    });
+    return (result._max.sortOrder ?? -1) + 1;
   }
 
   private toResponse(category: {
