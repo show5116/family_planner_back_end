@@ -109,3 +109,48 @@ export class RoutineSummaryDto {
   })
   routines: RoutineSummaryItemDto[];
 }
+
+export class OverviewHeatmapDayDto {
+  @ApiProperty({ description: '날짜 (YYYY-MM-DD)' })
+  date: string;
+
+  @ApiProperty({ description: '해당 날짜에 체크된 루틴 수' })
+  checkedCount: number;
+
+  @ApiProperty({
+    description: '해당 날짜에 활성 상태였던(일시정지 제외) 루틴 수',
+  })
+  totalCount: number;
+}
+
+export class RoutineOverviewDto {
+  @ApiProperty({ description: '기간 단위' })
+  period: string;
+
+  @ApiProperty({ description: '조회 시작일' })
+  from: string;
+
+  @ApiProperty({ description: '조회 종료일' })
+  to: string;
+
+  @ApiProperty({ description: '집계 대상 루틴 수 (ACTIVE + PAUSED)' })
+  totalRoutines: number;
+
+  @ApiProperty({ description: '기간 내 실제 체크 횟수 합계 (전체 루틴)' })
+  totalChecked: number;
+
+  @ApiProperty({ description: '기간 내 기대 체크 횟수 합계 (전체 루틴)' })
+  totalExpected: number;
+
+  @ApiProperty({
+    description: '달성률 (%), totalChecked / totalExpected',
+    example: 81.4,
+  })
+  achievementRate: number;
+
+  @ApiProperty({
+    description: '날짜별 체크 현황 히트맵 (period와 동일한 기간)',
+    type: [OverviewHeatmapDayDto],
+  })
+  heatmap: OverviewHeatmapDayDto[];
+}

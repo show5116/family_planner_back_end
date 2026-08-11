@@ -19,7 +19,7 @@ export interface DateRange {
   to: Date;
 }
 
-function isExcluded(date: Date, excludedRanges: DateRange[]): boolean {
+export function isExcluded(date: Date, excludedRanges: DateRange[]): boolean {
   const t = toDateOnly(date).getTime();
   return excludedRanges.some(
     (r) => t >= toDateOnly(r.from).getTime() && t < toDateOnly(r.to).getTime(),
@@ -69,6 +69,46 @@ export function listWeekStarts(from: Date, to: Date): Date[] {
     cursor = new Date(cursor.getTime() + 7 * MS_PER_DAY);
   }
   return weeks;
+}
+
+/** [from, to] 사이 모든 날짜(하루 단위)를 오름차순으로 반환. from > to면 빈 배열. */
+export function listDays(from: Date, to: Date): Date[] {
+  const days: Date[] = [];
+  const fromOnly = toDateOnly(from);
+  const toOnly = toDateOnly(to);
+  for (
+    let cursor = fromOnly;
+    cursor.getTime() <= toOnly.getTime();
+    cursor = new Date(cursor.getTime() + MS_PER_DAY)
+  ) {
+    days.push(cursor);
+  }
+  return days;
+}
+
+export interface RoutineActiveWindow {
+  startDate: Date;
+  endDate: Date | null;
+}
+
+/**
+ * 해당 캘린더 날짜에 루틴이 "활성 상태"인지 판단.
+ * - date가 startDate 이전이거나 endDate(있다면) 이후면 false (아직 시작 전 / 이미 종료 후)
+ * - excludedRanges(RoutinePause 이력)에 포함된 날짜(일시정지 중)면 false
+ */
+export function isRoutineActiveOnDate(
+  routine: RoutineActiveWindow,
+  date: Date,
+  excludedRanges: DateRange[],
+): boolean {
+  const d = toDateOnly(date).getTime();
+  const start = toDateOnly(routine.startDate).getTime();
+  if (d < start) return false;
+  if (routine.endDate !== null) {
+    const end = toDateOnly(routine.endDate).getTime();
+    if (d > end) return false;
+  }
+  return !isExcluded(date, excludedRanges);
 }
 
 /** 해당 주(월~일)가 통째로 제외 구간에 포함되는지 확인 */

@@ -48,3 +48,18 @@ export class RateQueryDto {
   @IsDateString()
   to?: string;
 }
+
+export enum OverviewPeriod {
+  WEEK = 'week',
+  MONTH = 'month',
+}
+
+export class OverviewQueryDto {
+  @ApiProperty({
+    description: '기간 단위',
+    enum: OverviewPeriod,
+    default: OverviewPeriod.WEEK,
+  })
+  @IsEnum(OverviewPeriod)
+  period: OverviewPeriod = OverviewPeriod.WEEK;
+}

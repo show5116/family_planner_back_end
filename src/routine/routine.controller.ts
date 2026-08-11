@@ -30,7 +30,11 @@ import { ReorderRoutineGroupDto } from './dto/reorder-routine-group.dto';
 import { CreateRoutineCategoryDto } from './dto/create-routine-category.dto';
 import { UpdateRoutineCategoryDto } from './dto/update-routine-category.dto';
 import { ReorderRoutineCategoryDto } from './dto/reorder-routine-category.dto';
-import { HeatmapQueryDto, RateQueryDto } from './dto/routine-stats-query.dto';
+import {
+  HeatmapQueryDto,
+  RateQueryDto,
+  OverviewQueryDto,
+} from './dto/routine-stats-query.dto';
 import { LeaderboardQueryDto } from './dto/routine-leaderboard-query.dto';
 import {
   RoutineDto,
@@ -52,6 +56,7 @@ import {
   StreakResponseDto,
   RateResponseDto,
   RoutineSummaryDto,
+  RoutineOverviewDto,
 } from './dto/routine-stats-response.dto';
 import {
   RoutineBadgeDto,
@@ -102,6 +107,15 @@ export class RoutineController {
   @ApiSuccess(RoutineSummaryDto, '루틴 요약 조회 성공')
   getSummary(@Request() req) {
     return this.routineStatsService.getSummary(req.user.userId);
+  }
+
+  @Get('stats/overview')
+  @ApiOperation({
+    summary: '전체 루틴 대시보드 요약 (달성률 + 날짜별 히트맵)',
+  })
+  @ApiSuccess(RoutineOverviewDto, '전체 루틴 개요 조회 성공')
+  getOverview(@Request() req, @Query() query: OverviewQueryDto) {
+    return this.routineStatsService.getOverview(req.user.userId, query);
   }
 
   @Get('badges')
