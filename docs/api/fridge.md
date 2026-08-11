@@ -25,7 +25,7 @@
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -57,7 +57,7 @@
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -87,7 +87,7 @@
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -152,7 +152,7 @@
 {
   "groupId": "uuid-group", // string
   "name": "우리집 냉장고", // string
-  "type": "FRIDGE" // StorageType
+  "type": "FRIDGE" // 가능한 값: FRIDGE, FREEZER, PANTRY (StorageType)
 }
 ```
 
@@ -219,7 +219,7 @@
 ```json
 {
   "name": "냉장고 1", // string?
-  "type": null // StorageType?
+  "type": null // 가능한 값: FRIDGE, FREEZER, PANTRY (StorageType?)
 }
 ```
 

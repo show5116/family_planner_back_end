@@ -159,7 +159,7 @@
 
 **Query Parameters:**
 
-- `period` (`OverviewPeriod`): 기간 단위
+- `period` (`OverviewPeriod`): 기간 단위 (가능한 값: week, month)
 
 **Responses:**
 
@@ -723,8 +723,8 @@
 
 **Query Parameters:**
 
-- `period` (`LeaderboardPeriod`): 집계 기간
-- `metric` (`LeaderboardMetric`): 정렬 기준
+- `period` (`LeaderboardPeriod`): 집계 기간 (가능한 값: week, month)
+- `metric` (`LeaderboardMetric`): 정렬 기준 (가능한 값: checkCount, achievementRate)
 
 **Responses:**
 
@@ -1454,7 +1454,7 @@
 
 **Query Parameters:**
 
-- `period` (`RoutineRatePeriod`): 기간 단위
+- `period` (`RoutineRatePeriod`): 기간 단위 (가능한 값: week, month, custom)
 - `from` (`string`) (Optional): period=custom일 때 시작일 (YYYY-MM-DD)
 - `to` (`string`) (Optional): period=custom일 때 종료일 (YYYY-MM-DD)
 

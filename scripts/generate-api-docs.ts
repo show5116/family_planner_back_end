@@ -10,6 +10,7 @@ interface DtoField {
   example?: any;
   required: boolean;
   isArray?: boolean;
+  enumValues?: string[];
 }
 
 interface DtoInfo {
@@ -45,6 +46,7 @@ class ApiDocGenerator {
   private checker: ts.TypeChecker;
   private srcDir: string;
   private dtoCache: Map<string, DtoInfo> = new Map();
+  private enumCache: Map<string, string[] | null> = new Map();
 
   constructor(srcDir: string) {
     this.srcDir = srcDir;
@@ -203,6 +205,7 @@ class ApiDocGenerator {
             let description = '';
             let example: any = undefined;
             let isArray = false;
+            let enumValues: string[] | undefined;
             const required = !member.questionToken;
 
             // 타입 추출
@@ -245,9 +248,29 @@ class ApiDocGenerator {
                       // 중첩된 DTO는 간단히 타입 이름만 표시
                       example = `<${typeValue}>`;
                     }
+
+                    // enum 속성으로 실제 허용값 목록 확인
+                    const enumValue = this.extractDecoratorValue(
+                      modifier,
+                      'enum',
+                    );
+                    if (typeof enumValue === 'string') {
+                      enumValues =
+                        this.resolveEnumValues(enumValue) ?? undefined;
+                    }
                   }
                 }
               });
+            }
+
+            if (
+              enumValues &&
+              enumValues.length > 0 &&
+              !enumValues.every((v) => description.includes(v))
+            ) {
+              description = description
+                ? `${description} (가능한 값: ${enumValues.join(', ')})`
+                : `가능한 값: ${enumValues.join(', ')}`;
             }
 
             fields.push({
@@ -257,6 +280,7 @@ class ApiDocGenerator {
               example,
               required,
               isArray,
+              enumValues,
             });
           }
         });
@@ -274,6 +298,39 @@ class ApiDocGenerator {
     }
 
     return dtoInfo;
+  }
+
+  private resolveEnumValues(enumName: string): string[] | null {
+    if (this.enumCache.has(enumName)) {
+      return this.enumCache.get(enumName) ?? null;
+    }
+
+    let values: string[] | null = null;
+    const normalizedSrcDir = this.srcDir.replace(/\\/g, '/');
+
+    for (const sourceFile of this.program.getSourceFiles()) {
+      if (values || sourceFile.isDeclarationFile) continue;
+      if (!sourceFile.fileName.startsWith(normalizedSrcDir)) continue;
+
+      const visit = (node: ts.Node) => {
+        if (values) return;
+        if (ts.isEnumDeclaration(node) && node.name.text === enumName) {
+          values = node.members.map((member) => {
+            if (member.initializer && ts.isStringLiteral(member.initializer)) {
+              return member.initializer.text;
+            }
+            return member.name.getText();
+          });
+          return;
+        }
+        ts.forEachChild(node, visit);
+      };
+
+      visit(sourceFile);
+    }
+
+    this.enumCache.set(enumName, values);
+    return values;
   }
 
   private findDtoFiles(dir: string): string[] {

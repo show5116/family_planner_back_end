@@ -20,7 +20,7 @@
 - `page` (`number`): 페이지 번호
 - `limit` (`number`): 페이지 크기
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
-- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC)
 - `search` (`string`) (Optional): 검색어 (제목/내용)
 - `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
@@ -35,9 +35,9 @@
       "id": "uuid", // 질문 ID (string)
       "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
       "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
-      "category": null, // 카테고리 (QuestionCategory)
-      "status": null, // 질문 상태 (QuestionStatus)
-      "visibility": null, // 공개 여부 (QuestionVisibility)
+      "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+      "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+      "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
       "answerCount": 1, // 답변 수 (number)
       "user": {
         "id": "uuid",

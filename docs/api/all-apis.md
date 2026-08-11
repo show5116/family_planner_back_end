@@ -82,7 +82,7 @@
 
 - `page` (`number`) (Optional): 페이지 번호
 - `limit` (`number`) (Optional): 페이지 크기
-- `category` (`AnnouncementCategory`) (Optional): 카테고리 필터
+- `category` (`AnnouncementCategory`) (Optional): 카테고리 필터 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE)
 - `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회
 
 **Responses:**
@@ -96,7 +96,7 @@
       "id": "uuid", // 공지사항 ID (string)
       "title": "시스템 점검 안내", // 제목 (string)
       "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-      "category": null, // 카테고리 (AnnouncementCategory)
+      "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
       "isPinned": false, // 고정 여부 (boolean)
       "author": {
         "id": "uuid",
@@ -131,7 +131,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -162,7 +162,7 @@
 {
   "title": "v2.0 업데이트 안내", // 공지사항 제목 (string)
   "content": "새로운 기능이 추가되었습니다...", // 공지사항 내용 (Markdown 지원) (string)
-  "category": null, // 공지사항 카테고리 (AnnouncementCategory)
+  "category": null, // 공지사항 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 상단 고정 여부 (boolean?)
   "attachments": [
     {
@@ -183,7 +183,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -225,7 +225,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -297,7 +297,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -2702,7 +2702,7 @@ period=monthly 시 year 필수.
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -2734,7 +2734,7 @@ period=monthly 시 year 필수.
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -2764,7 +2764,7 @@ period=monthly 시 year 필수.
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -2829,7 +2829,7 @@ period=monthly 시 year 필수.
 {
   "groupId": "uuid-group", // string
   "name": "우리집 냉장고", // string
-  "type": "FRIDGE" // StorageType
+  "type": "FRIDGE" // 가능한 값: FRIDGE, FREEZER, PANTRY (StorageType)
 }
 ```
 
@@ -2896,7 +2896,7 @@ period=monthly 시 year 필수.
 ```json
 {
   "name": "냉장고 1", // string?
-  "type": null // StorageType?
+  "type": null // 가능한 값: FRIDGE, FREEZER, PANTRY (StorageType?)
 }
 ```
 
@@ -5788,7 +5788,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "title": "외박 준비물", // 메모 제목 (string)
   "content": "{"ops":[{"insert":"본문 텍스트\n"}]}", // Delta JSON 문자열 (format=DELTA) 또는 일반 텍스트 (string?)
-  "format": null, // 메모 형식 (기본값: DELTA) (MemoFormat?)
+  "format": null, // 메모 형식 (기본값: DELTA) (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat?)
   "visibility": null, // 공개 범위 (MemoVisibility?)
   "groupId": "", // 그룹 ID (GROUP 공개 시 필수) (string?)
   "tags": [
@@ -5812,7 +5812,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -5871,7 +5871,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
       "id": "uuid-1234", // 메모 ID (string)
       "title": "외박 준비물", // 제목 (string)
       "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-      "format": null, // 메모 형식 (MemoFormat)
+      "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
       "visibility": null, // 공개 범위 (MemoVisibility)
       "isPinned": false, // 핀 여부 (boolean)
       "groupId": null, // 그룹 ID (string | null)
@@ -5944,7 +5944,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -5996,7 +5996,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -6058,7 +6058,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -6138,7 +6138,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -6371,7 +6371,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "gameType": null, // 게임 타입 (MinigameType)
+  "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
   "title": "저녁 메뉴 정하기", // 게임 제목 (string)
   "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
   "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
@@ -6387,7 +6387,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "id": "uuid-1234", // 결과 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "gameType": null, // 게임 타입 (MinigameType)
+  "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
   "title": "저녁 메뉴 정하기", // 게임 제목 (string)
   "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
   "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
@@ -6408,7 +6408,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 **Query Parameters:**
 
 - `groupId` (`string`): 그룹 ID
-- `gameType` (`MinigameType`) (Optional): 게임 타입 필터
+- `gameType` (`MinigameType`) (Optional): 게임 타입 필터 (가능한 값: LADDER, ROULETTE)
 - `limit` (`number`) (Optional): 조회 개수
 - `offset` (`number`) (Optional): 오프셋
 
@@ -6422,7 +6422,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
     {
       "id": "uuid-1234", // 결과 ID (string)
       "groupId": "uuid-1234", // 그룹 ID (string)
-      "gameType": null, // 게임 타입 (MinigameType)
+      "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
       "title": "저녁 메뉴 정하기", // 게임 제목 (string)
       "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
       "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
@@ -6479,7 +6479,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 ```json
 {
   "token": "fGw3ZJ0kRZe-Xz9YlK6J7M:APA91bH4...(생략)...k5L8mN9oP0qR1sT2u", // FCM 디바이스 토큰 (string)
-  "platform": null, // 디바이스 플랫폼 (DevicePlatform)
+  "platform": null, // 디바이스 플랫폼 (가능한 값: IOS, ANDROID, WEB) (DevicePlatform)
   "language": "ko" // 앱 언어 설정 (ko, en, ja, zh) (string?)
 }
 ```
@@ -6493,7 +6493,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid", // 토큰 ID (string)
   "userId": "uuid", // 사용자 ID (string)
   "token": "dXNlci1kZXZpY2UtdG9rZW4tZXhhbXBsZQ", // FCM 디바이스 토큰 (string)
-  "platform": null, // 플랫폼 (DevicePlatform)
+  "platform": null, // 플랫폼 (가능한 값: IOS, ANDROID, WEB) (DevicePlatform)
   "lastUsed": "2025-12-27T00:00:00Z" // 마지막 사용 시간 (Date)
 }
 ```
@@ -6534,7 +6534,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "id": "uuid", // 설정 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true // 알림 활성화 여부 (boolean)
 }
 ```
@@ -6549,7 +6549,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 
 ```json
 {
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true, // 알림 활성화 여부 (boolean)
   "weatherAlertHour": 7, // WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시) (number?)
   "routineReminderHour": 21 // ROUTINE 카테고리 전용: 루틴 리마인드 수신 시각 (0~23시) (number?)
@@ -6564,7 +6564,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "id": "uuid", // 설정 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true // 알림 활성화 여부 (boolean)
 }
 ```
@@ -6591,7 +6591,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
     {
       "id": "uuid", // 알림 ID (string)
       "userId": "uuid", // 사용자 ID (string)
-      "category": null, // 알림 카테고리 (NotificationCategory)
+      "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
       "title": "새로운 일정 알림", // 알림 제목 (string)
       "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
       "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
@@ -6659,7 +6659,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "id": "uuid", // 알림 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "title": "새로운 일정 알림", // 알림 제목 (string)
   "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
   "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
@@ -6726,7 +6726,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 ```json
 {
   "userId": "550e8400-e29b-41d4-a716-446655440000", // 알림 받을 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "title": "할 일 알림", // 알림 제목 (string)
   "body": "30분 후 회의 시작", // 알림 내용 (string)
   "scheduledTime": "2026-01-11T15:30:00Z", // 발송 예정 시간 (ISO 8601 형식) (string)
@@ -7021,7 +7021,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 - `page` (`number`): 페이지 번호
 - `limit` (`number`): 페이지 크기
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
-- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC)
 - `search` (`string`) (Optional): 검색어 (제목/내용)
 - `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
@@ -7036,9 +7036,9 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
       "id": "uuid", // 질문 ID (string)
       "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
       "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
-      "category": null, // 카테고리 (QuestionCategory)
-      "status": null, // 질문 상태 (QuestionStatus)
-      "visibility": null, // 공개 여부 (QuestionVisibility)
+      "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+      "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+      "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
       "answerCount": 1, // 답변 수 (number)
       "user": {
         "id": "uuid",
@@ -7215,7 +7215,7 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
 - `page` (`number`): 페이지 번호
 - `limit` (`number`): 페이지 크기
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
-- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC)
 - `search` (`string`) (Optional): 검색어 (제목/내용)
 - `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
@@ -7230,9 +7230,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
       "id": "uuid", // 질문 ID (string)
       "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
       "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
-      "category": null, // 카테고리 (QuestionCategory)
-      "status": null, // 질문 상태 (QuestionStatus)
-      "visibility": null, // 공개 여부 (QuestionVisibility)
+      "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+      "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+      "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
       "answerCount": 1, // 답변 수 (number)
       "user": {
         "id": "uuid",
@@ -7269,9 +7269,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)
@@ -7320,7 +7320,7 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
 {
   "title": "앱이 자꾸 종료돼요", // 질문 제목 (string)
   "content": "홈 화면에서 특정 버튼을 누르면 앱이 종료됩니다.", // 질문 내용 (string)
-  "category": null, // 질문 카테고리 (QuestionCategory)
+  "category": null, // 질문 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
   "visibility": null, // 공개 여부 (PUBLIC: 모든 사용자 조회 가능, PRIVATE: 본인/ADMIN만 조회 가능) (QuestionVisibility?)
   "attachments": [
     {
@@ -7341,9 +7341,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)
@@ -7397,8 +7397,8 @@ PENDING: 일반 수정, ANSWERED: 수정 시 PENDING으로 변경 (재질문), R
 {
   "title": "", // 질문 제목 (string?)
   "content": "", // 질문 내용 (string?)
-  "category": null, // 질문 카테고리 (QuestionCategory?)
-  "visibility": null, // 공개 여부 (QuestionVisibility?)
+  "category": null, // 질문 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory?)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility?)
   "attachments": [
     {
       "url": "", // 파일 URL (string)
@@ -7418,9 +7418,9 @@ PENDING: 일반 수정, ANSWERED: 수정 시 PENDING으로 변경 (재질문), R
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)
@@ -7818,7 +7818,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 **Query Parameters:**
 
-- `period` (`OverviewPeriod`): 기간 단위
+- `period` (`OverviewPeriod`): 기간 단위 (가능한 값: week, month)
 
 **Responses:**
 
@@ -8382,8 +8382,8 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 **Query Parameters:**
 
-- `period` (`LeaderboardPeriod`): 집계 기간
-- `metric` (`LeaderboardMetric`): 정렬 기준
+- `period` (`LeaderboardPeriod`): 집계 기간 (가능한 값: week, month)
+- `metric` (`LeaderboardMetric`): 정렬 기준 (가능한 값: checkCount, achievementRate)
 
 **Responses:**
 
@@ -9113,7 +9113,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 **Query Parameters:**
 
-- `period` (`RoutineRatePeriod`): 기간 단위
+- `period` (`RoutineRatePeriod`): 기간 단위 (가능한 값: week, month, custom)
 - `from` (`string`) (Optional): period=custom일 때 시작일 (YYYY-MM-DD)
 - `to` (`string`) (Optional): period=custom일 때 종료일 (YYYY-MM-DD)
 
@@ -10561,9 +10561,9 @@ R2에 파일이 존재하는지 확인합니다.
 - `groupIds` (`string[]`) (Optional): 그룹 ID 목록 (콤마로 구분)
 - `includePersonal` (`boolean`) (Optional): 개인 일정 포함 여부 (기본값: true)
 - `categoryIds` (`string[]`) (Optional): 카테고리 ID 목록 (콤마로 구분)
-- `type` (`TaskType`) (Optional): Task 타입
-- `priority` (`TaskPriority`) (Optional): 우선순위
-- `status` (`TaskStatus`) (Optional): Task 상태
+- `type` (`TaskType`) (Optional): Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY)
+- `priority` (`TaskPriority`) (Optional): 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT)
+- `status` (`TaskStatus`) (Optional): Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED)
 - `search` (`string`) (Optional): 검색어 (제목, 설명, 장소)
 - `anniversaryId` (`string`) (Optional): 기념일 ID (해당 기념일의 milestone Task만 조회)
 - `startDate` (`string`) (Optional): 시작 날짜
@@ -10590,8 +10590,8 @@ R2에 파일이 존재하는지 확인합니다.
         "lat": 37,
         "lng": 127
       }, // 장소 (LocationDto | null)
-      "type": null, // Task 타입 (TaskType)
-      "priority": null, // 우선순위 (TaskPriority)
+      "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+      "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
       "category": {
         "id": "uuid",
         "userId": "uuid",
@@ -10606,7 +10606,7 @@ R2에 파일이 존재하는지 확인합니다.
       "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
       "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
       "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-      "status": "PENDING", // Task 상태 (TaskStatus)
+      "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
       "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
       "recurring": {
         "id": "uuid",
@@ -10668,7 +10668,7 @@ R2에 파일이 존재하는지 확인합니다.
     {
       "id": "uuid", // ID (string)
       "userId": "uuid", // 사용자 ID (string)
-      "action": null, // 변경 유형 (TaskHistoryAction)
+      "action": null, // 변경 유형 (가능한 값: CREATE, UPDATE, DELETE, COMPLETE, SKIP) (TaskHistoryAction)
       "changes": null, // 변경 내용 (any | null)
       "createdAt": "2025-01-01T00:00:00Z" // 변경 시간 (Date)
     }
@@ -10698,15 +10698,15 @@ R2에 파일이 존재하는지 확인합니다.
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto?)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority?)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority?)
   "categoryId": "uuid", // 카테고리 ID (string?)
   "groupId": "uuid", // 그룹 ID (그룹 Task 생성 시) (string?)
   "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "recurring": {
-    "ruleType": null, // 반복 타입 (RecurringRuleType)
+    "ruleType": null, // 반복 타입 (가능한 값: DAILY, WEEKLY, MONTHLY, YEARLY) (RecurringRuleType)
     "ruleConfig": {
       "interval": 1,
       "endType": null,
@@ -10726,14 +10726,14 @@ R2에 파일이 존재하는지 확인합니다.
       "skipHolidays": false,
       "skipBehavior": null
     }, // 반복 설정 (RuleConfigDto)
-    "generationType": null, // 생성 방식 (RecurringGenerationType)
+    "generationType": null, // 생성 방식 (가능한 값: AUTO_SCHEDULER, AFTER_COMPLETION) (RecurringGenerationType)
     "skipWeekends": false, // 주말 제외 여부 (boolean?)
     "skipHolidays": false, // 공휴일 제외 여부 (boolean?)
     "skipBehavior": null // 주말/공휴일 해당 시 동작 방식 (SKIP: 건너뜀, MOVE_TO_NEXT_WEEKDAY: 다음 평일로 이동) (SkipBehavior?)
   }, // 반복 규칙 (RecurringRuleDto?)
   "reminders": [
     {
-      "reminderType": null, // 알림 타입 (TaskReminderType)
+      "reminderType": null, // 알림 타입 (가능한 값: BEFORE_START, BEFORE_DUE) (TaskReminderType)
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
   ], // 알림 목록 (TaskReminderDto[]?)
@@ -10761,8 +10761,8 @@ R2에 파일이 존재하는지 확인합니다.
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -10777,7 +10777,7 @@ R2에 파일이 존재하는지 확인합니다.
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -10836,15 +10836,15 @@ R2에 파일이 존재하는지 확인합니다.
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto?)
   "categoryId": "uuid", // 카테고리 ID (string?)
-  "type": null, // Task 타입 (TaskType?)
-  "priority": null, // 우선순위 (TaskPriority?)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType?)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority?)
   "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "participantIds": ["uuid-1", "uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
   "reminders": [
     {
-      "reminderType": null, // 알림 타입 (TaskReminderType)
+      "reminderType": null, // 알림 타입 (가능한 값: BEFORE_START, BEFORE_DUE) (TaskReminderType)
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
   ], // 알림 목록 (전달 시 기존 알림 전체 교체) (TaskReminderDto[]?)
@@ -10871,8 +10871,8 @@ R2에 파일이 존재하는지 확인합니다.
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -10887,7 +10887,7 @@ R2에 파일이 존재하는지 확인합니다.
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -10937,7 +10937,7 @@ R2에 파일이 존재하는지 확인합니다.
 
 ```json
 {
-  "status": "COMPLETED" // Task 상태 (TaskStatus)
+  "status": "COMPLETED" // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
 }
 ```
 
@@ -10958,8 +10958,8 @@ R2에 파일이 존재하는지 확인합니다.
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -10974,7 +10974,7 @@ R2에 파일이 존재하는지 확인합니다.
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -11119,7 +11119,7 @@ R2에 파일이 존재하는지 확인합니다.
 
 **Query Parameters:**
 
-- `status` (`VoteStatusFilter`) (Optional): 투표 상태 필터
+- `status` (`VoteStatusFilter`) (Optional): 투표 상태 필터 (가능한 값: ALL, ONGOING, CLOSED)
 - `page` (`number`) (Optional): 페이지
 - `limit` (`number`) (Optional): 페이지 크기
 

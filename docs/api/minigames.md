@@ -17,7 +17,7 @@
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "gameType": null, // 게임 타입 (MinigameType)
+  "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
   "title": "저녁 메뉴 정하기", // 게임 제목 (string)
   "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
   "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
@@ -33,7 +33,7 @@
 {
   "id": "uuid-1234", // 결과 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "gameType": null, // 게임 타입 (MinigameType)
+  "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
   "title": "저녁 메뉴 정하기", // 게임 제목 (string)
   "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
   "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
@@ -54,7 +54,7 @@
 **Query Parameters:**
 
 - `groupId` (`string`): 그룹 ID
-- `gameType` (`MinigameType`) (Optional): 게임 타입 필터
+- `gameType` (`MinigameType`) (Optional): 게임 타입 필터 (가능한 값: LADDER, ROULETTE)
 - `limit` (`number`) (Optional): 조회 개수
 - `offset` (`number`) (Optional): 오프셋
 
@@ -68,7 +68,7 @@
     {
       "id": "uuid-1234", // 결과 ID (string)
       "groupId": "uuid-1234", // 그룹 ID (string)
-      "gameType": null, // 게임 타입 (MinigameType)
+      "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
       "title": "저녁 메뉴 정하기", // 게임 제목 (string)
       "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
       "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])

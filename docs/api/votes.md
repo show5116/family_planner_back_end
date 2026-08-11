@@ -18,7 +18,7 @@
 
 **Query Parameters:**
 
-- `status` (`VoteStatusFilter`) (Optional): 투표 상태 필터
+- `status` (`VoteStatusFilter`) (Optional): 투표 상태 필터 (가능한 값: ALL, ONGOING, CLOSED)
 - `page` (`number`) (Optional): 페이지
 - `limit` (`number`) (Optional): 페이지 크기
 
