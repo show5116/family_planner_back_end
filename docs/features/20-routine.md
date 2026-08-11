@@ -75,7 +75,7 @@
   - `MONTHLY`: 월 단위 연속 달성 개월 수(`currentStreakWeeks`/`longestStreakWeeks` 필드에 월-스트릭 값이 담겨 응답됨), 일 단위 스트릭은 매일 스케줄 기준으로 별도 계산
   - 모든 경우에 `RoutinePause` 이력이 "제외 구간"으로 반영되어 일시정지 기간은 스트릭을 끊지 않음
 - **기간별 달성률**: `week`/`month`/`custom` 기준. `MONTHLY` 루틴은 월 단위로, 그 외는 주(월~일) 단위로 기대 체크 횟수 대비 실제 체크 횟수(%) 계산. 진행 중인 기간(이번 주/이번 달 등)도 포함해 부분 조회에도 값이 나옴
-- **대시보드 요약**: 전체 `ACTIVE` 루틴의 오늘 체크 여부 + 현재 스트릭 + 이번 주(또는 월간 루틴은 이번 달) 진행 상황을 한 번에 조회 (위젯용)
+- **대시보드 요약**: 전체 `ACTIVE` 루틴의 오늘 체크 여부 + 현재 스트릭 + 이번 주/이번 달 진행 상황을 한 번에 조회 (위젯용). `thisWeekProgress`/`thisMonthProgress` 둘 다 응답에 포함되며, `frequencyType=MONTHLY` 루틴은 `thisMonthProgress`만 값이 있고 `thisWeekProgress`는 `null`, 그 외(DAILY/WEEKLY)는 반대로 `thisWeekProgress`만 값이 있고 `thisMonthProgress`는 `null` — 개별 루틴마다 `GET /:id/stats/rate?period=month`를 호출하는 N+1 없이 월간 목표 루틴의 이번 달 진행률까지 한 번에 조회 가능
 
 ### 배지
 - 체크(`POST /routines/:id/check`) 성공 직후 `RoutineBadgeService.evaluateAndAward()`가 동기적으로 판정, 응답의 `newlyEarnedBadges`에 신규 획득 배지 포함
@@ -505,4 +505,4 @@ src/common/utils/
   date-kst.util.ts                   — todayInKst(), thisMonthStartInKst(), parseDateOnly() (KST 기준 날짜 계산, 프로젝트 공용)
 ```
 
-**Last Updated**: 2026-07-20
+**Last Updated**: 2026-08-11

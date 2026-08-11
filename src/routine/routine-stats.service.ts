@@ -284,8 +284,11 @@ export class RoutineStatsService {
           excludedRanges,
         );
         const thisWeekProgress = isMonthly
-          ? getThisMonthProgress(today, targetCount, routineLogs)
+          ? null
           : getThisWeekProgress(today, targetCount, routineLogs);
+        const thisMonthProgress = isMonthly
+          ? getThisMonthProgress(today, targetCount, routineLogs)
+          : null;
         const checkedToday = routineLogs.some(
           (d) => formatDate(d) === todayStr,
         );
@@ -297,6 +300,7 @@ export class RoutineStatsService {
           checkedToday,
           currentStreakDays: dayStreak.currentStreakDays,
           thisWeekProgress,
+          thisMonthProgress,
         };
       }),
     };

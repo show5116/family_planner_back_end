@@ -141,7 +141,11 @@
       "thisWeekProgress": {
         "checked": 0,
         "target": 0
-      } // 이번 주 진행 상황 (ThisWeekProgressDto)
+      }, // 이번 주 진행 상황 (frequencyType=MONTHLY인 루틴은 null) (ThisWeekProgressDto | null)
+      "thisMonthProgress": {
+        "checked": 0,
+        "target": 0
+      } // 이번 달 진행 상황 (frequencyType=MONTHLY인 루틴만 값이 있음) (ThisWeekProgressDto | null)
     }
   ] // 루틴별 오늘/스트릭 요약 (RoutineSummaryItemDto[])
 }

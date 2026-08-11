@@ -87,8 +87,19 @@ export class RoutineSummaryItemDto {
   @ApiProperty({ description: '현재 연속 체크 일수' })
   currentStreakDays: number;
 
-  @ApiProperty({ description: '이번 주 진행 상황', type: ThisWeekProgressDto })
-  thisWeekProgress: ThisWeekProgressDto;
+  @ApiProperty({
+    description: '이번 주 진행 상황 (frequencyType=MONTHLY인 루틴은 null)',
+    type: ThisWeekProgressDto,
+    nullable: true,
+  })
+  thisWeekProgress: ThisWeekProgressDto | null;
+
+  @ApiProperty({
+    description: '이번 달 진행 상황 (frequencyType=MONTHLY인 루틴만 값이 있음)',
+    type: ThisWeekProgressDto,
+    nullable: true,
+  })
+  thisMonthProgress: ThisWeekProgressDto | null;
 }
 
 export class RoutineSummaryDto {
