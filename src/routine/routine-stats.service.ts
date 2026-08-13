@@ -429,6 +429,37 @@ export class RoutineStatsService {
         ? Math.round((totalChecked / totalExpected) * 1000) / 10
         : 0;
 
+    const routineBreakdown =
+      query.period === OverviewPeriod.WEEK
+        ? routines.map((routine) => {
+            const isMonthly =
+              routine.frequencyType === RoutineFrequencyType.MONTHLY;
+            const isFixedDays =
+              routine.frequencyType === RoutineFrequencyType.WEEKLY &&
+              routine.weeklyMode === RoutineWeeklyMode.FIXED_DAYS;
+            const targetDays = Array.isArray(routine.targetDays)
+              ? (routine.targetDays as number[])
+              : [];
+            const targetCount = isMonthly
+              ? null
+              : isFixedDays
+                ? targetDays.length
+                : (routine.targetCount ?? 7);
+
+            const checkedDates = (logsByRoutine.get(routine.id) ?? [])
+              .map((d) => formatDate(d))
+              .sort();
+
+            return {
+              routineId: routine.id,
+              title: routine.title,
+              emoji: routine.emoji,
+              targetCount,
+              checkedDates,
+            };
+          })
+        : undefined;
+
     return {
       period: query.period,
       from: formatDate(from),
@@ -438,6 +469,7 @@ export class RoutineStatsService {
       totalExpected,
       achievementRate,
       heatmap,
+      ...(routineBreakdown ? { routineBreakdown } : {}),
     };
   }
 

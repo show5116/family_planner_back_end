@@ -7839,7 +7839,16 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "checkedCount": 0, // 해당 날짜에 체크된 루틴 수 (number)
       "totalCount": 0 // 해당 날짜에 활성 상태였던(일시정지 제외) 루틴 수 (number)
     }
-  ] // 날짜별 체크 현황 히트맵 (period와 동일한 기간) (OverviewHeatmapDayDto[])
+  ], // 날짜별 체크 현황 히트맵 (period와 동일한 기간) (OverviewHeatmapDayDto[])
+  "routineBreakdown": [
+    {
+      "routineId": "", // 루틴 ID (string)
+      "title": "", // 루틴 제목 (string)
+      "emoji": null, // 이모지 (string | null)
+      "targetCount": null, // 주간 목표 횟수 (WEEKLY/FIXED_DAYS는 targetDays.length, 그 외는 targetCount). MONTHLY 루틴은 주간 목표 개념이 없어 null (number | null)
+      "checkedDates": ["2026-08-10", "2026-08-11"] // 조회 기간(from~to) 내 체크된 날짜 목록 (YYYY-MM-DD) (string[])
+    }
+  ] // 루틴별 체크 현황 (period=week일 때만 존재, month일 때는 필드 생략) (OverviewRoutineBreakdownDto[]?)
 }
 ```
 
