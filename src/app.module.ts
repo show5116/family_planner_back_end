@@ -132,6 +132,8 @@ import { ScheduleModule } from '@nestjs/schedule';
                 url: req.url,
                 query: req.query,
                 params: req.params,
+                ip: req.headers['x-forwarded-for'] || req.remoteAddress,
+                userAgent: req.headers['user-agent'],
               }),
               res: (res) => ({
                 statusCode: res.statusCode,
