@@ -7819,6 +7819,8 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 **Query Parameters:**
 
 - `period` (`OverviewPeriod`): 기간 단위 (가능한 값: week, month)
+- `from` (`string`) (Optional): 조회 기준일 (YYYY-MM-DD, 옵션). 이 날짜가 속한 주(월~일)/달(1일~말일)을 계산. 생략 시 오늘 기준
+- `to` (`string`) (Optional): from과 함께 명시하면 [from, to] 범위를 스냅 없이 그대로 사용 (옵션). from 없이 단독으로는 무시됨
 
 **Responses:**
 

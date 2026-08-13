@@ -313,7 +313,7 @@ export class RoutineStatsService {
   /** 전체 루틴 대시보드 요약: 기간 내 총 체크/기대 횟수, 달성률, 날짜별 히트맵 */
   async getOverview(userId: string, query: OverviewQueryDto) {
     const today = todayInKst();
-    const { from, to } = this.resolveOverviewRange(query.period, today);
+    const { from, to } = this.resolveOverviewRange(query, today);
 
     const routines = await this.prisma.routine.findMany({
       where: {
@@ -474,20 +474,26 @@ export class RoutineStatsService {
   }
 
   private resolveOverviewRange(
-    period: OverviewPeriod,
+    query: OverviewQueryDto,
     today: Date,
   ): { from: Date; to: Date } {
-    if (period === OverviewPeriod.MONTH) {
+    if (query.from && query.to) {
+      return { from: parseDateOnly(query.from), to: parseDateOnly(query.to) };
+    }
+
+    const anchor = query.from ? parseDateOnly(query.from) : today;
+
+    if (query.period === OverviewPeriod.MONTH) {
       const from = new Date(
-        Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1),
+        Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1),
       );
       const to = new Date(
-        Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0),
+        Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0),
       );
       return { from, to: to.getTime() > today.getTime() ? today : to };
     }
 
-    const from = getWeekStart(today);
+    const from = getWeekStart(anchor);
     const to = new Date(from.getTime() + 6 * MS_PER_DAY);
     return { from, to: to.getTime() > today.getTime() ? today : to };
   }
