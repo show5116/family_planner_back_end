@@ -482,6 +482,8 @@ export class RoutineStatsService {
     }
 
     const anchor = query.from ? parseDateOnly(query.from) : today;
+    const clampToToday = (to: Date) =>
+      to.getTime() > today.getTime() ? today : to;
 
     if (query.period === OverviewPeriod.MONTH) {
       const from = new Date(
@@ -490,12 +492,16 @@ export class RoutineStatsService {
       const to = new Date(
         Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0),
       );
-      return { from, to: to.getTime() > today.getTime() ? today : to };
+      const isCurrentMonth =
+        anchor.getUTCFullYear() === today.getUTCFullYear() &&
+        anchor.getUTCMonth() === today.getUTCMonth();
+      return { from, to: isCurrentMonth ? clampToToday(to) : to };
     }
 
     const from = getWeekStart(anchor);
     const to = new Date(from.getTime() + 6 * MS_PER_DAY);
-    return { from, to: to.getTime() > today.getTime() ? today : to };
+    const isCurrentWeek = getWeekStart(today).getTime() === from.getTime();
+    return { from, to: isCurrentWeek ? clampToToday(to) : to };
   }
 
   private async getExcludedRanges(
