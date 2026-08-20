@@ -290,6 +290,7 @@ getUsers() { ... }
 - **모든 에러를 수정할 때까지 반복 실행**
 - **ESLint disable은 정당한 사유가 있을 때만 사용**
 - **테스트 파일은 일부 규칙 예외 허용**
+- **curl 등으로 API 실동작을 검증할 때는 `POST /v1/auth/signup`으로 신규 유저를 만들지 말 것** — 실제 이메일이 발송됨. `CLAUDE.md`의 "API 실동작 검증" 절 참고, 기존 테스트 계정(`docs/maintenance/test-accounts.md`)을 재사용
 
 ## 토큰 최적화
 
