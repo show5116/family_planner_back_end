@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { RoutineController } from './routine.controller';
 import { RoutineService } from './routine.service';
 import { RoutineStatsService } from './routine-stats.service';
+import { RoutineSettingsService } from './routine-settings.service';
 import { RoutineBadgeService } from './routine-badge.service';
 import { RoutineLeaderboardService } from './routine-leaderboard.service';
 import { RoutineGroupService } from './routine-group.service';
@@ -16,6 +17,7 @@ import { NotificationModule } from '@/notification/notification.module';
   providers: [
     RoutineService,
     RoutineStatsService,
+    RoutineSettingsService,
     RoutineBadgeService,
     RoutineLeaderboardService,
     RoutineGroupService,

@@ -121,6 +121,13 @@ export class OverviewHeatmapDayDto {
     description: '해당 날짜에 활성 상태였던(일시정지 제외) 루틴 수',
   })
   totalCount: number;
+
+  @ApiProperty({
+    description:
+      '해당 날짜의 일일 목표 달성 여부. 그날 대상 습관이 0개면 null(집계 대상 아님)',
+    nullable: true,
+  })
+  goalAchieved: boolean | null;
 }
 
 export class OverviewRoutineBreakdownDto {
@@ -185,4 +192,72 @@ export class RoutineOverviewDto {
     required: false,
   })
   routineBreakdown?: OverviewRoutineBreakdownDto[];
+
+  @ApiProperty({
+    description: '조회 기간 마지막 날(to) 기준 유효했던 일일 목표 모드',
+  })
+  dailyGoalMode: string;
+
+  @ApiProperty({
+    description:
+      '조회 기간 마지막 날(to) 기준 유효했던 일일 목표 개수 (ALL 모드면 null)',
+    nullable: true,
+  })
+  dailyGoalCount: number | null;
+
+  @ApiProperty({ description: '기간 내 일일 목표를 달성한 날 수' })
+  goalAchievedDays: number;
+
+  @ApiProperty({
+    description:
+      '기간 내 집계 대상 일수 (대상 습관이 0개였던 날 제외, 진행 중인 기간은 오늘까지의 경과 일수)',
+  })
+  goalTotalDays: number;
+
+  @ApiProperty({
+    description: '일일 목표 달성률 (%), goalAchievedDays / goalTotalDays',
+    example: 71.4,
+  })
+  goalAchievementRate: number;
+}
+
+export class DailyStreakRecent14DaysDto {
+  @ApiProperty({ description: '최근 14일 중 목표를 달성한 날 수' })
+  achievedDays: number;
+
+  @ApiProperty({ description: '최근 14일 중 목표를 초과 달성한 날 수' })
+  exceededDays: number;
+
+  @ApiProperty({
+    description: '최근 14일 중 집계 대상 일수 (대상 습관 0개였던 날 제외)',
+  })
+  totalDays: number;
+
+  @ApiProperty({ description: '집계 대상일들의 하루 평균 체크 개수' })
+  averageCheckedCount: number;
+}
+
+export class DailyStreakResponseDto {
+  @ApiProperty({ description: '오늘(또는 어제)까지 이어지는 연속 달성 일수' })
+  currentStreakDays: number;
+
+  @ApiProperty({ description: '역대 최장 연속 달성 일수' })
+  longestStreakDays: number;
+
+  @ApiProperty({ description: '오늘 목표 달성 여부' })
+  todayAchieved: boolean;
+
+  @ApiProperty({ description: '오늘 체크한 습관 수' })
+  todayCheckedCount: number;
+
+  @ApiProperty({
+    description: '오늘 기준 목표 개수 (ALL 모드면 오늘 대상 습관 수)',
+  })
+  todayTargetCount: number;
+
+  @ApiProperty({
+    description: '최근 14일 집계 (목표 조정 제안용)',
+    type: DailyStreakRecent14DaysDto,
+  })
+  recent14Days: DailyStreakRecent14DaysDto;
 }

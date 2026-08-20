@@ -8,24 +8,24 @@ datasource db {
 }
 
 model User {
-  id                        String                 @id @default(uuid())
-  email                     String?                @unique
+  id                        String                  @id @default(uuid())
+  email                     String?                 @unique
   name                      String
-  provider                  Provider               @default(LOCAL)
+  provider                  Provider                @default(LOCAL)
   providerId                String?
   password                  String?
-  createdAt                 DateTime               @default(now())
-  updatedAt                 DateTime               @updatedAt
-  isEmailVerified           Boolean                @default(false)
-  isAdmin                   Boolean                @default(false)
-  isSuperAdmin              Boolean                @default(false)
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  isEmailVerified           Boolean                 @default(false)
+  isAdmin                   Boolean                 @default(false)
+  isSuperAdmin              Boolean                 @default(false)
   lastLoginAt               DateTime?
-  phoneNumber               String?                @db.VarChar(20)
-  profileImageKey           String?                @db.VarChar(255)
-  personalColor             String?                @db.VarChar(7)
-  announcementReads         AnnouncementRead[]     @relation("AnnouncementReads")
-  announcements             Announcement[]         @relation("AnnouncementAuthor")
-  answers                   Answer[]               @relation("AdminAnswers")
+  phoneNumber               String?                 @db.VarChar(20)
+  profileImageKey           String?                 @db.VarChar(255)
+  personalColor             String?                 @db.VarChar(7)
+  announcementReads         AnnouncementRead[]      @relation("AnnouncementReads")
+  announcements             Announcement[]          @relation("AnnouncementAuthor")
+  answers                   Answer[]                @relation("AdminAnswers")
   categories                Category[]
   deviceTokens              DeviceToken[]
   groupMemberships          GroupMember[]
@@ -43,10 +43,12 @@ model User {
   routineGroups             RoutineGroup[]
   routineCategories         RoutineCategory[]
   routineBadges             UserRoutineBadge[]
+  routineSetting            RoutineSetting?
+  routineSettingHistory     RoutineSettingHistory[]
   expenses                  Expense[]
-  expensesAsMember          Expense[]              @relation("ExpenseMember")
+  expensesAsMember          Expense[]               @relation("ExpenseMember")
   recurringExpenses         RecurringExpense[]
-  recurringExpensesAsMember RecurringExpense[]     @relation("RecurringExpenseMember")
+  recurringExpensesAsMember RecurringExpense[]      @relation("RecurringExpenseMember")
   budgets                   Budget[]
   budgetTemplates           BudgetTemplate[]
   groupBudgets              GroupBudget[]
@@ -54,22 +56,22 @@ model User {
   merchants                 Merchant[]
   accounts                  Account[]
   indicatorBookmarks        IndicatorBookmark[]
-  childcareAsParent         ChildcareAccount[]     @relation("ChildcareParent")
-  childcareTransactions     ChildcareTransaction[] @relation("ChildcareTransactionCreator")
-  childProfiles             Child[]                @relation("ChildParent")
-  linkedChildProfiles       Child[]                @relation("ChildLinkedUser")
-  votesCreated              Vote[]                 @relation("VoteCreator")
-  voteBallots               VoteBallot[]           @relation("VoteBallots")
-  reportsMade               MemberReport[]         @relation("ReporterRelation")
-  reportsReceived           MemberReport[]         @relation("ReportedRelation")
-  resolvedReports           MemberReport[]         @relation("ReportResolver")
-  subscriptionTier          SubscriptionTier       @default(free)
+  childcareAsParent         ChildcareAccount[]      @relation("ChildcareParent")
+  childcareTransactions     ChildcareTransaction[]  @relation("ChildcareTransactionCreator")
+  childProfiles             Child[]                 @relation("ChildParent")
+  linkedChildProfiles       Child[]                 @relation("ChildLinkedUser")
+  votesCreated              Vote[]                  @relation("VoteCreator")
+  voteBallots               VoteBallot[]            @relation("VoteBallots")
+  reportsMade               MemberReport[]          @relation("ReporterRelation")
+  reportsReceived           MemberReport[]          @relation("ReportedRelation")
+  resolvedReports           MemberReport[]          @relation("ReportResolver")
+  subscriptionTier          SubscriptionTier        @default(free)
   subscriptionExpiresAt     DateTime?
-  inAppPurchaseToken        String?                @db.VarChar(500)
+  inAppPurchaseToken        String?                 @db.VarChar(500)
   subscription              Subscription?
   lastLat                   Float?
   lastLon                   Float?
-  language                  String                 @default("ko") @db.VarChar(10)
+  language                  String                  @default("ko") @db.VarChar(10)
   deletedAt                 DateTime?
   termsAgreedAt             DateTime?
 
@@ -1868,4 +1870,37 @@ enum BadgeCriteriaType {
   STREAK_DAYS
   STREAK_WEEKS
   TOTAL_CHECKS
+}
+
+model RoutineSetting {
+  id             String               @id @default(uuid())
+  userId         String               @unique
+  dailyGoalMode  RoutineDailyGoalMode @default(ALL)
+  dailyGoalCount Int?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("routine_settings")
+}
+
+model RoutineSettingHistory {
+  id             String               @id @default(uuid())
+  userId         String
+  dailyGoalMode  RoutineDailyGoalMode
+  dailyGoalCount Int?
+  effectiveFrom  DateTime             @db.Date
+  createdAt      DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, effectiveFrom])
+  @@index([userId, effectiveFrom])
+  @@map("routine_setting_histories")
+}
+
+enum RoutineDailyGoalMode {
+  ALL
+  COUNT
 }

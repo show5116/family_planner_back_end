@@ -78,6 +78,14 @@
 - **대시보드 요약**: 전체 `ACTIVE` 루틴의 오늘 체크 여부 + 현재 스트릭 + 이번 주/이번 달 진행 상황을 한 번에 조회 (위젯용). `thisWeekProgress`/`thisMonthProgress` 둘 다 응답에 포함되며, `frequencyType=MONTHLY` 루틴은 `thisMonthProgress`만 값이 있고 `thisWeekProgress`는 `null`, 그 외(DAILY/WEEKLY)는 반대로 `thisWeekProgress`만 값이 있고 `thisMonthProgress`는 `null` — 개별 루틴마다 `GET /:id/stats/rate?period=month`를 호출하는 N+1 없이 월간 목표 루틴의 이번 달 진행률까지 한 번에 조회 가능
 - **전체 개요(overview)**: `GET /routines/stats/overview?period=week|month` — 전체 루틴을 대상으로 기간 내 총 체크/기대 횟수, 합산 달성률(`totalChecked/totalExpected`), 날짜별 체크 현황 히트맵을 한 번에 반환. `대시보드 요약`과 달리 집계 대상은 `ACTIVE`+`PAUSED`(둘 다 포함, `ENDED`만 제외) — 사용자가 관리 중인 일시정지 습관도 개요에는 포함시키되 개별 요약 위젯(`stats/summary`)과는 의도적으로 다른 필터를 쓴다는 점에 주의. heatmap의 각 날짜 `totalCount`는 그날 실제로 활성 상태였던(시작일 이후, 종료일 이전, 일시정지 아님) 루틴 수로, 날짜마다 다를 수 있다. `totalExpected`/`achievementRate`는 개별 루틴의 `stats/rate`와 동일한 주/월 버킷 방식을 각 루틴의 `startDate`/`endDate`로 클리핑한 뒤 합산한 값이라, 개별 루틴 화면과 전체 개요 화면의 숫자가 일관된다. `period=week`일 때만 `routineBreakdown`(루틴별 `title`/`emoji`/`targetCount`/`checkedDates`)이 함께 내려가 습관별 주간 체크 그리드를 그릴 수 있음(`month`일 때는 필드 자체가 응답에서 생략됨) — `checkedDates`는 `stats/heatmap`과 동일한 포맷의 날짜 문자열 배열이고, `targetCount`는 달성/미달성 판정을 프론트에서 `checkedDates.length`와 비교해 계산할 수 있도록 제공하는 참고값(`WEEKLY/FIXED_DAYS`는 `targetDays.length`, 그 외는 `targetCount ?? 7`, `MONTHLY` 루틴은 주간 목표 개념이 없어 `null`). 과거/미래 주·달 탐색을 위해 `from`(YYYY-MM-DD, 옵션)을 추가로 받을 수 있음 — `from`만 주면 그 날짜가 속한 주(월~일)/달(1일~말일)로 서버가 스냅해서 계산하고, `from`+`to`를 함께 주면 스냅 없이 그 범위를 그대로 사용한다. 둘 다 생략하면 기존과 동일하게 오늘 기준 이번 주/이번 달. 상한(`to`)이 오늘보다 미래로 계산되는 클램핑은 **이번 주/이번 달을 조회할 때만** 적용(진행 중인 기간의 "아직 지나지 않은 날"은 집계 대상에서 제외하려는 의도) — `from`으로 다음 주/다음 달처럼 완전히 미래인 기간을 명시적으로 조회하면 클램핑 없이 그 기간 전체(월~일, 1일~말일)를 그대로 계산하며, `totalChecked=0`/`heatmap`의 `checkedCount`도 전부 0으로 자연스럽게 나옴(아직 아무도 체크할 수 없는 기간이므로)
 
+### 일일 목표 (daily goal)
+습관이 많을수록 "그날 대상 전부 체크해야 100%" 구조에서는 달성률이 역설적으로 낮아지는 문제를 완화하기 위해, 사용자가 "하루에 몇 개 하면 성공인지"를 직접 정하는 개념. 사용자 전체에 걸쳐 단일 설정(그룹별 없음), 저장/계산은 전부 개수(count) 기준(비율 자동 환산 없음).
+
+- **설정**: `GET/PATCH /routines/settings` — `dailyGoalMode: ALL | COUNT`(기본 `ALL`), `COUNT`일 때만 `dailyGoalCount`(1 이상). `COUNT`인데 `dailyGoalCount`가 없거나 0 이하면 400. `dailyGoalCount`가 현재 습관 총 개수보다 커도 허용(검증 안 함). `ALL`로 바꿀 때 `dailyGoalCount`를 생략하면 기존 값을 유지해서, 다시 `COUNT`로 되돌릴 때 이전 값이 복원됨.
+- **변경 이력 보존**: `RoutineSetting`(현재 값 캐시)과 별개로 `RoutineSettingHistory`(`userId`+`effectiveFrom` 유닛)가 시점별 원장 역할. `PATCH` 호출 시 오늘 날짜로 history row를 upsert하고, 특정 날짜의 유효 설정은 "`effectiveFrom <= 그 날짜`인 것 중 가장 최근 row"로 판정. 즉 **과거 통계를 조회하면 그 시점에 실제 유효했던 목표로 판정**되며(소급 재판정 안 함), 목표를 자주 바꿔도 지난주 통계 숫자가 뒤늦게 달라지지 않음.
+- **`GET /routines/stats/overview` 확장**: `heatmap[].goalAchieved`(그날 목표 달성 여부, 그날 대상 습관이 0개면 `null`)와, 응답 최상위에 `dailyGoalMode`/`dailyGoalCount`(조회 기간 마지막 날 기준 유효 설정)/`goalAchievedDays`/`goalTotalDays`/`goalAchievementRate` 추가. `goalTotalDays`는 대상 습관이 0개였던 날을 제외한 집계 대상 일수 — 진행 중인 기간(이번 주/이번 달)은 자연히 오늘까지의 경과 일수만 포함됨(기존 `to` 클램핑과 동일한 이유). `ALL` 모드인 날은 "그날 대상 습관 전부 체크"가 목표.
+- **`GET /routines/stats/daily-streak`(신규)**: 일일 목표 기준 전체 연속 달성 스트릭. `currentStreakDays`/`longestStreakDays`/`todayAchieved`/`todayCheckedCount`/`todayTargetCount`와, 목표 조정 제안용 `recent14Days`(최근 14일 `achievedDays`/`exceededDays`/`totalDays`/`averageCheckedCount`) 포함. **오늘이 아직 미달성이어도 스트릭을 끊지 않고 어제까지의 값을 유지**(자정이 지나야 끊김). 대상 습관이 0개였던 날은 스트릭을 끊지 않고 건너뜀. 스트릭 계산은 `RoutineSettingHistory` 최초 생성일부터 시작(그 이전은 아직 목표 개념이 없던 기간이라 감사 대상에서 제외) — `ALL` 모드만 써온 사용자도(한 번도 `COUNT`로 바꾼 적 없어도 `PATCH`를 호출한 적이 있다면) 동일하게 전체 스트릭 조회 가능. `RoutineSettingHistory`가 아예 없는 사용자(설정을 한 번도 변경한 적 없음)는 모든 값이 0/빈 값으로 응답(에러 아님).
+
 ### 배지
 - 체크(`POST /routines/:id/check`) 성공 직후 `RoutineBadgeService.evaluateAndAward()`가 동기적으로 판정, 응답의 `newlyEarnedBadges`에 신규 획득 배지 포함
 - 판정 기준 3종: `STREAK_DAYS`(연속 체크일), `STREAK_WEEKS`(연속 주간 목표 달성), `TOTAL_CHECKS`(누적 체크 횟수) — 카탈로그 9종 시드값은 아래 참고
@@ -451,7 +459,10 @@ model RoutineGroup {
 | GET    | `/routines/:id/stats/streak`           | 현재/최장 스트릭 (주/일 단위)     | JWT, Access |
 | GET    | `/routines/:id/stats/rate?period=`     | 기간별 달성률                     | JWT, Access |
 | GET    | `/routines/stats/summary`              | 대시보드 위젯용 전체 루틴 요약    | JWT         |
-| GET    | `/routines/stats/overview?period=`     | 전체 루틴 개요 (달성률 + 날짜별 히트맵) | JWT     |
+| GET    | `/routines/stats/overview?period=`     | 전체 루틴 개요 (달성률 + 날짜별 히트맵 + 일일 목표) | JWT     |
+| GET    | `/routines/stats/daily-streak`         | 일일 목표 기준 전체 연속 달성 스트릭 | JWT       |
+| GET    | `/routines/settings`                   | 루틴 일일 목표 설정 조회          | JWT         |
+| PATCH  | `/routines/settings`                   | 루틴 일일 목표 설정 변경          | JWT         |
 
 ### 배지
 

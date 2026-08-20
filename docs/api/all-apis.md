@@ -7839,7 +7839,8 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
     {
       "date": "", // 날짜 (YYYY-MM-DD) (string)
       "checkedCount": 0, // 해당 날짜에 체크된 루틴 수 (number)
-      "totalCount": 0 // 해당 날짜에 활성 상태였던(일시정지 제외) 루틴 수 (number)
+      "totalCount": 0, // 해당 날짜에 활성 상태였던(일시정지 제외) 루틴 수 (number)
+      "goalAchieved": null // 해당 날짜의 일일 목표 달성 여부. 그날 대상 습관이 0개면 null(집계 대상 아님) (boolean | null)
     }
   ], // 날짜별 체크 현황 히트맵 (period와 동일한 기간) (OverviewHeatmapDayDto[])
   "routineBreakdown": [
@@ -7850,7 +7851,81 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "targetCount": null, // 주간 목표 횟수 (WEEKLY/FIXED_DAYS는 targetDays.length, 그 외는 targetCount). MONTHLY 루틴은 주간 목표 개념이 없어 null (number | null)
       "checkedDates": ["2026-08-10", "2026-08-11"] // 조회 기간(from~to) 내 체크된 날짜 목록 (YYYY-MM-DD) (string[])
     }
-  ] // 루틴별 체크 현황 (period=week일 때만 존재, month일 때는 필드 생략) (OverviewRoutineBreakdownDto[]?)
+  ], // 루틴별 체크 현황 (period=week일 때만 존재, month일 때는 필드 생략) (OverviewRoutineBreakdownDto[]?)
+  "dailyGoalMode": "", // 조회 기간 마지막 날(to) 기준 유효했던 일일 목표 모드 (string)
+  "dailyGoalCount": null, // 조회 기간 마지막 날(to) 기준 유효했던 일일 목표 개수 (ALL 모드면 null) (number | null)
+  "goalAchievedDays": 0, // 기간 내 일일 목표를 달성한 날 수 (number)
+  "goalTotalDays": 0, // 기간 내 집계 대상 일수 (대상 습관이 0개였던 날 제외, 진행 중인 기간은 오늘까지의 경과 일수) (number)
+  "goalAchievementRate": 71 // 일일 목표 달성률 (%), goalAchievedDays / goalTotalDays (number)
+}
+```
+
+---
+
+### GET `routines/stats/daily-streak`
+
+**요약:** 일일 목표 기준 전체 연속 달성 스트릭 + 최근 14일 집계
+
+**Responses:**
+
+#### 200 - 일일 목표 스트릭 조회 성공
+
+```json
+{
+  "currentStreakDays": 0, // 오늘(또는 어제)까지 이어지는 연속 달성 일수 (number)
+  "longestStreakDays": 0, // 역대 최장 연속 달성 일수 (number)
+  "todayAchieved": false, // 오늘 목표 달성 여부 (boolean)
+  "todayCheckedCount": 0, // 오늘 체크한 습관 수 (number)
+  "todayTargetCount": 0, // 오늘 기준 목표 개수 (ALL 모드면 오늘 대상 습관 수) (number)
+  "recent14Days": {
+    "achievedDays": 0, // 최근 14일 중 목표를 달성한 날 수 (number)
+    "exceededDays": 0, // 최근 14일 중 목표를 초과 달성한 날 수 (number)
+    "totalDays": 0, // 최근 14일 중 집계 대상 일수 (대상 습관 0개였던 날 제외) (number)
+    "averageCheckedCount": 0 // 집계 대상일들의 하루 평균 체크 개수 (number)
+  } // 최근 14일 집계 (목표 조정 제안용) (DailyStreakRecent14DaysDto)
+}
+```
+
+---
+
+### GET `routines/settings`
+
+**요약:** 루틴 일일 목표 설정 조회
+
+**Responses:**
+
+#### 200 - 루틴 설정 조회 성공
+
+```json
+{
+  "dailyGoalMode": "", // 일일 목표 모드 (가능한 값: ALL, COUNT) (string)
+  "dailyGoalCount": null // COUNT 모드일 때 목표 개수 (ALL이면 null) (number | null)
+}
+```
+
+---
+
+### PATCH `routines/settings`
+
+**요약:** 루틴 일일 목표 설정 변경
+
+**Request Body:**
+
+```json
+{
+  "dailyGoalMode": null, // 일일 목표 모드. ALL=그날 대상 습관 전부, COUNT=dailyGoalCount 개수만 채우면 달성 (RoutineDailyGoalMode?)
+  "dailyGoalCount": 0 // dailyGoalMode=COUNT일 때의 목표 개수 (1 이상). ALL로 바꿀 때 생략하면 기존 값 유지 (number?)
+}
+```
+
+**Responses:**
+
+#### 200 - 루틴 설정 변경 성공
+
+```json
+{
+  "dailyGoalMode": "", // 일일 목표 모드 (가능한 값: ALL, COUNT) (string)
+  "dailyGoalCount": null // COUNT 모드일 때 목표 개수 (ALL이면 null) (number | null)
 }
 ```
 

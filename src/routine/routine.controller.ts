@@ -13,6 +13,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 import { RoutineService } from './routine.service';
 import { RoutineStatsService } from './routine-stats.service';
+import { RoutineSettingsService } from './routine-settings.service';
 import { RoutineBadgeService } from './routine-badge.service';
 import { RoutineLeaderboardService } from './routine-leaderboard.service';
 import { RoutineGroupService } from './routine-group.service';
@@ -35,6 +36,10 @@ import {
   RateQueryDto,
   OverviewQueryDto,
 } from './dto/routine-stats-query.dto';
+import {
+  UpdateRoutineSettingsDto,
+  RoutineSettingsResponseDto,
+} from './dto/routine-settings.dto';
 import { LeaderboardQueryDto } from './dto/routine-leaderboard-query.dto';
 import {
   RoutineDto,
@@ -57,6 +62,7 @@ import {
   RateResponseDto,
   RoutineSummaryDto,
   RoutineOverviewDto,
+  DailyStreakResponseDto,
 } from './dto/routine-stats-response.dto';
 import {
   RoutineBadgeDto,
@@ -80,6 +86,7 @@ export class RoutineController {
   constructor(
     private readonly routineService: RoutineService,
     private readonly routineStatsService: RoutineStatsService,
+    private readonly routineSettingsService: RoutineSettingsService,
     private readonly routineBadgeService: RoutineBadgeService,
     private readonly routineLeaderboardService: RoutineLeaderboardService,
     private readonly routineGroupService: RoutineGroupService,
@@ -116,6 +123,29 @@ export class RoutineController {
   @ApiSuccess(RoutineOverviewDto, '전체 루틴 개요 조회 성공')
   getOverview(@Request() req, @Query() query: OverviewQueryDto) {
     return this.routineStatsService.getOverview(req.user.userId, query);
+  }
+
+  @Get('stats/daily-streak')
+  @ApiOperation({
+    summary: '일일 목표 기준 전체 연속 달성 스트릭 + 최근 14일 집계',
+  })
+  @ApiSuccess(DailyStreakResponseDto, '일일 목표 스트릭 조회 성공')
+  getDailyStreak(@Request() req) {
+    return this.routineStatsService.getDailyStreak(req.user.userId);
+  }
+
+  @Get('settings')
+  @ApiOperation({ summary: '루틴 일일 목표 설정 조회' })
+  @ApiSuccess(RoutineSettingsResponseDto, '루틴 설정 조회 성공')
+  getSettings(@Request() req) {
+    return this.routineSettingsService.getSettings(req.user.userId);
+  }
+
+  @Patch('settings')
+  @ApiOperation({ summary: '루틴 일일 목표 설정 변경' })
+  @ApiSuccess(RoutineSettingsResponseDto, '루틴 설정 변경 성공')
+  updateSettings(@Request() req, @Body() dto: UpdateRoutineSettingsDto) {
+    return this.routineSettingsService.updateSettings(req.user.userId, dto);
   }
 
   @Get('badges')
