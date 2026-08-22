@@ -18,6 +18,7 @@ import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { CreateRoutineCategoryLinkDto } from './dto/create-routine-category-link.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
+import { UpdateDailyGoalInclusionsDto } from './dto/update-daily-goal-inclusions.dto';
 import { RoutineBadgeService } from './routine-badge.service';
 import {
   RoutineFrequencyType,
@@ -100,6 +101,8 @@ export class RoutineService {
 
   async create(userId: string, dto: CreateRoutineDto) {
     const frequencyType = dto.frequencyType ?? RoutineFrequencyType.WEEKLY;
+    const includeInDailyGoal =
+      dto.includeInDailyGoal ?? frequencyType === RoutineFrequencyType.DAILY;
 
     this.validateFrequencyCombo({
       frequencyType,
@@ -140,6 +143,7 @@ export class RoutineService {
         targetDays: dto.targetDays,
         startDate: parseDateOnly(dto.startDate),
         endDate: dto.endDate ? parseDateOnly(dto.endDate) : undefined,
+        includeInDailyGoal,
         ...(dto.categoryIds?.length && {
           categoryLinks: {
             create: dto.categoryIds.map((categoryId) => ({ categoryId })),
@@ -257,6 +261,9 @@ export class RoutineService {
           }),
           ...(dto.routineGroupId !== undefined && {
             groupId: dto.routineGroupId,
+          }),
+          ...(dto.includeInDailyGoal !== undefined && {
+            includeInDailyGoal: dto.includeInDailyGoal,
           }),
         },
       }),
@@ -390,6 +397,22 @@ export class RoutineService {
         this.prisma.routine.updateMany({
           where: { id: item.id, userId, deletedAt: null },
           data: { sortOrder: item.sortOrder },
+        }),
+      ),
+    );
+
+    return this.findAll(userId, {});
+  }
+
+  async updateDailyGoalInclusions(
+    userId: string,
+    dto: UpdateDailyGoalInclusionsDto,
+  ) {
+    await this.prisma.$transaction(
+      dto.items.map((item) =>
+        this.prisma.routine.updateMany({
+          where: { id: item.id, userId, deletedAt: null },
+          data: { includeInDailyGoal: item.includeInDailyGoal },
         }),
       ),
     );
@@ -815,6 +838,7 @@ export class RoutineService {
       startDate: Date;
       endDate: Date | null;
       sortOrder: number;
+      includeInDailyGoal: boolean;
       createdAt: Date;
       updatedAt: Date;
     },
@@ -844,6 +868,7 @@ export class RoutineService {
       startDate: routine.startDate,
       endDate: routine.endDate,
       sortOrder: routine.sortOrder,
+      includeInDailyGoal: routine.includeInDailyGoal,
       checkedToday: !!checkedLog,
       checkedLog: checkedLog
         ? {

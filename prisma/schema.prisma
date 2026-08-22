@@ -1659,27 +1659,28 @@ enum AnniversaryOffsetType {
 // ============================================================
 
 model Routine {
-  id            String               @id @default(uuid())
-  userId        String
-  groupId       String?
-  title         String               @db.VarChar(100)
-  emoji         String?              @db.VarChar(10)
-  color         String?              @db.VarChar(7)
-  memo          String?              @db.VarChar(500)
-  importance    RoutineImportance    @default(MEDIUM)
-  timeFilter    RoutineTimeFilter?
-  frequencyType RoutineFrequencyType @default(WEEKLY)
-  weeklyMode    RoutineWeeklyMode?
-  targetCount   Int?
-  targetDays    Json?
-  recordType    RoutineRecordType    @default(BOOLEAN)
-  status        RoutineStatus        @default(ACTIVE)
-  startDate     DateTime             @db.Date
-  endDate       DateTime?            @db.Date
-  sortOrder     Int                  @default(0)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  deletedAt     DateTime?
+  id                 String               @id @default(uuid())
+  userId             String
+  groupId            String?
+  title              String               @db.VarChar(100)
+  emoji              String?              @db.VarChar(10)
+  color              String?              @db.VarChar(7)
+  memo               String?              @db.VarChar(500)
+  importance         RoutineImportance    @default(MEDIUM)
+  timeFilter         RoutineTimeFilter?
+  frequencyType      RoutineFrequencyType @default(WEEKLY)
+  weeklyMode         RoutineWeeklyMode?
+  targetCount        Int?
+  targetDays         Json?
+  recordType         RoutineRecordType    @default(BOOLEAN)
+  status             RoutineStatus        @default(ACTIVE)
+  startDate          DateTime             @db.Date
+  endDate            DateTime?            @db.Date
+  sortOrder          Int                  @default(0)
+  includeInDailyGoal Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  deletedAt          DateTime?
 
   user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   group         RoutineGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)

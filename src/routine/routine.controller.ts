@@ -25,6 +25,7 @@ import { CheckRoutineDto } from './dto/check-routine.dto';
 import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { CreateRoutineCategoryLinkDto } from './dto/create-routine-category-link.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
+import { UpdateDailyGoalInclusionsDto } from './dto/update-daily-goal-inclusions.dto';
 import { CreateRoutineGroupDto } from './dto/create-routine-group.dto';
 import { UpdateRoutineGroupDto } from './dto/update-routine-group.dto';
 import { ReorderRoutineGroupDto } from './dto/reorder-routine-group.dto';
@@ -326,6 +327,16 @@ export class RoutineController {
   @ApiSuccess(RoutineDto, '순서 변경 성공', { isArray: true })
   reorder(@Request() req, @Body() dto: ReorderRoutineDto) {
     return this.routineService.reorder(req.user.userId, dto);
+  }
+
+  @Patch('daily-goal-inclusions')
+  @ApiOperation({ summary: '루틴별 일일 목표 포함 여부 일괄 변경' })
+  @ApiSuccess(RoutineDto, '일괄 변경 성공', { isArray: true })
+  updateDailyGoalInclusions(
+    @Request() req,
+    @Body() dto: UpdateDailyGoalInclusionsDto,
+  ) {
+    return this.routineService.updateDailyGoalInclusions(req.user.userId, dto);
   }
 
   @Get(':id')

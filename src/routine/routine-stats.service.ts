@@ -521,6 +521,7 @@ export class RoutineStatsService {
       let dayCheckedCount = 0;
       const dayStr = formatDate(day);
       for (const routine of routines) {
+        if (!routine.includeInDailyGoal) continue;
         const excludedRanges = pausesByRoutine.get(routine.id) ?? [];
         if (isRoutineActiveOnDate(routine, day, excludedRanges)) {
           dayTotalCount += 1;

@@ -7689,7 +7689,8 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "targetDays": [1, 3, 5], // 반복 요일 목록 (frequencyType=WEEKLY, weeklyMode=FIXED_DAYS일 때 필수, 0=일요일~6=토요일) (number[]?)
   "startDate": "2026-07-01", // 시작일 (YYYY-MM-DD) (string)
   "endDate": "", // 종료일 (YYYY-MM-DD, 없으면 무기한) (string?)
-  "routineGroupId": "" // 소속시킬 루틴 그룹 ID (없으면 독립 습관) (string?)
+  "routineGroupId": "", // 소속시킬 루틴 그룹 ID (없으면 독립 습관) (string?)
+  "includeInDailyGoal": false // 일일 목표 집계에 포함할지 여부. 생략 시 frequencyType=DAILY면 true, 그 외(WEEKLY/MONTHLY)는 false (boolean?)
 }
 ```
 
@@ -7716,6 +7717,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -7765,6 +7767,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -8075,6 +8078,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
+      "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
       "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
       "checkedLog": {
         "note": null,
@@ -8290,6 +8294,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
+      "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
       "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
       "checkedLog": {
         "note": null,
@@ -8439,6 +8444,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
+      "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
       "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
       "checkedLog": {
         "note": null,
@@ -8528,6 +8534,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -8585,6 +8592,63 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### PATCH `routines/daily-goal-inclusions`
+
+**요약:** 루틴별 일일 목표 포함 여부 일괄 변경
+
+**Request Body:**
+
+```json
+{
+  "items": [
+    {
+      "id": "", // 루틴 ID (string)
+      "includeInDailyGoal": false // 일일 목표 집계 포함 여부 (boolean)
+    }
+  ] // 루틴별 일일 목표 포함 여부 목록 (DailyGoalInclusionItemDto[])
+}
+```
+
+**Responses:**
+
+#### 200 - 일괄 변경 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -8631,6 +8695,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -8690,6 +8755,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -8764,6 +8830,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -8814,6 +8881,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)

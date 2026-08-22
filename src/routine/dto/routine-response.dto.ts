@@ -87,6 +87,9 @@ export class RoutineDto {
   @ApiProperty({ description: '정렬 순서' })
   sortOrder: number;
 
+  @ApiProperty({ description: '일일 목표 집계 포함 여부' })
+  includeInDailyGoal: boolean;
+
   @ApiProperty({
     description: '조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부',
   })

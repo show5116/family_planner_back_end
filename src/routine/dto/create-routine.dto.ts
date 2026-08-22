@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsInt,
   IsArray,
+  IsBoolean,
   Min,
   Max,
   MinLength,
@@ -179,4 +180,13 @@ export class CreateRoutineDto {
   @IsOptional()
   @IsString()
   routineGroupId?: string;
+
+  @ApiProperty({
+    description:
+      '일일 목표 집계에 포함할지 여부. 생략 시 frequencyType=DAILY면 true, 그 외(WEEKLY/MONTHLY)는 false',
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeInDailyGoal?: boolean;
 }

@@ -85,6 +85,7 @@
 - **변경 이력 보존**: `RoutineSetting`(현재 값 캐시)과 별개로 `RoutineSettingHistory`(`userId`+`effectiveFrom` 유닛)가 시점별 원장 역할. `PATCH` 호출 시 오늘 날짜로 history row를 upsert하고, 특정 날짜의 유효 설정은 "`effectiveFrom <= 그 날짜`인 것 중 가장 최근 row"로 판정. 즉 **과거 통계를 조회하면 그 시점에 실제 유효했던 목표로 판정**되며(소급 재판정 안 함), 목표를 자주 바꿔도 지난주 통계 숫자가 뒤늦게 달라지지 않음.
 - **`GET /routines/stats/overview` 확장**: `heatmap[].goalAchieved`(그날 목표 달성 여부, 그날 대상 습관이 0개면 `null`)와, 응답 최상위에 `dailyGoalMode`/`dailyGoalCount`(조회 기간 마지막 날 기준 유효 설정)/`goalAchievedDays`/`goalTotalDays`/`goalAchievementRate` 추가. `goalTotalDays`는 대상 습관이 0개였던 날을 제외한 집계 대상 일수 — 진행 중인 기간(이번 주/이번 달)은 자연히 오늘까지의 경과 일수만 포함됨(기존 `to` 클램핑과 동일한 이유). `ALL` 모드인 날은 "그날 대상 습관 전부 체크"가 목표.
 - **`GET /routines/stats/daily-streak`(신규)**: 일일 목표 기준 전체 연속 달성 스트릭. `currentStreakDays`/`longestStreakDays`/`todayAchieved`/`todayCheckedCount`/`todayTargetCount`와, 목표 조정 제안용 `recent14Days`(최근 14일 `achievedDays`/`exceededDays`/`totalDays`/`averageCheckedCount`) 포함. **오늘이 아직 미달성이어도 스트릭을 끊지 않고 어제까지의 값을 유지**(자정이 지나야 끊김). 대상 습관이 0개였던 날은 스트릭을 끊지 않고 건너뜀. 스트릭 계산은 `RoutineSettingHistory` 최초 생성일부터 시작(그 이전은 아직 목표 개념이 없던 기간이라 감사 대상에서 제외) — `ALL` 모드만 써온 사용자도(한 번도 `COUNT`로 바꾼 적 없어도 `PATCH`를 호출한 적이 있다면) 동일하게 전체 스트릭 조회 가능. `RoutineSettingHistory`가 아예 없는 사용자(설정을 한 번도 변경한 적 없음)는 모든 값이 0/빈 값으로 응답(에러 아님).
+- **습관별 포함/제외(`includeInDailyGoal`, 2차)**: 1차 구현은 "그날 대상 습관 수"를 `isRoutineActiveOnDate`(시작일 이후, 종료일 이전, 일시정지 아님)로만 정의해 반복 주기를 반영하지 못했다(주 3회 습관도 매일 분모에 포함). `Routine.includeInDailyGoal`(기본값: `frequencyType=DAILY`면 `true`, `WEEKLY`/`MONTHLY`는 `false` — 생성 시 자동 결정, 명시하면 그 값 우선)로 사용자가 습관별로 일일 목표 집계 포함 여부를 직접 정한다. `PATCH /routines/:id`로 개별 변경 가능하며, `frequencyType`이 바뀌어도 `includeInDailyGoal`은 명시적으로 보내지 않는 한 자동으로 재조정되지 않는다. `PATCH /routines/daily-goal-inclusions`(`{ items: [{id, includeInDailyGoal}] }`)로 여러 습관을 한 번에 토글 가능(`PATCH /routines/sort-order`와 동일한 벌크 패턴). `includeInDailyGoal=false`인 습관은 `heatmap[].totalCount`/`goalAchieved`, `goalAchievedDays`/`goalTotalDays`/`goalAchievementRate`, `daily-streak`의 모든 필드 계산에서 제외된다(`dailyGoalMode=ALL`의 "그날 대상 전부"도 "포함 습관 전부"로 재해석). **주의**: 전체 통계 지표인 `totalChecked`/`totalExpected`/`achievementRate`(1차 이전부터 있던 필드)는 이 설정과 무관하게 기존 정의 그대로 모든 습관을 포함해 계산된다 — 일일 목표와 전체 통계는 서로 다른 축의 지표. `dailyGoalCount`가 포함 습관 수보다 커도 서버는 보정하지 않는다(설정값을 임의로 바꾸지 않는다는 원칙).
 
 ### 배지
 - 체크(`POST /routines/:id/check`) 성공 직후 `RoutineBadgeService.evaluateAndAward()`가 동기적으로 판정, 응답의 `newlyEarnedBadges`에 신규 획득 배지 포함
@@ -400,6 +401,7 @@ model RoutineGroup {
 | PATCH  | `/routines/:id/pause`   | 루틴 일시정지                 | JWT, Owner |
 | PATCH  | `/routines/:id/resume`  | 루틴 재개                     | JWT, Owner |
 | PATCH  | `/routines/sort-order`  | 순서 일괄 변경                | JWT        |
+| PATCH  | `/routines/daily-goal-inclusions` | 일일 목표 포함 여부 일괄 변경 | JWT        |
 
 ### 루틴 카테고리
 
