@@ -31,7 +31,7 @@
   "startDate": "2026-07-01", // 시작일 (YYYY-MM-DD) (string)
   "endDate": "", // 종료일 (YYYY-MM-DD, 없으면 무기한) (string?)
   "routineGroupId": "", // 소속시킬 루틴 그룹 ID (없으면 독립 습관) (string?)
-  "includeInDailyGoal": false // 일일 목표 집계에 포함할지 여부. 생략 시 frequencyType=DAILY면 true, 그 외(WEEKLY/MONTHLY)는 false (boolean?)
+  "includeInDailyGoal": false // 일일 목표 집계에 포함할지 여부. 생략 시 true (boolean?)
 }
 ```
 

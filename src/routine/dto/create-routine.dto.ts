@@ -182,8 +182,7 @@ export class CreateRoutineDto {
   routineGroupId?: string;
 
   @ApiProperty({
-    description:
-      '일일 목표 집계에 포함할지 여부. 생략 시 frequencyType=DAILY면 true, 그 외(WEEKLY/MONTHLY)는 false',
+    description: '일일 목표 집계에 포함할지 여부. 생략 시 true',
     required: false,
   })
   @IsOptional()

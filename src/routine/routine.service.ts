@@ -101,8 +101,7 @@ export class RoutineService {
 
   async create(userId: string, dto: CreateRoutineDto) {
     const frequencyType = dto.frequencyType ?? RoutineFrequencyType.WEEKLY;
-    const includeInDailyGoal =
-      dto.includeInDailyGoal ?? frequencyType === RoutineFrequencyType.DAILY;
+    const includeInDailyGoal = dto.includeInDailyGoal ?? true;
 
     this.validateFrequencyCombo({
       frequencyType,
