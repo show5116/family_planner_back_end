@@ -3,14 +3,12 @@ import { PrismaService } from '@/prisma/prisma.service';
 import {
   UpdateRoutineSettingsDto,
   RoutineDailyGoalMode,
+  EffectiveDailyGoal,
 } from './dto/routine-settings.dto';
 import { formatDate, listDays } from './utils/routine-stats.util';
 import { todayInKst } from '@/common/utils/date-kst.util';
 
-export interface EffectiveDailyGoal {
-  dailyGoalMode: RoutineDailyGoalMode;
-  dailyGoalCount: number | null;
-}
+export type { EffectiveDailyGoal };
 
 @Injectable()
 export class RoutineSettingsService {

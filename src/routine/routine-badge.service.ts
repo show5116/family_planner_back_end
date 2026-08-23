@@ -1,22 +1,16 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { I18nService, I18nContext } from 'nestjs-i18n';
+import { Injectable, Logger } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
+import { BadgeCriteriaType, RoutineStatus } from '@/routine/enums';
 import {
-  BadgeCriteriaType,
-  RoutineFrequencyType,
-  RoutineWeeklyMode,
-} from '@/routine/enums';
-import {
-  calculateScheduledDayStreak,
-  calculateWeekStreak,
-  calculateMonthStreak,
-  isScheduledDayForRoutine,
+  computeDailyGoalStatus,
+  computeDailyGoalAchievementSummary,
   pauseToDateRange,
   DateRange,
 } from './utils/routine-stats.util';
-import { RoutineService } from './routine.service';
+import { RoutineSettingsService } from './routine-settings.service';
 import { todayInKst } from '@/common/utils/date-kst.util';
 
 @Injectable()
@@ -27,8 +21,7 @@ export class RoutineBadgeService {
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
     private readonly i18n: I18nService,
-    @Inject(forwardRef(() => RoutineService))
-    private readonly routineService: RoutineService,
+    private readonly routineSettingsService: RoutineSettingsService,
   ) {}
 
   async findCatalog() {
@@ -38,41 +31,29 @@ export class RoutineBadgeService {
     });
   }
 
-  /** 특정 루틴에서 획득한 배지 조회. 본인 또는 공유 그룹원만 접근 가능 */
-  async findByRoutine(userId: string, routineId: string) {
-    const routine = await this.routineService.findRoutineWithAccess(
-      userId,
-      routineId,
-    );
-
-    const badges = await this.prisma.userRoutineBadge.findMany({
-      where: { userId: routine.userId, routineId },
-      include: { badge: true, routine: { select: { title: true } } },
-      orderBy: { earnedAt: 'desc' },
-    });
-    return badges.map((b) => this.toResponse(b));
-  }
-
   async findMine(userId: string) {
     const badges = await this.prisma.userRoutineBadge.findMany({
       where: { userId },
-      include: { badge: true, routine: { select: { title: true } } },
+      include: { badge: true },
       orderBy: { earnedAt: 'desc' },
     });
     return badges.map((b) => this.toResponse(b));
   }
 
-  /** 체크 직후 배지 판정. 실패해도 체크 자체는 성공 처리되도록 호출부에서 에러를 삼킴 */
-  async evaluateAndAward(userId: string, routineId: string) {
-    const routine = await this.prisma.routine.findUnique({
-      where: { id: routineId },
-    });
-    if (!routine) return [];
+  /**
+   * 일일 목표 달성 기준 배지 판정. 체크된 날짜와 무관하게 항상 [최초 설정일, 오늘] 전체를
+   * 재계산해서 판정한다(과거 날짜 백필로 지난 스트릭/완벽한 주가 뒤늦게 바뀌는 경우까지 반영).
+   * 실패해도 체크 자체는 성공 처리되도록 호출부에서 에러를 삼킨다.
+   */
+  async evaluateAndAward(userId: string) {
+    const firstEffectiveFrom =
+      await this.routineSettingsService.getFirstEffectiveFrom(userId);
+    if (!firstEffectiveFrom) return [];
 
     const [catalog, earned] = await Promise.all([
       this.prisma.routineBadge.findMany({ where: { isActive: true } }),
       this.prisma.userRoutineBadge.findMany({
-        where: { userId, routineId },
+        where: { userId },
         select: { badgeId: true },
       }),
     ]);
@@ -81,99 +62,51 @@ export class RoutineBadgeService {
     const candidates = catalog.filter((b) => !earnedBadgeIds.has(b.id));
     if (candidates.length === 0) return [];
 
-    const [logs, pauses] = await Promise.all([
-      this.prisma.routineLog.findMany({
-        where: { routineId },
-        select: { checkedDate: true },
-      }),
-      this.prisma.routinePause.findMany({ where: { routineId } }),
-    ]);
-    const logDates = logs.map((l) => l.checkedDate);
     const today = todayInKst();
-    const excludedRanges: DateRange[] = pauses.map((p) =>
-      pauseToDateRange(p, today),
-    );
+    const from = firstEffectiveFrom;
+    const to = today;
 
-    let currentStreakDays: number;
-    let currentStreakWeeks: number; // MONTHLY 루틴은 월-스트릭을 이 슬롯에 매핑
+    const routines = await this.prisma.routine.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        status: { in: [RoutineStatus.ACTIVE, RoutineStatus.PAUSED] },
+      },
+    });
+    const routineIds = routines.map((r) => r.id);
 
-    if (routine.frequencyType === RoutineFrequencyType.MONTHLY) {
-      const targetCount = routine.targetCount ?? 1;
-      const dayStreak = calculateScheduledDayStreak(
-        routine.startDate,
-        today,
-        logDates,
-        () => true,
-        excludedRanges,
-      );
-      const monthStreak = calculateMonthStreak(
-        routine.startDate,
-        today,
-        targetCount,
-        logDates,
-        excludedRanges,
-      );
-      currentStreakDays = dayStreak.currentStreakDays;
-      currentStreakWeeks = monthStreak.currentStreakMonths;
-    } else if (
-      routine.frequencyType === RoutineFrequencyType.WEEKLY &&
-      routine.weeklyMode === RoutineWeeklyMode.FIXED_DAYS
-    ) {
-      const targetDays = Array.isArray(routine.targetDays)
-        ? (routine.targetDays as number[])
-        : [];
-      const isScheduledDay = (date: Date) =>
-        isScheduledDayForRoutine(
-          {
-            frequencyType: routine.frequencyType,
-            weeklyMode: routine.weeklyMode,
-            targetDays: routine.targetDays,
-          },
-          date,
-        );
-      const dayStreak = calculateScheduledDayStreak(
-        routine.startDate,
-        today,
-        logDates,
-        isScheduledDay,
-        excludedRanges,
-      );
-      const weekStreak = calculateWeekStreak(
-        routine.startDate,
-        today,
-        targetDays.length,
-        logDates,
-        excludedRanges,
-      );
-      currentStreakDays = dayStreak.currentStreakDays;
-      currentStreakWeeks = weekStreak.currentStreakWeeks;
-    } else {
-      // DAILY, WEEKLY/COUNT_ONLY
-      const targetCount = routine.targetCount ?? 7;
-      const dayStreak = calculateScheduledDayStreak(
-        routine.startDate,
-        today,
-        logDates,
-        () => true,
-        excludedRanges,
-      );
-      const weekStreak = calculateWeekStreak(
-        routine.startDate,
-        today,
-        targetCount,
-        logDates,
-        excludedRanges,
-      );
-      currentStreakDays = dayStreak.currentStreakDays;
-      currentStreakWeeks = weekStreak.currentStreakWeeks;
+    const [logs, allPauses, settingsMap] = await Promise.all([
+      this.prisma.routineLog.findMany({
+        where: { userId, checkedDate: { gte: from, lte: to } },
+        select: { routineId: true, checkedDate: true },
+      }),
+      this.prisma.routinePause.findMany({
+        where: { routineId: { in: routineIds } },
+      }),
+      this.routineSettingsService.getEffectiveSettingsMap(userId, from, to),
+    ]);
+
+    const pausesByRoutine = new Map<string, DateRange[]>();
+    for (const pause of allPauses) {
+      const ranges = pausesByRoutine.get(pause.routineId) ?? [];
+      ranges.push(pauseToDateRange(pause, today));
+      pausesByRoutine.set(pause.routineId, ranges);
     }
 
-    const totalChecks = logDates.length;
+    const dailyStatuses = computeDailyGoalStatus(
+      routines,
+      logs,
+      pausesByRoutine,
+      settingsMap,
+      from,
+      to,
+    );
+    const summary = computeDailyGoalAchievementSummary(dailyStatuses);
 
     const currentValue = (type: BadgeCriteriaType): number => {
-      if (type === 'STREAK_DAYS') return currentStreakDays;
-      if (type === 'STREAK_WEEKS') return currentStreakWeeks;
-      return totalChecks;
+      if (type === 'GOAL_STREAK_DAYS') return summary.currentStreakDays;
+      if (type === 'GOAL_TOTAL_DAYS') return summary.totalAchievedDays;
+      return summary.perfectWeeksCount; // GOAL_PERFECT_WEEK
     };
 
     const toAward = candidates.filter(
@@ -184,8 +117,8 @@ export class RoutineBadgeService {
     const created = await this.prisma.$transaction(
       toAward.map((badge) =>
         this.prisma.userRoutineBadge.create({
-          data: { userId, badgeId: badge.id, routineId },
-          include: { badge: true, routine: { select: { title: true } } },
+          data: { userId, badgeId: badge.id },
+          include: { badge: true },
         }),
       ),
     );
@@ -233,16 +166,12 @@ export class RoutineBadgeService {
       criteriaType: BadgeCriteriaType;
       criteriaValue: number;
     };
-    routineId: string | null;
-    routine: { title: string } | null;
     earnedAt: Date;
   }) {
     return {
       id: userBadge.id,
       badgeId: userBadge.badgeId,
       badge: userBadge.badge,
-      routineId: userBadge.routineId,
-      routineTitle: userBadge.routine?.title ?? null,
       earnedAt: userBadge.earnedAt,
     };
   }

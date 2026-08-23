@@ -11,15 +11,18 @@ const BADGES: {
   criteriaValue: number;
   sortOrder: number;
 }[] = [
-  { code: 'STREAK_DAYS_7', title: '7일 연속 달성', description: '루틴을 7일 연속으로 체크했어요', iconEmoji: '🔥', criteriaType: 'STREAK_DAYS', criteriaValue: 7, sortOrder: 0 },
-  { code: 'STREAK_DAYS_30', title: '30일 연속 달성', description: '루틴을 30일 연속으로 체크했어요', iconEmoji: '🔥', criteriaType: 'STREAK_DAYS', criteriaValue: 30, sortOrder: 1 },
-  { code: 'STREAK_DAYS_100', title: '100일 연속 달성', description: '루틴을 100일 연속으로 체크했어요', iconEmoji: '🏆', criteriaType: 'STREAK_DAYS', criteriaValue: 100, sortOrder: 2 },
-  { code: 'STREAK_WEEKS_4', title: '4주 연속 목표 달성', description: '4주 연속으로 주간 목표를 달성했어요', iconEmoji: '⭐', criteriaType: 'STREAK_WEEKS', criteriaValue: 4, sortOrder: 3 },
-  { code: 'STREAK_WEEKS_12', title: '12주 연속 목표 달성', description: '12주 연속으로 주간 목표를 달성했어요', iconEmoji: '🌟', criteriaType: 'STREAK_WEEKS', criteriaValue: 12, sortOrder: 4 },
-  { code: 'STREAK_WEEKS_52', title: '1년 연속 목표 달성', description: '52주 연속으로 주간 목표를 달성했어요', iconEmoji: '👑', criteriaType: 'STREAK_WEEKS', criteriaValue: 52, sortOrder: 5 },
-  { code: 'TOTAL_CHECKS_50', title: '누적 50회 체크', description: '루틴을 총 50회 체크했어요', iconEmoji: '✅', criteriaType: 'TOTAL_CHECKS', criteriaValue: 50, sortOrder: 6 },
-  { code: 'TOTAL_CHECKS_200', title: '누적 200회 체크', description: '루틴을 총 200회 체크했어요', iconEmoji: '💯', criteriaType: 'TOTAL_CHECKS', criteriaValue: 200, sortOrder: 7 },
-  { code: 'TOTAL_CHECKS_500', title: '누적 500회 체크', description: '루틴을 총 500회 체크했어요', iconEmoji: '💎', criteriaType: 'TOTAL_CHECKS', criteriaValue: 500, sortOrder: 8 },
+  { code: 'GOAL_STREAK_3', title: '3일 연속 달성', description: '일일 목표를 3일 연속으로 달성했어요', iconEmoji: '🌱', criteriaType: 'GOAL_STREAK_DAYS', criteriaValue: 3, sortOrder: 0 },
+  { code: 'GOAL_STREAK_7', title: '7일 연속 달성', description: '일일 목표를 7일 연속으로 달성했어요', iconEmoji: '🔥', criteriaType: 'GOAL_STREAK_DAYS', criteriaValue: 7, sortOrder: 1 },
+  { code: 'GOAL_STREAK_14', title: '2주 연속 달성', description: '일일 목표를 14일 연속으로 달성했어요', iconEmoji: '🔥', criteriaType: 'GOAL_STREAK_DAYS', criteriaValue: 14, sortOrder: 2 },
+  { code: 'GOAL_STREAK_30', title: '30일 연속 달성', description: '일일 목표를 30일 연속으로 달성했어요', iconEmoji: '🔥🔥', criteriaType: 'GOAL_STREAK_DAYS', criteriaValue: 30, sortOrder: 3 },
+  { code: 'GOAL_STREAK_100', title: '100일 연속 달성', description: '일일 목표를 100일 연속으로 달성했어요', iconEmoji: '🔥🔥🔥', criteriaType: 'GOAL_STREAK_DAYS', criteriaValue: 100, sortOrder: 4 },
+  { code: 'GOAL_TOTAL_10', title: '누적 10일 달성', description: '일일 목표를 누적 10일 달성했어요', iconEmoji: '⭐', criteriaType: 'GOAL_TOTAL_DAYS', criteriaValue: 10, sortOrder: 5 },
+  { code: 'GOAL_TOTAL_50', title: '누적 50일 달성', description: '일일 목표를 누적 50일 달성했어요', iconEmoji: '⭐⭐', criteriaType: 'GOAL_TOTAL_DAYS', criteriaValue: 50, sortOrder: 6 },
+  { code: 'GOAL_TOTAL_100', title: '누적 100일 달성', description: '일일 목표를 누적 100일 달성했어요', iconEmoji: '⭐⭐⭐', criteriaType: 'GOAL_TOTAL_DAYS', criteriaValue: 100, sortOrder: 7 },
+  { code: 'GOAL_TOTAL_365', title: '누적 365일 달성', description: '일일 목표를 누적 365일 달성했어요', iconEmoji: '👑', criteriaType: 'GOAL_TOTAL_DAYS', criteriaValue: 365, sortOrder: 8 },
+  { code: 'GOAL_PERFECT_WEEK_1', title: '완벽한 한 주', description: '한 주(월~일) 동안 매일 일일 목표를 달성했어요', iconEmoji: '🏆', criteriaType: 'GOAL_PERFECT_WEEK', criteriaValue: 1, sortOrder: 9 },
+  { code: 'GOAL_PERFECT_WEEK_4', title: '완벽한 4주', description: '완벽한 한 주를 4번 달성했어요', iconEmoji: '🏆🏆', criteriaType: 'GOAL_PERFECT_WEEK', criteriaValue: 4, sortOrder: 10 },
+  { code: 'GOAL_PERFECT_WEEK_12', title: '완벽한 12주', description: '완벽한 한 주를 12번 달성했어요', iconEmoji: '🏆🏆🏆', criteriaType: 'GOAL_PERFECT_WEEK', criteriaValue: 12, sortOrder: 11 },
 ];
 
 async function main() {

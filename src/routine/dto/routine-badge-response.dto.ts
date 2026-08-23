@@ -5,7 +5,7 @@ export class RoutineBadgeDto {
   @ApiProperty({ description: '배지 ID' })
   id: string;
 
-  @ApiProperty({ description: '배지 코드', example: 'STREAK_DAYS_7' })
+  @ApiProperty({ description: '배지 코드', example: 'GOAL_STREAK_7' })
   code: string;
 
   @ApiProperty({ description: '배지 제목', example: '7일 연속 달성' })
@@ -33,12 +33,6 @@ export class UserRoutineBadgeDto {
 
   @ApiProperty({ description: '배지 정보', type: RoutineBadgeDto })
   badge: RoutineBadgeDto;
-
-  @ApiProperty({ description: '획득 기준이 된 루틴 ID', nullable: true })
-  routineId: string | null;
-
-  @ApiProperty({ description: '획득 기준이 된 루틴 제목', nullable: true })
-  routineTitle: string | null;
 
   @ApiProperty({ description: '획득 일시' })
   earnedAt: Date;

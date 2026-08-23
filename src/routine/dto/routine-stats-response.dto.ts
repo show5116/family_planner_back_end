@@ -29,10 +29,16 @@ export class StreakResponseDto {
   @ApiProperty({ description: '루틴 ID' })
   routineId: string;
 
-  @ApiProperty({ description: '현재 연속 달성 주 수 (목표 달성 기준)' })
+  @ApiProperty({
+    description:
+      '현재 연속 달성 주 수 (목표 달성 기준). frequencyType=MONTHLY 루틴은 주 단위 연속 개념이 없어 0',
+  })
   currentStreakWeeks: number;
 
-  @ApiProperty({ description: '최장 연속 달성 주 수' })
+  @ApiProperty({
+    description:
+      '최장 연속 달성 주 수. frequencyType=MONTHLY 루틴은 주 단위 연속 개념이 없어 0',
+  })
   longestStreakWeeks: number;
 
   @ApiProperty({ description: '현재 연속 체크 일수' })
@@ -40,6 +46,18 @@ export class StreakResponseDto {
 
   @ApiProperty({ description: '최장 연속 체크 일수' })
   longestStreakDays: number;
+
+  @ApiProperty({
+    description:
+      '현재 연속 달성 개월 수 (frequencyType=MONTHLY 루틴 전용). MONTHLY가 아니면 0',
+  })
+  currentStreakMonths: number;
+
+  @ApiProperty({
+    description:
+      '최장 연속 달성 개월 수 (frequencyType=MONTHLY 루틴 전용). MONTHLY가 아니면 0',
+  })
+  longestStreakMonths: number;
 
   @ApiProperty({ description: '이번 주 진행 상황', type: ThisWeekProgressDto })
   thisWeekProgress: ThisWeekProgressDto;

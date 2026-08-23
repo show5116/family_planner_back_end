@@ -1,3 +1,9 @@
+import { Routine } from '@prisma/client';
+import {
+  RoutineDailyGoalMode,
+  EffectiveDailyGoal,
+} from '../dto/routine-settings.dto';
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function toDateOnly(date: Date): Date {
@@ -505,4 +511,145 @@ export function isScheduledDayForRoutine(
     return targetDays.includes(toDateOnly(date).getUTCDay());
   }
   return true;
+}
+
+// ============================================================
+// 일일 목표(daily goal) 달성 현황 계산
+// ============================================================
+
+export interface DailyGoalDayStatus {
+  date: string;
+  checkedCount: number;
+  totalCount: number;
+  targetCount: number | null;
+  goalAchieved: boolean | null;
+}
+
+/** 루틴별 로그/일시정지 이력과 일별 유효 목표를 바탕으로 [from,to] 각 날짜의 체크/목표 달성 현황을 계산 */
+export function computeDailyGoalStatus(
+  routines: Routine[],
+  logs: { routineId: string; checkedDate: Date }[],
+  pausesByRoutine: Map<string, DateRange[]>,
+  settingsMap: Map<string, EffectiveDailyGoal>,
+  from: Date,
+  to: Date,
+): DailyGoalDayStatus[] {
+  const checkedDateSet = new Set(
+    logs.map((l) => `${l.routineId}|${formatDate(l.checkedDate)}`),
+  );
+
+  return listDays(from, to).map((day) => {
+    let dayTotalCount = 0;
+    let dayCheckedCount = 0;
+    const dayStr = formatDate(day);
+    for (const routine of routines) {
+      if (!routine.includeInDailyGoal) continue;
+      const excludedRanges = pausesByRoutine.get(routine.id) ?? [];
+      if (isRoutineActiveOnDate(routine, day, excludedRanges)) {
+        dayTotalCount += 1;
+      }
+      if (checkedDateSet.has(`${routine.id}|${dayStr}`)) {
+        dayCheckedCount += 1;
+      }
+    }
+
+    if (dayTotalCount === 0) {
+      return {
+        date: dayStr,
+        checkedCount: dayCheckedCount,
+        totalCount: dayTotalCount,
+        targetCount: null,
+        goalAchieved: null,
+      };
+    }
+
+    const effective = settingsMap.get(dayStr) ?? {
+      dailyGoalMode: RoutineDailyGoalMode.ALL,
+      dailyGoalCount: null,
+    };
+    const targetCount =
+      effective.dailyGoalMode === RoutineDailyGoalMode.COUNT
+        ? (effective.dailyGoalCount ?? dayTotalCount)
+        : dayTotalCount;
+    const goalAchieved = dayCheckedCount >= targetCount;
+
+    return {
+      date: dayStr,
+      checkedCount: dayCheckedCount,
+      totalCount: dayTotalCount,
+      targetCount,
+      goalAchieved,
+    };
+  });
+}
+
+export interface DailyGoalAchievementSummary {
+  currentStreakDays: number;
+  longestStreakDays: number;
+  totalAchievedDays: number;
+  perfectWeeksCount: number;
+}
+
+/**
+ * 일별 목표 달성 현황(computeDailyGoalStatus 결과)으로부터 배지/스트릭 판정에 필요한 요약 지표를 계산.
+ * - currentStreakDays: 오늘 미달성은 건너뛰고 어제까지 기준(자정이 지나야 끊김), goalAchieved=null(대상 0개)인 날은 스킵.
+ * - totalAchievedDays: 전체 구간 중 목표를 달성한 날의 누적 수.
+ * - perfectWeeksCount: 월~일 7일 전부가 goalAchieved=true인 주의 수. 구간 경계에 걸려 7일 미만만
+ *   포함된 주(도입 시점이 주 중간이거나 이번 주가 아직 안 끝난 경우)는 그룹 크기가 7 미만이라 자동 제외.
+ */
+export function computeDailyGoalAchievementSummary(
+  dailyStatuses: DailyGoalDayStatus[],
+): DailyGoalAchievementSummary {
+  let currentStreakDays = 0;
+  for (let i = dailyStatuses.length - 1; i >= 0; i -= 1) {
+    const status = dailyStatuses[i];
+    if (status.goalAchieved === null) continue;
+    if (i === dailyStatuses.length - 1 && !status.goalAchieved) {
+      continue;
+    }
+    if (status.goalAchieved) {
+      currentStreakDays += 1;
+    } else {
+      break;
+    }
+  }
+
+  let longestStreakDays = 0;
+  let runningStreak = 0;
+  for (const status of dailyStatuses) {
+    if (status.goalAchieved === null) continue;
+    if (status.goalAchieved) {
+      runningStreak += 1;
+      longestStreakDays = Math.max(longestStreakDays, runningStreak);
+    } else {
+      runningStreak = 0;
+    }
+  }
+
+  const totalAchievedDays = dailyStatuses.filter(
+    (s) => s.goalAchieved === true,
+  ).length;
+
+  const weekGroups = new Map<string, DailyGoalDayStatus[]>();
+  for (const status of dailyStatuses) {
+    const weekKey = formatDate(
+      getWeekStart(new Date(`${status.date}T00:00:00.000Z`)),
+    );
+    const group = weekGroups.get(weekKey) ?? [];
+    group.push(status);
+    weekGroups.set(weekKey, group);
+  }
+  let perfectWeeksCount = 0;
+  for (const group of weekGroups.values()) {
+    if (group.length === 7 && group.every((s) => s.goalAchieved === true)) {
+      perfectWeeksCount += 1;
+    }
+  }
+
+  return {
+    currentStreakDays,
+    longestStreakDays,
+    totalAchievedDays,
+    perfectWeeksCount,
+  };
 }

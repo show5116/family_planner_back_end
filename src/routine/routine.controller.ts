@@ -481,17 +481,6 @@ export class RoutineController {
     return this.routineService.findCategories(req.user.userId, id);
   }
 
-  @Get(':id/badges')
-  @ApiOperation({
-    summary: '특정 루틴에서 획득한 배지 목록 조회 (본인 또는 공유 그룹원)',
-  })
-  @ApiSuccess(UserRoutineBadgeDto, '루틴별 배지 조회 성공', { isArray: true })
-  @ApiNotFound('루틴을 찾을 수 없습니다')
-  @ApiForbidden('루틴에 접근할 권한이 없습니다')
-  getRoutineBadges(@Request() req, @Param('id') id: string) {
-    return this.routineBadgeService.findByRoutine(req.user.userId, id);
-  }
-
   @Get(':id/stats/heatmap')
   @ApiOperation({ summary: '루틴 달력 히트맵 (날짜별 달성 여부)' })
   @ApiSuccess(HeatmapResponseDto, '히트맵 조회 성공')

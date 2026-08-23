@@ -6,6 +6,11 @@ export enum RoutineDailyGoalMode {
   COUNT = 'COUNT',
 }
 
+export interface EffectiveDailyGoal {
+  dailyGoalMode: RoutineDailyGoalMode;
+  dailyGoalCount: number | null;
+}
+
 export class UpdateRoutineSettingsDto {
   @ApiProperty({
     description:

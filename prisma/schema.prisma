@@ -1686,7 +1686,6 @@ model Routine {
   group         RoutineGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
   logs          RoutineLog[]
   shares        RoutineShare[]
-  badges        UserRoutineBadge[]
   pauses        RoutinePause[]
   categoryLinks RoutineCategoryLink[]
 
@@ -1850,27 +1849,24 @@ model RoutineBadge {
 }
 
 model UserRoutineBadge {
-  id        String   @id @default(uuid())
-  userId    String
-  badgeId   String
-  routineId String?
-  earnedAt  DateTime @default(now())
+  id       String   @id @default(uuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
 
-  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge   RoutineBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-  routine Routine?     @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge RoutineBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, badgeId, routineId])
+  @@unique([userId, badgeId])
   @@index([userId])
   @@index([badgeId])
-  @@index([routineId])
   @@map("user_routine_badges")
 }
 
 enum BadgeCriteriaType {
-  STREAK_DAYS
-  STREAK_WEEKS
-  TOTAL_CHECKS
+  GOAL_STREAK_DAYS
+  GOAL_TOTAL_DAYS
+  GOAL_PERFECT_WEEK
 }
 
 model RoutineSetting {

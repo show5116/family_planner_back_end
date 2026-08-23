@@ -7945,7 +7945,7 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 ```json
 {
   "id": "", // 배지 ID (string)
-  "code": "STREAK_DAYS_7", // 배지 코드 (string)
+  "code": "GOAL_STREAK_7", // 배지 코드 (string)
   "title": "7일 연속 달성", // 배지 제목 (string)
   "description": null, // 배지 설명 (string | null)
   "iconEmoji": null, // 아이콘 이모지 (string | null)
@@ -8394,15 +8394,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "badgeId": "", // 배지 ID (string)
   "badge": {
     "id": "", // 배지 ID (string)
-    "code": "STREAK_DAYS_7", // 배지 코드 (string)
+    "code": "GOAL_STREAK_7", // 배지 코드 (string)
     "title": "7일 연속 달성", // 배지 제목 (string)
     "description": null, // 배지 설명 (string | null)
     "iconEmoji": null, // 아이콘 이모지 (string | null)
     "criteriaType": null, // 판정 기준 타입 (BadgeCriteriaType)
     "criteriaValue": 7 // 판정 기준값 (number)
   }, // 배지 정보 (RoutineBadgeDto)
-  "routineId": null, // 획득 기준이 된 루틴 ID (string | null)
-  "routineTitle": null, // 획득 기준이 된 루틴 제목 (string | null)
   "earnedAt": "2025-01-01T00:00:00Z" // 획득 일시 (Date)
 }
 ```
@@ -8941,15 +8939,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "badgeId": "", // 배지 ID (string)
       "badge": {
         "id": "",
-        "code": "STREAK_DAYS_7",
+        "code": "GOAL_STREAK_7",
         "title": "7일 연속 달성",
         "description": null,
         "iconEmoji": null,
         "criteriaType": null,
         "criteriaValue": 7
       }, // 배지 정보 (RoutineBadgeDto)
-      "routineId": null, // 획득 기준이 된 루틴 ID (string | null)
-      "routineTitle": null, // 획득 기준이 된 루틴 제목 (string | null)
       "earnedAt": "2025-01-01T00:00:00Z" // 획득 일시 (Date)
     }
   ] // 이번 체크로 새로 획득한 배지 목록 (UserRoutineBadgeDto[])
@@ -9156,43 +9152,6 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ---
 
-### GET `routines/:id/badges`
-
-**요약:** 특정 루틴에서 획득한 배지 목록 조회 (본인 또는 공유 그룹원)
-
-**Path Parameters:**
-
-- `id` (`string`)
-
-**Responses:**
-
-#### 200 - 루틴별 배지 조회 성공
-
-```json
-{
-  "id": "", // 획득 기록 ID (string)
-  "badgeId": "", // 배지 ID (string)
-  "badge": {
-    "id": "", // 배지 ID (string)
-    "code": "STREAK_DAYS_7", // 배지 코드 (string)
-    "title": "7일 연속 달성", // 배지 제목 (string)
-    "description": null, // 배지 설명 (string | null)
-    "iconEmoji": null, // 아이콘 이모지 (string | null)
-    "criteriaType": null, // 판정 기준 타입 (BadgeCriteriaType)
-    "criteriaValue": 7 // 판정 기준값 (number)
-  }, // 배지 정보 (RoutineBadgeDto)
-  "routineId": null, // 획득 기준이 된 루틴 ID (string | null)
-  "routineTitle": null, // 획득 기준이 된 루틴 제목 (string | null)
-  "earnedAt": "2025-01-01T00:00:00Z" // 획득 일시 (Date)
-}
-```
-
-#### 404 - 루틴을 찾을 수 없습니다
-
-#### 403 - 루틴에 접근할 권한이 없습니다
-
----
-
 ### GET `routines/:id/stats/heatmap`
 
 **요약:** 루틴 달력 히트맵 (날짜별 달성 여부)
@@ -9240,10 +9199,12 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 ```json
 {
   "routineId": "", // 루틴 ID (string)
-  "currentStreakWeeks": 0, // 현재 연속 달성 주 수 (목표 달성 기준) (number)
-  "longestStreakWeeks": 0, // 최장 연속 달성 주 수 (number)
+  "currentStreakWeeks": 0, // 현재 연속 달성 주 수 (목표 달성 기준). frequencyType=MONTHLY 루틴은 주 단위 연속 개념이 없어 0 (number)
+  "longestStreakWeeks": 0, // 최장 연속 달성 주 수. frequencyType=MONTHLY 루틴은 주 단위 연속 개념이 없어 0 (number)
   "currentStreakDays": 0, // 현재 연속 체크 일수 (number)
   "longestStreakDays": 0, // 최장 연속 체크 일수 (number)
+  "currentStreakMonths": 0, // 현재 연속 달성 개월 수 (frequencyType=MONTHLY 루틴 전용). MONTHLY가 아니면 0 (number)
+  "longestStreakMonths": 0, // 최장 연속 달성 개월 수 (frequencyType=MONTHLY 루틴 전용). MONTHLY가 아니면 0 (number)
   "thisWeekProgress": {
     "checked": 0, // 이번 주 체크 횟수 (number)
     "target": 0 // 이번 주 목표 횟수 (number)

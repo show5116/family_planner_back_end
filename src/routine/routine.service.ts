@@ -457,9 +457,9 @@ export class RoutineService {
     });
 
     const newlyEarnedBadges = await this.routineBadgeService
-      .evaluateAndAward(userId, id)
+      .evaluateAndAward(userId)
       .catch((err) => {
-        this.logger.error(`배지 평가 실패 (routineId=${id}): ${err.message}`);
+        this.logger.error(`배지 평가 실패 (userId=${userId}): ${err.message}`);
         return [];
       });
 

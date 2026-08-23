@@ -1,11 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { Routine } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RoutineService } from './routine.service';
-import {
-  RoutineSettingsService,
-  EffectiveDailyGoal,
-} from './routine-settings.service';
+import { RoutineSettingsService } from './routine-settings.service';
 import { RoutineDailyGoalMode } from './dto/routine-settings.dto';
 import {
   HeatmapQueryDto,
@@ -28,6 +24,8 @@ import {
   pauseToDateRange,
   listDays,
   isRoutineActiveOnDate,
+  computeDailyGoalStatus,
+  computeDailyGoalAchievementSummary,
   DateRange,
 } from './utils/routine-stats.util';
 import {
@@ -39,14 +37,6 @@ import { todayInKst, parseDateOnly } from '@/common/utils/date-kst.util';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MAX_RANGE_DAYS = 366;
-
-export interface DailyGoalDayStatus {
-  date: string;
-  checkedCount: number;
-  totalCount: number;
-  targetCount: number | null;
-  goalAchieved: boolean | null;
-}
 
 @Injectable()
 export class RoutineStatsService {
@@ -122,10 +112,12 @@ export class RoutineStatsService {
 
       return {
         routineId,
-        currentStreakWeeks: monthStreak.currentStreakMonths,
-        longestStreakWeeks: monthStreak.longestStreakMonths,
+        currentStreakWeeks: 0,
+        longestStreakWeeks: 0,
         currentStreakDays: dayStreak.currentStreakDays,
         longestStreakDays: dayStreak.longestStreakDays,
+        currentStreakMonths: monthStreak.currentStreakMonths,
+        longestStreakMonths: monthStreak.longestStreakMonths,
         thisWeekProgress: thisMonthProgress,
       };
     }
@@ -172,6 +164,8 @@ export class RoutineStatsService {
       longestStreakWeeks: weekStreak.longestStreakWeeks,
       currentStreakDays: dayStreak.currentStreakDays,
       longestStreakDays: dayStreak.longestStreakDays,
+      currentStreakMonths: 0,
+      longestStreakMonths: 0,
       thisWeekProgress,
     };
   }
@@ -421,7 +415,7 @@ export class RoutineStatsService {
         from,
         to,
       );
-    const dailyGoalStatuses = this.computeDailyGoalStatus(
+    const dailyGoalStatuses = computeDailyGoalStatus(
       routines,
       logs,
       pausesByRoutine,
@@ -501,64 +495,6 @@ export class RoutineStatsService {
       goalTotalDays,
       goalAchievementRate,
     };
-  }
-
-  /** 루틴별 로그/일시정지 이력과 일별 유효 목표를 바탕으로 [from,to] 각 날짜의 체크/목표 달성 현황을 계산 */
-  private computeDailyGoalStatus(
-    routines: Routine[],
-    logs: { routineId: string; checkedDate: Date }[],
-    pausesByRoutine: Map<string, DateRange[]>,
-    settingsMap: Map<string, EffectiveDailyGoal>,
-    from: Date,
-    to: Date,
-  ): DailyGoalDayStatus[] {
-    const checkedDateSet = new Set(
-      logs.map((l) => `${l.routineId}|${formatDate(l.checkedDate)}`),
-    );
-
-    return listDays(from, to).map((day) => {
-      let dayTotalCount = 0;
-      let dayCheckedCount = 0;
-      const dayStr = formatDate(day);
-      for (const routine of routines) {
-        if (!routine.includeInDailyGoal) continue;
-        const excludedRanges = pausesByRoutine.get(routine.id) ?? [];
-        if (isRoutineActiveOnDate(routine, day, excludedRanges)) {
-          dayTotalCount += 1;
-        }
-        if (checkedDateSet.has(`${routine.id}|${dayStr}`)) {
-          dayCheckedCount += 1;
-        }
-      }
-
-      if (dayTotalCount === 0) {
-        return {
-          date: dayStr,
-          checkedCount: dayCheckedCount,
-          totalCount: dayTotalCount,
-          targetCount: null,
-          goalAchieved: null,
-        };
-      }
-
-      const effective = settingsMap.get(dayStr) ?? {
-        dailyGoalMode: RoutineDailyGoalMode.ALL,
-        dailyGoalCount: null,
-      };
-      const targetCount =
-        effective.dailyGoalMode === RoutineDailyGoalMode.COUNT
-          ? (effective.dailyGoalCount ?? dayTotalCount)
-          : dayTotalCount;
-      const goalAchieved = dayCheckedCount >= targetCount;
-
-      return {
-        date: dayStr,
-        checkedCount: dayCheckedCount,
-        totalCount: dayTotalCount,
-        targetCount,
-        goalAchieved,
-      };
-    });
   }
 
   private resolveOverviewRange(
@@ -644,7 +580,7 @@ export class RoutineStatsService {
       pausesByRoutine.set(pause.routineId, ranges);
     }
 
-    const dailyStatuses = this.computeDailyGoalStatus(
+    const dailyStatuses = computeDailyGoalStatus(
       routines,
       logs,
       pausesByRoutine,
@@ -653,31 +589,8 @@ export class RoutineStatsService {
       to,
     );
 
-    let currentStreakDays = 0;
-    for (let i = dailyStatuses.length - 1; i >= 0; i -= 1) {
-      const status = dailyStatuses[i];
-      if (status.goalAchieved === null) continue;
-      if (status.date === formatDate(today) && !status.goalAchieved) {
-        continue;
-      }
-      if (status.goalAchieved) {
-        currentStreakDays += 1;
-      } else {
-        break;
-      }
-    }
-
-    let longestStreakDays = 0;
-    let runningStreak = 0;
-    for (const status of dailyStatuses) {
-      if (status.goalAchieved === null) continue;
-      if (status.goalAchieved) {
-        runningStreak += 1;
-        longestStreakDays = Math.max(longestStreakDays, runningStreak);
-      } else {
-        runningStreak = 0;
-      }
-    }
+    const { currentStreakDays, longestStreakDays } =
+      computeDailyGoalAchievementSummary(dailyStatuses);
 
     const todayStatus = dailyStatuses[dailyStatuses.length - 1];
     const todayAchieved = todayStatus?.goalAchieved === true;

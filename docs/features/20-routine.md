@@ -27,9 +27,9 @@
 - **카테고리(개인 커스텀, 다중 선택)**: 사용자가 직접 만드는 태그(`RoutineCategory`, 예: "규칙적인 삶", "운동", "건강"). 카테고리 자체는 `RoutineGroup`과 동일한 개인 소유/soft delete 패턴이지만, 루틴과의 연결은 `RoutineShare`(루틴↔가족그룹)와 동일한 N:M 조인 테이블(`RoutineCategoryLink`) 방식 — 한 루틴에 여러 카테고리를 자유롭게 태그처럼 붙일 수 있음. 가족 그룹 공유와는 무관.
 - **그룹 공유(N:M)**: 하나의 루틴을 여러 그룹에 동시 공유 가능. 공유된 그룹의 멤버는 서로의 루틴과 달성 현황을 조회 가능(수정 권한 공유는 없음, 체크는 본인만).
 - **삭제 정책**: 루틴 종료(soft delete) 시 `RoutineLog`는 보존(통계/이력 보존 목적).
-- **배지**: 체크 직후 동기적으로 판정(스트릭/누적 체크 기준). 한 번 획득한 배지는 체크 취소로도 회수되지 않음. `MONTHLY` 루틴은 월-스트릭이 `STREAK_WEEKS` 배지 기준 슬롯에 매핑됨(주 개념이 없으므로).
+- **배지(3차부터 일일 목표 기준, 유저 단위)**: 습관 개별이 아니라 사용자의 일일 목표 달성 여부를 기준으로 판정. 체크 직후 동기적으로 판정하며, 한 번 획득한 배지는 체크 취소로도 회수되지 않음. 자세한 내용은 "배지" 절 참고.
 - **랭킹보드**: 그룹에 공유된 루틴만 집계 대상(비공유 루틴은 익명으로도 포함하지 않음 — 공유하지 않았다는 의사표시 존중).
-- **루틴 그룹**: 여러 습관을 "아침 루틴"처럼 하나의 컨테이너로 묶는 얇은 레이어(`RoutineGroup`). 습관은 최대 1개 그룹에만 소속되며, 그룹 밖에서도 독립적으로 조회/체크 가능. 체크/배지/스트릭/공유는 전부 개별 습관 단위 그대로 유지 — 그룹은 "오늘 3/5 완료" 같은 진행률 뷰만 제공.
+- **루틴 그룹**: 여러 습관을 "아침 루틴"처럼 하나의 컨테이너로 묶는 얇은 레이어(`RoutineGroup`). 습관은 최대 1개 그룹에만 소속되며, 그룹 밖에서도 독립적으로 조회/체크 가능. 체크/스트릭/공유는 전부 개별 습관 단위 그대로 유지 — 그룹은 "오늘 3/5 완료" 같은 진행률 뷰만 제공.
 
 ---
 
@@ -70,9 +70,9 @@
 ### 통계
 - **달력 히트맵**: 기간 내 체크된 날짜 목록 (최대 1년)
 - **스트릭**: `frequencyType`에 따라 계산 방식이 분기됨
-  - `DAILY`, `WEEKLY/COUNT_ONLY`: 기존과 동일(주 단위 목표 달성 연속 주 수 + 일 단위 연속 체크일)
+  - `DAILY`, `WEEKLY/COUNT_ONLY`: 기존과 동일(주 단위 목표 달성 연속 주 수 + 일 단위 연속 체크일), 응답의 `currentStreakWeeks`/`longestStreakWeeks`에 값이 들어가고 `currentStreakMonths`/`longestStreakMonths`는 `0`
   - `WEEKLY/FIXED_DAYS`: 스케줄된 요일만 평가 대상(비스케줄 요일은 "미스"로 세지 않음), 주 단위 목표는 `targetDays.length`
-  - `MONTHLY`: 월 단위 연속 달성 개월 수(`currentStreakWeeks`/`longestStreakWeeks` 필드에 월-스트릭 값이 담겨 응답됨), 일 단위 스트릭은 매일 스케줄 기준으로 별도 계산
+  - `MONTHLY`: 월 단위 연속 달성 개월 수(신규 `currentStreakMonths`/`longestStreakMonths` 필드에 월-스트릭 값이 담겨 응답됨), 일 단위 스트릭은 매일 스케줄 기준으로 별도 계산, `currentStreakWeeks`/`longestStreakWeeks`는 주 단위 개념이 없어 `0`
   - 모든 경우에 `RoutinePause` 이력이 "제외 구간"으로 반영되어 일시정지 기간은 스트릭을 끊지 않음
 - **기간별 달성률**: `week`/`month`/`custom` 기준. `MONTHLY` 루틴은 월 단위로, 그 외는 주(월~일) 단위로 기대 체크 횟수 대비 실제 체크 횟수(%) 계산. 진행 중인 기간(이번 주/이번 달 등)도 포함해 부분 조회에도 값이 나옴
 - **대시보드 요약**: 전체 `ACTIVE` 루틴의 오늘 체크 여부 + 현재 스트릭 + 이번 주/이번 달 진행 상황을 한 번에 조회 (위젯용). `thisWeekProgress`/`thisMonthProgress` 둘 다 응답에 포함되며, `frequencyType=MONTHLY` 루틴은 `thisMonthProgress`만 값이 있고 `thisWeekProgress`는 `null`, 그 외(DAILY/WEEKLY)는 반대로 `thisWeekProgress`만 값이 있고 `thisMonthProgress`는 `null` — 개별 루틴마다 `GET /:id/stats/rate?period=month`를 호출하는 N+1 없이 월간 목표 루틴의 이번 달 진행률까지 한 번에 조회 가능
@@ -87,11 +87,21 @@
 - **`GET /routines/stats/daily-streak`(신규)**: 일일 목표 기준 전체 연속 달성 스트릭. `currentStreakDays`/`longestStreakDays`/`todayAchieved`/`todayCheckedCount`/`todayTargetCount`와, 목표 조정 제안용 `recent14Days`(최근 14일 `achievedDays`/`exceededDays`/`totalDays`/`averageCheckedCount`) 포함. **오늘이 아직 미달성이어도 스트릭을 끊지 않고 어제까지의 값을 유지**(자정이 지나야 끊김). 대상 습관이 0개였던 날은 스트릭을 끊지 않고 건너뜀. 스트릭 계산은 `RoutineSettingHistory` 최초 생성일부터 시작(그 이전은 아직 목표 개념이 없던 기간이라 감사 대상에서 제외) — `ALL` 모드만 써온 사용자도(한 번도 `COUNT`로 바꾼 적 없어도 `PATCH`를 호출한 적이 있다면) 동일하게 전체 스트릭 조회 가능. `RoutineSettingHistory`가 아예 없는 사용자(설정을 한 번도 변경한 적 없음)는 모든 값이 0/빈 값으로 응답(에러 아님).
 - **습관별 포함/제외(`includeInDailyGoal`, 2차)**: 1차 구현은 "그날 대상 습관 수"를 `isRoutineActiveOnDate`(시작일 이후, 종료일 이전, 일시정지 아님)로만 정의해 반복 주기를 반영하지 못했다(주 3회 습관도 매일 분모에 포함). `Routine.includeInDailyGoal`(기본값: `frequencyType=DAILY`면 `true`, `WEEKLY`/`MONTHLY`는 `false` — 생성 시 자동 결정, 명시하면 그 값 우선)로 사용자가 습관별로 일일 목표 집계 포함 여부를 직접 정한다. `PATCH /routines/:id`로 개별 변경 가능하며, `frequencyType`이 바뀌어도 `includeInDailyGoal`은 명시적으로 보내지 않는 한 자동으로 재조정되지 않는다. `PATCH /routines/daily-goal-inclusions`(`{ items: [{id, includeInDailyGoal}] }`)로 여러 습관을 한 번에 토글 가능(`PATCH /routines/sort-order`와 동일한 벌크 패턴). `includeInDailyGoal=false`인 습관은 `heatmap[].totalCount`/`goalAchieved`, `goalAchievedDays`/`goalTotalDays`/`goalAchievementRate`, `daily-streak`의 모든 필드 계산에서 제외된다(`dailyGoalMode=ALL`의 "그날 대상 전부"도 "포함 습관 전부"로 재해석). **주의**: 전체 통계 지표인 `totalChecked`/`totalExpected`/`achievementRate`(1차 이전부터 있던 필드)는 이 설정과 무관하게 기존 정의 그대로 모든 습관을 포함해 계산된다 — 일일 목표와 전체 통계는 서로 다른 축의 지표. `dailyGoalCount`가 포함 습관 수보다 커도 서버는 보정하지 않는다(설정값을 임의로 바꾸지 않는다는 원칙).
 
-### 배지
-- 체크(`POST /routines/:id/check`) 성공 직후 `RoutineBadgeService.evaluateAndAward()`가 동기적으로 판정, 응답의 `newlyEarnedBadges`에 신규 획득 배지 포함
-- 판정 기준 3종: `STREAK_DAYS`(연속 체크일), `STREAK_WEEKS`(연속 주간 목표 달성), `TOTAL_CHECKS`(누적 체크 횟수) — 카탈로그 9종 시드값은 아래 참고
+### 배지 (3차부터 일일 목표 기준, 유저 단위)
+1·2차의 습관 개별 배지(`STREAK_DAYS`/`STREAK_WEEKS`/`TOTAL_CHECKS`)는 습관 수에 비례해 배지가 쏟아지고 습관을 종료하면 맥락이 사라지는 문제가 있어, 3차부터 **일일 목표 달성 여부(유저 전체 단위)** 기준으로 완전히 교체했다. 배지는 "나의 성취", 습관별 연속 기록은 통계(`GET /:id/stats/streak`)가 담당하도록 역할을 분리했다. 출시 전(실사용자 데이터 없음)이라 기존 배지 카탈로그/획득 이력은 마이그레이션으로 전량 삭제 후 재시드했다.
+
+- 체크(`POST /routines/:id/check`) 성공 직후 `RoutineBadgeService.evaluateAndAward(userId)`가 동기적으로 판정, 응답의 `newlyEarnedBadges`에 신규 획득 배지 포함. **판정 트리거는 체크 시점만**(`PATCH routines/settings`, `PATCH routines/daily-goal-inclusions`는 트리거하지 않음).
+- 판정 데이터는 `GET routines/stats/daily-streak`와 동일한 계산(`computeDailyGoalStatus` + `computeDailyGoalAchievementSummary`, `src/routine/utils/routine-stats.util.ts`)을 재사용 — `includeInDailyGoal=false`인 습관은 판정에서도 자동 제외됨(2차 규칙 그대로 상속).
+- 판정 기준 3종:
+  - `GOAL_STREAK_DAYS`: 일일 목표 연속 달성 일수. 오늘 미달성이어도 어제까지의 연속을 유지(자정이 지나야 끊김), 대상 습관 0개인 날은 건너뜀.
+  - `GOAL_TOTAL_DAYS`: 일일 목표 누적 달성 일수. `RoutineSettingHistory` 최초 생성일(일일 목표 기능 도입 시점)부터만 집계 — 그 이전은 소급하지 않음.
+  - `GOAL_PERFECT_WEEK`: 월~일 7일 **전부**가 목표 달성인 주의 누적 횟수. 집계 대상 일수가 7일 미만인 주(도입 시점이 주 중간이거나 진행 중인 이번 주, 대상 습관 0개인 날이 낀 주)는 완벽한 주로 치지 않는다.
+  - 카탈로그 12종 시드값은 아래 참고
+- **판정 범위는 항상 전체 재계산**: `POST /check`가 과거 날짜(`date` 파라미터)를 체크해도, 체크된 날짜와 무관하게 `[RoutineSettingHistory 최초 생성일, 오늘]` 전체를 매번 다시 계산해서 판정한다 — 과거 누락분을 오늘 백필해서 지난 스트릭/완벽한 주가 뒤늦게 성립해도 정확히 반영됨.
+- `RoutineSettingHistory`가 아예 없는 사용자(일일 목표 설정을 한 번도 변경한 적 없음)는 배지 판정 자체를 스킵(`[]` 반환, 체크는 정상 처리).
+- 배지는 **유저당 배지 1개를 단 한 번만** 획득(`UserRoutineBadge`의 유니크 제약이 `(userId, badgeId)`) — 습관 단위였던 1·2차와 달리 `routineId` 컬럼 자체가 없음. `UserRoutineBadgeDto`에도 `routineId`/`routineTitle` 필드가 없다(루틴 무관). 이에 따라 `GET /routines/:id/badges`(루틴별 배지 조회) 엔드포인트는 3차에서 삭제됨.
 - 배지 평가 실패는 체크 자체를 막지 않음(에러 격리), 체크 취소 시에도 이미 획득한 배지는 회수하지 않음
-- 배지 획득 시 `ROUTINE_STREAK_MILESTONE` 알림 자동 발송
+- 배지 획득 시 알림 자동 발송(`notifyBadgeEarned`, fire-and-forget)
 
 ### 루틴 그룹
 - 여러 습관을 하나의 컨테이너(`RoutineGroup`)로 묶어 "아침 루틴"처럼 관리. 습관은 최대 1개 그룹에만 소속(선택적 FK), 그룹 밖에서도 독립 조회/체크 가능
@@ -296,27 +306,24 @@ model RoutineBadge {
 }
 
 model UserRoutineBadge {
-  id        String   @id @default(uuid())
-  userId    String
-  badgeId   String
-  routineId String?
-  earnedAt  DateTime @default(now())
+  id       String   @id @default(uuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
 
-  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge   RoutineBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-  routine Routine?     @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge RoutineBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, badgeId, routineId])
+  @@unique([userId, badgeId])
   @@index([userId])
   @@index([badgeId])
-  @@index([routineId])
   @@map("user_routine_badges")
 }
 
 enum BadgeCriteriaType {
-  STREAK_DAYS
-  STREAK_WEEKS
-  TOTAL_CHECKS
+  GOAL_STREAK_DAYS
+  GOAL_TOTAL_DAYS
+  GOAL_PERFECT_WEEK
 }
 
 model RoutineGroup {
@@ -340,19 +347,24 @@ model RoutineGroup {
 
 `Routine`에는 선택적 FK `groupId String?` + `group RoutineGroup? @relation(..., onDelete: SetNull)`가 추가되어 있음 — 그룹 삭제 시 소속 습관은 유지되고 `groupId`만 `null`로 해제됨. 기존 `RoutineShare.groupId`(가족 `Group` 참조)와 필드명이 겹치지만 참조 모델이 달라 문제없고, DTO/컨트롤러 레벨에서는 `routineGroupId`로 구분해 혼동을 방지함.
 
-### 배지 카탈로그 (9종 시드)
+### 배지 카탈로그 (12종 시드, 3차 이후)
 
 | code | criteriaType | criteriaValue | title | iconEmoji |
 |---|---|---|---|---|
-| STREAK_DAYS_7 | STREAK_DAYS | 7 | 7일 연속 달성 | 🔥 |
-| STREAK_DAYS_30 | STREAK_DAYS | 30 | 30일 연속 달성 | 🔥 |
-| STREAK_DAYS_100 | STREAK_DAYS | 100 | 100일 연속 달성 | 🏆 |
-| STREAK_WEEKS_4 | STREAK_WEEKS | 4 | 4주 연속 목표 달성 | ⭐ |
-| STREAK_WEEKS_12 | STREAK_WEEKS | 12 | 12주 연속 목표 달성 | 🌟 |
-| STREAK_WEEKS_52 | STREAK_WEEKS | 52 | 1년 연속 목표 달성 | 👑 |
-| TOTAL_CHECKS_50 | TOTAL_CHECKS | 50 | 누적 50회 체크 | ✅ |
-| TOTAL_CHECKS_200 | TOTAL_CHECKS | 200 | 누적 200회 체크 | 💯 |
-| TOTAL_CHECKS_500 | TOTAL_CHECKS | 500 | 누적 500회 체크 | 💎 |
+| GOAL_STREAK_3 | GOAL_STREAK_DAYS | 3 | 3일 연속 달성 | 🌱 |
+| GOAL_STREAK_7 | GOAL_STREAK_DAYS | 7 | 7일 연속 달성 | 🔥 |
+| GOAL_STREAK_14 | GOAL_STREAK_DAYS | 14 | 2주 연속 달성 | 🔥 |
+| GOAL_STREAK_30 | GOAL_STREAK_DAYS | 30 | 30일 연속 달성 | 🔥🔥 |
+| GOAL_STREAK_100 | GOAL_STREAK_DAYS | 100 | 100일 연속 달성 | 🔥🔥🔥 |
+| GOAL_TOTAL_10 | GOAL_TOTAL_DAYS | 10 | 누적 10일 달성 | ⭐ |
+| GOAL_TOTAL_50 | GOAL_TOTAL_DAYS | 50 | 누적 50일 달성 | ⭐⭐ |
+| GOAL_TOTAL_100 | GOAL_TOTAL_DAYS | 100 | 누적 100일 달성 | ⭐⭐⭐ |
+| GOAL_TOTAL_365 | GOAL_TOTAL_DAYS | 365 | 누적 365일 달성 | 👑 |
+| GOAL_PERFECT_WEEK_1 | GOAL_PERFECT_WEEK | 1 | 완벽한 한 주 | 🏆 |
+| GOAL_PERFECT_WEEK_4 | GOAL_PERFECT_WEEK | 4 | 완벽한 4주 | 🏆🏆 |
+| GOAL_PERFECT_WEEK_12 | GOAL_PERFECT_WEEK | 12 | 완벽한 12주 | 🏆🏆🏆 |
+
+시드 스크립트: `scripts/seed-routine-badges.ts` (`code` 기준 upsert, 재실행해도 안전)
 
 ---
 
@@ -471,7 +483,6 @@ model RoutineGroup {
 | Method | Endpoint                | 설명                              | 권한        |
 | ------ | ------------------------ | --------------------------------- | ----------- |
 | GET    | `/routines/badges`       | 전체 배지 카탈로그 (활성만)       | JWT         |
-| GET    | `/routines/:id/badges`   | 특정 루틴에서 획득한 배지         | JWT, Access |
 | GET    | `/routines/me/badges`    | 내 전체 통산 배지                 | JWT         |
 
 ---
@@ -511,7 +522,7 @@ src/routine/
   routine-group.service.ts           — 루틴 그룹 CRUD, 오늘 진행률 계산
   routine-category.service.ts        — 루틴 카테고리 CRUD (개인 커스텀 태그, 루틴과의 연결 자체는 routine.service.ts가 담당)
   routine-stats.service.ts           — 히트맵/스트릭/달성률/요약 (frequencyType별 분기, 일시정지 구간 반영)
-  routine-badge.service.ts           — 배지 카탈로그 조회, evaluateAndAward() (frequencyType별 스트릭 분기)
+  routine-badge.service.ts           — 배지 카탈로그 조회, evaluateAndAward(userId) (일일 목표 달성 현황 기반 유저 단위 판정)
   routine-leaderboard.service.ts     — 그룹 랭킹보드 집계
   routine-reminder.scheduler.ts      — 일일 리마인더 + 주간 요약 크론 (status/FIXED_DAYS/MONTHLY 인지)
   routine.module.ts
