@@ -19,6 +19,7 @@ import { RoutineBadgeService } from './routine-badge.service';
 import { RoutineLeaderboardService } from './routine-leaderboard.service';
 import { RoutineGroupService } from './routine-group.service';
 import { RoutineCategoryService } from './routine-category.service';
+import { RoutineChallengeService } from './routine-challenge.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { RoutineQueryDto } from './dto/routine-query.dto';
@@ -71,6 +72,13 @@ import {
   UserRoutineBadgeDto,
 } from './dto/routine-badge-response.dto';
 import { LeaderboardResponseDto } from './dto/routine-leaderboard-response.dto';
+import { CreateRoutineChallengeDto } from './dto/create-routine-challenge.dto';
+import { UpdateRoutineChallengeDto } from './dto/update-routine-challenge.dto';
+import { JoinRoutineChallengeDto } from './dto/join-routine-challenge.dto';
+import {
+  RoutineChallengeDto,
+  RoutineChallengeDetailDto,
+} from './dto/routine-challenge-response.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
@@ -93,6 +101,7 @@ export class RoutineController {
     private readonly routineLeaderboardService: RoutineLeaderboardService,
     private readonly routineGroupService: RoutineGroupService,
     private readonly routineCategoryService: RoutineCategoryService,
+    private readonly routineChallengeService: RoutineChallengeService,
   ) {}
 
   @Post()
@@ -326,6 +335,31 @@ export class RoutineController {
     );
   }
 
+  @Get('groups/:groupId/challenges')
+  @ApiOperation({ summary: '그룹 챌린지 목록 조회' })
+  @ApiSuccess(RoutineChallengeDto, '챌린지 목록 조회 성공', { isArray: true })
+  @ApiForbidden('그룹 멤버가 아닙니다')
+  findGroupChallenges(@Request() req, @Param('groupId') groupId: string) {
+    return this.routineChallengeService.findGroupChallenges(
+      req.user.userId,
+      groupId,
+    );
+  }
+
+  @Post('groups/:groupId/challenges')
+  @ApiOperation({
+    summary: '그룹 챌린지 생성 (만든 사람이 자동 참가되지는 않음)',
+  })
+  @ApiCreated(RoutineChallengeDto, '챌린지 생성 성공')
+  @ApiForbidden('그룹 멤버가 아닙니다')
+  createChallenge(
+    @Request() req,
+    @Param('groupId') groupId: string,
+    @Body() dto: CreateRoutineChallengeDto,
+  ) {
+    return this.routineChallengeService.create(req.user.userId, groupId, dto);
+  }
+
   @Get('groups/:groupId/members/:userId')
   @ApiOperation({ summary: '특정 그룹원의 공유 루틴 상세 조회' })
   @ApiSuccess(RoutineDto, '그룹원 루틴 상세 조회 성공', { isArray: true })
@@ -357,6 +391,59 @@ export class RoutineController {
     @Body() dto: UpdateDailyGoalInclusionsDto,
   ) {
     return this.routineService.updateDailyGoalInclusions(req.user.userId, dto);
+  }
+
+  @Get('challenges/:id')
+  @ApiOperation({ summary: '챌린지 상세 조회 (참가자별 진행률 포함)' })
+  @ApiSuccess(RoutineChallengeDetailDto, '챌린지 상세 조회 성공')
+  @ApiNotFound('챌린지를 찾을 수 없습니다')
+  @ApiForbidden('그룹 멤버가 아닙니다')
+  findChallenge(@Request() req, @Param('id') id: string) {
+    return this.routineChallengeService.findOne(req.user.userId, id);
+  }
+
+  @Patch('challenges/:id')
+  @ApiOperation({ summary: '챌린지 수정 (만든 사람만)' })
+  @ApiSuccess(RoutineChallengeDto, '챌린지 수정 성공')
+  @ApiNotFound('챌린지를 찾을 수 없습니다')
+  @ApiForbidden('만든 사람만 수정할 수 있습니다')
+  updateChallenge(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateRoutineChallengeDto,
+  ) {
+    return this.routineChallengeService.update(req.user.userId, id, dto);
+  }
+
+  @Delete('challenges/:id')
+  @ApiOperation({ summary: '챌린지 삭제 (만든 사람만)' })
+  @ApiSuccess(MessageResponseDto, '챌린지 삭제 성공')
+  @ApiNotFound('챌린지를 찾을 수 없습니다')
+  @ApiForbidden('만든 사람만 삭제할 수 있습니다')
+  removeChallenge(@Request() req, @Param('id') id: string) {
+    return this.routineChallengeService.remove(req.user.userId, id);
+  }
+
+  @Post('challenges/:id/join')
+  @ApiOperation({ summary: '챌린지 참가 (이미 참가 중이면 연결 습관 교체)' })
+  @ApiSuccess(RoutineChallengeDetailDto, '챌린지 참가 성공')
+  @ApiNotFound('챌린지 또는 루틴을 찾을 수 없습니다')
+  @ApiForbidden('그룹 멤버가 아니거나 본인 소유 루틴이 아닙니다')
+  joinChallenge(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: JoinRoutineChallengeDto,
+  ) {
+    return this.routineChallengeService.join(req.user.userId, id, dto);
+  }
+
+  @Delete('challenges/:id/join')
+  @ApiOperation({ summary: '챌린지 참가 취소' })
+  @ApiSuccess(MessageResponseDto, '참가 취소 성공')
+  @ApiNotFound('참가 기록을 찾을 수 없습니다')
+  @ApiForbidden('그룹 멤버가 아닙니다')
+  leaveChallenge(@Request() req, @Param('id') id: string) {
+    return this.routineChallengeService.leave(req.user.userId, id);
   }
 
   @Get(':id')

@@ -29,7 +29,14 @@
     "own_routine_category_only_update": "본인의 카테고리만 수정할 수 있습니다",
     "own_routine_category_only_delete": "본인의 카테고리만 삭제할 수 있습니다",
     "already_categorized": "이미 연결된 카테고리입니다",
-    "category_link_not_found": "연결 정보를 찾을 수 없습니다"
+    "category_link_not_found": "연결 정보를 찾을 수 없습니다",
+    "challenge_not_found": "챌린지를 찾을 수 없습니다",
+    "own_challenge_only_update": "만든 사람만 챌린지를 수정할 수 있습니다",
+    "challenge_invalid_date_range": "종료일은 시작일 이후여야 합니다",
+    "challenge_already_ended": "이미 종료된 챌린지에는 참가할 수 없습니다",
+    "private_routine_not_joinable": "비공개 습관은 챌린지에 연결할 수 없습니다",
+    "own_routine_only_join": "본인의 루틴만 챌린지에 연결할 수 있습니다",
+    "challenge_participation_not_found": "참가 기록을 찾을 수 없습니다"
   },
   "success": {
     "routine_deleted": "루틴이 종료되었습니다 (체크 기록은 유지됩니다)",
@@ -39,7 +46,9 @@
     "routine_paused": "루틴이 일시정지되었습니다",
     "routine_resumed": "루틴이 재개되었습니다",
     "routine_category_deleted": "루틴 카테고리가 삭제되었습니다 (소속 루틴은 유지됩니다)",
-    "category_link_removed": "카테고리 연결이 해제되었습니다"
+    "category_link_removed": "카테고리 연결이 해제되었습니다",
+    "challenge_deleted": "챌린지가 삭제되었습니다",
+    "challenge_left": "챌린지 참가가 취소되었습니다"
   },
   "notification": {
     "daily_reminder_title": "오늘의 루틴을 확인해보세요",

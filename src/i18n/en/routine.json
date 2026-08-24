@@ -29,7 +29,14 @@
     "own_routine_category_only_update": "You can only update your own categories",
     "own_routine_category_only_delete": "You can only delete your own categories",
     "already_categorized": "This category is already linked",
-    "category_link_not_found": "Category link not found"
+    "category_link_not_found": "Category link not found",
+    "challenge_not_found": "Challenge not found",
+    "own_challenge_only_update": "Only the creator can update this challenge",
+    "challenge_invalid_date_range": "End date must be on or after the start date",
+    "challenge_already_ended": "You cannot join a challenge that has already ended",
+    "private_routine_not_joinable": "Private routines cannot be linked to a challenge",
+    "own_routine_only_join": "You can only link your own routines to a challenge",
+    "challenge_participation_not_found": "Participation record not found"
   },
   "success": {
     "routine_deleted": "Routine ended (check logs are kept)",
@@ -39,7 +46,9 @@
     "routine_paused": "Routine paused",
     "routine_resumed": "Routine resumed",
     "routine_category_deleted": "Routine category deleted (routines are kept)",
-    "category_link_removed": "Category link removed"
+    "category_link_removed": "Category link removed",
+    "challenge_deleted": "Challenge deleted",
+    "challenge_left": "Left the challenge"
   },
   "notification": {
     "daily_reminder_title": "Check your routines today",

@@ -29,7 +29,14 @@
     "own_routine_category_only_update": "自分のカテゴリーのみ更新できます",
     "own_routine_category_only_delete": "自分のカテゴリーのみ削除できます",
     "already_categorized": "すでに連結されているカテゴリーです",
-    "category_link_not_found": "連結情報が見つかりません"
+    "category_link_not_found": "連結情報が見つかりません",
+    "challenge_not_found": "チャレンジが見つかりません",
+    "own_challenge_only_update": "作成者のみチャレンジを更新できます",
+    "challenge_invalid_date_range": "終了日は開始日以降にしてください",
+    "challenge_already_ended": "終了したチャレンジには参加できません",
+    "private_routine_not_joinable": "非公開のルーティンはチャレンジに連結できません",
+    "own_routine_only_join": "自分のルーティンのみチャレンジに連結できます",
+    "challenge_participation_not_found": "参加記録が見つかりません"
   },
   "success": {
     "routine_deleted": "ルーティンを終了しました(チェック記録は維持されます)",
@@ -39,7 +46,9 @@
     "routine_paused": "ルーティンを一時停止しました",
     "routine_resumed": "ルーティンを再開しました",
     "routine_category_deleted": "ルーティンカテゴリーを削除しました(所属ルーティンは維持されます)",
-    "category_link_removed": "カテゴリー連結を解除しました"
+    "category_link_removed": "カテゴリー連結を解除しました",
+    "challenge_deleted": "チャレンジを削除しました",
+    "challenge_left": "チャレンジ参加を取り消しました"
   },
   "notification": {
     "daily_reminder_title": "今日のルーティンを確認しましょう",

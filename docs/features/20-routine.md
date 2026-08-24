@@ -29,6 +29,7 @@
 - **삭제 정책**: 루틴 종료(soft delete) 시 `RoutineLog`는 보존(통계/이력 보존 목적).
 - **배지(3차부터 일일 목표 기준, 유저 단위)**: 습관 개별이 아니라 사용자의 일일 목표 달성 여부를 기준으로 판정. 체크 직후 동기적으로 판정하며, 한 번 획득한 배지는 체크 취소로도 회수되지 않음. 자세한 내용은 "배지" 절 참고.
 - **랭킹보드(5차부터 일일 목표 기준)**: 공유 그룹에 속한 사용자의 비공개 아닌 습관만 집계 대상. "공유한 습관 수"가 아니라 일일 목표 달성률/연속일수로 비교하므로 습관 개수가 서로 달라도 공정하게 비교된다.
+- **그룹 챌린지(6차, 기간제 공동 목표)**: 그룹원이 자유 참가하는 기간제 이벤트(`RoutineChallenge`). 랭킹보드가 "항상 켜져 있는 비교"라면 챌린지는 "이번엔 이걸 걸고 겨루자"는 일회성 이벤트로 성격이 다르며 병존한다. 자세한 내용은 "그룹 챌린지" 절 참고.
 - **루틴 그룹**: 여러 습관을 "아침 루틴"처럼 하나의 컨테이너로 묶는 얇은 레이어(`RoutineGroup`). 습관은 최대 1개 그룹에만 소속되며, 그룹 밖에서도 독립적으로 조회/체크 가능. 체크/스트릭/공유는 전부 개별 습관 단위 그대로 유지 — 그룹은 "오늘 3/5 완료" 같은 진행률 뷰만 제공.
 
 ---
@@ -124,6 +125,20 @@
 - 집계 대상은 해당 가족 그룹에 공유 중인(`RoutineGroupShare`) 사용자들, `isPrivate=false`인 습관만 포함. 아직 일일 목표 개념을 도입한 적 없는 사용자(`RoutineSettingHistory` 없음)는 랭킹에서 제외.
 - 응답에 `goalAchievedDays`(기간 내 목표 달성일 수)/`goalTotalDays`(집계 대상일 수)/`goalAchievementRate`(달성률 %)/`currentStreakDays`(현재 연속 달성일 수)를 항상 함께 포함(정렬 기준만 `metric`으로 결정). `currentStreakDays`는 기간(period)과 무관하게 오늘 기준 전체 스트릭.
 - 계산은 `computeDailyGoalStatus`/`computeDailyGoalAchievementSummary`(`routine-stats.util.ts`, 유저 단위 순수 함수)를 그룹원별로 순차 호출해 얻음 — 4차 이전에는 "공유한 습관 수"에 좌우되던 `checkCount`/`achievementRate` 기준이었으나, 5차부터 습관 개수가 달라도 공정하게 비교되는 일일 목표 기준으로 전환.
+
+### 그룹 챌린지 (6차: 기간제 공동 목표)
+
+랭킹보드가 "항상 켜져 있는 비교"라면, 챌린지는 그룹원이 기간과 목표 횟수를 걸고 "이번엔 이걸 하자"고 겨루는 일회성 이벤트(`RoutineChallenge`). 랭킹보드와 별개로 병존한다.
+
+- **자유 참가**: 초대 절차 없이 그룹 멤버 누구나 목록에서 보고 `POST /routines/challenges/:id/join`으로 참가. 참가 시 자신의 습관 중 하나를 연결해야 하며, 각 참가자가 서로 다른 습관으로 참가해도 무방(예: 아버지는 "아침 운동", 아들은 "헬스장 가기").
+- **목표는 횟수만**: 챌린지 기간(`startDate`~`endDate`) 내 연결한 습관을 `targetCount`회 이상 체크하면 달성. `checkedCount`는 참가 시점과 무관하게 챌린지 시작일부터 전체 기간을 집계 — 중간에 참가해도 그 이전 기록이 그대로 반영되어 늦게 참가했다고 불리하지 않다.
+- **비공개 습관은 연결 불가**: `isPrivate=true`인 습관으로 참가 시도 시 400. 본인 소유가 아닌 습관으로 참가 시도 시 403. "함께 겨룬다"는 취지에 맞지 않기 때문.
+- **`status`는 저장하지 않고 계산**: `UPCOMING`/`ONGOING`/`ENDED`를 매 응답마다 `startDate`/`endDate`와 오늘(KST) 날짜로 계산(`computeChallengeStatus`, `routine-challenge.util.ts`). 상태 전환용 배치가 필요 없다. 종료일 당일까지는 `ONGOING`. 이미 `ENDED`인 챌린지에는 참가 불가(400).
+- **만든 사람이 자동 참가되지는 않음**: 챌린지를 만든 뒤에도 별도로 `join`을 호출해 자신의 습관을 골라야 한다(생성 시점엔 어떤 습관으로 참가할지 알 수 없으므로).
+- **재참가 시 습관 교체(upsert)**: 이미 참가 중인 상태에서 다시 `join`을 호출하면 409로 막지 않고 연결된 습관만 교체한다(`@@unique([challengeId, userId])` 기준 upsert) — 잘못 연결했거나 습관을 바꾸고 싶은 경우를 자연스럽게 지원.
+- **수정/삭제는 만든 사람만**: `PATCH`/`DELETE /routines/challenges/:id`는 `createdBy === 요청자`가 아니면 403.
+- **습관을 종료해도 참가 기록은 유지**: `RoutineService.end()`는 `deletedAt`만 설정하는 soft delete라 FK cascade가 발동하지 않으므로, 참가자가 습관을 종료해도 `RoutineChallengeParticipant` 행은 그대로 남고 그 시점까지의 체크 기록은 유효하게 집계된다.
+- **엔드포인트**: `GET/POST /routines/groups/:groupId/challenges`(목록/생성), `GET/PATCH/DELETE /routines/challenges/:id`(상세/수정/삭제), `POST/DELETE /routines/challenges/:id/join`(참가/취소).
 
 ### 알림/리마인더
 - `NotificationCategory.ROUTINE` 신설, `PUT /notifications/settings`에서 `routineReminderHour`(0~23시, 기본 21시)로 개인화된 리마인드 시각 설정 (WEATHER의 `weatherAlertHour`와 동일 패턴)
@@ -257,6 +272,50 @@ model RoutineGroupShare {
   @@unique([userId, groupId])
   @@index([groupId])
   @@map("routine_group_shares")
+}
+
+// 그룹 챌린지 (기간제 공동 목표, 6차). status는 저장하지 않고 startDate/endDate + 오늘 날짜로 계산
+model RoutineChallenge {
+  id          String   @id @default(uuid())
+  groupId     String
+  createdBy   String
+
+  title       String   @db.VarChar(50)
+  description String?  @db.VarChar(200)
+
+  startDate   DateTime @db.Date
+  endDate     DateTime @db.Date
+
+  targetCount Int      // 기간 내 목표 체크 횟수
+
+  reward      String?  @db.VarChar(100)  // 내기·벌칙 자유 텍스트
+
+  group        Group                          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator      User                           @relation("RoutineChallengeCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  participants RoutineChallengeParticipant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([groupId])
+  @@map("routine_challenges")
+}
+
+model RoutineChallengeParticipant {
+  id          String @id @default(uuid())
+  challengeId String
+  userId      String
+  routineId   String   // 연결한 자신의 습관. isPrivate=true는 연결 불가
+
+  challenge RoutineChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routine   Routine          @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+  @@map("routine_challenge_participants")
 }
 
 enum RoutineFrequencyType {
@@ -400,6 +459,7 @@ model RoutineGroup {
 - [x] 루틴 카테고리 (`RoutineCategory`) — 개인 커스텀 태그, CRUD
 - [x] 루틴-카테고리 N:M 연결 (`RoutineCategoryLink`) — 한 루틴에 여러 카테고리 태그, 추가/해제/전체교체 지원
 - [x] 중요도/메모/시간대 분류 필드 추가
+- [x] 그룹 챌린지 (6차) — 기간제 공동 목표, 자유 참가, 습관별 체크 횟수 집계, 만든 사람만 수정/삭제
 
 ### ⬜ 향후 고려
 - [ ] 그룹원 간 미체크 알림(사회적 압박 vs 동기부여, 옵트인 필요)
@@ -468,6 +528,18 @@ model RoutineGroup {
 
 > 사용자 단위 공유 자체는 `GET/PUT /routines/share-groups`(위 "루틴 기본" 표 참고)로 관리하고, 습관별 노출 여부는 `POST/PATCH`의 `isPrivate` 필드로 정한다.
 
+### 그룹 챌린지 (6차: 기간제 공동 목표)
+
+| Method | Endpoint                                | 설명                                     | 권한        |
+| ------ | ---------------------------------------- | ---------------------------------------- | ----------- |
+| GET    | `/routines/groups/:groupId/challenges`   | 그룹 챌린지 목록                          | JWT, Member |
+| POST   | `/routines/groups/:groupId/challenges`   | 챌린지 생성 (만든 사람 자동 참가 안 됨)   | JWT, Member |
+| GET    | `/routines/challenges/:id`               | 챌린지 상세 (참가자별 진행률 포함)        | JWT, Member |
+| PATCH  | `/routines/challenges/:id`               | 챌린지 수정                               | JWT, Creator |
+| DELETE | `/routines/challenges/:id`               | 챌린지 삭제                               | JWT, Creator |
+| POST   | `/routines/challenges/:id/join`          | 참가 (재참가 시 연결 습관 교체)           | JWT, Member |
+| DELETE | `/routines/challenges/:id/join`          | 참가 취소                                 | JWT, Member |
+
 ### 루틴-카테고리 연결
 
 | Method | Endpoint                                | 설명                       | 권한       |
@@ -508,6 +580,9 @@ src/routine/
     routine-query.dto.ts              — status/routineGroupId/categoryId/date 필터
     check-routine.dto.ts              — textValue/numericValue/timeValue (recordType별 값)
     update-routine-group-shares.dto.ts — { groupIds: string[] } (5차, 공유 그룹 전체교체용)
+    create-routine-challenge.dto.ts   — title/description/startDate/endDate/targetCount/reward (6차)
+    update-routine-challenge.dto.ts   — PartialType(CreateRoutineChallengeDto) (6차)
+    join-routine-challenge.dto.ts     — { routineId } (6차, 참가용)
     create-routine-category-link.dto.ts — { categoryId } (루틴-카테고리 개별 연결용)
     reorder-routine.dto.ts
     create-routine-group.dto.ts
@@ -524,10 +599,12 @@ src/routine/
     routine-group-response.dto.ts    — RoutineGroupDto(+todayProgress), RoutineGroupDetailDto(+routines)
     routine-category-response.dto.ts — RoutineCategoryDto, RoutineCategoryDetailDto(+routines)
     routine-stats-response.dto.ts    — HeatmapResponseDto, StreakResponseDto, RateResponseDto, RoutineSummaryDto
+    routine-challenge-response.dto.ts — RoutineChallengeStatus(로컬 enum), RoutineChallengeDto, RoutineChallengeDetailDto(+participants), RoutineChallengeParticipantDto (6차)
   enums/
     index.ts                        — RoutineFrequencyType, RoutineWeeklyMode, RoutineImportance, RoutineTimeFilter, RoutineRecordType, RoutineStatus, BadgeCriteriaType re-export
   utils/
     routine-stats.util.ts            — 주/월 단위 스트릭·달성률 순수 함수, 일시정지 구간 인지 day-streak, FIXED_DAYS 스케줄 판정
+    routine-challenge.util.ts        — computeChallengeStatus, computeAchieved (6차, 순수 함수)
   routine.controller.ts
   routine.service.ts                 — CRUD(isPrivate 포함), pause/resume/end, 체크/체크취소(배지 판정 연동, 기록타입 검증), 사용자 단위 공유 관리(getShareGroups/updateShareGroups), 그룹원 조회(findGroupMembers/findGroupMemberDetail, 비공개 필터링), findRoutineWithAccess(사용자 단위 공유 + isPrivate 게이트), 카테고리 연결 관리(addCategory/removeCategory/findCategories)
   routine-group.service.ts           — 루틴 그룹 CRUD, 오늘 진행률 계산
@@ -535,6 +612,7 @@ src/routine/
   routine-stats.service.ts           — 히트맵/스트릭/달성률/요약 (frequencyType별 분기, 일시정지 구간 반영)
   routine-badge.service.ts           — 배지 카탈로그 조회, evaluateAndAward(userId) (일일 목표 달성 현황 기반 유저 단위 판정)
   routine-leaderboard.service.ts     — 그룹 랭킹보드 집계 (5차: 그룹원별 일일 목표 순차 계산)
+  routine-challenge.service.ts       — 그룹 챌린지 CRUD/참가/취소, 챌린지 단위(groupBy) + 목록 단위(개별 count) 진행률 집계 (6차)
   routine-reminder.scheduler.ts      — 일일 리마인더 + 주간 요약 크론 (status/FIXED_DAYS/MONTHLY 인지)
   routine.module.ts
 

@@ -46,6 +46,8 @@ model User {
   routineSetting            RoutineSetting?
   routineSettingHistory     RoutineSettingHistory[]
   routineGroupShares        RoutineGroupShare[]
+  routineChallenges         RoutineChallenge[]            @relation("RoutineChallengeCreator")
+  routineChallengeParticipations RoutineChallengeParticipant[]
   expenses                  Expense[]
   expensesAsMember          Expense[]               @relation("ExpenseMember")
   recurringExpenses         RecurringExpense[]
@@ -121,6 +123,7 @@ model Group {
   memberReports       MemberReport[]
   anniversaries       Anniversary[]
   routineGroupShares  RoutineGroupShare[]
+  routineChallenges   RoutineChallenge[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -1689,6 +1692,7 @@ model Routine {
   logs          RoutineLog[]
   pauses        RoutinePause[]
   categoryLinks RoutineCategoryLink[]
+  challengeParticipations RoutineChallengeParticipant[]
 
   @@index([userId, status])
   @@index([userId, sortOrder])
@@ -1778,6 +1782,49 @@ model RoutineGroupShare {
   @@unique([userId, groupId])
   @@index([groupId])
   @@map("routine_group_shares")
+}
+
+model RoutineChallenge {
+  id          String   @id @default(uuid())
+  groupId     String
+  createdBy   String
+
+  title       String   @db.VarChar(50)
+  description String?  @db.VarChar(200)
+
+  startDate   DateTime @db.Date
+  endDate     DateTime @db.Date
+
+  targetCount Int
+
+  reward      String?  @db.VarChar(100)
+
+  group        Group                          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator      User                           @relation("RoutineChallengeCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  participants RoutineChallengeParticipant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([groupId])
+  @@map("routine_challenges")
+}
+
+model RoutineChallengeParticipant {
+  id          String @id @default(uuid())
+  challengeId String
+  userId      String
+  routineId   String
+
+  challenge RoutineChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routine   Routine          @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+  @@map("routine_challenge_participants")
 }
 
 model RoutineCategoryLink {

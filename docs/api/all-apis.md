@@ -8554,6 +8554,93 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ---
 
+### GET `routines/groups/:groupId/challenges`
+
+**요약:** 그룹 챌린지 목록 조회
+
+**Path Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 챌린지 목록 조회 성공
+
+```json
+{
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### POST `routines/groups/:groupId/challenges`
+
+**요약:** 그룹 챌린지 생성 (만든 사람이 자동 참가되지는 않음)
+
+**Path Parameters:**
+
+- `groupId` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "title": "이번 주 운동하기", // 챌린지 제목 (string)
+  "description": "", // 챌린지 설명 (string?)
+  "startDate": "2026-08-24", // 시작일 (YYYY-MM-DD) (string)
+  "endDate": "2026-08-30", // 종료일 (YYYY-MM-DD, startDate 이상) (string)
+  "targetCount": 3, // 기간 내 목표 체크 횟수 (1 이상) (number)
+  "reward": "진 사람이 치킨 쏘기" // 내기·벌칙 문구 (자유 텍스트) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 챌린지 생성 성공
+
+```json
+{
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
 ### GET `routines/groups/:groupId/members/:userId`
 
 **요약:** 특정 그룹원의 공유 루틴 상세 조회
@@ -8716,6 +8803,175 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
 ```
+
+---
+
+### GET `routines/challenges/:id`
+
+**요약:** 챌린지 상세 조회 (참가자별 진행률 포함)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 챌린지 상세 조회 성공
+
+```json
+{
+  "participants": [
+    {
+      "userId": "", // 사용자 ID (string)
+      "userName": "", // 사용자 이름 (string)
+      "routineId": "", // 연결한 루틴 ID (string)
+      "routineTitle": "", // 연결한 루틴 제목 (string)
+      "routineEmoji": null, // 연결한 루틴 이모지 (string | null)
+      "checkedCount": 0, // 기간 내 체크 횟수 (number)
+      "achieved": false // 목표 달성 여부 (boolean)
+    }
+  ] // 참가자별 진행률 (RoutineChallengeParticipantDto[])
+}
+```
+
+#### 404 - 챌린지를 찾을 수 없습니다
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### PATCH `routines/challenges/:id`
+
+**요약:** 챌린지 수정 (만든 사람만)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Responses:**
+
+#### 200 - 챌린지 수정 성공
+
+```json
+{
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 챌린지를 찾을 수 없습니다
+
+#### 403 - 만든 사람만 수정할 수 있습니다
+
+---
+
+### DELETE `routines/challenges/:id`
+
+**요약:** 챌린지 삭제 (만든 사람만)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 챌린지 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 챌린지를 찾을 수 없습니다
+
+#### 403 - 만든 사람만 삭제할 수 있습니다
+
+---
+
+### POST `routines/challenges/:id/join`
+
+**요약:** 챌린지 참가 (이미 참가 중이면 연결 습관 교체)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "routineId": "" // 연결할 본인 소유 루틴 ID (isPrivate=true인 습관은 연결 불가) (string)
+}
+```
+
+**Responses:**
+
+#### 200 - 챌린지 참가 성공
+
+```json
+{
+  "participants": [
+    {
+      "userId": "", // 사용자 ID (string)
+      "userName": "", // 사용자 이름 (string)
+      "routineId": "", // 연결한 루틴 ID (string)
+      "routineTitle": "", // 연결한 루틴 제목 (string)
+      "routineEmoji": null, // 연결한 루틴 이모지 (string | null)
+      "checkedCount": 0, // 기간 내 체크 횟수 (number)
+      "achieved": false // 목표 달성 여부 (boolean)
+    }
+  ] // 참가자별 진행률 (RoutineChallengeParticipantDto[])
+}
+```
+
+#### 404 - 챌린지 또는 루틴을 찾을 수 없습니다
+
+#### 403 - 그룹 멤버가 아니거나 본인 소유 루틴이 아닙니다
+
+---
+
+### DELETE `routines/challenges/:id/join`
+
+**요약:** 챌린지 참가 취소
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 참가 취소 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 참가 기록을 찾을 수 없습니다
+
+#### 403 - 그룹 멤버가 아닙니다
 
 ---
 
