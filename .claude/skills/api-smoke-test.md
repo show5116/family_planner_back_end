@@ -12,12 +12,13 @@
 
 **대신 기존 테스트 계정을 재사용한다** (`docs/maintenance/test-accounts.md`):
 
-| 계정 | 이메일 | 비밀번호 | 역할 |
-|---|---|---|---|
-| 그룹장 | `test-owner@familyplanner.test` | `Test1234!` | OWNER |
-| 멤버 | `test-member@familyplanner.test` | `Test1234!` | DEFAULT |
+| 이메일 | 비밀번호 | 이름 | 테스트 가족 | 테스트 가족 2 |
+|---|---|---|---|---|
+| `test-owner@familyplanner.test` | `Test1234!` | 테스트 그룹장 | OWNER | MEMBER |
+| `test-member@familyplanner.test` | `Test1234!` | 테스트 멤버 | MEMBER | MEMBER |
+| `test-owner2@familyplanner.test` | `Test1234!` | 테스트 그룹장2 | - | OWNER |
 
-둘 다 `isEmailVerified: true` 상태로 이미 존재하므로 `POST /v1/auth/login`으로 바로 토큰을 받아 쓴다. 계정이 DB에 없다면(예: DB 초기화 후) `npx ts-node -r tsconfig-paths/register scripts/create-test-account.ts`로 재생성(멱등적).
+`test-owner`/`test-member`는 두 그룹 모두에 속함(여러 그룹에 걸친 시나리오 검증용). 전부 `isEmailVerified: true` 상태로 이미 존재하므로 `POST /v1/auth/login`으로 바로 토큰을 받아 쓴다. 계정이 DB에 없다면(예: DB 초기화 후) `npx ts-node -r tsconfig-paths/register scripts/create-test-account.ts`로 재생성(멱등적).
 
 **이 계정 자체를 삭제하지 않는다** — 플레이스토어 심사 제출용으로도 쓰인다.
 
