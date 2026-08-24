@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Patch,
   Delete,
   Body,
@@ -22,7 +23,7 @@ import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { RoutineQueryDto } from './dto/routine-query.dto';
 import { CheckRoutineDto } from './dto/check-routine.dto';
-import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
+import { UpdateRoutineGroupSharesDto } from './dto/update-routine-group-shares.dto';
 import { CreateRoutineCategoryLinkDto } from './dto/create-routine-category-link.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { UpdateDailyGoalInclusionsDto } from './dto/update-daily-goal-inclusions.dto';
@@ -45,7 +46,7 @@ import { LeaderboardQueryDto } from './dto/routine-leaderboard-query.dto';
 import {
   RoutineDto,
   RoutineLogDto,
-  RoutineShareDto,
+  RoutineGroupShareDto,
   RoutineCategoryLinkDto,
   RoutineMemberSummaryDto,
 } from './dto/routine-response.dto';
@@ -154,6 +155,25 @@ export class RoutineController {
   @ApiSuccess(RoutineBadgeDto, '배지 카탈로그 조회 성공', { isArray: true })
   getBadgeCatalog() {
     return this.routineBadgeService.findCatalog();
+  }
+
+  @Get('share-groups')
+  @ApiOperation({ summary: '내 루틴을 공유 중인 가족 그룹 목록 조회' })
+  @ApiSuccess(RoutineGroupShareDto, '공유 그룹 목록 조회 성공', {
+    isArray: true,
+  })
+  getShareGroups(@Request() req) {
+    return this.routineService.getShareGroups(req.user.userId);
+  }
+
+  @Put('share-groups')
+  @ApiOperation({ summary: '내 루틴 공유 그룹 목록 전체 교체' })
+  @ApiSuccess(RoutineGroupShareDto, '공유 그룹 목록 교체 성공', {
+    isArray: true,
+  })
+  @ApiForbidden('본인이 속하지 않은 그룹은 지정할 수 없습니다')
+  updateShareGroups(@Request() req, @Body() dto: UpdateRoutineGroupSharesDto) {
+    return this.routineService.updateShareGroups(req.user.userId, dto.groupIds);
   }
 
   @Post('categories')
@@ -409,40 +429,6 @@ export class RoutineController {
     @Query('date') date?: string,
   ) {
     return this.routineService.uncheck(req.user.userId, id, date);
-  }
-
-  @Post(':id/shares')
-  @ApiOperation({ summary: '그룹에 루틴 공유' })
-  @ApiCreated(RoutineShareDto, '공유 성공')
-  @ApiNotFound('루틴을 찾을 수 없습니다')
-  @ApiForbidden('본인의 루틴만 공유할 수 있습니다')
-  @ApiConflict('이미 공유된 그룹입니다')
-  addShare(
-    @Request() req,
-    @Param('id') id: string,
-    @Body() dto: CreateRoutineShareDto,
-  ) {
-    return this.routineService.addShare(req.user.userId, id, dto);
-  }
-
-  @Delete(':id/shares/:groupId')
-  @ApiOperation({ summary: '그룹 공유 해제' })
-  @ApiSuccess(MessageResponseDto, '공유 해제 성공')
-  @ApiNotFound('공유 정보를 찾을 수 없습니다')
-  removeShare(
-    @Request() req,
-    @Param('id') id: string,
-    @Param('groupId') groupId: string,
-  ) {
-    return this.routineService.removeShare(req.user.userId, id, groupId);
-  }
-
-  @Get(':id/shares')
-  @ApiOperation({ summary: '루틴이 공유된 그룹 목록 조회' })
-  @ApiSuccess(RoutineShareDto, '공유 그룹 목록 조회 성공', { isArray: true })
-  @ApiForbidden('본인의 루틴만 조회할 수 있습니다')
-  findShares(@Request() req, @Param('id') id: string) {
-    return this.routineService.findShares(req.user.userId, id);
   }
 
   @Post(':id/categories')

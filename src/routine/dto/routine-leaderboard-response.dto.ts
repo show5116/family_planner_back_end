@@ -10,11 +10,17 @@ export class LeaderboardEntryDto {
   @ApiProperty({ description: '사용자 이름' })
   userName: string;
 
-  @ApiProperty({ description: '기간 내 체크 횟수' })
-  checkCount: number;
+  @ApiProperty({ description: '기간 내 일일 목표 달성일 수' })
+  goalAchievedDays: number;
 
-  @ApiProperty({ description: '기간 내 평균 달성률 (%)' })
-  achievementRate: number;
+  @ApiProperty({ description: '기간 내 일일 목표 집계 대상일 수' })
+  goalTotalDays: number;
+
+  @ApiProperty({ description: '기간 내 일일 목표 달성률 (%)' })
+  goalAchievementRate: number;
+
+  @ApiProperty({ description: '현재 연속 달성일 수' })
+  currentStreakDays: number;
 }
 
 export class LeaderboardResponseDto {

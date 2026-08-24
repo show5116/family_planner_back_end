@@ -188,4 +188,12 @@ export class CreateRoutineDto {
   @IsOptional()
   @IsBoolean()
   includeInDailyGoal?: boolean;
+
+  @ApiProperty({
+    description: '비공개 여부. 생략 시 false(공개)',
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isPrivate?: boolean;
 }

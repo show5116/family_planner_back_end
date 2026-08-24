@@ -91,6 +91,11 @@ export class RoutineDto {
   includeInDailyGoal: boolean;
 
   @ApiProperty({
+    description: '비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김)',
+  })
+  isPrivate: boolean;
+
+  @ApiProperty({
     description: '조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부',
   })
   checkedToday: boolean;
@@ -145,13 +150,7 @@ export class RoutineLogDto {
   newlyEarnedBadges: UserRoutineBadgeDto[];
 }
 
-export class RoutineShareDto {
-  @ApiProperty({ description: '공유 ID' })
-  id: string;
-
-  @ApiProperty({ description: '루틴 ID' })
-  routineId: string;
-
+export class RoutineGroupShareDto {
   @ApiProperty({ description: '그룹 ID' })
   groupId: string;
 

@@ -15,7 +15,6 @@ import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { RoutineQueryDto } from './dto/routine-query.dto';
 import { CheckRoutineDto } from './dto/check-routine.dto';
-import { CreateRoutineShareDto } from './dto/create-routine-share.dto';
 import { CreateRoutineCategoryLinkDto } from './dto/create-routine-category-link.dto';
 import { ReorderRoutineDto } from './dto/reorder-routine.dto';
 import { UpdateDailyGoalInclusionsDto } from './dto/update-daily-goal-inclusions.dto';
@@ -102,6 +101,7 @@ export class RoutineService {
   async create(userId: string, dto: CreateRoutineDto) {
     const frequencyType = dto.frequencyType ?? RoutineFrequencyType.WEEKLY;
     const includeInDailyGoal = dto.includeInDailyGoal ?? true;
+    const isPrivate = dto.isPrivate ?? false;
 
     this.validateFrequencyCombo({
       frequencyType,
@@ -143,6 +143,7 @@ export class RoutineService {
         startDate: parseDateOnly(dto.startDate),
         endDate: dto.endDate ? parseDateOnly(dto.endDate) : undefined,
         includeInDailyGoal,
+        isPrivate,
         ...(dto.categoryIds?.length && {
           categoryLinks: {
             create: dto.categoryIds.map((categoryId) => ({ categoryId })),
@@ -264,6 +265,7 @@ export class RoutineService {
           ...(dto.includeInDailyGoal !== undefined && {
             includeInDailyGoal: dto.includeInDailyGoal,
           }),
+          ...(dto.isPrivate !== undefined && { isPrivate: dto.isPrivate }),
         },
       }),
       ...(dto.categoryIds !== undefined
@@ -520,61 +522,45 @@ export class RoutineService {
     return { message: this.t('success.check_removed') };
   }
 
-  async addShare(userId: string, id: string, dto: CreateRoutineShareDto) {
-    await this.findOwnRoutine(userId, id);
-    await this.validateGroupMembership(userId, dto.groupId);
-
-    const existing = await this.prisma.routineShare.findUnique({
-      where: { routineId_groupId: { routineId: id, groupId: dto.groupId } },
-    });
-    if (existing) {
-      throw new ConflictException(this.t('errors.already_shared'));
-    }
-
-    const share = await this.prisma.routineShare.create({
-      data: { routineId: id, groupId: dto.groupId },
+  async getShareGroups(userId: string) {
+    const shares = await this.prisma.routineGroupShare.findMany({
+      where: { userId },
       include: { group: { select: { name: true } } },
-    });
-
-    return {
-      id: share.id,
-      routineId: share.routineId,
-      groupId: share.groupId,
-      groupName: share.group.name,
-      createdAt: share.createdAt,
-    };
-  }
-
-  async removeShare(userId: string, id: string, groupId: string) {
-    await this.findOwnRoutine(userId, id);
-
-    const share = await this.prisma.routineShare.findUnique({
-      where: { routineId_groupId: { routineId: id, groupId } },
-    });
-    if (!share) {
-      throw new NotFoundException(this.t('errors.share_not_found'));
-    }
-
-    await this.prisma.routineShare.delete({ where: { id: share.id } });
-
-    return { message: this.t('success.share_removed') };
-  }
-
-  async findShares(userId: string, id: string) {
-    await this.findOwnRoutine(userId, id);
-
-    const shares = await this.prisma.routineShare.findMany({
-      where: { routineId: id },
-      include: { group: { select: { name: true } } },
+      orderBy: { createdAt: 'asc' },
     });
 
     return shares.map((s) => ({
-      id: s.id,
-      routineId: s.routineId,
       groupId: s.groupId,
       groupName: s.group.name,
       createdAt: s.createdAt,
     }));
+  }
+
+  async updateShareGroups(userId: string, groupIds: string[]) {
+    const uniqueGroupIds = Array.from(new Set(groupIds));
+
+    if (uniqueGroupIds.length > 0) {
+      const memberships = await this.prisma.groupMember.findMany({
+        where: { userId, groupId: { in: uniqueGroupIds } },
+        select: { groupId: true },
+      });
+      if (memberships.length !== uniqueGroupIds.length) {
+        throw new ForbiddenException(this.t('errors.no_group_access'));
+      }
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.routineGroupShare.deleteMany({ where: { userId } }),
+      ...(uniqueGroupIds.length
+        ? [
+            this.prisma.routineGroupShare.createMany({
+              data: uniqueGroupIds.map((groupId) => ({ userId, groupId })),
+            }),
+          ]
+        : []),
+    ]);
+
+    return this.getShareGroups(userId);
   }
 
   async addCategory(
@@ -671,17 +657,29 @@ export class RoutineService {
   async findGroupMembers(userId: string, groupId: string) {
     await this.validateGroupMembership(userId, groupId);
 
-    const shares = await this.prisma.routineShare.findMany({
+    const shares = await this.prisma.routineGroupShare.findMany({
       where: { groupId },
-      include: {
-        routine: {
-          include: { user: { select: { id: true, name: true } } },
-        },
+      select: { userId: true },
+    });
+    const sharedUserIds = shares.map((s) => s.userId);
+    if (sharedUserIds.length === 0) return [];
+
+    const owners = await this.prisma.user.findMany({
+      where: { id: { in: sharedUserIds } },
+      select: { id: true, name: true },
+    });
+    const ownerMap = new Map(owners.map((o) => [o.id, o]));
+
+    const routines = await this.prisma.routine.findMany({
+      where: {
+        userId: { in: sharedUserIds },
+        deletedAt: null,
+        isPrivate: false,
       },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    const activeShares = shares.filter((s) => !s.routine.deletedAt);
-    const routineIds = activeShares.map((s) => s.routineId);
+    const routineIds = routines.map((r) => r.id);
     const today = todayInKst();
     const todayLogs = await this.prisma.routineLog.findMany({
       where: { routineId: { in: routineIds }, checkedDate: today },
@@ -698,18 +696,24 @@ export class RoutineService {
       }
     >();
 
-    for (const share of activeShares) {
-      const owner = share.routine.user;
-      let member = memberMap.get(owner.id);
-      if (!member) {
-        member = { userId: owner.id, userName: owner.name, routines: [] };
-        memberMap.set(owner.id, member);
-      }
+    for (const sharedUserId of sharedUserIds) {
+      const owner = ownerMap.get(sharedUserId);
+      if (!owner) continue;
+      memberMap.set(sharedUserId, {
+        userId: owner.id,
+        userName: owner.name,
+        routines: [],
+      });
+    }
+
+    for (const routine of routines) {
+      const member = memberMap.get(routine.userId);
+      if (!member) continue;
       member.routines.push(
         this.toResponse(
-          share.routine,
-          logsByRoutine.get(share.routineId) ?? null,
-          categoryIdsByRoutine.get(share.routineId) ?? [],
+          routine,
+          logsByRoutine.get(routine.id) ?? null,
+          categoryIdsByRoutine.get(routine.id) ?? [],
         ),
       );
     }
@@ -724,12 +728,19 @@ export class RoutineService {
   ) {
     await this.validateGroupMembership(userId, groupId);
 
-    const shares = await this.prisma.routineShare.findMany({
-      where: { groupId, routine: { userId: targetUserId, deletedAt: null } },
-      include: { routine: true },
+    const share = await this.prisma.routineGroupShare.findUnique({
+      where: { userId_groupId: { userId: targetUserId, groupId } },
+    });
+    if (!share) {
+      return [];
+    }
+
+    const routines = await this.prisma.routine.findMany({
+      where: { userId: targetUserId, deletedAt: null, isPrivate: false },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
-    const routineIds = shares.map((s) => s.routineId);
+    const routineIds = routines.map((r) => r.id);
     const today = todayInKst();
     const todayLogs = await this.prisma.routineLog.findMany({
       where: { routineId: { in: routineIds }, checkedDate: today },
@@ -737,11 +748,11 @@ export class RoutineService {
     const logsByRoutine = new Map(todayLogs.map((l) => [l.routineId, l]));
     const categoryIdsByRoutine = await this.batchFetchCategoryIds(routineIds);
 
-    return shares.map((s) =>
+    return routines.map((r) =>
       this.toResponse(
-        s.routine,
-        logsByRoutine.get(s.routineId) ?? null,
-        categoryIdsByRoutine.get(s.routineId) ?? [],
+        r,
+        logsByRoutine.get(r.id) ?? null,
+        categoryIdsByRoutine.get(r.id) ?? [],
       ),
     );
   }
@@ -759,19 +770,23 @@ export class RoutineService {
       return routine;
     }
 
-    const sharedGroupIds = (
-      await this.prisma.routineShare.findMany({
-        where: { routineId: id },
+    if (routine.isPrivate) {
+      throw new ForbiddenException(this.t('errors.no_access'));
+    }
+
+    const ownerSharedGroupIds = (
+      await this.prisma.routineGroupShare.findMany({
+        where: { userId: routine.userId },
         select: { groupId: true },
       })
     ).map((s) => s.groupId);
 
-    if (sharedGroupIds.length === 0) {
+    if (ownerSharedGroupIds.length === 0) {
       throw new ForbiddenException(this.t('errors.no_access'));
     }
 
     const membership = await this.prisma.groupMember.findFirst({
-      where: { userId, groupId: { in: sharedGroupIds } },
+      where: { userId, groupId: { in: ownerSharedGroupIds } },
     });
     if (!membership) {
       throw new ForbiddenException(this.t('errors.no_access'));
@@ -838,6 +853,7 @@ export class RoutineService {
       endDate: Date | null;
       sortOrder: number;
       includeInDailyGoal: boolean;
+      isPrivate: boolean;
       createdAt: Date;
       updatedAt: Date;
     },
@@ -868,6 +884,7 @@ export class RoutineService {
       endDate: routine.endDate,
       sortOrder: routine.sortOrder,
       includeInDailyGoal: routine.includeInDailyGoal,
+      isPrivate: routine.isPrivate,
       checkedToday: !!checkedLog,
       checkedLog: checkedLog
         ? {

@@ -45,6 +45,7 @@ model User {
   routineBadges             UserRoutineBadge[]
   routineSetting            RoutineSetting?
   routineSettingHistory     RoutineSettingHistory[]
+  routineGroupShares        RoutineGroupShare[]
   expenses                  Expense[]
   expensesAsMember          Expense[]               @relation("ExpenseMember")
   recurringExpenses         RecurringExpense[]
@@ -119,7 +120,7 @@ model Group {
   minigameResults     MinigameResult[]
   memberReports       MemberReport[]
   anniversaries       Anniversary[]
-  routineShares       RoutineShare[]
+  routineGroupShares  RoutineGroupShare[]
 
   @@index([inviteCode])
   @@map("member_groups")
@@ -1678,6 +1679,7 @@ model Routine {
   endDate            DateTime?            @db.Date
   sortOrder          Int                  @default(0)
   includeInDailyGoal Boolean              @default(true)
+  isPrivate          Boolean              @default(false)
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   deletedAt          DateTime?
@@ -1685,7 +1687,6 @@ model Routine {
   user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   group         RoutineGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
   logs          RoutineLog[]
-  shares        RoutineShare[]
   pauses        RoutinePause[]
   categoryLinks RoutineCategoryLink[]
 
@@ -1764,18 +1765,19 @@ model RoutineLog {
   @@map("routine_logs")
 }
 
-model RoutineShare {
-  id        String   @id @default(uuid())
-  routineId String
-  groupId   String
+model RoutineGroupShare {
+  id      String @id @default(uuid())
+  userId  String
+  groupId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
 
-  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
-  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
-  @@unique([routineId, groupId])
+  @@unique([userId, groupId])
   @@index([groupId])
-  @@map("routine_shares")
+  @@map("routine_group_shares")
 }
 
 model RoutineCategoryLink {

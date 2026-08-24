@@ -7,9 +7,15 @@ import {
   LeaderboardPeriod,
 } from './dto/routine-leaderboard-query.dto';
 import {
+  computeDailyGoalStatus,
+  computeDailyGoalAchievementSummary,
+  pauseToDateRange,
   getWeekStart,
-  calculateAchievementRate,
+  formatDate,
+  DateRange,
 } from './utils/routine-stats.util';
+import { RoutineSettingsService } from './routine-settings.service';
+import { RoutineStatus } from '@/routine/enums';
 import { todayInKst } from '@/common/utils/date-kst.util';
 
 @Injectable()
@@ -17,6 +23,7 @@ export class RoutineLeaderboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService,
+    private readonly routineSettingsService: RoutineSettingsService,
   ) {}
 
   private t(key: string) {
@@ -40,85 +47,122 @@ export class RoutineLeaderboardService {
     const today = todayInKst();
     const { from, to } = this.resolveRange(query.period, today);
 
-    const shares = await this.prisma.routineShare.findMany({
-      where: { groupId, routine: { deletedAt: null } },
-      include: {
-        routine: {
-          include: { user: { select: { id: true, name: true } } },
-        },
-      },
+    const shares = await this.prisma.routineGroupShare.findMany({
+      where: { groupId },
+      select: { userId: true },
     });
-
-    const routineIds = shares.map((s) => s.routineId);
-    const logs = await this.prisma.routineLog.findMany({
-      where: {
-        routineId: { in: routineIds },
-        checkedDate: { gte: from, lte: to },
-      },
-      select: { routineId: true, checkedDate: true },
-    });
-
-    const logsByRoutine = new Map<string, Date[]>();
-    for (const log of logs) {
-      const arr = logsByRoutine.get(log.routineId);
-      if (arr) {
-        arr.push(log.checkedDate);
-      } else {
-        logsByRoutine.set(log.routineId, [log.checkedDate]);
-      }
+    const sharedUserIds = shares.map((s) => s.userId);
+    if (sharedUserIds.length === 0) {
+      return {
+        groupId,
+        period: query.period,
+        metric: query.metric,
+        rankings: [],
+      };
     }
 
-    interface UserAgg {
+    const owners = await this.prisma.user.findMany({
+      where: { id: { in: sharedUserIds } },
+      select: { id: true, name: true },
+    });
+    const ownerMap = new Map(owners.map((o) => [o.id, o]));
+
+    interface Entry {
       userId: string;
       userName: string;
-      checkCount: number;
-      rateSum: number;
-      routineCount: number;
+      goalAchievedDays: number;
+      goalTotalDays: number;
+      goalAchievementRate: number;
+      currentStreakDays: number;
     }
-    const userMap = new Map<string, UserAgg>();
+    const entries: Entry[] = [];
 
-    for (const share of shares) {
-      const routine = share.routine;
-      const owner = routine.user;
-      const routineLogs = logsByRoutine.get(routine.id) ?? [];
-      const targetCount = routine.targetCount ?? 7;
-      const rate = calculateAchievementRate(
-        from,
-        to,
-        targetCount,
-        routineLogs,
-      ).achievementRate;
+    for (const targetUserId of sharedUserIds) {
+      const owner = ownerMap.get(targetUserId);
+      if (!owner) continue;
 
-      let agg = userMap.get(owner.id);
-      if (!agg) {
-        agg = {
-          userId: owner.id,
-          userName: owner.name,
-          checkCount: 0,
-          rateSum: 0,
-          routineCount: 0,
-        };
-        userMap.set(owner.id, agg);
+      const firstEffectiveFrom =
+        await this.routineSettingsService.getFirstEffectiveFrom(targetUserId);
+      if (!firstEffectiveFrom) continue;
+
+      const rangeFrom =
+        firstEffectiveFrom.getTime() < from.getTime()
+          ? firstEffectiveFrom
+          : from;
+      const rangeTo = today;
+
+      const routines = await this.prisma.routine.findMany({
+        where: {
+          userId: targetUserId,
+          deletedAt: null,
+          isPrivate: false,
+          status: { in: [RoutineStatus.ACTIVE, RoutineStatus.PAUSED] },
+        },
+      });
+      const routineIds = routines.map((r) => r.id);
+
+      const [logs, pauses, settingsMap] = await Promise.all([
+        this.prisma.routineLog.findMany({
+          where: {
+            routineId: { in: routineIds },
+            checkedDate: { gte: rangeFrom, lte: rangeTo },
+          },
+          select: { routineId: true, checkedDate: true },
+        }),
+        this.prisma.routinePause.findMany({
+          where: { routineId: { in: routineIds } },
+        }),
+        this.routineSettingsService.getEffectiveSettingsMap(
+          targetUserId,
+          rangeFrom,
+          rangeTo,
+        ),
+      ]);
+
+      const pausesByRoutine = new Map<string, DateRange[]>();
+      for (const pause of pauses) {
+        const ranges = pausesByRoutine.get(pause.routineId) ?? [];
+        ranges.push(pauseToDateRange(pause, today));
+        pausesByRoutine.set(pause.routineId, ranges);
       }
-      agg.checkCount += routineLogs.length;
-      agg.rateSum += rate;
-      agg.routineCount += 1;
-    }
 
-    const entries = Array.from(userMap.values()).map((agg) => ({
-      userId: agg.userId,
-      userName: agg.userName,
-      checkCount: agg.checkCount,
-      achievementRate:
-        agg.routineCount > 0
-          ? Math.round((agg.rateSum / agg.routineCount) * 10) / 10
-          : 0,
-    }));
+      const dailyStatuses = computeDailyGoalStatus(
+        routines,
+        logs,
+        pausesByRoutine,
+        settingsMap,
+        rangeFrom,
+        rangeTo,
+      );
+
+      const { currentStreakDays } =
+        computeDailyGoalAchievementSummary(dailyStatuses);
+
+      const periodStatuses = dailyStatuses.filter(
+        (s) => s.date >= formatDate(from) && s.date <= formatDate(to),
+      );
+      const goalDays = periodStatuses.filter((s) => s.goalAchieved !== null);
+      const goalAchievedDays = goalDays.filter((s) => s.goalAchieved).length;
+      const goalTotalDays = goalDays.length;
+      const goalAchievementRate =
+        goalTotalDays > 0
+          ? Math.round((goalAchievedDays / goalTotalDays) * 1000) / 10
+          : 0;
+
+      entries.push({
+        userId: owner.id,
+        userName: owner.name,
+        goalAchievedDays,
+        goalTotalDays,
+        goalAchievementRate,
+        currentStreakDays,
+      });
+    }
 
     entries.sort((a, b) =>
-      query.metric === LeaderboardMetric.ACHIEVEMENT_RATE
-        ? b.achievementRate - a.achievementRate
-        : b.checkCount - a.checkCount,
+      query.metric === LeaderboardMetric.GOAL_STREAK_DAYS
+        ? b.currentStreakDays - a.currentStreakDays
+        : b.goalAchievementRate - a.goalAchievementRate,
     );
 
     return {

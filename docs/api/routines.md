@@ -31,7 +31,8 @@
   "startDate": "2026-07-01", // 시작일 (YYYY-MM-DD) (string)
   "endDate": "", // 종료일 (YYYY-MM-DD, 없으면 무기한) (string?)
   "routineGroupId": "", // 소속시킬 루틴 그룹 ID (없으면 독립 습관) (string?)
-  "includeInDailyGoal": false // 일일 목표 집계에 포함할지 여부. 생략 시 true (boolean?)
+  "includeInDailyGoal": false, // 일일 목표 집계에 포함할지 여부. 생략 시 true (boolean?)
+  "isPrivate": false // 비공개 여부. 생략 시 false(공개) (boolean?)
 }
 ```
 
@@ -59,6 +60,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -109,6 +111,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -297,6 +300,52 @@
 
 ---
 
+### GET `routines/share-groups`
+
+**요약:** 내 루틴을 공유 중인 가족 그룹 목록 조회
+
+**Responses:**
+
+#### 200 - 공유 그룹 목록 조회 성공
+
+```json
+{
+  "groupId": "", // 그룹 ID (string)
+  "groupName": "", // 그룹 이름 (string)
+  "createdAt": "2025-01-01T00:00:00Z" // 공유 생성일 (Date)
+}
+```
+
+---
+
+### PUT `routines/share-groups`
+
+**요약:** 내 루틴 공유 그룹 목록 전체 교체
+
+**Request Body:**
+
+```json
+{
+  "groupIds": "<String>" // 공유할 그룹 ID 전체 목록 (기존 공유 목록을 이 값으로 통째 교체, 빈 배열이면 전체 해제) (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 공유 그룹 목록 교체 성공
+
+```json
+{
+  "groupId": "", // 그룹 ID (string)
+  "groupName": "", // 그룹 이름 (string)
+  "createdAt": "2025-01-01T00:00:00Z" // 공유 생성일 (Date)
+}
+```
+
+#### 403 - 본인이 속하지 않은 그룹은 지정할 수 없습니다
+
+---
+
 ### POST `routines/categories`
 
 **요약:** 루틴 카테고리 생성 (사용자 커스텀 태그)
@@ -420,6 +469,7 @@
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
       "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+      "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
       "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
       "checkedLog": {
         "note": null,
@@ -636,6 +686,7 @@
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
       "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+      "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
       "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
       "checkedLog": {
         "note": null,
@@ -784,6 +835,7 @@
       "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
       "sortOrder": 0, // 정렬 순서 (number)
       "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+      "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
       "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
       "checkedLog": {
         "note": null,
@@ -814,7 +866,7 @@
 **Query Parameters:**
 
 - `period` (`LeaderboardPeriod`): 집계 기간 (가능한 값: week, month)
-- `metric` (`LeaderboardMetric`): 정렬 기준 (가능한 값: checkCount, achievementRate)
+- `metric` (`LeaderboardMetric`): 정렬 기준 (가능한 값: goalAchievementRate, goalStreakDays)
 
 **Responses:**
 
@@ -830,8 +882,10 @@
       "rank": 0, // 순위 (number)
       "userId": "", // 사용자 ID (string)
       "userName": "", // 사용자 이름 (string)
-      "checkCount": 0, // 기간 내 체크 횟수 (number)
-      "achievementRate": 0 // 기간 내 평균 달성률 (%) (number)
+      "goalAchievedDays": 0, // 기간 내 일일 목표 달성일 수 (number)
+      "goalTotalDays": 0, // 기간 내 일일 목표 집계 대상일 수 (number)
+      "goalAchievementRate": 0, // 기간 내 일일 목표 달성률 (%) (number)
+      "currentStreakDays": 0 // 현재 연속 달성일 수 (number)
     }
   ] // 순위 목록 (LeaderboardEntryDto[])
 }
@@ -874,6 +928,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -932,6 +987,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -988,6 +1044,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -1035,6 +1092,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -1095,6 +1153,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -1170,6 +1229,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -1221,6 +1281,7 @@
   "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
   "sortOrder": 0, // 정렬 순서 (number)
   "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
   "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
   "checkedLog": {
     "note": null, // 메모 (string | null)
@@ -1320,91 +1381,6 @@
 ```
 
 #### 404 - 체크 기록을 찾을 수 없습니다
-
----
-
-### POST `routines/:id/shares`
-
-**요약:** 그룹에 루틴 공유
-
-**Path Parameters:**
-
-- `id` (`string`)
-
-**Request Body:**
-
-```json
-{
-  "groupId": "" // 공유할 그룹 ID (string)
-}
-```
-
-**Responses:**
-
-#### 201 - 공유 성공
-
-```json
-{
-  "id": "", // 공유 ID (string)
-  "routineId": "", // 루틴 ID (string)
-  "groupId": "", // 그룹 ID (string)
-  "groupName": "", // 그룹 이름 (string)
-  "createdAt": "2025-01-01T00:00:00Z" // 공유 생성일 (Date)
-}
-```
-
-#### 404 - 루틴을 찾을 수 없습니다
-
-#### 403 - 본인의 루틴만 공유할 수 있습니다
-
----
-
-### DELETE `routines/:id/shares/:groupId`
-
-**요약:** 그룹 공유 해제
-
-**Path Parameters:**
-
-- `id` (`string`)
-- `groupId` (`string`)
-
-**Responses:**
-
-#### 200 - 공유 해제 성공
-
-```json
-{
-  "message": "작업이 완료되었습니다" // string
-}
-```
-
-#### 404 - 공유 정보를 찾을 수 없습니다
-
----
-
-### GET `routines/:id/shares`
-
-**요약:** 루틴이 공유된 그룹 목록 조회
-
-**Path Parameters:**
-
-- `id` (`string`)
-
-**Responses:**
-
-#### 200 - 공유 그룹 목록 조회 성공
-
-```json
-{
-  "id": "", // 공유 ID (string)
-  "routineId": "", // 루틴 ID (string)
-  "groupId": "", // 그룹 ID (string)
-  "groupName": "", // 그룹 이름 (string)
-  "createdAt": "2025-01-01T00:00:00Z" // 공유 생성일 (Date)
-}
-```
-
-#### 403 - 본인의 루틴만 조회할 수 있습니다
 
 ---
 

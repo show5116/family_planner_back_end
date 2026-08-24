@@ -7,8 +7,8 @@ export enum LeaderboardPeriod {
 }
 
 export enum LeaderboardMetric {
-  CHECK_COUNT = 'checkCount',
-  ACHIEVEMENT_RATE = 'achievementRate',
+  GOAL_ACHIEVEMENT_RATE = 'goalAchievementRate',
+  GOAL_STREAK_DAYS = 'goalStreakDays',
 }
 
 export class LeaderboardQueryDto {
@@ -23,8 +23,8 @@ export class LeaderboardQueryDto {
   @ApiProperty({
     description: '정렬 기준',
     enum: LeaderboardMetric,
-    default: LeaderboardMetric.CHECK_COUNT,
+    default: LeaderboardMetric.GOAL_ACHIEVEMENT_RATE,
   })
   @IsEnum(LeaderboardMetric)
-  metric: LeaderboardMetric = LeaderboardMetric.CHECK_COUNT;
+  metric: LeaderboardMetric = LeaderboardMetric.GOAL_ACHIEVEMENT_RATE;
 }

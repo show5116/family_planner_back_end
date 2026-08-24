@@ -24,11 +24,11 @@
 - **타임존**: "오늘"/"이번 주"/"이번 달" 계산은 항상 KST(Asia/Seoul) 기준(`src/common/utils/date-kst.util.ts`의 `todayInKst()`). 서버가 UTC로 실행되므로 `new Date()`의 UTC getter를 직접 쓰지 말고 반드시 이 함수를 통해 "오늘 날짜"를 구할 것.
 - **기록 타입(고정)**: 루틴 생성 시 `recordType`을 하나로 고정(체크마다 바꿀 수 없음). `BOOLEAN`(단순 체크, 기본값) / `TEXT`(텍스트) / `TIME`(시각 "HH:mm") / `NUMERIC`(수치). 체크 시 `recordType`과 일치하는 값 필드만 허용.
 - **상태(ACTIVE/PAUSED/ENDED)**: `isActive` 불리언 대신 `status` enum으로 통합. `PAUSED`/`ENDED` 상태의 루틴은 체크 불가(400). `ENDED`는 기존 soft delete(`deletedAt`)와 동일 — 데이터는 보존되고 목록에서만 제외. `PAUSED` 기간은 `RoutinePause` 이력 테이블에 별도 기록되며, 스트릭 계산에서 "결석"이 아니라 통째로 건너뛰는 구간으로 취급(재개 후에도 스트릭이 끊기지 않음).
-- **카테고리(개인 커스텀, 다중 선택)**: 사용자가 직접 만드는 태그(`RoutineCategory`, 예: "규칙적인 삶", "운동", "건강"). 카테고리 자체는 `RoutineGroup`과 동일한 개인 소유/soft delete 패턴이지만, 루틴과의 연결은 `RoutineShare`(루틴↔가족그룹)와 동일한 N:M 조인 테이블(`RoutineCategoryLink`) 방식 — 한 루틴에 여러 카테고리를 자유롭게 태그처럼 붙일 수 있음. 가족 그룹 공유와는 무관.
-- **그룹 공유(N:M)**: 하나의 루틴을 여러 그룹에 동시 공유 가능. 공유된 그룹의 멤버는 서로의 루틴과 달성 현황을 조회 가능(수정 권한 공유는 없음, 체크는 본인만).
+- **카테고리(개인 커스텀, 다중 선택)**: 사용자가 직접 만드는 태그(`RoutineCategory`, 예: "규칙적인 삶", "운동", "건강"). 카테고리 자체는 `RoutineGroup`과 동일한 개인 소유/soft delete 패턴이지만, 루틴과의 연결은 N:M 조인 테이블(`RoutineCategoryLink`) 방식 — 한 루틴에 여러 카테고리를 자유롭게 태그처럼 붙일 수 있음. 가족 그룹 공유와는 무관.
+- **사용자 단위 공유 (5차)**: 습관 단위(`RoutineShare`, 습관×그룹)가 아니라 **사용자×가족그룹**(`RoutineGroupShare`) 단위로 공유한다. 특정 가족 그룹에 공유를 설정하면 그 사용자의 습관이 (비공개로 표시한 것만 빼고) 전부 그룹원에게 보인다. 자세한 내용은 "사용자 단위 공유" 절 참고.
 - **삭제 정책**: 루틴 종료(soft delete) 시 `RoutineLog`는 보존(통계/이력 보존 목적).
 - **배지(3차부터 일일 목표 기준, 유저 단위)**: 습관 개별이 아니라 사용자의 일일 목표 달성 여부를 기준으로 판정. 체크 직후 동기적으로 판정하며, 한 번 획득한 배지는 체크 취소로도 회수되지 않음. 자세한 내용은 "배지" 절 참고.
-- **랭킹보드**: 그룹에 공유된 루틴만 집계 대상(비공유 루틴은 익명으로도 포함하지 않음 — 공유하지 않았다는 의사표시 존중).
+- **랭킹보드(5차부터 일일 목표 기준)**: 공유 그룹에 속한 사용자의 비공개 아닌 습관만 집계 대상. "공유한 습관 수"가 아니라 일일 목표 달성률/연속일수로 비교하므로 습관 개수가 서로 달라도 공정하게 비교된다.
 - **루틴 그룹**: 여러 습관을 "아침 루틴"처럼 하나의 컨테이너로 묶는 얇은 레이어(`RoutineGroup`). 습관은 최대 1개 그룹에만 소속되며, 그룹 밖에서도 독립적으로 조회/체크 가능. 체크/스트릭/공유는 전부 개별 습관 단위 그대로 유지 — 그룹은 "오늘 3/5 완료" 같은 진행률 뷰만 제공.
 
 ---
@@ -57,15 +57,22 @@
 
 ### 루틴 카테고리
 - 사용자가 직접 만드는 개인 커스텀 태그(`RoutineCategory`). CRUD + 순서 일괄 변경 (`/routines/categories/*`)
-- 루틴과 카테고리는 N:M(`RoutineCategoryLink` 조인 테이블, `RoutineShare`와 동일 패턴) — 한 루틴에 여러 카테고리를 동시에 붙일 수 있음
+- 루틴과 카테고리는 N:M(`RoutineCategoryLink` 조인 테이블) — 한 루틴에 여러 카테고리를 동시에 붙일 수 있음
 - 루틴별 카테고리 연결 관리는 전용 엔드포인트로: `POST /routines/:id/categories`(연결 추가), `DELETE /routines/:id/categories/:categoryId`(연결 해제), `GET /routines/:id/categories`(연결 목록 조회)
 - 루틴 생성 시 `categoryIds` 배열로 초기 연결 가능. 수정 시 `categoryIds` 배열을 전달하면 전체 교체(빈 배열 `[]` 전달 시 전체 해제), 미전달 시 기존 연결 유지 — 개별 추가/삭제는 위 전용 엔드포인트로 하고, 전체를 한 번에 바꾸고 싶을 때만 `categoryIds`를 사용
 - 카테고리 삭제(soft delete)는 해당 카테고리의 조인 행만 제거 — 여러 카테고리가 달린 루틴은 삭제된 카테고리만 빠지고 나머지 카테고리는 그대로 유지(가족 그룹 공유 `Category`와 무관한 순수 개인 소유 태그)
 
-### 그룹 공유
-- 루틴 소유자가 자신이 속한 그룹에 공유 추가/해제 (`RoutineShare`, N:M)
-- 공유된 그룹의 멤버는 그룹원별 루틴 목록과 오늘/이번 주 진행 상황을 조회 가능
-- 향후 랭킹/경쟁 기능은 `RoutineLog` + `RoutineShare` 조인만으로 스키마 변경 없이 확장 가능하도록 설계
+### 사용자 단위 공유 (5차)
+
+1·2차의 `RoutineShare`(습관×가족그룹)는 습관을 하나 추가할 때마다 공유 대상을 매번 지정해야 하고, 공유 상태가 목록에서 보이지 않으며, 랭킹보드가 "공유한 습관 수"에 좌우되는 문제가 있었다. 5차부터 **"그룹을 정하면 전부 공유, 민감한 것만 숨김"** 방식으로 전환했다.
+
+> **개념 구분**: `Routine.groupId`(→ `RoutineGroup`)는 개인 소유 습관 폴더로 이번 변경과 무관하다. 아래의 "가족 그룹"은 `RoutineGroupShare.groupId`(→ `Group`, 구성원이 여러 명인 가족/household 그룹)를 가리키며 이름이 비슷하니 혼동하지 않도록 주의.
+
+- **`RoutineGroupShare`(사용자×가족그룹)**: `GET/PUT /routines/share-groups`로 관리. `GET`은 내 루틴을 공유 중인 가족 그룹 목록(`{groupId, groupName, createdAt}[]`)을 반환. `PUT`은 `{ groupIds: string[] }`로 공유 그룹 목록을 통째로 교체(개별 추가/삭제 API는 없음 — 빈 배열이면 전체 해제, 본인이 속하지 않은 그룹 ID를 넣으면 403). 특정 가족 그룹에 공유를 설정하면 그 사용자의 **모든 습관**이 (비공개로 표시한 것만 빼고) 그룹원에게 보인다.
+- **`Routine.isPrivate`**: 습관별로 그룹원에게 숨길지 정하는 단일 플래그(그룹마다 다르게 둘 수 없음 — 어느 그룹에든 동일하게 적용). `POST /routines`/`PATCH /routines/:id`에서 설정 가능, 생략 시 `false`(공개). `isPrivate=true`인 습관은 그룹원 조회(`GET groups/:groupId/members`, `.../members/:userId`)와 랭킹보드 집계에서 완전히 제외된다 — "숨긴 게 있다"는 사실 자체도 노출하지 않음(빈 자리를 남기지 않고 그냥 목록에서 빠짐). 본인이 직접 조회할 때(`GET /routines`, `GET /routines/:id` 등)는 비공개 여부와 무관하게 항상 보인다.
+- **본인 대상 집계와는 독립된 축**: `isPrivate`은 본인의 일일 목표 집계(`overview`/`daily-streak`/배지 판정 등)에 전혀 영향을 주지 않는다. 비공개 습관도 `includeInDailyGoal=true`면 본인의 목표 달성 여부에는 그대로 반영된다 — "남에게 안 보일 뿐 내 목표에는 들어간다."
+- **접근 차단은 통계 API까지 일관 적용**: 그룹원이 `findRoutineWithAccess`(통계 API들이 공용으로 쓰는 접근 게이트)를 통해 다른 사람의 루틴에 접근할 때, 소유자가 요청자와 같은 가족 그룹을 공유하지 않거나 그 습관이 `isPrivate=true`면 차단(403)된다. `GET /:id/stats/heatmap`, `/:id/stats/streak`, `/:id/stats/rate` 등도 동일하게 적용 — `routineId`를 직접 알고 있어도 비공개 습관을 우회 조회할 수 없다.
+- **마이그레이션(5차 배포 시 1회)**: 기존 `RoutineShare` 데이터는 "습관을 1개라도 A그룹에 공유했던 사용자는 A그룹 전체에 `RoutineGroupShare`를 생성"하는 의사 보존 방식으로 전환했다(중복은 자동 제거). 공유 그룹을 해제하면 그 즉시 그룹원에게 안 보이며 과거 기록도 조회 불가(별도 이력 보존 없음).
 
 ### 통계
 - **달력 히트맵**: 기간 내 체크된 날짜 목록 (최대 1년)
@@ -112,10 +119,11 @@
 - 습관 생성/수정 시 `routineGroupId`로 소속 지정/변경 가능, 수정 시 `null` 전달로 소속 해제 가능
 - 체크/체크취소/배지/스트릭/공유는 전부 기존 개별 루틴 로직 그대로 — 그룹은 진행률 집계 뷰만 추가하는 얇은 레이어(1차는 그룹 단위 배지/스트릭/랭킹보드 없음)
 
-### 그룹 랭킹보드
-- `GET /routines/groups/:groupId/leaderboard?period=week|month&metric=checkCount|achievementRate`
-- 집계 대상은 해당 그룹에 `RoutineShare`로 공유된 루틴만, 소유자 단위로 그룹핑
-- 응답에 `checkCount`, `achievementRate`를 항상 함께 포함(정렬 기준만 `metric`으로 결정, 프런트가 재조회 없이 전환 가능)
+### 그룹 랭킹보드 (5차부터 일일 목표 기준)
+- `GET /routines/groups/:groupId/leaderboard?period=week|month&metric=goalAchievementRate|goalStreakDays`
+- 집계 대상은 해당 가족 그룹에 공유 중인(`RoutineGroupShare`) 사용자들, `isPrivate=false`인 습관만 포함. 아직 일일 목표 개념을 도입한 적 없는 사용자(`RoutineSettingHistory` 없음)는 랭킹에서 제외.
+- 응답에 `goalAchievedDays`(기간 내 목표 달성일 수)/`goalTotalDays`(집계 대상일 수)/`goalAchievementRate`(달성률 %)/`currentStreakDays`(현재 연속 달성일 수)를 항상 함께 포함(정렬 기준만 `metric`으로 결정). `currentStreakDays`는 기간(period)과 무관하게 오늘 기준 전체 스트릭.
+- 계산은 `computeDailyGoalStatus`/`computeDailyGoalAchievementSummary`(`routine-stats.util.ts`, 유저 단위 순수 함수)를 그룹원별로 순차 호출해 얻음 — 4차 이전에는 "공유한 습관 수"에 좌우되던 `checkCount`/`achievementRate` 기준이었으나, 5차부터 습관 개수가 달라도 공정하게 비교되는 일일 목표 기준으로 전환.
 
 ### 알림/리마인더
 - `NotificationCategory.ROUTINE` 신설, `PUT /notifications/settings`에서 `routineReminderHour`(0~23시, 기본 21시)로 개인화된 리마인드 시각 설정 (WEATHER의 `weatherAlertHour`와 동일 패턴)
@@ -150,6 +158,7 @@ model Routine {
   startDate     DateTime             @db.Date
   endDate       DateTime?            @db.Date
   sortOrder     Int                  @default(0)
+  isPrivate     Boolean              @default(false) // 5차: true면 공유 그룹의 다른 멤버에게 완전히 숨김
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   deletedAt     DateTime?
@@ -157,7 +166,6 @@ model Routine {
   user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   group         RoutineGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
   logs          RoutineLog[]
-  shares        RoutineShare[]
   badges        UserRoutineBadge[]
   pauses        RoutinePause[]
   categoryLinks RoutineCategoryLink[]
@@ -187,7 +195,7 @@ model RoutineCategory {
   @@map("routine_categories")
 }
 
-// 루틴 ↔ 카테고리 (N:M, RoutineShare와 동일한 조인 테이블 패턴)
+// 루틴 ↔ 카테고리 (N:M 조인 테이블)
 model RoutineCategoryLink {
   id         String   @id @default(uuid())
   routineId  String
@@ -235,19 +243,20 @@ model RoutineLog {
   @@map("routine_logs")
 }
 
-// 루틴 ↔ 그룹 공유 (N:M)
-model RoutineShare {
-  id        String   @id @default(uuid())
-  routineId String
-  groupId   String
+// 사용자 ↔ 가족그룹 공유 (5차, User×Group. Routine.groupId가 가리키는 RoutineGroup과는 다른 모델)
+model RoutineGroupShare {
+  id      String @id @default(uuid())
+  userId  String
+  groupId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
 
-  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
-  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
-  @@unique([routineId, groupId])
+  @@unique([userId, groupId])
   @@index([groupId])
-  @@map("routine_shares")
+  @@map("routine_group_shares")
 }
 
 enum RoutineFrequencyType {
@@ -346,7 +355,7 @@ model RoutineGroup {
 }
 ```
 
-`Routine`에는 선택적 FK `groupId String?` + `group RoutineGroup? @relation(..., onDelete: SetNull)`가 추가되어 있음 — 그룹 삭제 시 소속 습관은 유지되고 `groupId`만 `null`로 해제됨. 기존 `RoutineShare.groupId`(가족 `Group` 참조)와 필드명이 겹치지만 참조 모델이 달라 문제없고, DTO/컨트롤러 레벨에서는 `routineGroupId`로 구분해 혼동을 방지함.
+`Routine`에는 선택적 FK `groupId String?` + `group RoutineGroup? @relation(..., onDelete: SetNull)`가 추가되어 있음 — 그룹 삭제 시 소속 습관은 유지되고 `groupId`만 `null`로 해제됨. `RoutineGroupShare.groupId`(가족 `Group` 참조)와 필드명이 겹치지만 참조 모델이 달라 문제없고, DTO/컨트롤러 레벨에서는 `routineGroupId`로 구분해 혼동을 방지함.
 
 ### 배지 카탈로그 (12종 시드, 3차 이후)
 
@@ -375,14 +384,14 @@ model RoutineGroup {
 - [x] 루틴 CRUD (생성, 목록, 상세, 수정, 삭제)
 - [x] 순서 일괄 변경
 - [x] 체크/체크취소 (하루 1건, 미래 날짜 차단)
-- [x] 그룹 공유 추가/해제/목록 조회 (N:M)
-- [x] 그룹원 루틴 조회 (멤버별 목록, 특정 멤버 상세)
+- [x] 사용자 단위 공유 설정 조회/전체교체 (5차, `RoutineGroupShare`)
+- [x] 그룹원 루틴 조회 (멤버별 목록, 특정 멤버 상세, 비공개 습관 제외)
 - [x] 통계: 달력 히트맵
 - [x] 통계: 스트릭 (주 단위 + 일 단위 병행)
 - [x] 통계: 기간별 달성률 (week/month/custom)
 - [x] 대시보드 위젯용 요약 API
-- [x] 배지 시스템 (카탈로그 9종, 체크 시 동기 판정, 체크 응답에 신규 획득 포함)
-- [x] 그룹 랭킹보드 (공유 루틴 기준 체크 횟수/달성률 순위)
+- [x] 배지 시스템 (카탈로그 12종, 체크 시 동기 판정, 체크 응답에 신규 획득 포함)
+- [x] 그룹 랭킹보드 (5차: 일일 목표 달성률/연속일수 기준 순위)
 - [x] 알림/리마인더 (일일 미체크 리마인드, 배지 획득 알림, 주간 요약)
 - [x] 루틴 그룹 (`RoutineGroup`) — 여러 습관 묶음 관리, 진행률 조회, 개별 습관 소속 지정/해제
 - [x] 반복 주기 재설계 — `DAILY`/`WEEKLY`(COUNT_ONLY/FIXED_DAYS)/`MONTHLY` 전 종류 실제 구현 및 스트릭/달성률 연동
@@ -415,6 +424,8 @@ model RoutineGroup {
 | PATCH  | `/routines/:id/resume`  | 루틴 재개                     | JWT, Owner |
 | PATCH  | `/routines/sort-order`  | 순서 일괄 변경                | JWT        |
 | PATCH  | `/routines/daily-goal-inclusions` | 일일 목표 포함 여부 일괄 변경 | JWT        |
+| GET    | `/routines/share-groups` | 내 루틴을 공유 중인 가족 그룹 목록 | JWT   |
+| PUT    | `/routines/share-groups` | 공유 그룹 목록 전체 교체      | JWT        |
 
 ### 루틴 카테고리
 
@@ -447,16 +458,15 @@ model RoutineGroup {
 | POST   | `/routines/:id/check`           | 체크 (date 미지정 시 오늘)       | JWT, Owner |
 | DELETE | `/routines/:id/check?date=`     | 체크 취소 (date 미지정 시 오늘)  | JWT, Owner |
 
-### 그룹 공유
+### 그룹 공유 (5차: 사용자 단위 + `isPrivate`)
 
 | Method | Endpoint                                | 설명                       | 권한       |
 | ------ | ---------------------------------------- | -------------------------- | ---------- |
-| POST   | `/routines/:id/shares`                   | 그룹에 공유 추가           | JWT, Owner |
-| DELETE | `/routines/:id/shares/:groupId`          | 그룹 공유 해제             | JWT, Owner |
-| GET    | `/routines/:id/shares`                   | 공유된 그룹 목록           | JWT, Owner |
-| GET    | `/routines/groups/:groupId/members`      | 그룹원별 공유 루틴 + 현황  | JWT, Member |
-| GET    | `/routines/groups/:groupId/members/:userId` | 특정 그룹원 공유 루틴 상세 | JWT, Member |
-| GET    | `/routines/groups/:groupId/leaderboard?period=&metric=` | 그룹 랭킹보드 | JWT, Member |
+| GET    | `/routines/groups/:groupId/members`      | 그룹원별 공유 루틴(비공개 제외) + 현황 | JWT, Member |
+| GET    | `/routines/groups/:groupId/members/:userId` | 특정 그룹원 공유 루틴 상세(공유 안 했으면 빈 배열) | JWT, Member |
+| GET    | `/routines/groups/:groupId/leaderboard?period=&metric=` | 그룹 랭킹보드 (일일 목표 기준) | JWT, Member |
+
+> 사용자 단위 공유 자체는 `GET/PUT /routines/share-groups`(위 "루틴 기본" 표 참고)로 관리하고, 습관별 노출 여부는 `POST/PATCH`의 `isPrivate` 필드로 정한다.
 
 ### 루틴-카테고리 연결
 
@@ -497,7 +507,7 @@ src/routine/
     update-routine.dto.ts             — routineGroupId?: string | null (해제용 오버라이드), categoryIds?: string[] (전체 교체용), isActive 제거(status는 pause/resume/end 전용 엔드포인트로만 전환)
     routine-query.dto.ts              — status/routineGroupId/categoryId/date 필터
     check-routine.dto.ts              — textValue/numericValue/timeValue (recordType별 값)
-    create-routine-share.dto.ts
+    update-routine-group-shares.dto.ts — { groupIds: string[] } (5차, 공유 그룹 전체교체용)
     create-routine-category-link.dto.ts — { categoryId } (루틴-카테고리 개별 연결용)
     reorder-routine.dto.ts
     create-routine-group.dto.ts
@@ -510,7 +520,7 @@ src/routine/
     routine-leaderboard-query.dto.ts  — LeaderboardQueryDto
     routine-leaderboard-response.dto.ts — LeaderboardResponseDto, LeaderboardEntryDto
     routine-badge-response.dto.ts    — RoutineBadgeDto, UserRoutineBadgeDto
-    routine-response.dto.ts          — RoutineDto(+memo/importance/timeFilter/categoryIds/recordType/status/weeklyMode/targetDays/checkedLog), RoutineCheckedLogDto(조회 기준일 기록값), RoutineLogDto(+textValue/numericValue/timeValue), RoutineShareDto, RoutineCategoryLinkDto, RoutineMemberSummaryDto
+    routine-response.dto.ts          — RoutineDto(+memo/importance/timeFilter/categoryIds/recordType/status/weeklyMode/targetDays/checkedLog/isPrivate), RoutineCheckedLogDto(조회 기준일 기록값), RoutineLogDto(+textValue/numericValue/timeValue), RoutineGroupShareDto(5차), RoutineCategoryLinkDto, RoutineMemberSummaryDto
     routine-group-response.dto.ts    — RoutineGroupDto(+todayProgress), RoutineGroupDetailDto(+routines)
     routine-category-response.dto.ts — RoutineCategoryDto, RoutineCategoryDetailDto(+routines)
     routine-stats-response.dto.ts    — HeatmapResponseDto, StreakResponseDto, RateResponseDto, RoutineSummaryDto
@@ -519,12 +529,12 @@ src/routine/
   utils/
     routine-stats.util.ts            — 주/월 단위 스트릭·달성률 순수 함수, 일시정지 구간 인지 day-streak, FIXED_DAYS 스케줄 판정
   routine.controller.ts
-  routine.service.ts                 — CRUD, pause/resume/end, 체크/체크취소(배지 판정 연동, 기록타입 검증), 그룹 공유 관리, 카테고리 연결 관리(addCategory/removeCategory/findCategories)
+  routine.service.ts                 — CRUD(isPrivate 포함), pause/resume/end, 체크/체크취소(배지 판정 연동, 기록타입 검증), 사용자 단위 공유 관리(getShareGroups/updateShareGroups), 그룹원 조회(findGroupMembers/findGroupMemberDetail, 비공개 필터링), findRoutineWithAccess(사용자 단위 공유 + isPrivate 게이트), 카테고리 연결 관리(addCategory/removeCategory/findCategories)
   routine-group.service.ts           — 루틴 그룹 CRUD, 오늘 진행률 계산
   routine-category.service.ts        — 루틴 카테고리 CRUD (개인 커스텀 태그, 루틴과의 연결 자체는 routine.service.ts가 담당)
   routine-stats.service.ts           — 히트맵/스트릭/달성률/요약 (frequencyType별 분기, 일시정지 구간 반영)
   routine-badge.service.ts           — 배지 카탈로그 조회, evaluateAndAward(userId) (일일 목표 달성 현황 기반 유저 단위 판정)
-  routine-leaderboard.service.ts     — 그룹 랭킹보드 집계
+  routine-leaderboard.service.ts     — 그룹 랭킹보드 집계 (5차: 그룹원별 일일 목표 순차 계산)
   routine-reminder.scheduler.ts      — 일일 리마인더 + 주간 요약 크론 (status/FIXED_DAYS/MONTHLY 인지)
   routine.module.ts
 
@@ -532,4 +542,4 @@ src/common/utils/
   date-kst.util.ts                   — todayInKst(), thisMonthStartInKst(), parseDateOnly() (KST 기준 날짜 계산, 프로젝트 공용)
 ```
 
-**Last Updated**: 2026-08-11
+**Last Updated**: 2026-08-24
