@@ -296,10 +296,27 @@ export class RoutineChallengeService {
       },
     });
 
-    const participantCount =
-      await this.prisma.routineChallengeParticipant.count({
+    const [participantCount, myParticipation] = await Promise.all([
+      this.prisma.routineChallengeParticipant.count({
         where: { challengeId },
-      });
+      }),
+      this.prisma.routineChallengeParticipant.findUnique({
+        where: { challengeId_userId: { challengeId, userId } },
+      }),
+    ]);
+
+    // 수정 후 기간 기준으로 내 체크 횟수를 다시 집계 (startDate/endDate가 바뀌었을 수 있음)
+    const myCheckedCount = myParticipation
+      ? await this.prisma.routineLog.count({
+          where: {
+            routineId: myParticipation.routineId,
+            checkedDate: {
+              gte: updated.startDate,
+              lte: updated.endDate,
+            },
+          },
+        })
+      : null;
 
     return {
       id: updated.id,
@@ -315,9 +332,11 @@ export class RoutineChallengeService {
         todayInKst(),
       ),
       participantCount,
-      joined: false,
-      myCheckedCount: null,
-      myAchieved: false,
+      joined: !!myParticipation,
+      myCheckedCount,
+      myAchieved: myParticipation
+        ? computeAchieved(myCheckedCount ?? 0, updated.targetCount)
+        : false,
       createdBy: updated.createdBy,
       isMine: true,
       createdAt: updated.createdAt,
