@@ -154,6 +154,16 @@
 
 ---
 
+### `subscription` — 인앱 구독 재검증
+
+파일: [src/subscription/subscription-reconcile.scheduler.ts](../../src/subscription/subscription-reconcile.scheduler.ts)
+
+| 메서드 | 주기 | 설명 |
+|--------|------|------|
+| `reconcileExpiringSubscriptions` | 매일 새벽 3시 (`0 3 * * *`) | 만료 임박·유예·보류 구독을 스토어에서 재검증 (웹훅 유실 대비 안전망) |
+
+---
+
 ## 새 스케줄러 추가 시 체크리스트
 
 1. `isSchedulerEnabled('이름')` 을 모든 `@Cron` 메서드 첫 줄에 추가

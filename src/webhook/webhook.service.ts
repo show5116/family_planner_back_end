@@ -2,15 +2,29 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { NotificationTypeV2 } from '@apple/app-store-server-library';
+import { SubscriptionStatus } from '@prisma/client';
 import { SubscriptionService } from '@/subscription/subscription.service';
 import { IosSubscriptionVerifier } from '@/subscription/verifiers/ios-subscription.verifier';
 import { AndroidSubscriptionVerifier } from '@/subscription/verifiers/android-subscription.verifier';
+import { PurchaseVerificationFailedException } from '@/subscription/verifiers/verification-error';
 
-const APPLE_EXPIRE_NOTIFICATION_TYPES = new Set<string>([
-  NotificationTypeV2.EXPIRED,
-  NotificationTypeV2.REVOKE,
-  NotificationTypeV2.GRACE_PERIOD_EXPIRED,
-]);
+/** Google Play RTDN 알림 유형 (로그·이벤트 기록용) */
+const GOOGLE_NOTIFICATION_TYPES: Record<number, string> = {
+  1: 'RECOVERED',
+  2: 'RENEWED',
+  3: 'CANCELED',
+  4: 'PURCHASED',
+  5: 'ON_HOLD',
+  6: 'IN_GRACE_PERIOD',
+  7: 'RESTARTED',
+  8: 'PRICE_CHANGE_CONFIRMED',
+  9: 'DEFERRED',
+  10: 'PAUSED',
+  11: 'PAUSE_SCHEDULE_CHANGED',
+  12: 'REVOKED',
+  13: 'EXPIRED',
+  20: 'PENDING_PURCHASE_CANCELED',
+};
 
 /**
  * Webhook 서비스
@@ -317,27 +331,34 @@ export class WebhookService {
   /**
    * Apple App Store Server Notifications V2 처리
    * 참고: https://developer.apple.com/documentation/appstoreservernotifications
-   * Apple/Google 모두 비-2xx 응답 시 자체적으로 재시도하므로, 내부 에러는 삼키고 항상 200을 반환한다.
+   * 영수증이 무효한 경우에만 200으로 종료하고, 일시적 오류는 5xx로 응답해 Apple의 재시도를 유도한다.
    */
   async handleAppleWebhook(body: { signedPayload?: string }) {
-    try {
-      const notification = await this.iosVerifier.verifyAndDecodeNotification(
-        body.signedPayload,
-      );
+    if (!body?.signedPayload) {
+      this.logger.warn('Apple webhook: signedPayload 없음');
+      return { message: 'Apple webhook 수신 완료' };
+    }
 
-      const signedTransactionInfo = notification.data?.signedTransactionInfo;
-      if (!signedTransactionInfo) {
-        this.logger.warn(
-          `Apple webhook: signedTransactionInfo 없음 (type=${notification.notificationType})`,
-        );
-        return { message: 'Apple webhook 수신 완료' };
+    try {
+      const { notification, verified } =
+        await this.iosVerifier.decodeNotification(body.signedPayload);
+
+      const eventType = [notification.notificationType, notification.subtype]
+        .filter(Boolean)
+        .join('_');
+
+      if (
+        (notification.notificationType as NotificationTypeV2) ===
+        NotificationTypeV2.TEST
+      ) {
+        this.logger.log('Apple webhook: 테스트 알림 수신 성공');
+        return { message: 'Apple webhook 처리 완료' };
       }
 
-      const verifier = this.iosVerifier.getVerifier();
-      const transaction = await verifier.verifyAndDecodeTransaction(
-        signedTransactionInfo,
-      );
-      const verified = this.iosVerifier.toVerifiedPurchase(transaction);
+      if (!verified) {
+        this.logger.warn(`Apple webhook: 거래 정보 없음 (type=${eventType})`);
+        return { message: 'Apple webhook 수신 완료' };
+      }
 
       const userId =
         await this.subscriptionService.findUserIdByOriginalTransactionId(
@@ -345,30 +366,40 @@ export class WebhookService {
         );
 
       if (!userId) {
+        // 클라이언트의 /subscription/verify 가 아직 도착하지 않은 경우 (검증 시 반영된다)
         this.logger.warn(
-          `Apple webhook: 알 수 없는 originalTransactionId=${verified.originalTransactionId}`,
+          `Apple webhook: 알 수 없는 originalTransactionId=${verified.originalTransactionId} (type=${eventType})`,
         );
         return { message: 'Apple webhook 수신 완료' };
       }
 
-      const occurredAt = notification.signedDate
-        ? new Date(notification.signedDate)
-        : new Date();
-
-      if (APPLE_EXPIRE_NOTIFICATION_TYPES.has(notification.notificationType)) {
-        await this.subscriptionService.expireSubscription(userId);
-      } else {
-        await this.subscriptionService.applyVerifiedPurchase(userId, verified, {
-          eventType: notification.notificationType,
-          rawPayload: body,
-          occurredAt,
-        });
-      }
+      await this.subscriptionService.applyVerifiedPurchase(userId, verified, {
+        eventType,
+        rawPayload: {
+          notificationType: notification.notificationType,
+          subtype: notification.subtype,
+          environment: notification.data?.environment,
+          notificationUUID: notification.notificationUUID,
+        },
+        occurredAt: notification.signedDate
+          ? new Date(notification.signedDate)
+          : new Date(),
+      });
 
       return { message: 'Apple webhook 처리 완료' };
     } catch (error) {
-      this.logger.error(`Apple webhook 처리 실패: ${error.message}`);
-      return { message: 'Apple webhook 수신 완료' };
+      if (error instanceof PurchaseVerificationFailedException) {
+        this.logger.error(
+          `Apple webhook 검증 실패 (재시도 불필요): ${error.message}`,
+        );
+        return { message: 'Apple webhook 수신 완료' };
+      }
+
+      // DB·스토어 일시 장애는 삼키면 이벤트가 유실되므로 재시도하도록 그대로 던진다
+      this.logger.error(
+        `Apple webhook 처리 실패 (재시도 유도): ${error.message}`,
+      );
+      throw error;
     }
   }
 
@@ -446,58 +477,118 @@ export class WebhookService {
   /**
    * Google Play Real-time Developer Notifications 처리
    * 참고: https://developer.android.com/google/play/billing/rtdn-reference
-   * RTDN 페이로드 자체는 서명되어 있지 않으므로, purchaseToken을 Google Play Developer API로 재검증해야 신뢰할 수 있다.
+   * RTDN 페이로드 자체는 서명되어 있지 않으므로 purchaseToken을 Google Play Developer API로 재검증한다.
    */
   async handleGoogleWebhook(body: { message?: { data?: string } }) {
-    try {
-      if (!body.message?.data) {
-        return { message: 'Google webhook 수신 완료' };
-      }
+    if (!body?.message?.data) {
+      this.logger.warn('Google webhook: message.data 없음');
+      return { message: 'Google webhook 수신 완료' };
+    }
 
-      const decoded = JSON.parse(
+    let decoded: any;
+    try {
+      decoded = JSON.parse(
         Buffer.from(body.message.data, 'base64').toString('utf-8'),
       );
+    } catch (error) {
+      this.logger.error(
+        `Google webhook: 페이로드 파싱 실패 - ${error.message}`,
+      );
+      return { message: 'Google webhook 수신 완료' };
+    }
 
-      const purchaseToken =
-        decoded.subscriptionNotification?.purchaseToken ??
-        decoded.testNotification?.purchaseToken;
+    try {
+      if (decoded.testNotification) {
+        this.logger.log('Google webhook: 테스트 알림 수신 성공');
+        return { message: 'Google webhook 처리 완료' };
+      }
 
+      if (decoded.voidedPurchaseNotification?.purchaseToken) {
+        return await this.handleGoogleVoidedPurchase(
+          decoded.voidedPurchaseNotification.purchaseToken,
+        );
+      }
+
+      const purchaseToken = decoded.subscriptionNotification?.purchaseToken;
       if (!purchaseToken) {
-        this.logger.log('Google webhook: 구독 알림 아님 (테스트 알림 등)');
+        this.logger.log('Google webhook: 구독 알림 아님 (단건 결제 등)');
         return { message: 'Google webhook 수신 완료' };
       }
 
       const verified = await this.androidVerifier.verify(purchaseToken);
 
+      // 업그레이드·재구독 시 purchaseToken이 교체되므로 이전 토큰으로도 조회한다
       const userId =
-        await this.subscriptionService.findUserIdByOriginalTransactionId(
+        (await this.subscriptionService.findUserIdByOriginalTransactionId(
           purchaseToken,
-        );
+        )) ??
+        (verified.linkedOriginalTransactionId
+          ? await this.subscriptionService.findUserIdByOriginalTransactionId(
+              verified.linkedOriginalTransactionId,
+            )
+          : null);
 
       if (!userId) {
+        // 클라이언트의 /subscription/verify 가 아직 도착하지 않은 경우 (검증 시 반영된다)
         this.logger.warn(
-          `Google webhook: 알 수 없는 purchaseToken (userId 조회 실패)`,
+          'Google webhook: 알 수 없는 purchaseToken (userId 조회 실패)',
         );
         return { message: 'Google webhook 수신 완료' };
       }
 
       const notificationType =
         decoded.subscriptionNotification?.notificationType;
-      const occurredAt = decoded.eventTimeMillis
-        ? new Date(Number(decoded.eventTimeMillis))
-        : new Date();
 
       await this.subscriptionService.applyVerifiedPurchase(userId, verified, {
-        eventType: `GOOGLE_${notificationType}`,
-        rawPayload: decoded,
-        occurredAt,
+        eventType: `GOOGLE_${GOOGLE_NOTIFICATION_TYPES[notificationType] ?? notificationType}`,
+        rawPayload: {
+          notificationType,
+          subscriptionId: decoded.subscriptionNotification?.subscriptionId,
+          eventTimeMillis: decoded.eventTimeMillis,
+        },
+        occurredAt: decoded.eventTimeMillis
+          ? new Date(Number(decoded.eventTimeMillis))
+          : new Date(),
       });
 
       return { message: 'Google webhook 처리 완료' };
     } catch (error) {
-      this.logger.error(`Google webhook 처리 실패: ${error.message}`);
+      if (error instanceof PurchaseVerificationFailedException) {
+        this.logger.error(
+          `Google webhook 검증 실패 (재시도 불필요): ${error.message}`,
+        );
+        return { message: 'Google webhook 수신 완료' };
+      }
+
+      // 비-2xx로 응답하면 Pub/Sub이 재전송하므로 일시적 오류는 그대로 던진다
+      this.logger.error(
+        `Google webhook 처리 실패 (재시도 유도): ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * 환불·차지백 알림 처리 (즉시 혜택 회수)
+   */
+  private async handleGoogleVoidedPurchase(purchaseToken: string) {
+    const userId =
+      await this.subscriptionService.findUserIdByOriginalTransactionId(
+        purchaseToken,
+      );
+
+    if (!userId) {
+      this.logger.warn('Google webhook: 환불 대상 구독을 찾을 수 없습니다');
       return { message: 'Google webhook 수신 완료' };
     }
+
+    await this.subscriptionService.expireSubscription(
+      userId,
+      SubscriptionStatus.revoked,
+    );
+
+    this.logger.log(`Google webhook: 환불 처리 완료 (userId=${userId})`);
+    return { message: 'Google webhook 처리 완료' };
   }
 
   /**

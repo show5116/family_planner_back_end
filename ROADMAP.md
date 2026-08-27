@@ -218,12 +218,14 @@
 - ⬜ 매일/특정 요일 반복 타입 확장
 - ⬜ 그룹원 간 미체크 알림(사회적 압박, 옵트인 필요)
 
-### 🟡 구독 관리
+### 🟢 구독 관리
 - ✅ 구독 상태 조회 / 업데이트 / 복원
 - ✅ ADMIN 수동 관리 (tier/만료일 직접 수정, 사용자 목록/상세)
-- ⬜ Apple App Store 결제 검증 (StoreKit API)
-- ⬜ Google Play 결제 검증 (Play Developer API)
-- ⬜ Apple/Google 웹훅 처리
+- ✅ Apple App Store 결제 검증 (App Store Server API, Sandbox·Production 모두 처리)
+- ✅ Google Play 결제 검증 (Play Developer API, subscriptionsv2)
+- ✅ Apple/Google 웹훅 처리 (ASSN V2 / RTDN)
+- ✅ 유예 기간·계정 보류·환불 상태 구분 처리
+- ⬜ 스토어 콘솔 연동 (서비스 계정 권한, 웹훅 URL 등록)
 
 ### ⬜ 성능 최적화
 - 쿼리 최적화
@@ -259,8 +261,8 @@
 | Phase 3: 협업 기능 | ✅ 완료 | 100% |
 | Phase 4: 데이터 관리 | ✅ 완료 | 100% |
 | Phase 5: 특화 기능 | ✅ 완료 | 100% |
-| Phase 6: 최적화 및 배포 | 🟡 진행 중 | 40% (적립금 완료, 구독 기본 완료, 루틴 배지/랭킹/알림까지 완료) |
+| Phase 6: 최적화 및 배포 | 🟡 진행 중 | 50% (적립금 완료, 구독 스토어 검증·웹훅 완료, 루틴 배지/랭킹/알림까지 완료) |
 
 ---
 
-**Last Updated**: 2026-07-14
+**Last Updated**: 2026-08-27

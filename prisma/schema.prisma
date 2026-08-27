@@ -501,6 +501,8 @@ enum SubscriptionStatus {
   canceled
   grace_period
   revoked
+  on_hold
+  paused
 }
 
 model Subscription {

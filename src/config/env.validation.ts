@@ -99,6 +99,7 @@ export const validationSchema = Joi.object({
 
   // 인앱 구독 검증 - iOS (선택적, 스토어 등록 후 설정)
   IOS_BUNDLE_ID: Joi.string().optional(),
+  APPLE_APP_APPLE_ID: Joi.number().optional(),
   APPLE_IAP_ISSUER_ID: Joi.string().optional(),
   APPLE_IAP_KEY_ID: Joi.string().optional(),
   APPLE_IAP_PRIVATE_KEY: Joi.string().optional(),

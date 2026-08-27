@@ -127,7 +127,7 @@ describe('SubscriptionService', () => {
         productId: 'premium_monthly',
         originalTransactionId: 'purchase-token-abc',
         tier: SubscriptionTier.premium,
-        expiresAt: new Date('2026-08-01T00:00:00.000Z'),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         autoRenewing: true,
         status: SubscriptionStatus.active,
       };

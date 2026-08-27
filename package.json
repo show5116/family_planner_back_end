@@ -25,7 +25,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "prisma db seed",
-    "gen:api": "ts-node -r tsconfig-paths/register scripts/generate-api-docs.ts"
+    "gen:api": "ts-node -r tsconfig-paths/register scripts/generate-api-docs.ts",
+    "check:iap": "ts-node -r tsconfig-paths/register scripts/check-iap-credentials.ts"
   },
   "dependencies": {
     "@apple/app-store-server-library": "^3.1.0",

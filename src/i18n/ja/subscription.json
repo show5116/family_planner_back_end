@@ -2,6 +2,10 @@
   "errors": {
     "user_not_found": "ユーザーが見つかりません",
     "verification_failed": "購入の検証に失敗しました",
-    "missing_purchase_token": "購入トークンが必要です"
+    "verification_unavailable": "ストアの検証サーバーに接続できません。しばらくしてから再試行してください",
+    "missing_purchase_token": "購入トークンが必要です",
+    "already_used": "この購入は既に他のアカウントで使用されています",
+    "unknown_product": "サポートされていない商品です",
+    "purchase_pending": "決済がまだ完了していません"
   }
 }
