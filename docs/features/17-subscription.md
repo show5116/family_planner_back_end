@@ -296,6 +296,33 @@ RTDN 페이로드는 서명되어 있지 않으므로 `purchaseToken`을 Google 
 
 dev 환경에서 재검증 스케줄러를 켜려면 `ENABLE_SCHEDULER=subscription`을 설정합니다.
 
+### 자격증명 점검
+
+실제 구매 없이 스토어 연동 상태를 확인합니다.
+
+```bash
+npm run check:iap                        # 키·권한·상품 매핑 점검 (읽기 전용)
+npm run check:iap -- --test-notification # Apple에 테스트 알림 발송 요청 (Sandbox)
+npm run check:iap -- --test-notification --production
+```
+
+점검 항목과 실패 시 의미:
+
+| 항목 | 실패 시 원인 |
+| --- | --- |
+| Google Play — 앱 접근 | 서비스 계정 앱 권한 없음 / AAB 미업로드 / androidpublisher API 미사용 설정 |
+| Google Play — 재무 데이터 권한 | "재무 데이터, 주문, 구독 취소 설문 응답 보기" 권한 누락 (반영까지 최대 24시간) |
+| 상품 ID 매핑 | 스토어 상품이 `subscription-product.map.ts`에 없음 |
+| App Store (Sandbox/Production) | Issuer ID·Key ID·`.p8` 오류. Issuer ID는 Team ID가 아닌 UUID |
+| 웹훅 테스트 알림 | 등록 URL 오타(`/v1` 누락 등), 서버가 2xx를 반환하지 않음 |
+
+> 앱 접근은 성공하는데 재무 데이터 권한만 실패하는 경우가 흔합니다.
+> 두 권한은 별개이며 반영 시점도 다릅니다.
+
+Google RTDN은 앱당 토픽이 하나뿐이라 dev/양산 구분이 없습니다.
+같은 토픽에 push 구독을 두 개 붙여 양쪽 서버가 모든 알림을 각각 받고,
+자기 DB에 없는 `purchaseToken`은 로그만 남기고 무시합니다.
+
 ---
 
 ## 구현 파일
@@ -317,6 +344,8 @@ src/subscription/
   subscription-admin.controller.ts
   subscription-admin.service.ts
   subscription-reconcile.scheduler.ts — 매일 새벽 재검증 안전망
+scripts/
+  check-iap-credentials.ts           — 스토어 자격증명·웹훅 점검 (npm run check:iap)
 src/webhook/
   webhook.controller.ts              — /v1/webhook/google, /v1/webhook/apple
   webhook.service.ts                 — RTDN / ASSN V2 처리
