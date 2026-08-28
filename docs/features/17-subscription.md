@@ -198,6 +198,22 @@ App Store Connect > 앱 > 일반 > App Store 서버 알림에서 **버전 2**로
 > ⚠️ `main.ts`의 `enableVersioning(defaultVersion: '1')` 때문에 모든 경로에 `/v1` 접두사가 붙습니다.
 > 콘솔에 `/webhook/apple`로 등록하면 404가 됩니다.
 
+### Google 웹훅 인증
+
+Apple의 `signedPayload`는 JWS 서명이라 그 자체로 인증이 되지만, Google RTDN 페이로드는
+서명되어 있지 않습니다. `purchaseToken`을 Google Play API로 재검증하므로 위조 페이로드로
+tier를 얻을 수는 없으나, 검증 자체가 낭비되는 것을 막기 위해 공유 시크릿을 둔다.
+
+- `GOOGLE_WEBHOOK_SECRET` 환경변수 설정 시, Pub/Sub 구독의 엔드포인트 URL에
+  `?token=<같은 값>`을 붙여야 요청이 통과한다 (`crypto.timingSafeEqual`로 비교)
+- 환경변수가 없으면 검증을 생략한다 (경고 로그만 남김) — 기존 배포와의 하위 호환용
+- dev/production에 서로 다른 값을 쓴다. Pub/Sub 구독은 앱당 토픽이 하나뿐이라
+  dev·production 두 서버 모두 모든 알림을 받으므로, URL의 토큰으로만 구분한다
+
+```
+https://<서버 도메인>/v1/webhook/google?token=<GOOGLE_WEBHOOK_SECRET 값>
+```
+
 ---
 
 ## 웹훅 재시도 정책
