@@ -10,7 +10,7 @@ CREATE TABLE `routine_group_shares` (
   PRIMARY KEY (`id`),
   UNIQUE INDEX `routine_group_shares_userId_groupId_key`(`userId`, `groupId`),
   INDEX `routine_group_shares_groupId_idx`(`groupId`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 2) Routine.isPrivate 컬럼 추가 (기본 공개)
 ALTER TABLE `routines` ADD COLUMN `isPrivate` BOOLEAN NOT NULL DEFAULT false;

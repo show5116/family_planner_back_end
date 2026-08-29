@@ -67,6 +67,41 @@ npx prisma migrate status
 
 shadow DB 문제가 없다면 `npx prisma migrate dev --name 설명` 한 번으로 가능.
 
+### ⚠️ CREATE TABLE에는 반드시 COLLATE 명시
+
+마이그레이션 SQL에서 **`CREATE TABLE`을 작성하면 반드시 콜레이션까지 명시**한다.
+
+```sql
+-- ❌ 금지: charset만 지정 (서버 기본 콜레이션을 따라감)
+) DEFAULT CHARACTER SET utf8mb4;
+
+-- ✅ 필수: 콜레이션까지 명시
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+**이유:** MySQL 8.0부터 서버 기본 콜레이션이 `utf8mb4_general_ci` → `utf8mb4_0900_ai_ci`로 바뀌었다.
+콜레이션을 생략하면 서버 버전마다 다른 값이 적용되어, **개발 DB에서는 통과하고 양산에서만 실패**한다.
+
+양산 DB(MySQL 9.x)의 기존 테이블은 전부 `utf8mb4_unicode_ci`이므로, 콜레이션이 다른 테이블을 만들면
+FK 생성 시 아래 에러로 마이그레이션이 죽는다. 타입이 같아도(`varchar(191)`) 콜레이션이 다르면 FK를 걸 수 없다.
+
+```
+Database error code: 3780
+Referencing column 'userId' and referenced column 'id' in
+foreign key constraint 'xxx_userId_fkey' are incompatible.
+```
+
+이 경우 MySQL은 DDL 트랜잭션을 지원하지 않아 **일부 테이블만 생성된 채 중단**되고,
+이후 모든 배포가 P3009로 막힌다. 잔여물 정리 → `migrate resolve --rolled-back` → 재적용이 필요하다.
+
+`prisma migrate dev`가 자동 생성한 SQL에도 `COLLATE`가 빠져 있으므로, **생성 후 반드시 확인**한다.
+
+```bash
+# CREATE TABLE 개수와 COLLATE 개수가 일치해야 정상
+grep -c "CREATE TABLE" prisma/migrations/YYYYMMDD000000_설명/migration.sql
+grep -c "COLLATE utf8mb4_unicode_ci" prisma/migrations/YYYYMMDD000000_설명/migration.sql
+```
+
 ## API 실동작 검증 (curl 등)
 
 **`POST /v1/auth/signup`으로 테스트 유저를 새로 만들지 말 것.** `AuthService.signup()`이 개발 환경 스킵 없이 무조건 실제 이메일 인증 메일을 발송한다(`isEmailVerified`를 나중에 DB에서 직접 true로 바꿔도 메일은 이미 발송된 뒤라 막을 수 없음).

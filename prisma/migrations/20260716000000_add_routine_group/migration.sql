@@ -12,7 +12,7 @@ CREATE TABLE `routine_groups` (
 
     INDEX `routine_groups_userId_deletedAt_idx`(`userId`, `deletedAt`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AlterTable
 ALTER TABLE `routines` ADD COLUMN `groupId` VARCHAR(191) NULL;

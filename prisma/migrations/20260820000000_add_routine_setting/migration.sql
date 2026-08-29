@@ -9,7 +9,7 @@ CREATE TABLE `routine_settings` (
 
     UNIQUE INDEX `routine_settings_userId_key`(`userId`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `routine_setting_histories` (
@@ -23,7 +23,7 @@ CREATE TABLE `routine_setting_histories` (
     INDEX `routine_setting_histories_userId_effectiveFrom_idx`(`userId`, `effectiveFrom`),
     UNIQUE INDEX `routine_setting_histories_userId_effectiveFrom_key`(`userId`, `effectiveFrom`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
 ALTER TABLE `routine_settings` ADD CONSTRAINT `routine_settings_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
