@@ -118,6 +118,20 @@
 
 ---
 
+### 🔥 ROUTINE — 루틴 알림
+
+| # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
+|---|--------|------|--------|-----------|------|
+| 1 | 매 정시 크론잡 — `routineReminderHour` 일치 + 오늘 미체크 루틴 존재 | 오늘의 루틴을 확인해보세요 | 개인 (설정한 유저) | 큐 (즉시, 스케줄러) | [routine-reminder.scheduler.ts](../../src/routine/routine-reminder.scheduler.ts) |
+| 2 | 배지 획득 시점 (체크 직후 동기 판정) | 새 배지를 획득했어요! | 개인 (배지 획득자) | 큐 (즉시) | [routine-badge.service.ts](../../src/routine/routine-badge.service.ts) |
+| 3 | 매주 일요일 20:00 KST | 이번 주 루틴 리포트 | 개인 (ROUTINE 알림 활성 유저 전체) | 큐 (즉시, 스케줄러) | [routine-reminder.scheduler.ts](../../src/routine/routine-reminder.scheduler.ts) |
+
+> **본문 예시**: `"오늘 아직 체크하지 않은 루틴이 2개 있어요"` / `"7일 연속 달성을 획득했어요! 🔥"` / `"이번 주 루틴 달성률 78%예요. 다음 주도 화이팅!"`
+> **설정**: `PUT /notifications/settings`에서 `routineReminderHour`(0~23) 지정
+> **그룹원 간 미체크 알림(사회적 압박)은 1차 범위 제외**
+
+---
+
 ### 🔔 SYSTEM — 시스템 알림
 
 | # | 트리거 | 제목 | 수신자 | 발송 방식 | 파일 |
@@ -161,6 +175,8 @@
 | **SYSTEM** (Q&A) | `questionId` | `{ "questionId": "uuid" }` |
 | **WEATHER** | `action` | `{ "action": "view_weather" }` |
 | **FRIDGE** | `action`, `groupId` | `{ "action": "view_fridge", "groupId": "uuid" }` |
+| **ROUTINE** (일일/주간 리마인더) | `action` | `{ "action": "view_routine" }` / `{ "action": "view_routine_summary" }` |
+| **ROUTINE** (배지 획득) | `action` | `{ "action": "view_routine_badge" }` |
 
 > **HOUSEHOLD**: 가계부는 그룹 단위로 관리되므로 `householdId`는 `groupId`와 동일한 값입니다.
 
@@ -180,3 +196,9 @@
 
 - 위치 저장 API: `PUT /auth/location` — `{ lat, lon }` (날씨 알림 수신에 필수)
 - 위치 미등록 유저는 크론잡 대상에서 자동 제외
+
+### ROUTINE 전용 설정
+
+| 필드 | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `routineReminderHour` | `int` (0~23) | 21 | 루틴 리마인드 수신 시각 (시 단위) |

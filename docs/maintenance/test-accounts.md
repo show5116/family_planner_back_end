@@ -6,12 +6,13 @@
 
 ## 계정 정보
 
-| 구분 | 이메일 | 비밀번호 | 이름 |
-|------|--------|---------|------|
-| 그룹장 (OWNER) | `test-owner@familyplanner.test` | `Test1234!` | 테스트 그룹장 |
-| 멤버 (DEFAULT) | `test-member@familyplanner.test` | `Test1234!` | 테스트 멤버 |
+| 이메일 | 비밀번호 | 이름 | 테스트 가족 | 테스트 가족 2 |
+|--------|---------|------|--------------|----------------|
+| `test-owner@familyplanner.test` | `Test1234!` | 테스트 그룹장 | OWNER | MEMBER |
+| `test-member@familyplanner.test` | `Test1234!` | 테스트 멤버 | MEMBER | MEMBER |
+| `test-owner2@familyplanner.test` | `Test1234!` | 테스트 그룹장2 | - | OWNER |
 
-- 소속 그룹: **테스트 가족**
+- `test-owner`/`test-member`는 두 그룹 모두에 속함(여러 그룹에 걸친 시나리오 검증용). `test-owner2`는 "테스트 가족 2" 전용
 - 이메일 인증 완료 상태 (`isEmailVerified: true`)로 생성됨 — 실제 메일 없이 바로 로그인 가능
 
 ---

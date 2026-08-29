@@ -12,6 +12,11 @@ import { RecurringDateUtil } from './recurring-date.util';
 import { RuleConfig, RecurringEndType } from './interfaces';
 import { RecurringSkippedEvent, RecurringTasksGeneratedEvent } from './events';
 import { HolidayService } from './holiday.service';
+import {
+  todayInKst,
+  combineKstDateAndTime,
+  getKstTime,
+} from '@/common/utils/date-kst.util';
 
 @Injectable()
 export class RecurringService {
@@ -159,11 +164,10 @@ export class RecurringService {
       ),
     );
 
-    // 시작 날짜 계산: 항상 오늘 기준으로 탐색 (existingDates로 중복 방지)
+    // 시작 날짜 계산: 항상 오늘(KST 기준) 기준으로 탐색 (existingDates로 중복 방지)
     // lastGeneratedAt 기준으로 하면 YEARLY처럼 범위가 넓은 경우
     // fromDate가 이미 생성된 날짜 이후를 가리켜 중복 생성될 수 있음
-    const fromDate = new Date();
-    fromDate.setHours(0, 0, 0, 0);
+    const fromDate = todayInKst();
 
     // ruleType에 따라 생성 범위 결정 (YEARLY/MONTHLY는 범위가 넓어야 미래 일정이 보임)
     const monthsAhead = this.resolveMonthsAhead(
@@ -524,13 +528,10 @@ export class RecurringService {
     templateScheduledAt: Date | null,
     templateDueAt: Date | null,
   ): { scheduledAt: Date; dueAt: Date | null } {
-    const scheduledAt = new Date(baseDate);
+    let scheduledAt = new Date(baseDate);
     if (templateScheduledAt) {
-      scheduledAt.setHours(
-        templateScheduledAt.getHours(),
-        templateScheduledAt.getMinutes(),
-        templateScheduledAt.getSeconds(),
-      );
+      const { hour, minute, second } = getKstTime(templateScheduledAt);
+      scheduledAt = combineKstDateAndTime(baseDate, hour, minute, second);
     }
 
     let dueAt: Date | null = null;
@@ -538,12 +539,8 @@ export class RecurringService {
       const diff = templateDueAt.getTime() - templateScheduledAt.getTime();
       dueAt = new Date(scheduledAt.getTime() + diff);
     } else if (templateDueAt) {
-      dueAt = new Date(baseDate);
-      dueAt.setHours(
-        templateDueAt.getHours(),
-        templateDueAt.getMinutes(),
-        templateDueAt.getSeconds(),
-      );
+      const { hour, minute, second } = getKstTime(templateDueAt);
+      dueAt = combineKstDateAndTime(baseDate, hour, minute, second);
     }
 
     return { scheduledAt, dueAt };

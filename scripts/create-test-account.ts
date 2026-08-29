@@ -13,23 +13,39 @@ const ACCOUNTS = [
     email: 'test-owner@familyplanner.test',
     password: 'Test1234!',
     name: '테스트 그룹장',
-    role: 'OWNER',
+    // 그룹별 역할: GROUP1에서는 OWNER, GROUP2에서는 DEFAULT 멤버
+    memberships: [
+      { group: 'GROUP1', role: 'OWNER' },
+      { group: 'GROUP2', role: 'DEFAULT' },
+    ],
   },
   {
     email: 'test-member@familyplanner.test',
     password: 'Test1234!',
     name: '테스트 멤버',
-    role: 'DEFAULT',
+    memberships: [
+      { group: 'GROUP1', role: 'DEFAULT' },
+      { group: 'GROUP2', role: 'DEFAULT' },
+    ],
+  },
+  {
+    email: 'test-owner2@familyplanner.test',
+    password: 'Test1234!',
+    name: '테스트 그룹장2',
+    memberships: [{ group: 'GROUP2', role: 'OWNER' }],
   },
 ];
 
-const GROUP_NAME = '테스트 가족';
+const GROUPS: Record<string, string> = {
+  GROUP1: '테스트 가족',
+  GROUP2: '테스트 가족 2',
+};
 
 interface UserInfo {
   id: string;
   email: string;
   name: string;
-  role: string;
+  memberships: { group: string; role: string }[];
 }
 
 async function main() {
@@ -54,6 +70,10 @@ async function main() {
     );
     process.exit(1);
   }
+  const roleByName: Record<string, { id: string }> = {
+    OWNER: ownerRole,
+    DEFAULT: defaultRole,
+  };
 
   const users: UserInfo[] = [];
 
@@ -68,7 +88,7 @@ async function main() {
         id: existing.id,
         email: account.email,
         name: account.name,
-        role: account.role,
+        memberships: account.memberships,
       });
       continue;
     }
@@ -88,28 +108,23 @@ async function main() {
       id: user.id,
       email: account.email,
       name: account.name,
-      role: account.role,
+      memberships: account.memberships,
     });
   }
 
-  const ownerUser = users.find((u) => u.role === 'OWNER');
-  const memberUser = users.find((u) => u.role === 'DEFAULT');
-  if (!ownerUser || !memberUser) {
-    console.error('유저 정보를 찾을 수 없습니다.');
-    process.exit(1);
-  }
+  const groupIdByKey: Record<string, string> = {};
 
-  const existingMembership = await prisma.groupMember.findFirst({
-    where: { userId: ownerUser.id },
-    include: { group: true },
-  });
+  for (const [groupKey, groupName] of Object.entries(GROUPS)) {
+    const existingGroup = await prisma.group.findFirst({
+      where: { name: groupName },
+    });
 
-  let groupId: string;
+    if (existingGroup) {
+      console.log(`이미 그룹 존재: ${existingGroup.name} (건너뜀)`);
+      groupIdByKey[groupKey] = existingGroup.id;
+      continue;
+    }
 
-  if (existingMembership) {
-    console.log(`이미 그룹 존재: ${existingMembership.group.name} (건너뜀)`);
-    groupId = existingMembership.groupId;
-  } else {
     const inviteCode = Math.random()
       .toString(36)
       .substring(2, 10)
@@ -118,42 +133,49 @@ async function main() {
     inviteCodeExpiresAt.setFullYear(inviteCodeExpiresAt.getFullYear() + 10);
 
     const group = await prisma.group.create({
-      data: { name: GROUP_NAME, inviteCode, inviteCodeExpiresAt },
+      data: { name: groupName, inviteCode, inviteCodeExpiresAt },
     });
-    groupId = group.id;
-    console.log(`그룹 생성: ${GROUP_NAME}`);
-
-    await prisma.groupMember.create({
-      data: { groupId, userId: ownerUser.id, roleId: ownerRole.id },
-    });
-    console.log(`그룹장 등록: ${ownerUser.name}`);
+    groupIdByKey[groupKey] = group.id;
+    console.log(`그룹 생성: ${groupName}`);
   }
 
-  const memberAlreadyJoined = await prisma.groupMember.findUnique({
-    where: { groupId_userId: { groupId, userId: memberUser.id } },
-  });
+  for (const user of users) {
+    for (const membership of user.memberships) {
+      const groupId = groupIdByKey[membership.group];
+      const role = roleByName[membership.role];
 
-  if (!memberAlreadyJoined) {
-    await prisma.groupMember.create({
-      data: { groupId, userId: memberUser.id, roleId: defaultRole.id },
-    });
-    console.log(`멤버 등록: ${memberUser.name}`);
-  } else {
-    console.log(`이미 멤버로 등록됨: ${memberUser.name} (건너뜀)`);
+      const alreadyJoined = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId, userId: user.id } },
+      });
+
+      if (!alreadyJoined) {
+        await prisma.groupMember.create({
+          data: { groupId, userId: user.id, roleId: role.id },
+        });
+        console.log(
+          `${membership.role === 'OWNER' ? '그룹장' : '멤버'} 등록: ${user.name} → ${GROUPS[membership.group]}`,
+        );
+      } else {
+        console.log(
+          `이미 멤버로 등록됨: ${user.name} → ${GROUPS[membership.group]} (건너뜀)`,
+        );
+      }
+    }
   }
 
   console.log('\n========== 테스트 계정 정보 ==========');
-  console.log(`[그룹장]`);
-  console.log(`  이메일  : ${ownerUser.email}`);
-  console.log(`  비밀번호: Test1234!`);
-  console.log(`  이름    : ${ownerUser.name}`);
-  console.log('');
-  console.log(`[멤버]`);
-  console.log(`  이메일  : ${memberUser.email}`);
-  console.log(`  비밀번호: Test1234!`);
-  console.log(`  이름    : ${memberUser.name}`);
-  console.log(`\n소속 그룹: ${GROUP_NAME}`);
-  console.log('=======================================\n');
+  for (const [groupKey, groupName] of Object.entries(GROUPS)) {
+    console.log(`\n소속 그룹: ${groupName}`);
+    for (const u of users) {
+      const membership = u.memberships.find((m) => m.group === groupKey);
+      if (!membership) continue;
+      console.log(`[${membership.role === 'OWNER' ? '그룹장' : '멤버'}]`);
+      console.log(`  이메일  : ${u.email}`);
+      console.log(`  비밀번호: Test1234!`);
+      console.log(`  이름    : ${u.name}`);
+    }
+  }
+  console.log('\n=======================================\n');
 }
 
 main()

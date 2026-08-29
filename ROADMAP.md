@@ -57,7 +57,7 @@
 ### ✅ 알림 시스템
 - ✅ Firebase Cloud Messaging (FCM) 통합
 - ✅ FCM 디바이스 토큰 관리 (등록, 삭제)
-- ✅ 카테고리별 알림 설정 (SCHEDULE, TODO, HOUSEHOLD, ASSET, CHILDCARE, GROUP, SYSTEM, SAVINGS, WEATHER, FRIDGE)
+- ✅ 카테고리별 알림 설정 (SCHEDULE, TODO, HOUSEHOLD, ASSET, CHILDCARE, GROUP, SYSTEM, SAVINGS, WEATHER, FRIDGE, ROUTINE)
 - ✅ 알림 히스토리 관리 (조회, 읽음 처리, 삭제)
 - ✅ 페이지네이션 지원
 - ✅ 다중 디바이스 지원 (iOS, Android, Web)
@@ -207,12 +207,25 @@
 - ✅ 자동 적립 일시 중지 / 재개
 - ✅ 자산 통계 연동 (`includeInAssets`)
 
-### 🟡 구독 관리
+### 🟡 루틴 관리
+- ✅ 루틴 CRUD + 순서 변경
+- ✅ 체크/체크취소 (하루 1건, 미래 날짜 차단, 스케줄러 없이 실시간 계산)
+- ✅ 그룹 공유 (N:M) + 그룹원 루틴/현황 조회
+- ✅ 통계: 달력 히트맵 / 스트릭(주+일 단위) / 기간별 달성률 / 대시보드 요약
+- ✅ 배지 시스템 (카탈로그 9종, 체크 시 동기 판정)
+- ✅ 그룹 랭킹보드 (공유 루틴 기준 체크 횟수/달성률 순위)
+- ✅ 알림/리마인더 (일일 미체크 리마인드, 배지 획득 알림, 주간 요약)
+- ⬜ 매일/특정 요일 반복 타입 확장
+- ⬜ 그룹원 간 미체크 알림(사회적 압박, 옵트인 필요)
+
+### 🟢 구독 관리
 - ✅ 구독 상태 조회 / 업데이트 / 복원
 - ✅ ADMIN 수동 관리 (tier/만료일 직접 수정, 사용자 목록/상세)
-- ⬜ Apple App Store 결제 검증 (StoreKit API)
-- ⬜ Google Play 결제 검증 (Play Developer API)
-- ⬜ Apple/Google 웹훅 처리
+- ✅ Apple App Store 결제 검증 (App Store Server API, Sandbox·Production 모두 처리)
+- ✅ Google Play 결제 검증 (Play Developer API, subscriptionsv2)
+- ✅ Apple/Google 웹훅 처리 (ASSN V2 / RTDN)
+- ✅ 유예 기간·계정 보류·환불 상태 구분 처리
+- ⬜ 스토어 콘솔 연동 (서비스 계정 권한, 웹훅 URL 등록)
 
 ### ⬜ 성능 최적화
 - 쿼리 최적화
@@ -248,8 +261,8 @@
 | Phase 3: 협업 기능 | ✅ 완료 | 100% |
 | Phase 4: 데이터 관리 | ✅ 완료 | 100% |
 | Phase 5: 특화 기능 | ✅ 완료 | 100% |
-| Phase 6: 최적화 및 배포 | 🟡 진행 중 | 30% (적립금 완료, 구독 기본 완료) |
+| Phase 6: 최적화 및 배포 | 🟡 진행 중 | 50% (적립금 완료, 구독 스토어 검증·웹훅 완료, 루틴 배지/랭킹/알림까지 완료) |
 
 ---
 
-**Last Updated**: 2026-05-26
+**Last Updated**: 2026-08-27

@@ -8,6 +8,7 @@
 - 공지사항 작업 → `docs/features/11-announcements.md`만
 - 알림 작업 → `docs/features/10-notifications.md`만
 - Q&A 작업 → `docs/features/12-qna.md`만
+- 루틴 작업 → `docs/features/20-routine.md`만
 
 **절대 전체 문서를 읽지 마세요!** 토큰 낭비입니다.
 
@@ -65,3 +66,13 @@ npx prisma migrate status
 ```
 
 shadow DB 문제가 없다면 `npx prisma migrate dev --name 설명` 한 번으로 가능.
+
+## API 실동작 검증 (curl 등)
+
+**`POST /v1/auth/signup`으로 테스트 유저를 새로 만들지 말 것.** `AuthService.signup()`이 개발 환경 스킵 없이 무조건 실제 이메일 인증 메일을 발송한다(`isEmailVerified`를 나중에 DB에서 직접 true로 바꿔도 메일은 이미 발송된 뒤라 막을 수 없음).
+
+이미 이메일 인증 완료 상태로 준비된 기존 테스트 계정(`test-owner@familyplanner.test` / `Test1234!` 등)을 재사용한다. 절차는 **[.claude/skills/api-smoke-test.md](.claude/skills/api-smoke-test.md)** 참고.
+
+## Git 커밋
+
+**커밋은 사용자가 명시적으로 요청했을 때만 한다.** 코드 작성이 끝났거나, `npm run check`/실동작 검증이 통과했다고 해서 자동으로 커밋하지 않는다. "커밋해줘" 같은 직접적인 요청이 없으면 변경 사항을 워킹 트리에 그대로 두고 결과만 보고한다.

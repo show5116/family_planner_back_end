@@ -7,6 +7,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { NotificationQueueService } from '@/notification/notification-queue.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
+import { todayInKst, thisMonthStartInKst } from '@/common/utils/date-kst.util';
 
 const LOCK_TTL = 5 * 60; // 5분
 
@@ -22,13 +23,13 @@ export class SavingsScheduler {
   ) {}
 
   /**
-   * 매일 00:10 실행 — 자동 적립
-   * depositDay가 오늘 날짜와 일치하는 목표에 monthlyAmount 적립
+   * 매일 UTC 00:10(KST 09:10) 실행 — 자동 적립
+   * depositDay가 오늘(KST) 날짜와 일치하는 목표에 monthlyAmount 적립
    * - 말일 처리: 오늘이 말일이면 depositDay > 말일인 목표도 함께 실행
    * - 중복 방지: 이번 달 AUTO_DEPOSIT 트랜잭션이 이미 있으면 skip
    * - Redis 분산 락으로 중복 실행 방지
    */
-  @Cron('10 0 * * *')
+  @Cron('10 0 * * *', { timeZone: 'UTC' })
   async runAutoDeposit() {
     if (!isSchedulerEnabled('')) return;
     const lockKey = 'lock:savings:auto-deposit';
@@ -37,14 +38,11 @@ export class SavingsScheduler {
     if (!acquired) return;
 
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayDay = today.getDate();
+      const today = todayInKst();
+      const todayDay = today.getUTCDate();
       const lastDayOfMonth = new Date(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        0,
-      ).getDate();
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0),
+      ).getUTCDate();
       const isLastDay = todayDay === lastDayOfMonth;
 
       this.logger.log(
@@ -65,15 +63,17 @@ export class SavingsScheduler {
 
       this.logger.log(`자동 적립 대상: ${goals.length}건`);
 
-      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthStart = thisMonthStartInKst();
       const monthEnd = new Date(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        0,
-        23,
-        59,
-        59,
-        999,
+        Date.UTC(
+          today.getUTCFullYear(),
+          today.getUTCMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        ),
       );
 
       let count = 0;

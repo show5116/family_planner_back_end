@@ -20,7 +20,7 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
 - `page` (`number`): 페이지 번호
 - `limit` (`number`): 페이지 크기
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
-- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC)
 - `search` (`string`) (Optional): 검색어 (제목/내용)
 - `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
@@ -35,9 +35,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
       "id": "uuid", // 질문 ID (string)
       "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
       "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
-      "category": null, // 카테고리 (QuestionCategory)
-      "status": null, // 질문 상태 (QuestionStatus)
-      "visibility": null, // 공개 여부 (QuestionVisibility)
+      "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+      "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+      "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
       "answerCount": 1, // 답변 수 (number)
       "user": {
         "id": "uuid",
@@ -74,9 +74,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)
@@ -125,7 +125,7 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
 {
   "title": "앱이 자꾸 종료돼요", // 질문 제목 (string)
   "content": "홈 화면에서 특정 버튼을 누르면 앱이 종료됩니다.", // 질문 내용 (string)
-  "category": null, // 질문 카테고리 (QuestionCategory)
+  "category": null, // 질문 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
   "visibility": null, // 공개 여부 (PUBLIC: 모든 사용자 조회 가능, PRIVATE: 본인/ADMIN만 조회 가능) (QuestionVisibility?)
   "attachments": [
     {
@@ -146,9 +146,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)
@@ -202,8 +202,8 @@ PENDING: 일반 수정, ANSWERED: 수정 시 PENDING으로 변경 (재질문), R
 {
   "title": "", // 질문 제목 (string?)
   "content": "", // 질문 내용 (string?)
-  "category": null, // 질문 카테고리 (QuestionCategory?)
-  "visibility": null, // 공개 여부 (QuestionVisibility?)
+  "category": null, // 질문 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory?)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility?)
   "attachments": [
     {
       "url": "", // 파일 URL (string)
@@ -223,9 +223,9 @@ PENDING: 일반 수정, ANSWERED: 수정 시 PENDING으로 변경 (재질문), R
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)

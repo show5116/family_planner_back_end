@@ -74,6 +74,22 @@ export function ApiForbidden(description = '권한 없음') {
 }
 
 /**
+ * 처리할 수 없는 요청 (422) — 재시도해도 결과가 같은 경우
+ * @param description 에러 설명
+ */
+export function ApiUnprocessable(description: string) {
+  return ApiResponse({ status: 422, description });
+}
+
+/**
+ * 일시적으로 처리 불가 (503) — 재시도하면 성공할 수 있는 경우
+ * @param description 에러 설명
+ */
+export function ApiServiceUnavailable(description: string) {
+  return ApiResponse({ status: 503, description });
+}
+
+/**
  * 여러 특수 응답을 한 번에 적용
  */
 export function ApiExtraResponses(

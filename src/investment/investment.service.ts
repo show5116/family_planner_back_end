@@ -15,6 +15,7 @@ import { CoinGeckoCollector } from './scheduler/collectors/coingecko.collector';
 import { BokCollector } from './scheduler/collectors/bok.collector';
 import { KoreaGoldCollector } from './scheduler/collectors/korea-gold.collector';
 import { FearGreedCollector } from './scheduler/collectors/fear-greed.collector';
+import { getKstDay } from '@/common/utils/date-kst.util';
 
 const INDICATORS: {
   symbol: string;
@@ -437,7 +438,7 @@ export class InvestmentService implements OnModuleInit {
       ind.category === 'CRYPTO'
         ? rows
         : rows.filter((r) => {
-            const dow = new Date(r.bucket).getDay();
+            const dow = getKstDay(new Date(r.bucket));
             return dow !== 0 && dow !== 6;
           });
 

@@ -17,7 +17,7 @@
 ```json
 {
   "token": "fGw3ZJ0kRZe-Xz9YlK6J7M:APA91bH4...(생략)...k5L8mN9oP0qR1sT2u", // FCM 디바이스 토큰 (string)
-  "platform": null, // 디바이스 플랫폼 (DevicePlatform)
+  "platform": null, // 디바이스 플랫폼 (가능한 값: IOS, ANDROID, WEB) (DevicePlatform)
   "language": "ko" // 앱 언어 설정 (ko, en, ja, zh) (string?)
 }
 ```
@@ -31,7 +31,7 @@
   "id": "uuid", // 토큰 ID (string)
   "userId": "uuid", // 사용자 ID (string)
   "token": "dXNlci1kZXZpY2UtdG9rZW4tZXhhbXBsZQ", // FCM 디바이스 토큰 (string)
-  "platform": null, // 플랫폼 (DevicePlatform)
+  "platform": null, // 플랫폼 (가능한 값: IOS, ANDROID, WEB) (DevicePlatform)
   "lastUsed": "2025-12-27T00:00:00Z" // 마지막 사용 시간 (Date)
 }
 ```
@@ -72,7 +72,7 @@
 {
   "id": "uuid", // 설정 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true // 알림 활성화 여부 (boolean)
 }
 ```
@@ -87,9 +87,10 @@
 
 ```json
 {
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true, // 알림 활성화 여부 (boolean)
-  "weatherAlertHour": 7 // WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시) (number?)
+  "weatherAlertHour": 7, // WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시) (number?)
+  "routineReminderHour": 21 // ROUTINE 카테고리 전용: 루틴 리마인드 수신 시각 (0~23시) (number?)
 }
 ```
 
@@ -101,7 +102,7 @@
 {
   "id": "uuid", // 설정 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true // 알림 활성화 여부 (boolean)
 }
 ```
@@ -128,7 +129,7 @@
     {
       "id": "uuid", // 알림 ID (string)
       "userId": "uuid", // 사용자 ID (string)
-      "category": null, // 알림 카테고리 (NotificationCategory)
+      "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
       "title": "새로운 일정 알림", // 알림 제목 (string)
       "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
       "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
@@ -196,7 +197,7 @@
 {
   "id": "uuid", // 알림 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "title": "새로운 일정 알림", // 알림 제목 (string)
   "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
   "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
@@ -263,7 +264,7 @@
 ```json
 {
   "userId": "550e8400-e29b-41d4-a716-446655440000", // 알림 받을 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "title": "할 일 알림", // 알림 제목 (string)
   "body": "30분 후 회의 시작", // 알림 내용 (string)
   "scheduledTime": "2026-01-11T15:30:00Z", // 발송 예정 시간 (ISO 8601 형식) (string)

@@ -2,6 +2,10 @@
   "errors": {
     "user_not_found": "用户不存在",
     "verification_failed": "购买验证失败",
-    "missing_purchase_token": "需要购买令牌"
+    "verification_unavailable": "无法连接商店验证服务器，请稍后重试",
+    "missing_purchase_token": "需要购买令牌",
+    "already_used": "该购买记录已被其他账号使用",
+    "unknown_product": "不支持的商品",
+    "purchase_pending": "支付尚未完成"
   }
 }

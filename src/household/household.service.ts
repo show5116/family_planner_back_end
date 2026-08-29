@@ -39,6 +39,7 @@ import {
   parseToUtcMonthStart,
   toUtcDate,
 } from './household.util';
+import { todayInKst, thisMonthStartInKst } from '@/common/utils/date-kst.util';
 
 const ALLOWED_RECEIPT_TYPES = [
   'image/jpeg',
@@ -693,7 +694,7 @@ export class HouseholdService {
     if (!rec.startDate) return;
     const startDate = rec.startDate;
 
-    const now = new Date();
+    const now = todayInKst();
     const months = listMonthsFromStartToNow(startDate, now).filter(
       ({ year, month }) => {
         if (!rec.totalMonths) return true;
@@ -1060,10 +1061,7 @@ export class HouseholdService {
 
     // 신규 템플릿이고 이번 달 예산이 없으면 즉시 생성
     if (isNew) {
-      const now = new Date();
-      const monthDate = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-      );
+      const monthDate = thisMonthStartInKst();
 
       const existsBudget = await this.prisma.budget.findFirst({
         where: {
@@ -1195,10 +1193,7 @@ export class HouseholdService {
     const groupId = dto.groupId ?? null;
     const ownerId = dto.groupId ? null : userId;
 
-    const now = new Date();
-    const monthDate = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-    );
+    const monthDate = thisMonthStartInKst();
 
     const results: { total?: unknown; categories?: unknown[] } = {};
 
@@ -1336,10 +1331,7 @@ export class HouseholdService {
     });
 
     if (isNew) {
-      const now = new Date();
-      const monthDate = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-      );
+      const monthDate = thisMonthStartInKst();
 
       const exists = await this.prisma.groupBudget.findFirst({
         where: { groupId, userId: ownerId, month: monthDate },

@@ -2,6 +2,10 @@
   "errors": {
     "user_not_found": "User not found",
     "verification_failed": "Purchase verification failed",
-    "missing_purchase_token": "Purchase token is required"
+    "verification_unavailable": "Cannot reach the store verification server. Please try again shortly",
+    "missing_purchase_token": "Purchase token is required",
+    "already_used": "This purchase is already linked to another account",
+    "unknown_product": "Unsupported product",
+    "purchase_pending": "The payment has not been completed yet"
   }
 }

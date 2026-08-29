@@ -9,6 +9,7 @@ import { SyncCartItemsDto } from './dto/sync-cart-items.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { CompleteShoppingDto } from './dto/complete-shopping.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
+import { todayInKst } from '@/common/utils/date-kst.util';
 
 const DEFAULT_ALERT_DAYS_BEFORE = 3;
 const DEFAULT_EXPENSE_CATEGORY = 'GROCERIES' as const;
@@ -237,7 +238,6 @@ export class ShoppingService {
 
         if (dto.expense) {
           const amount = dto.expense.amount ?? totalPrice;
-          const today = new Date().toISOString().slice(0, 10);
           await tx.expense.create({
             data: {
               groupId,
@@ -245,7 +245,9 @@ export class ShoppingService {
               type: 'EXPENSE',
               amount,
               category: dto.expense.category ?? DEFAULT_EXPENSE_CATEGORY,
-              date: new Date(dto.expense.date ?? today),
+              date: dto.expense.date
+                ? new Date(dto.expense.date)
+                : todayInKst(),
               description:
                 dto.expense.description ?? DEFAULT_EXPENSE_DESCRIPTION,
               paymentMethod: dto.expense.paymentMethod,

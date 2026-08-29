@@ -30,15 +30,15 @@
 
 ### POST `subscription/verify`
 
-**요약:** 구독 업데이트 (인앱 결제 후 tier/토큰 저장)
+**요약:** 인앱 구매 검증 (Google Play / App Store 서버 검증 후 tier 반영)
 
 **Request Body:**
 
 ```json
 {
-  "tier": null, // SubscriptionTier
-  "expiresAt": "2026-12-31T23:59:59.000Z", // 구독 만료일 (ISO 8601) (string?)
-  "purchaseToken": "AEuhp4..." // 인앱 결제 토큰 (Apple receipt / Google purchase token) (string?)
+  "platform": null, // SubscriptionPlatform
+  "purchaseToken": "", // Google Play 구매 토큰 (platform=ANDROID일 때 필수) (string?)
+  "signedTransaction": "" // App Store signedTransaction (JWS, platform=IOS일 때 필수) (string?)
 }
 ```
 

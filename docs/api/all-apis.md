@@ -82,7 +82,7 @@
 
 - `page` (`number`) (Optional): 페이지 번호
 - `limit` (`number`) (Optional): 페이지 크기
-- `category` (`AnnouncementCategory`) (Optional): 카테고리 필터
+- `category` (`AnnouncementCategory`) (Optional): 카테고리 필터 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE)
 - `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회
 
 **Responses:**
@@ -96,7 +96,7 @@
       "id": "uuid", // 공지사항 ID (string)
       "title": "시스템 점검 안내", // 제목 (string)
       "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-      "category": null, // 카테고리 (AnnouncementCategory)
+      "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
       "isPinned": false, // 고정 여부 (boolean)
       "author": {
         "id": "uuid",
@@ -131,7 +131,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -162,7 +162,7 @@
 {
   "title": "v2.0 업데이트 안내", // 공지사항 제목 (string)
   "content": "새로운 기능이 추가되었습니다...", // 공지사항 내용 (Markdown 지원) (string)
-  "category": null, // 공지사항 카테고리 (AnnouncementCategory)
+  "category": null, // 공지사항 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 상단 고정 여부 (boolean?)
   "attachments": [
     {
@@ -183,7 +183,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -225,7 +225,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -297,7 +297,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -2702,7 +2702,7 @@ period=monthly 시 year 필수.
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -2734,7 +2734,7 @@ period=monthly 시 year 필수.
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -2764,7 +2764,7 @@ period=monthly 시 year 필수.
   "globalPresetId": "uuid-1234", // 글로벌 프리셋 ID (string)
   "category": "채소", // 카테고리 (string)
   "keyword": "사과", // 품목 키워드 (string)
-  "storageType": null, // 보관 유형 (StorageType)
+  "storageType": null, // 보관 유형 (가능한 값: FRIDGE, FREEZER, PANTRY) (StorageType)
   "days": 30, // 적용 유통기한 (일) - 커스텀이 있으면 커스텀, 없으면 글로벌 (number)
   "isCustom": false, // 그룹 커스텀 여부 (boolean)
   "customPresetId": "uuid-5678" // 그룹 커스텀 프리셋 ID (커스텀인 경우에만 존재) (string | null)
@@ -2829,7 +2829,7 @@ period=monthly 시 year 필수.
 {
   "groupId": "uuid-group", // string
   "name": "우리집 냉장고", // string
-  "type": "FRIDGE" // StorageType
+  "type": "FRIDGE" // 가능한 값: FRIDGE, FREEZER, PANTRY (StorageType)
 }
 ```
 
@@ -2896,7 +2896,7 @@ period=monthly 시 year 필수.
 ```json
 {
   "name": "냉장고 1", // string?
-  "type": null // StorageType?
+  "type": null // 가능한 값: FRIDGE, FREEZER, PANTRY (StorageType?)
 }
 ```
 
@@ -3697,50 +3697,6 @@ period=monthly 시 year 필수.
 
 ---
 
-### POST `groups/:id/invite-by-email`
-
-**요약:** 이메일로 그룹 초대 (INVITE_MEMBER 권한 필요)
-
-**설명:**
-초대할 사용자의 이메일로 초대 코드가 포함된 이메일을 발송합니다. 해당 이메일로 가입된 사용자가 있어야 합니다.
-
-**인증/권한:**
-
-- GroupPermissionGuard
-
-**Path Parameters:**
-
-- `id` (`string`)
-
-**Request Body:**
-
-```json
-{
-  "email": "user@example.com" // 초대할 사용자의 이메일 (string)
-}
-```
-
-**Responses:**
-
-#### 200 - 초대 이메일 발송 성공
-
-```json
-{
-  "message": "초대 이메일이 발송되었습니다", // string
-  "email": "user@example.com", // 초대받은 사용자의 이메일 (string)
-  "groupName": "우리 가족", // 그룹명 (string)
-  "inviteCode": "AbC123Xy", // 초대 코드 (string)
-  "inviteCodeExpiresAt": "2025-12-24T00:00:00Z", // 초대 코드 만료 시간 (Date)
-  "joinRequestId": "uuid" // 가입 요청 ID (string)
-}
-```
-
-#### 403 - 권한 없음
-
-#### 404 - 그룹을 찾을 수 없음
-
----
-
 ### POST `groups/:id/transfer-ownership`
 
 **요약:** OWNER 권한 양도 (현재 OWNER만 가능)
@@ -3936,75 +3892,6 @@ PENDING 상태의 가입 요청을 거부
 #### 403 - 권한 없음
 
 #### 404 - 가입 요청을 찾을 수 없음
-
----
-
-### DELETE `groups/:id/invites/:requestId`
-
-**요약:** 초대 취소 (INVITE_MEMBER 권한 필요)
-
-**설명:**
-INVITE 타입의 PENDING 상태 초대를 취소합니다
-
-**인증/권한:**
-
-- GroupPermissionGuard
-
-**Path Parameters:**
-
-- `id` (`string`)
-- `requestId` (`string`)
-
-**Responses:**
-
-#### 200 - 초대 취소 성공
-
-```json
-{
-  "message": "초대가 취소되었습니다" // string
-}
-```
-
-#### 403 - 권한 없음
-
-#### 404 - 초대 요청을 찾을 수 없음
-
----
-
-### POST `groups/:id/invites/:requestId/resend`
-
-**요약:** 초대 재전송 (INVITE_MEMBER 권한 필요)
-
-**설명:**
-INVITE 타입의 PENDING 상태 초대 이메일을 재전송합니다
-
-**인증/권한:**
-
-- GroupPermissionGuard
-
-**Path Parameters:**
-
-- `id` (`string`)
-- `requestId` (`string`)
-
-**Responses:**
-
-#### 200 - 초대 이메일 재전송 성공
-
-```json
-{
-  "message": "초대 이메일이 재전송되었습니다", // string
-  "email": "user@example.com", // 초대받은 사용자의 이메일 (string)
-  "groupName": "우리 가족", // 그룹명 (string)
-  "inviteCode": "AbC123Xy", // 초대 코드 (string)
-  "inviteCodeExpiresAt": "2025-12-24T00:00:00Z", // 초대 코드 만료 시간 (Date)
-  "joinRequestId": "uuid" // 가입 요청 ID (string)
-}
-```
-
-#### 403 - 권한 없음
-
-#### 404 - 초대 요청을 찾을 수 없음
 
 ---
 
@@ -5901,7 +5788,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "title": "외박 준비물", // 메모 제목 (string)
   "content": "{"ops":[{"insert":"본문 텍스트\n"}]}", // Delta JSON 문자열 (format=DELTA) 또는 일반 텍스트 (string?)
-  "format": null, // 메모 형식 (기본값: DELTA) (MemoFormat?)
+  "format": null, // 메모 형식 (기본값: DELTA) (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat?)
   "visibility": null, // 공개 범위 (MemoVisibility?)
   "groupId": "", // 그룹 ID (GROUP 공개 시 필수) (string?)
   "tags": [
@@ -5925,7 +5812,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -5984,7 +5871,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
       "id": "uuid-1234", // 메모 ID (string)
       "title": "외박 준비물", // 제목 (string)
       "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-      "format": null, // 메모 형식 (MemoFormat)
+      "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
       "visibility": null, // 공개 범위 (MemoVisibility)
       "isPinned": false, // 핀 여부 (boolean)
       "groupId": null, // 그룹 ID (string | null)
@@ -6057,7 +5944,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -6109,7 +5996,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -6171,7 +6058,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -6251,7 +6138,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid-1234", // 메모 ID (string)
   "title": "외박 준비물", // 제목 (string)
   "content": "", // Delta JSON 문자열 또는 일반 텍스트 (string)
-  "format": null, // 메모 형식 (MemoFormat)
+  "format": null, // 메모 형식 (가능한 값: MARKDOWN, HTML, PLAIN, DELTA) (MemoFormat)
   "visibility": null, // 공개 범위 (MemoVisibility)
   "isPinned": false, // 핀 여부 (boolean)
   "groupId": null, // 그룹 ID (string | null)
@@ -6484,7 +6371,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 ```json
 {
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "gameType": null, // 게임 타입 (MinigameType)
+  "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
   "title": "저녁 메뉴 정하기", // 게임 제목 (string)
   "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
   "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
@@ -6500,7 +6387,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "id": "uuid-1234", // 결과 ID (string)
   "groupId": "uuid-1234", // 그룹 ID (string)
-  "gameType": null, // 게임 타입 (MinigameType)
+  "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
   "title": "저녁 메뉴 정하기", // 게임 제목 (string)
   "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
   "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
@@ -6521,7 +6408,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 **Query Parameters:**
 
 - `groupId` (`string`): 그룹 ID
-- `gameType` (`MinigameType`) (Optional): 게임 타입 필터
+- `gameType` (`MinigameType`) (Optional): 게임 타입 필터 (가능한 값: LADDER, ROULETTE)
 - `limit` (`number`) (Optional): 조회 개수
 - `offset` (`number`) (Optional): 오프셋
 
@@ -6535,7 +6422,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
     {
       "id": "uuid-1234", // 결과 ID (string)
       "groupId": "uuid-1234", // 그룹 ID (string)
-      "gameType": null, // 게임 타입 (MinigameType)
+      "gameType": null, // 게임 타입 (가능한 값: LADDER, ROULETTE) (MinigameType)
       "title": "저녁 메뉴 정하기", // 게임 제목 (string)
       "participants": ["아빠", "엄마", "민준"], // 참여자 이름 목록 (string[])
       "options": ["삼겹살", "치킨", "피자"], // 결과 항목 목록 (string[])
@@ -6592,7 +6479,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 ```json
 {
   "token": "fGw3ZJ0kRZe-Xz9YlK6J7M:APA91bH4...(생략)...k5L8mN9oP0qR1sT2u", // FCM 디바이스 토큰 (string)
-  "platform": null, // 디바이스 플랫폼 (DevicePlatform)
+  "platform": null, // 디바이스 플랫폼 (가능한 값: IOS, ANDROID, WEB) (DevicePlatform)
   "language": "ko" // 앱 언어 설정 (ko, en, ja, zh) (string?)
 }
 ```
@@ -6606,7 +6493,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   "id": "uuid", // 토큰 ID (string)
   "userId": "uuid", // 사용자 ID (string)
   "token": "dXNlci1kZXZpY2UtdG9rZW4tZXhhbXBsZQ", // FCM 디바이스 토큰 (string)
-  "platform": null, // 플랫폼 (DevicePlatform)
+  "platform": null, // 플랫폼 (가능한 값: IOS, ANDROID, WEB) (DevicePlatform)
   "lastUsed": "2025-12-27T00:00:00Z" // 마지막 사용 시간 (Date)
 }
 ```
@@ -6647,7 +6534,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "id": "uuid", // 설정 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true // 알림 활성화 여부 (boolean)
 }
 ```
@@ -6662,9 +6549,10 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 
 ```json
 {
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true, // 알림 활성화 여부 (boolean)
-  "weatherAlertHour": 7 // WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시) (number?)
+  "weatherAlertHour": 7, // WEATHER 카테고리 전용: 날씨 알림 수신 시각 (0~23시) (number?)
+  "routineReminderHour": 21 // ROUTINE 카테고리 전용: 루틴 리마인드 수신 시각 (0~23시) (number?)
 }
 ```
 
@@ -6676,7 +6564,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "id": "uuid", // 설정 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "enabled": true // 알림 활성화 여부 (boolean)
 }
 ```
@@ -6703,7 +6591,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
     {
       "id": "uuid", // 알림 ID (string)
       "userId": "uuid", // 사용자 ID (string)
-      "category": null, // 알림 카테고리 (NotificationCategory)
+      "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
       "title": "새로운 일정 알림", // 알림 제목 (string)
       "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
       "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
@@ -6771,7 +6659,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 {
   "id": "uuid", // 알림 ID (string)
   "userId": "uuid", // 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "title": "새로운 일정 알림", // 알림 제목 (string)
   "body": "내일 오후 3시에 회의가 예정되어 있습니다.", // 알림 내용 (string)
   "data": { "scheduleId": "uuid", "action": "view_schedule" }, // 추가 데이터 (JSON) (any)
@@ -6838,7 +6726,7 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 ```json
 {
   "userId": "550e8400-e29b-41d4-a716-446655440000", // 알림 받을 사용자 ID (string)
-  "category": null, // 알림 카테고리 (NotificationCategory)
+  "category": null, // 알림 카테고리 (가능한 값: SCHEDULE, TODO, HOUSEHOLD, SAVINGS, ASSET, CHILDCARE, GROUP, SYSTEM, WEATHER, FRIDGE, ROUTINE) (NotificationCategory)
   "title": "할 일 알림", // 알림 제목 (string)
   "body": "30분 후 회의 시작", // 알림 내용 (string)
   "scheduledTime": "2026-01-11T15:30:00Z", // 발송 예정 시간 (ISO 8601 형식) (string)
@@ -7133,7 +7021,7 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
 - `page` (`number`): 페이지 번호
 - `limit` (`number`): 페이지 크기
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
-- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC)
 - `search` (`string`) (Optional): 검색어 (제목/내용)
 - `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
@@ -7148,9 +7036,9 @@ UI에서 권한 선택 시 사용. 카테고리별 필터링 가능
       "id": "uuid", // 질문 ID (string)
       "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
       "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
-      "category": null, // 카테고리 (QuestionCategory)
-      "status": null, // 질문 상태 (QuestionStatus)
-      "visibility": null, // 공개 여부 (QuestionVisibility)
+      "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+      "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+      "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
       "answerCount": 1, // 답변 수 (number)
       "user": {
         "id": "uuid",
@@ -7327,7 +7215,7 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
 - `page` (`number`): 페이지 번호
 - `limit` (`number`): 페이지 크기
 - `status` (`QuestionStatus`) (Optional): 상태 필터 (PENDING, ANSWERED, RESOLVED)
-- `category` (`QuestionCategory`) (Optional): 카테고리 필터
+- `category` (`QuestionCategory`) (Optional): 카테고리 필터 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC)
 - `search` (`string`) (Optional): 검색어 (제목/내용)
 - `filter` (`'public' | 'my' | 'all'`) (Optional): 질문 필터 (public: 공개 질문만, my: 내 질문만, all: 모든 질문 - ADMIN 전용)
 
@@ -7342,9 +7230,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
       "id": "uuid", // 질문 ID (string)
       "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
       "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데...", // 내용 (미리보기 100자) (string)
-      "category": null, // 카테고리 (QuestionCategory)
-      "status": null, // 질문 상태 (QuestionStatus)
-      "visibility": null, // 공개 여부 (QuestionVisibility)
+      "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+      "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+      "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
       "answerCount": 1, // 답변 수 (number)
       "user": {
         "id": "uuid",
@@ -7381,9 +7269,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)
@@ -7432,7 +7320,7 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
 {
   "title": "앱이 자꾸 종료돼요", // 질문 제목 (string)
   "content": "홈 화면에서 특정 버튼을 누르면 앱이 종료됩니다.", // 질문 내용 (string)
-  "category": null, // 질문 카테고리 (QuestionCategory)
+  "category": null, // 질문 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
   "visibility": null, // 공개 여부 (PUBLIC: 모든 사용자 조회 가능, PRIVATE: 본인/ADMIN만 조회 가능) (QuestionVisibility?)
   "attachments": [
     {
@@ -7453,9 +7341,9 @@ filter 파라미터로 조회 범위 설정: public(공개 질문), my(내 질�
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)
@@ -7509,8 +7397,8 @@ PENDING: 일반 수정, ANSWERED: 수정 시 PENDING으로 변경 (재질문), R
 {
   "title": "", // 질문 제목 (string?)
   "content": "", // 질문 내용 (string?)
-  "category": null, // 질문 카테고리 (QuestionCategory?)
-  "visibility": null, // 공개 여부 (QuestionVisibility?)
+  "category": null, // 질문 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory?)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility?)
   "attachments": [
     {
       "url": "", // 파일 URL (string)
@@ -7530,9 +7418,9 @@ PENDING: 일반 수정, ANSWERED: 수정 시 PENDING으로 변경 (재질문), R
   "id": "uuid", // 질문 ID (string)
   "title": "그룹 초대는 어떻게 하나요?", // 제목 (string)
   "content": "안녕하세요. 그룹에 가족을 초대하고 싶은데 방법을 모르겠습니다.", // 내용 (string)
-  "category": null, // 카테고리 (QuestionCategory)
-  "status": null, // 질문 상태 (QuestionStatus)
-  "visibility": null, // 공개 여부 (QuestionVisibility)
+  "category": null, // 카테고리 (가능한 값: BUG, FEATURE, USAGE, ACCOUNT, PAYMENT, ETC) (QuestionCategory)
+  "status": null, // 질문 상태 (가능한 값: PENDING, ANSWERED, RESOLVED) (QuestionStatus)
+  "visibility": null, // 공개 여부 (가능한 값: PUBLIC, PRIVATE) (QuestionVisibility)
   "user": {
     "id": "uuid", // 사용자 ID (string)
     "name": "홍길동" // 사용자 이름 (string)
@@ -7772,6 +7660,1830 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
   ] // 역할 ID와 정렬 순서 배열 (RoleSortOrderItem[])
 }
 ```
+
+---
+
+## 루틴
+
+**Base Path:** `/routines`
+
+### POST `routines`
+
+**요약:** 루틴 생성
+
+**Request Body:**
+
+```json
+{
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": "🧘", // 이모지 (string?)
+  "color": "#6366F1", // 색상 (HEX) (string?)
+  "memo": "", // 루틴 메모 (체크별 note와 별개로, 루틴 자체에 대한 설명) (string?)
+  "importance": null, // 중요도 (RoutineImportance?)
+  "timeFilter": null, // 시간대 분류 (오전/오후/저녁, 알림과는 무관한 분류용) (RoutineTimeFilter?)
+  "categoryIds": "<String>", // 초기 연결할 루틴 카테고리 ID 목록 (없으면 미분류) (string[]?)
+  "recordType": null, // 기록 방식 (BOOLEAN=단순 체크, TEXT=텍스트, TIME=시각(HH:mm), NUMERIC=수치). 루틴 생성 시 고정되며 체크마다 바꿀 수 없음 (RoutineRecordType?)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType?)
+  "weeklyMode": null, // 주 반복 세부 방식 (frequencyType=WEEKLY일 때 필수). COUNT_ONLY=요일 무관 주 N회, FIXED_DAYS=특정 요일 지정 (RoutineWeeklyMode?)
+  "targetCount": 3, // 목표 횟수. WEEKLY+COUNT_ONLY=주 목표 횟수(1~7), MONTHLY=월 목표 횟수(1~31) (number?)
+  "targetDays": [1, 3, 5], // 반복 요일 목록 (frequencyType=WEEKLY, weeklyMode=FIXED_DAYS일 때 필수, 0=일요일~6=토요일) (number[]?)
+  "startDate": "2026-07-01", // 시작일 (YYYY-MM-DD) (string)
+  "endDate": "", // 종료일 (YYYY-MM-DD, 없으면 무기한) (string?)
+  "routineGroupId": "", // 소속시킬 루틴 그룹 ID (없으면 독립 습관) (string?)
+  "includeInDailyGoal": false, // 일일 목표 집계에 포함할지 여부. 생략 시 true (boolean?)
+  "isPrivate": false // 비공개 여부. 생략 시 false(공개) (boolean?)
+}
+```
+
+**Responses:**
+
+#### 201 - 루틴 생성 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines`
+
+**요약:** 내 루틴 목록 조회
+
+**Query Parameters:**
+
+- `status` (`RoutineStatus`) (Optional): 상태 필터 (ACTIVE/PAUSED만 의미 있음, ENDED는 항상 목록에서 제외됨)
+- `routineGroupId` (`string`) (Optional): 특정 루틴 그룹 소속만 조회
+- `categoryId` (`string`) (Optional): 특정 루틴 카테고리 소속만 조회
+- `date` (`string`) (Optional): 체크 여부/기록값 조회 기준 날짜 (YYYY-MM-DD, 미지정 시 오늘)
+
+**Responses:**
+
+#### 200 - 루틴 목록 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/stats/summary`
+
+**요약:** 대시보드 위젯용 루틴 요약 (오늘 체크 현황 + 스트릭)
+
+**Responses:**
+
+#### 200 - 루틴 요약 조회 성공
+
+```json
+{
+  "routines": [
+    {
+      "routineId": "", // 루틴 ID (string)
+      "title": "", // 루틴 제목 (string)
+      "emoji": null, // 이모지 (string | null)
+      "checkedToday": false, // 오늘 체크 여부 (boolean)
+      "currentStreakDays": 0, // 현재 연속 체크 일수 (number)
+      "thisWeekProgress": {
+        "checked": 0,
+        "target": 0
+      }, // 이번 주 진행 상황 (frequencyType=MONTHLY인 루틴은 null) (ThisWeekProgressDto | null)
+      "thisMonthProgress": {
+        "checked": 0,
+        "target": 0
+      } // 이번 달 진행 상황 (frequencyType=MONTHLY인 루틴만 값이 있음) (ThisWeekProgressDto | null)
+    }
+  ] // 루틴별 오늘/스트릭 요약 (RoutineSummaryItemDto[])
+}
+```
+
+---
+
+### GET `routines/stats/overview`
+
+**요약:** 전체 루틴 대시보드 요약 (달성률 + 날짜별 히트맵)
+
+**Query Parameters:**
+
+- `period` (`OverviewPeriod`): 기간 단위 (가능한 값: week, month)
+- `from` (`string`) (Optional): 조회 기준일 (YYYY-MM-DD, 옵션). 이 날짜가 속한 주(월~일)/달(1일~말일)을 계산. 생략 시 오늘 기준
+- `to` (`string`) (Optional): from과 함께 명시하면 [from, to] 범위를 스냅 없이 그대로 사용 (옵션). from 없이 단독으로는 무시됨
+
+**Responses:**
+
+#### 200 - 전체 루틴 개요 조회 성공
+
+```json
+{
+  "period": "", // 기간 단위 (string)
+  "from": "", // 조회 시작일 (string)
+  "to": "", // 조회 종료일 (string)
+  "totalRoutines": 0, // 집계 대상 루틴 수 (ACTIVE + PAUSED) (number)
+  "totalChecked": 0, // 기간 내 실제 체크 횟수 합계 (전체 루틴) (number)
+  "totalExpected": 0, // 기간 내 기대 체크 횟수 합계 (전체 루틴) (number)
+  "achievementRate": 81, // 달성률 (%), totalChecked / totalExpected (number)
+  "heatmap": [
+    {
+      "date": "", // 날짜 (YYYY-MM-DD) (string)
+      "checkedCount": 0, // 해당 날짜에 체크된 루틴 수 (number)
+      "totalCount": 0, // 해당 날짜에 활성 상태였던(일시정지 제외) 루틴 수 (number)
+      "goalAchieved": null // 해당 날짜의 일일 목표 달성 여부. 그날 대상 습관이 0개면 null(집계 대상 아님) (boolean | null)
+    }
+  ], // 날짜별 체크 현황 히트맵 (period와 동일한 기간) (OverviewHeatmapDayDto[])
+  "routineBreakdown": [
+    {
+      "routineId": "", // 루틴 ID (string)
+      "title": "", // 루틴 제목 (string)
+      "emoji": null, // 이모지 (string | null)
+      "targetCount": null, // 주간 목표 횟수 (WEEKLY/FIXED_DAYS는 targetDays.length, 그 외는 targetCount). MONTHLY 루틴은 주간 목표 개념이 없어 null (number | null)
+      "checkedDates": ["2026-08-10", "2026-08-11"] // 조회 기간(from~to) 내 체크된 날짜 목록 (YYYY-MM-DD) (string[])
+    }
+  ], // 루틴별 체크 현황 (period=week일 때만 존재, month일 때는 필드 생략) (OverviewRoutineBreakdownDto[]?)
+  "dailyGoalMode": "", // 조회 기간 마지막 날(to) 기준 유효했던 일일 목표 모드 (string)
+  "dailyGoalCount": null, // 조회 기간 마지막 날(to) 기준 유효했던 일일 목표 개수 (ALL 모드면 null) (number | null)
+  "goalAchievedDays": 0, // 기간 내 일일 목표를 달성한 날 수 (number)
+  "goalTotalDays": 0, // 기간 내 집계 대상 일수 (대상 습관이 0개였던 날 제외, 진행 중인 기간은 오늘까지의 경과 일수) (number)
+  "goalAchievementRate": 71 // 일일 목표 달성률 (%), goalAchievedDays / goalTotalDays (number)
+}
+```
+
+---
+
+### GET `routines/stats/daily-streak`
+
+**요약:** 일일 목표 기준 전체 연속 달성 스트릭 + 최근 14일 집계
+
+**Responses:**
+
+#### 200 - 일일 목표 스트릭 조회 성공
+
+```json
+{
+  "currentStreakDays": 0, // 오늘(또는 어제)까지 이어지는 연속 달성 일수 (number)
+  "longestStreakDays": 0, // 역대 최장 연속 달성 일수 (number)
+  "todayAchieved": false, // 오늘 목표 달성 여부 (boolean)
+  "todayCheckedCount": 0, // 오늘 체크한 습관 수 (number)
+  "todayTargetCount": 0, // 오늘 기준 목표 개수 (ALL 모드면 오늘 대상 습관 수) (number)
+  "recent14Days": {
+    "achievedDays": 0, // 최근 14일 중 목표를 달성한 날 수 (number)
+    "exceededDays": 0, // 최근 14일 중 목표를 초과 달성한 날 수 (number)
+    "totalDays": 0, // 최근 14일 중 집계 대상 일수 (대상 습관 0개였던 날 제외) (number)
+    "averageCheckedCount": 0 // 집계 대상일들의 하루 평균 체크 개수 (number)
+  } // 최근 14일 집계 (목표 조정 제안용) (DailyStreakRecent14DaysDto)
+}
+```
+
+---
+
+### GET `routines/settings`
+
+**요약:** 루틴 일일 목표 설정 조회
+
+**Responses:**
+
+#### 200 - 루틴 설정 조회 성공
+
+```json
+{
+  "dailyGoalMode": "", // 일일 목표 모드 (가능한 값: ALL, COUNT) (string)
+  "dailyGoalCount": null // COUNT 모드일 때 목표 개수 (ALL이면 null) (number | null)
+}
+```
+
+---
+
+### PATCH `routines/settings`
+
+**요약:** 루틴 일일 목표 설정 변경
+
+**Request Body:**
+
+```json
+{
+  "dailyGoalMode": null, // 일일 목표 모드. ALL=그날 대상 습관 전부, COUNT=dailyGoalCount 개수만 채우면 달성 (RoutineDailyGoalMode?)
+  "dailyGoalCount": 0 // dailyGoalMode=COUNT일 때의 목표 개수 (1 이상). ALL로 바꿀 때 생략하면 기존 값 유지 (number?)
+}
+```
+
+**Responses:**
+
+#### 200 - 루틴 설정 변경 성공
+
+```json
+{
+  "dailyGoalMode": "", // 일일 목표 모드 (가능한 값: ALL, COUNT) (string)
+  "dailyGoalCount": null // COUNT 모드일 때 목표 개수 (ALL이면 null) (number | null)
+}
+```
+
+---
+
+### GET `routines/badges`
+
+**요약:** 전체 배지 카탈로그 조회 (활성 배지만)
+
+**Responses:**
+
+#### 200 - 배지 카탈로그 조회 성공
+
+```json
+{
+  "id": "", // 배지 ID (string)
+  "code": "GOAL_STREAK_7", // 배지 코드 (string)
+  "title": "7일 연속 달성", // 배지 제목 (string)
+  "description": null, // 배지 설명 (string | null)
+  "iconEmoji": null, // 아이콘 이모지 (string | null)
+  "criteriaType": null, // 판정 기준 타입 (BadgeCriteriaType)
+  "criteriaValue": 7 // 판정 기준값 (number)
+}
+```
+
+---
+
+### GET `routines/share-groups`
+
+**요약:** 내 루틴을 공유 중인 가족 그룹 목록 조회
+
+**Responses:**
+
+#### 200 - 공유 그룹 목록 조회 성공
+
+```json
+{
+  "groupId": "", // 그룹 ID (string)
+  "groupName": "", // 그룹 이름 (string)
+  "createdAt": "2025-01-01T00:00:00Z" // 공유 생성일 (Date)
+}
+```
+
+---
+
+### PUT `routines/share-groups`
+
+**요약:** 내 루틴 공유 그룹 목록 전체 교체
+
+**Request Body:**
+
+```json
+{
+  "groupIds": "<String>" // 공유할 그룹 ID 전체 목록 (기존 공유 목록을 이 값으로 통째 교체, 빈 배열이면 전체 해제) (string[])
+}
+```
+
+**Responses:**
+
+#### 200 - 공유 그룹 목록 교체 성공
+
+```json
+{
+  "groupId": "", // 그룹 ID (string)
+  "groupName": "", // 그룹 이름 (string)
+  "createdAt": "2025-01-01T00:00:00Z" // 공유 생성일 (Date)
+}
+```
+
+#### 403 - 본인이 속하지 않은 그룹은 지정할 수 없습니다
+
+---
+
+### POST `routines/categories`
+
+**요약:** 루틴 카테고리 생성 (사용자 커스텀 태그)
+
+**Request Body:**
+
+```json
+{
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": "📅", // 이모지 (string?)
+  "color": "#22C55E" // 색상 (HEX) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 루틴 카테고리 생성 성공
+
+```json
+{
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/categories`
+
+**요약:** 내 루틴 카테고리 목록 조회
+
+**Responses:**
+
+#### 200 - 루틴 카테고리 목록 조회 성공
+
+```json
+{
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### PATCH `routines/categories/sort-order`
+
+**요약:** 루틴 카테고리 순서 일괄 변경
+
+**Request Body:**
+
+```json
+{
+  "items": [
+    {
+      "id": "", // 카테고리 ID (string)
+      "sortOrder": 0 // 정렬 순서 (number)
+    }
+  ] // 카테고리 순서 목록 (RoutineCategorySortOrderItemDto[])
+}
+```
+
+**Responses:**
+
+#### 200 - 순서 변경 성공
+
+```json
+{
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/categories/:id`
+
+**요약:** 루틴 카테고리 상세 조회 (소속 습관 목록 포함)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 카테고리 상세 조회 성공
+
+```json
+{
+  "routines": [
+    {
+      "id": "uuid-1234", // 루틴 ID (string)
+      "title": "아침 스트레칭", // 루틴 제목 (string)
+      "emoji": null, // 이모지 (string | null)
+      "color": null, // 색상 (string | null)
+      "memo": null, // 루틴 메모 (string | null)
+      "importance": null, // 중요도 (RoutineImportance)
+      "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+      "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+      "recordType": null, // 기록 방식 (RoutineRecordType)
+      "status": null, // 상태 (RoutineStatus)
+      "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+      "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+      "targetCount": null, // 목표 횟수 (주/월) (number | null)
+      "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+      "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+      "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+      "sortOrder": 0, // 정렬 순서 (number)
+      "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+      "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+      "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+      "checkedLog": {
+        "note": null,
+        "textValue": null,
+        "numericValue": null,
+        "timeValue": null
+      }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+      "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+    }
+  ] // 소속 습관 목록 (RoutineDto[])
+}
+```
+
+#### 404 - 루틴 카테고리를 찾을 수 없습니다
+
+#### 403 - 본인의 카테고리만 조회할 수 있습니다
+
+---
+
+### PATCH `routines/categories/:id`
+
+**요약:** 루틴 카테고리 수정
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Responses:**
+
+#### 200 - 루틴 카테고리 수정 성공
+
+```json
+{
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴 카테고리를 찾을 수 없습니다
+
+#### 403 - 본인의 카테고리만 수정할 수 있습니다
+
+---
+
+### DELETE `routines/categories/:id`
+
+**요약:** 루틴 카테고리 삭제 (soft delete, 소속 습관은 카테고리만 해제)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 카테고리 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 루틴 카테고리를 찾을 수 없습니다
+
+#### 403 - 본인의 카테고리만 삭제할 수 있습니다
+
+---
+
+### POST `routines/routine-groups`
+
+**요약:** 루틴 그룹 생성 (여러 습관을 묶는 그룹)
+
+**Request Body:**
+
+```json
+{
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": "🌅", // 이모지 (string?)
+  "color": "#6366F1" // 색상 (HEX) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 루틴 그룹 생성 성공
+
+```json
+{
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/routine-groups`
+
+**요약:** 내 루틴 그룹 목록 조회 (그룹별 오늘 진행률 포함)
+
+**Responses:**
+
+#### 200 - 루틴 그룹 목록 조회 성공
+
+```json
+{
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### PATCH `routines/routine-groups/sort-order`
+
+**요약:** 루틴 그룹 순서 일괄 변경
+
+**Request Body:**
+
+```json
+{
+  "items": [
+    {
+      "id": "", // 그룹 ID (string)
+      "sortOrder": 0 // 정렬 순서 (number)
+    }
+  ] // 그룹 순서 목록 (RoutineGroupSortOrderItemDto[])
+}
+```
+
+**Responses:**
+
+#### 200 - 순서 변경 성공
+
+```json
+{
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/routine-groups/:id`
+
+**요약:** 루틴 그룹 상세 조회 (소속 습관 목록 + 오늘 진행률)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 그룹 상세 조회 성공
+
+```json
+{
+  "routines": [
+    {
+      "id": "uuid-1234", // 루틴 ID (string)
+      "title": "아침 스트레칭", // 루틴 제목 (string)
+      "emoji": null, // 이모지 (string | null)
+      "color": null, // 색상 (string | null)
+      "memo": null, // 루틴 메모 (string | null)
+      "importance": null, // 중요도 (RoutineImportance)
+      "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+      "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+      "recordType": null, // 기록 방식 (RoutineRecordType)
+      "status": null, // 상태 (RoutineStatus)
+      "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+      "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+      "targetCount": null, // 목표 횟수 (주/월) (number | null)
+      "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+      "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+      "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+      "sortOrder": 0, // 정렬 순서 (number)
+      "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+      "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+      "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+      "checkedLog": {
+        "note": null,
+        "textValue": null,
+        "numericValue": null,
+        "timeValue": null
+      }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+      "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+    }
+  ] // 소속 습관 목록 (RoutineDto[])
+}
+```
+
+#### 404 - 루틴 그룹을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴 그룹만 조회할 수 있습니다
+
+---
+
+### PATCH `routines/routine-groups/:id`
+
+**요약:** 루틴 그룹 수정
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Responses:**
+
+#### 200 - 루틴 그룹 수정 성공
+
+```json
+{
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴 그룹을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴 그룹만 수정할 수 있습니다
+
+---
+
+### DELETE `routines/routine-groups/:id`
+
+**요약:** 루틴 그룹 삭제 (soft delete, 소속 습관은 그룹 소속만 해제되고 유지)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 그룹 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 루틴 그룹을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴 그룹만 삭제할 수 있습니다
+
+---
+
+### GET `routines/me/badges`
+
+**요약:** 내가 전체 루틴에서 획득한 통산 배지 목록 조회
+
+**Responses:**
+
+#### 200 - 내 배지 목록 조회 성공
+
+```json
+{
+  "id": "", // 획득 기록 ID (string)
+  "badgeId": "", // 배지 ID (string)
+  "badge": {
+    "id": "", // 배지 ID (string)
+    "code": "GOAL_STREAK_7", // 배지 코드 (string)
+    "title": "7일 연속 달성", // 배지 제목 (string)
+    "description": null, // 배지 설명 (string | null)
+    "iconEmoji": null, // 아이콘 이모지 (string | null)
+    "criteriaType": null, // 판정 기준 타입 (BadgeCriteriaType)
+    "criteriaValue": 7 // 판정 기준값 (number)
+  }, // 배지 정보 (RoutineBadgeDto)
+  "earnedAt": "2025-01-01T00:00:00Z" // 획득 일시 (Date)
+}
+```
+
+---
+
+### GET `routines/groups/:groupId/members`
+
+**요약:** 그룹에 공유된 멤버별 루틴 + 오늘/이번주 달성 현황 조회
+
+**Path Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 그룹원 루틴 조회 성공
+
+```json
+{
+  "userId": "", // 사용자 ID (string)
+  "userName": "", // 사용자 이름 (string)
+  "routines": [
+    {
+      "id": "uuid-1234", // 루틴 ID (string)
+      "title": "아침 스트레칭", // 루틴 제목 (string)
+      "emoji": null, // 이모지 (string | null)
+      "color": null, // 색상 (string | null)
+      "memo": null, // 루틴 메모 (string | null)
+      "importance": null, // 중요도 (RoutineImportance)
+      "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+      "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+      "recordType": null, // 기록 방식 (RoutineRecordType)
+      "status": null, // 상태 (RoutineStatus)
+      "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+      "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+      "targetCount": null, // 목표 횟수 (주/월) (number | null)
+      "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+      "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+      "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+      "sortOrder": 0, // 정렬 순서 (number)
+      "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+      "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+      "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+      "checkedLog": {
+        "note": null,
+        "textValue": null,
+        "numericValue": null,
+        "timeValue": null
+      }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+      "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+      "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+      "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+    }
+  ] // 공유된 루틴 목록 (RoutineDto[])
+}
+```
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### GET `routines/groups/:groupId/leaderboard`
+
+**요약:** 그룹 랭킹보드 (공유된 루틴 기준 체크 횟수/달성률 순위)
+
+**Path Parameters:**
+
+- `groupId` (`string`)
+
+**Query Parameters:**
+
+- `period` (`LeaderboardPeriod`): 집계 기간 (가능한 값: week, month)
+- `metric` (`LeaderboardMetric`): 정렬 기준 (가능한 값: goalAchievementRate, goalStreakDays)
+
+**Responses:**
+
+#### 200 - 랭킹보드 조회 성공
+
+```json
+{
+  "groupId": "", // 그룹 ID (string)
+  "period": "", // 집계 기간 (string)
+  "metric": "", // 정렬 기준 (string)
+  "rankings": [
+    {
+      "rank": 0, // 순위 (number)
+      "userId": "", // 사용자 ID (string)
+      "userName": "", // 사용자 이름 (string)
+      "goalAchievedDays": 0, // 기간 내 일일 목표 달성일 수 (number)
+      "goalTotalDays": 0, // 기간 내 일일 목표 집계 대상일 수 (number)
+      "goalAchievementRate": 0, // 기간 내 일일 목표 달성률 (%) (number)
+      "currentStreakDays": 0 // 현재 연속 달성일 수 (number)
+    }
+  ] // 순위 목록 (LeaderboardEntryDto[])
+}
+```
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### GET `routines/groups/:groupId/challenges`
+
+**요약:** 그룹 챌린지 목록 조회
+
+**Path Parameters:**
+
+- `groupId` (`string`)
+
+**Responses:**
+
+#### 200 - 챌린지 목록 조회 성공
+
+```json
+{
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### POST `routines/groups/:groupId/challenges`
+
+**요약:** 그룹 챌린지 생성 (만든 사람이 자동 참가되지는 않음)
+
+**Path Parameters:**
+
+- `groupId` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "title": "이번 주 운동하기", // 챌린지 제목 (string)
+  "description": "", // 챌린지 설명 (string?)
+  "startDate": "2026-08-24", // 시작일 (YYYY-MM-DD) (string)
+  "endDate": "2026-08-30", // 종료일 (YYYY-MM-DD, startDate 이상) (string)
+  "targetCount": 3, // 기간 내 목표 체크 횟수 (1 이상) (number)
+  "reward": "진 사람이 치킨 쏘기" // 내기·벌칙 문구 (자유 텍스트) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 챌린지 생성 성공
+
+```json
+{
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### GET `routines/groups/:groupId/members/:userId`
+
+**요약:** 특정 그룹원의 공유 루틴 상세 조회
+
+**Path Parameters:**
+
+- `groupId` (`string`)
+- `userId` (`string`)
+
+**Responses:**
+
+#### 200 - 그룹원 루틴 상세 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### PATCH `routines/sort-order`
+
+**요약:** 루틴 순서 일괄 변경
+
+**Request Body:**
+
+```json
+{
+  "items": [
+    {
+      "id": "", // 루틴 ID (string)
+      "sortOrder": 0 // 정렬 순서 (number)
+    }
+  ] // 루틴 순서 목록 (RoutineSortOrderItemDto[])
+}
+```
+
+**Responses:**
+
+#### 200 - 순서 변경 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### PATCH `routines/daily-goal-inclusions`
+
+**요약:** 루틴별 일일 목표 포함 여부 일괄 변경
+
+**Request Body:**
+
+```json
+{
+  "items": [
+    {
+      "id": "", // 루틴 ID (string)
+      "includeInDailyGoal": false // 일일 목표 집계 포함 여부 (boolean)
+    }
+  ] // 루틴별 일일 목표 포함 여부 목록 (DailyGoalInclusionItemDto[])
+}
+```
+
+**Responses:**
+
+#### 200 - 일괄 변경 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+---
+
+### GET `routines/challenges/:id`
+
+**요약:** 챌린지 상세 조회 (참가자별 진행률 포함)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 챌린지 상세 조회 성공
+
+```json
+{
+  "participants": [
+    {
+      "userId": "", // 사용자 ID (string)
+      "userName": "", // 사용자 이름 (string)
+      "routineId": "", // 연결한 루틴 ID (string)
+      "routineTitle": "", // 연결한 루틴 제목 (string)
+      "routineEmoji": null, // 연결한 루틴 이모지 (string | null)
+      "checkedCount": 0, // 기간 내 체크 횟수 (number)
+      "achieved": false // 목표 달성 여부 (boolean)
+    }
+  ] // 참가자별 진행률 (RoutineChallengeParticipantDto[])
+}
+```
+
+#### 404 - 챌린지를 찾을 수 없습니다
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### PATCH `routines/challenges/:id`
+
+**요약:** 챌린지 수정 (만든 사람만)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Responses:**
+
+#### 200 - 챌린지 수정 성공
+
+```json
+{
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 챌린지를 찾을 수 없습니다
+
+#### 403 - 만든 사람만 수정할 수 있습니다
+
+---
+
+### DELETE `routines/challenges/:id`
+
+**요약:** 챌린지 삭제 (만든 사람만)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 챌린지 삭제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 챌린지를 찾을 수 없습니다
+
+#### 403 - 만든 사람만 삭제할 수 있습니다
+
+---
+
+### POST `routines/challenges/:id/join`
+
+**요약:** 챌린지 참가 (이미 참가 중이면 연결 습관 교체)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "routineId": "" // 연결할 본인 소유 루틴 ID (isPrivate=true인 습관은 연결 불가) (string)
+}
+```
+
+**Responses:**
+
+#### 200 - 챌린지 참가 성공
+
+```json
+{
+  "participants": [
+    {
+      "userId": "", // 사용자 ID (string)
+      "userName": "", // 사용자 이름 (string)
+      "routineId": "", // 연결한 루틴 ID (string)
+      "routineTitle": "", // 연결한 루틴 제목 (string)
+      "routineEmoji": null, // 연결한 루틴 이모지 (string | null)
+      "checkedCount": 0, // 기간 내 체크 횟수 (number)
+      "achieved": false // 목표 달성 여부 (boolean)
+    }
+  ] // 참가자별 진행률 (RoutineChallengeParticipantDto[])
+}
+```
+
+#### 404 - 챌린지 또는 루틴을 찾을 수 없습니다
+
+#### 403 - 그룹 멤버가 아니거나 본인 소유 루틴이 아닙니다
+
+---
+
+### DELETE `routines/challenges/:id/join`
+
+**요약:** 챌린지 참가 취소
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 참가 취소 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 참가 기록을 찾을 수 없습니다
+
+#### 403 - 그룹 멤버가 아닙니다
+
+---
+
+### GET `routines/:id`
+
+**요약:** 루틴 상세 조회 (본인 또는 공유 그룹원)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 상세 조회 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 루틴에 접근할 권한이 없습니다
+
+---
+
+### PATCH `routines/:id`
+
+**요약:** 루틴 수정
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "routineGroupId": null, // 소속시킬 루틴 그룹 ID (null 전달 시 그룹 소속 해제) (string | null?)
+  "categoryIds": "<String>" // 전체 카테고리 목록을 이 배열로 교체 (빈 배열 [] 전달 시 전체 해제). 미전달 시 기존 연결 유지 (string[]?)
+}
+```
+
+**Responses:**
+
+#### 200 - 루틴 수정 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴만 수정할 수 있습니다
+
+---
+
+### DELETE `routines/:id`
+
+**요약:** 루틴 종료 (soft delete, 체크 기록은 보존)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 루틴 종료 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴만 종료할 수 있습니다
+
+---
+
+### PATCH `routines/:id/pause`
+
+**요약:** 루틴 일시정지 (체크 불가, 스트릭은 끊기지 않음)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 일시정지 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴만 일시정지할 수 있습니다
+
+---
+
+### PATCH `routines/:id/resume`
+
+**요약:** 루틴 재개
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 재개 성공
+
+```json
+{
+  "id": "uuid-1234", // 루틴 ID (string)
+  "title": "아침 스트레칭", // 루틴 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "memo": null, // 루틴 메모 (string | null)
+  "importance": null, // 중요도 (RoutineImportance)
+  "timeFilter": null, // 시간대 분류 (RoutineTimeFilter | null)
+  "categoryIds": "<String>", // 소속 루틴 카테고리 ID 목록 (string[])
+  "recordType": null, // 기록 방식 (RoutineRecordType)
+  "status": null, // 상태 (RoutineStatus)
+  "frequencyType": null, // 반복 타입 (RoutineFrequencyType)
+  "weeklyMode": null, // 주 반복 세부 방식 (RoutineWeeklyMode | null)
+  "targetCount": null, // 목표 횟수 (주/월) (number | null)
+  "targetDays": "<Number>", // 반복 요일 목록 (0=일요일~6=토요일, FIXED_DAYS만 사용) (number[] | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "includeInDailyGoal": false, // 일일 목표 집계 포함 여부 (boolean)
+  "isPrivate": false, // 비공개 여부 (true면 공유 그룹의 다른 멤버에게 완전히 숨김) (boolean)
+  "checkedToday": false, // 조회 기준 날짜(쿼리 date, 미지정 시 오늘) 체크 여부 (boolean)
+  "checkedLog": {
+    "note": null, // 메모 (string | null)
+    "textValue": null, // 텍스트 기록 값 (string | null)
+    "numericValue": null, // 수치 기록 값 (number | null)
+    "timeValue": null // 시각 기록 값 (HH:mm) (string | null)
+  }, // 조회 기준 날짜의 실제 기록값 (체크 안 했으면 null, BOOLEAN 루틴은 값이 전부 null인 객체) (RoutineCheckedLogDto | null)
+  "routineGroupId": null, // 소속 루틴 그룹 ID (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 본인의 루틴만 재개할 수 있습니다
+
+---
+
+### POST `routines/:id/check`
+
+**요약:** 루틴 체크 (날짜 미지정 시 오늘)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "date": "", // 체크할 날짜 (YYYY-MM-DD, 미지정 시 오늘) (string?)
+  "note": "", // 메모 (string?)
+  "textValue": "", // 텍스트 기록 값 (recordType=TEXT인 루틴만 사용) (string?)
+  "numericValue": 0, // 수치 기록 값 (recordType=NUMERIC인 루틴만 사용) (number?)
+  "timeValue": "07:30" // 시각 기록 값 "HH:mm" (recordType=TIME인 루틴만 사용) (string?)
+}
+```
+
+**Responses:**
+
+#### 201 - 체크 성공
+
+```json
+{
+  "id": "", // 로그 ID (string)
+  "routineId": "", // 루틴 ID (string)
+  "checkedDate": "2025-01-01T00:00:00Z", // 체크한 날짜 (Date)
+  "note": null, // 메모 (string | null)
+  "textValue": null, // 텍스트 기록 값 (string | null)
+  "numericValue": null, // 수치 기록 값 (number | null)
+  "timeValue": null, // 시각 기록 값 (HH:mm) (string | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "newlyEarnedBadges": [
+    {
+      "id": "", // 획득 기록 ID (string)
+      "badgeId": "", // 배지 ID (string)
+      "badge": {
+        "id": "",
+        "code": "GOAL_STREAK_7",
+        "title": "7일 연속 달성",
+        "description": null,
+        "iconEmoji": null,
+        "criteriaType": null,
+        "criteriaValue": 7
+      }, // 배지 정보 (RoutineBadgeDto)
+      "earnedAt": "2025-01-01T00:00:00Z" // 획득 일시 (Date)
+    }
+  ] // 이번 체크로 새로 획득한 배지 목록 (UserRoutineBadgeDto[])
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+---
+
+### DELETE `routines/:id/check`
+
+**요약:** 루틴 체크 취소 (날짜 미지정 시 오늘)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Query Parameters:**
+
+- `date` (`string`) - Optional
+
+**Responses:**
+
+#### 200 - 체크 취소 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 체크 기록을 찾을 수 없습니다
+
+---
+
+### POST `routines/:id/categories`
+
+**요약:** 루틴에 카테고리 연결
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Request Body:**
+
+```json
+{
+  "categoryId": "" // 연결할 카테고리 ID (string)
+}
+```
+
+**Responses:**
+
+#### 201 - 연결 성공
+
+```json
+{
+  "id": "", // 연결 ID (string)
+  "routineId": "", // 루틴 ID (string)
+  "categoryId": "", // 카테고리 ID (string)
+  "categoryTitle": "", // 카테고리 제목 (string)
+  "createdAt": "2025-01-01T00:00:00Z" // 연결 생성일 (Date)
+}
+```
+
+#### 404 - 루틴 또는 카테고리를 찾을 수 없습니다
+
+#### 403 - 본인의 루틴만 카테고리를 연결할 수 있습니다
+
+---
+
+### DELETE `routines/:id/categories/:categoryId`
+
+**요약:** 루틴에서 카테고리 연결 해제
+
+**Path Parameters:**
+
+- `id` (`string`)
+- `categoryId` (`string`)
+
+**Responses:**
+
+#### 200 - 연결 해제 성공
+
+```json
+{
+  "message": "작업이 완료되었습니다" // string
+}
+```
+
+#### 404 - 연결 정보를 찾을 수 없습니다
+
+---
+
+### GET `routines/:id/categories`
+
+**요약:** 루틴에 연결된 카테고리 목록 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 연결된 카테고리 목록 조회 성공
+
+```json
+{
+  "id": "", // 연결 ID (string)
+  "routineId": "", // 루틴 ID (string)
+  "categoryId": "", // 카테고리 ID (string)
+  "categoryTitle": "", // 카테고리 제목 (string)
+  "createdAt": "2025-01-01T00:00:00Z" // 연결 생성일 (Date)
+}
+```
+
+#### 403 - 본인의 루틴만 조회할 수 있습니다
+
+---
+
+### GET `routines/:id/stats/heatmap`
+
+**요약:** 루틴 달력 히트맵 (날짜별 달성 여부)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Query Parameters:**
+
+- `from` (`string`): 조회 시작일 (YYYY-MM-DD)
+- `to` (`string`): 조회 종료일 (YYYY-MM-DD)
+
+**Responses:**
+
+#### 200 - 히트맵 조회 성공
+
+```json
+{
+  "routineId": "", // 루틴 ID (string)
+  "from": "", // 조회 시작일 (string)
+  "to": "", // 조회 종료일 (string)
+  "checkedDates": ["2026-01-02", "2026-01-03"] // 체크된 날짜 목록 (YYYY-MM-DD) (string[])
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 루틴에 접근할 권한이 없습니다
+
+---
+
+### GET `routines/:id/stats/streak`
+
+**요약:** 루틴 스트릭 조회 (현재/최장, 주 단위 + 일 단위)
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Responses:**
+
+#### 200 - 스트릭 조회 성공
+
+```json
+{
+  "routineId": "", // 루틴 ID (string)
+  "currentStreakWeeks": 0, // 현재 연속 달성 주 수 (목표 달성 기준). frequencyType=MONTHLY 루틴은 주 단위 연속 개념이 없어 0 (number)
+  "longestStreakWeeks": 0, // 최장 연속 달성 주 수. frequencyType=MONTHLY 루틴은 주 단위 연속 개념이 없어 0 (number)
+  "currentStreakDays": 0, // 현재 연속 체크 일수 (number)
+  "longestStreakDays": 0, // 최장 연속 체크 일수 (number)
+  "currentStreakMonths": 0, // 현재 연속 달성 개월 수 (frequencyType=MONTHLY 루틴 전용). MONTHLY가 아니면 0 (number)
+  "longestStreakMonths": 0, // 최장 연속 달성 개월 수 (frequencyType=MONTHLY 루틴 전용). MONTHLY가 아니면 0 (number)
+  "thisWeekProgress": {
+    "checked": 0, // 이번 주 체크 횟수 (number)
+    "target": 0 // 이번 주 목표 횟수 (number)
+  } // 이번 주 진행 상황 (ThisWeekProgressDto)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 루틴에 접근할 권한이 없습니다
+
+---
+
+### GET `routines/:id/stats/rate`
+
+**요약:** 루틴 기간별 달성률 조회
+
+**Path Parameters:**
+
+- `id` (`string`)
+
+**Query Parameters:**
+
+- `period` (`RoutineRatePeriod`): 기간 단위 (가능한 값: week, month, custom)
+- `from` (`string`) (Optional): period=custom일 때 시작일 (YYYY-MM-DD)
+- `to` (`string`) (Optional): period=custom일 때 종료일 (YYYY-MM-DD)
+
+**Responses:**
+
+#### 200 - 달성률 조회 성공
+
+```json
+{
+  "routineId": "", // 루틴 ID (string)
+  "period": "", // 기간 단위 (string)
+  "from": "", // 조회 시작일 (string)
+  "to": "", // 조회 종료일 (string)
+  "targetCount": 0, // 주 목표 횟수 (number)
+  "totalChecked": 0, // 기간 내 실제 체크 횟수 (number)
+  "expectedCount": 0, // 기간 내 기대 체크 횟수 (완전한 주 기준) (number)
+  "achievementRate": 76 // 달성률 (%) (number)
+}
+```
+
+#### 404 - 루틴을 찾을 수 없습니다
+
+#### 403 - 루틴에 접근할 권한이 없습니다
 
 ---
 
@@ -8758,15 +10470,15 @@ R2에 파일이 존재하는지 확인합니다.
 
 ### POST `subscription/verify`
 
-**요약:** 구독 업데이트 (인앱 결제 후 tier/토큰 저장)
+**요약:** 인앱 구매 검증 (Google Play / App Store 서버 검증 후 tier 반영)
 
 **Request Body:**
 
 ```json
 {
-  "tier": null, // SubscriptionTier
-  "expiresAt": "2026-12-31T23:59:59.000Z", // 구독 만료일 (ISO 8601) (string?)
-  "purchaseToken": "AEuhp4..." // 인앱 결제 토큰 (Apple receipt / Google purchase token) (string?)
+  "platform": null, // SubscriptionPlatform
+  "purchaseToken": "", // Google Play 구매 토큰 (platform=ANDROID일 때 필수) (string?)
+  "signedTransaction": "" // App Store signedTransaction (JWS, platform=IOS일 때 필수) (string?)
 }
 ```
 
@@ -9196,9 +10908,9 @@ R2에 파일이 존재하는지 확인합니다.
 - `groupIds` (`string[]`) (Optional): 그룹 ID 목록 (콤마로 구분)
 - `includePersonal` (`boolean`) (Optional): 개인 일정 포함 여부 (기본값: true)
 - `categoryIds` (`string[]`) (Optional): 카테고리 ID 목록 (콤마로 구분)
-- `type` (`TaskType`) (Optional): Task 타입
-- `priority` (`TaskPriority`) (Optional): 우선순위
-- `status` (`TaskStatus`) (Optional): Task 상태
+- `type` (`TaskType`) (Optional): Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY)
+- `priority` (`TaskPriority`) (Optional): 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT)
+- `status` (`TaskStatus`) (Optional): Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED)
 - `search` (`string`) (Optional): 검색어 (제목, 설명, 장소)
 - `anniversaryId` (`string`) (Optional): 기념일 ID (해당 기념일의 milestone Task만 조회)
 - `startDate` (`string`) (Optional): 시작 날짜
@@ -9225,8 +10937,8 @@ R2에 파일이 존재하는지 확인합니다.
         "lat": 37,
         "lng": 127
       }, // 장소 (LocationDto | null)
-      "type": null, // Task 타입 (TaskType)
-      "priority": null, // 우선순위 (TaskPriority)
+      "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+      "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
       "category": {
         "id": "uuid",
         "userId": "uuid",
@@ -9241,7 +10953,7 @@ R2에 파일이 존재하는지 확인합니다.
       "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
       "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
       "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-      "status": "PENDING", // Task 상태 (TaskStatus)
+      "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
       "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
       "recurring": {
         "id": "uuid",
@@ -9303,7 +11015,7 @@ R2에 파일이 존재하는지 확인합니다.
     {
       "id": "uuid", // ID (string)
       "userId": "uuid", // 사용자 ID (string)
-      "action": null, // 변경 유형 (TaskHistoryAction)
+      "action": null, // 변경 유형 (가능한 값: CREATE, UPDATE, DELETE, COMPLETE, SKIP) (TaskHistoryAction)
       "changes": null, // 변경 내용 (any | null)
       "createdAt": "2025-01-01T00:00:00Z" // 변경 시간 (Date)
     }
@@ -9333,15 +11045,15 @@ R2에 파일이 존재하는지 확인합니다.
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto?)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority?)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority?)
   "categoryId": "uuid", // 카테고리 ID (string?)
   "groupId": "uuid", // 그룹 ID (그룹 Task 생성 시) (string?)
   "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "recurring": {
-    "ruleType": null, // 반복 타입 (RecurringRuleType)
+    "ruleType": null, // 반복 타입 (가능한 값: DAILY, WEEKLY, MONTHLY, YEARLY) (RecurringRuleType)
     "ruleConfig": {
       "interval": 1,
       "endType": null,
@@ -9361,14 +11073,14 @@ R2에 파일이 존재하는지 확인합니다.
       "skipHolidays": false,
       "skipBehavior": null
     }, // 반복 설정 (RuleConfigDto)
-    "generationType": null, // 생성 방식 (RecurringGenerationType)
+    "generationType": null, // 생성 방식 (가능한 값: AUTO_SCHEDULER, AFTER_COMPLETION) (RecurringGenerationType)
     "skipWeekends": false, // 주말 제외 여부 (boolean?)
     "skipHolidays": false, // 공휴일 제외 여부 (boolean?)
     "skipBehavior": null // 주말/공휴일 해당 시 동작 방식 (SKIP: 건너뜀, MOVE_TO_NEXT_WEEKDAY: 다음 평일로 이동) (SkipBehavior?)
   }, // 반복 규칙 (RecurringRuleDto?)
   "reminders": [
     {
-      "reminderType": null, // 알림 타입 (TaskReminderType)
+      "reminderType": null, // 알림 타입 (가능한 값: BEFORE_START, BEFORE_DUE) (TaskReminderType)
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
   ], // 알림 목록 (TaskReminderDto[]?)
@@ -9396,8 +11108,8 @@ R2에 파일이 존재하는지 확인합니다.
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -9412,7 +11124,7 @@ R2에 파일이 존재하는지 확인합니다.
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -9471,15 +11183,15 @@ R2에 파일이 존재하는지 확인합니다.
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto?)
   "categoryId": "uuid", // 카테고리 ID (string?)
-  "type": null, // Task 타입 (TaskType?)
-  "priority": null, // 우선순위 (TaskPriority?)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType?)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority?)
   "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "participantIds": ["uuid-1", "uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
   "reminders": [
     {
-      "reminderType": null, // 알림 타입 (TaskReminderType)
+      "reminderType": null, // 알림 타입 (가능한 값: BEFORE_START, BEFORE_DUE) (TaskReminderType)
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
   ], // 알림 목록 (전달 시 기존 알림 전체 교체) (TaskReminderDto[]?)
@@ -9506,8 +11218,8 @@ R2에 파일이 존재하는지 확인합니다.
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -9522,7 +11234,7 @@ R2에 파일이 존재하는지 확인합니다.
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -9572,7 +11284,7 @@ R2에 파일이 존재하는지 확인합니다.
 
 ```json
 {
-  "status": "COMPLETED" // Task 상태 (TaskStatus)
+  "status": "COMPLETED" // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
 }
 ```
 
@@ -9593,8 +11305,8 @@ R2에 파일이 존재하는지 확인합니다.
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -9609,7 +11321,7 @@ R2에 파일이 존재하는지 확인합니다.
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -9754,7 +11466,7 @@ R2에 파일이 존재하는지 확인합니다.
 
 **Query Parameters:**
 
-- `status` (`VoteStatusFilter`) (Optional): 투표 상태 필터
+- `status` (`VoteStatusFilter`) (Optional): 투표 상태 필터 (가능한 값: ALL, ONGOING, CLOSED)
 - `page` (`number`) (Optional): 페이지
 - `limit` (`number`) (Optional): 페이지 크기
 
@@ -10114,10 +11826,10 @@ GPS 좌표(위도/경도)로 향후 3일간 시간별 날씨 예보를 조회합
 
 ### POST `webhook/apple`
 
-**요약:** Apple App Store 구독 Webhook (미구현)
+**요약:** Apple App Store 구독 Webhook
 
 **설명:**
-스토어 등록 후 구현 예정. Apple App Store Server Notifications V2 수신.
+Apple App Store Server Notifications V2 수신.
 
 **Responses:**
 
@@ -10133,10 +11845,10 @@ GPS 좌표(위도/경도)로 향후 3일간 시간별 날씨 예보를 조회합
 
 ### POST `webhook/google`
 
-**요약:** Google Play 구독 Webhook (미구현)
+**요약:** Google Play 구독 Webhook
 
 **설명:**
-스토어 등록 후 구현 예정. Google Play Real-time Developer Notifications 수신.
+Google Play Real-time Developer Notifications 수신.
 
 **Responses:**
 

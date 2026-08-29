@@ -16,7 +16,7 @@
 
 - `page` (`number`) (Optional): 페이지 번호
 - `limit` (`number`) (Optional): 페이지 크기
-- `category` (`AnnouncementCategory`) (Optional): 카테고리 필터
+- `category` (`AnnouncementCategory`) (Optional): 카테고리 필터 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE)
 - `pinnedOnly` (`boolean`) (Optional): 고정 공지만 조회
 
 **Responses:**
@@ -30,7 +30,7 @@
       "id": "uuid", // 공지사항 ID (string)
       "title": "시스템 점검 안내", // 제목 (string)
       "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-      "category": null, // 카테고리 (AnnouncementCategory)
+      "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
       "isPinned": false, // 고정 여부 (boolean)
       "author": {
         "id": "uuid",
@@ -65,7 +65,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -96,7 +96,7 @@
 {
   "title": "v2.0 업데이트 안내", // 공지사항 제목 (string)
   "content": "새로운 기능이 추가되었습니다...", // 공지사항 내용 (Markdown 지원) (string)
-  "category": null, // 공지사항 카테고리 (AnnouncementCategory)
+  "category": null, // 공지사항 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 상단 고정 여부 (boolean?)
   "attachments": [
     {
@@ -117,7 +117,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -159,7 +159,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)
@@ -231,7 +231,7 @@
   "id": "uuid", // 공지사항 ID (string)
   "title": "시스템 점검 안내", // 제목 (string)
   "content": "2025년 1월 1일 오전 2시~4시 시스템 점검 예정입니다.", // 내용 (string)
-  "category": null, // 카테고리 (AnnouncementCategory)
+  "category": null, // 카테고리 (가능한 값: ANNOUNCEMENT, EVENT, UPDATE) (AnnouncementCategory)
   "isPinned": false, // 고정 여부 (boolean)
   "author": {
     "id": "uuid", // 작성자 ID (string)

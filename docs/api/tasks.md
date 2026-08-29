@@ -394,9 +394,9 @@
 - `groupIds` (`string[]`) (Optional): 그룹 ID 목록 (콤마로 구분)
 - `includePersonal` (`boolean`) (Optional): 개인 일정 포함 여부 (기본값: true)
 - `categoryIds` (`string[]`) (Optional): 카테고리 ID 목록 (콤마로 구분)
-- `type` (`TaskType`) (Optional): Task 타입
-- `priority` (`TaskPriority`) (Optional): 우선순위
-- `status` (`TaskStatus`) (Optional): Task 상태
+- `type` (`TaskType`) (Optional): Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY)
+- `priority` (`TaskPriority`) (Optional): 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT)
+- `status` (`TaskStatus`) (Optional): Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED)
 - `search` (`string`) (Optional): 검색어 (제목, 설명, 장소)
 - `anniversaryId` (`string`) (Optional): 기념일 ID (해당 기념일의 milestone Task만 조회)
 - `startDate` (`string`) (Optional): 시작 날짜
@@ -423,8 +423,8 @@
         "lat": 37,
         "lng": 127
       }, // 장소 (LocationDto | null)
-      "type": null, // Task 타입 (TaskType)
-      "priority": null, // 우선순위 (TaskPriority)
+      "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+      "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
       "category": {
         "id": "uuid",
         "userId": "uuid",
@@ -439,7 +439,7 @@
       "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
       "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
       "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-      "status": "PENDING", // Task 상태 (TaskStatus)
+      "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
       "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
       "recurring": {
         "id": "uuid",
@@ -501,7 +501,7 @@
     {
       "id": "uuid", // ID (string)
       "userId": "uuid", // 사용자 ID (string)
-      "action": null, // 변경 유형 (TaskHistoryAction)
+      "action": null, // 변경 유형 (가능한 값: CREATE, UPDATE, DELETE, COMPLETE, SKIP) (TaskHistoryAction)
       "changes": null, // 변경 내용 (any | null)
       "createdAt": "2025-01-01T00:00:00Z" // 변경 시간 (Date)
     }
@@ -531,15 +531,15 @@
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto?)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority?)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority?)
   "categoryId": "uuid", // 카테고리 ID (string?)
   "groupId": "uuid", // 그룹 ID (그룹 Task 생성 시) (string?)
   "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "recurring": {
-    "ruleType": null, // 반복 타입 (RecurringRuleType)
+    "ruleType": null, // 반복 타입 (가능한 값: DAILY, WEEKLY, MONTHLY, YEARLY) (RecurringRuleType)
     "ruleConfig": {
       "interval": 1,
       "endType": null,
@@ -559,14 +559,14 @@
       "skipHolidays": false,
       "skipBehavior": null
     }, // 반복 설정 (RuleConfigDto)
-    "generationType": null, // 생성 방식 (RecurringGenerationType)
+    "generationType": null, // 생성 방식 (가능한 값: AUTO_SCHEDULER, AFTER_COMPLETION) (RecurringGenerationType)
     "skipWeekends": false, // 주말 제외 여부 (boolean?)
     "skipHolidays": false, // 공휴일 제외 여부 (boolean?)
     "skipBehavior": null // 주말/공휴일 해당 시 동작 방식 (SKIP: 건너뜀, MOVE_TO_NEXT_WEEKDAY: 다음 평일로 이동) (SkipBehavior?)
   }, // 반복 규칙 (RecurringRuleDto?)
   "reminders": [
     {
-      "reminderType": null, // 알림 타입 (TaskReminderType)
+      "reminderType": null, // 알림 타입 (가능한 값: BEFORE_START, BEFORE_DUE) (TaskReminderType)
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
   ], // 알림 목록 (TaskReminderDto[]?)
@@ -594,8 +594,8 @@
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -610,7 +610,7 @@
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -669,15 +669,15 @@
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto?)
   "categoryId": "uuid", // 카테고리 ID (string?)
-  "type": null, // Task 타입 (TaskType?)
-  "priority": null, // 우선순위 (TaskPriority?)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType?)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority?)
   "allDay": false, // 종일 여부 (true이면 시간 정보 무시) (boolean?)
   "scheduledAt": "2025-12-30T09:00:00Z", // 수행 시작 날짜 (Date?)
   "dueAt": "2025-12-30T18:00:00Z", // 마감 날짜 (Date?)
   "participantIds": ["uuid-1", "uuid-2"], // 참여자 ID 목록 (그룹 Task에서만 사용 가능) (string[]?)
   "reminders": [
     {
-      "reminderType": null, // 알림 타입 (TaskReminderType)
+      "reminderType": null, // 알림 타입 (가능한 값: BEFORE_START, BEFORE_DUE) (TaskReminderType)
       "offsetMinutes": 0 // 오프셋 (분, 음수 가능) (number)
     }
   ], // 알림 목록 (전달 시 기존 알림 전체 교체) (TaskReminderDto[]?)
@@ -704,8 +704,8 @@
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -720,7 +720,7 @@
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)
@@ -770,7 +770,7 @@
 
 ```json
 {
-  "status": "COMPLETED" // Task 상태 (TaskStatus)
+  "status": "COMPLETED" // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
 }
 ```
 
@@ -791,8 +791,8 @@
     "lat": 37, // 위도 (number?)
     "lng": 127 // 경도 (number?)
   }, // 장소 (LocationDto | null)
-  "type": null, // Task 타입 (TaskType)
-  "priority": null, // 우선순위 (TaskPriority)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
   "category": {
     "id": "uuid", // ID (string)
     "userId": "uuid", // 사용자 ID (string)
@@ -807,7 +807,7 @@
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
   "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
-  "status": "PENDING", // Task 상태 (TaskStatus)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
     "id": "uuid", // ID (string)

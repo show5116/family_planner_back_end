@@ -32,6 +32,10 @@ import {
       useExisting: IosSubscriptionVerifier,
     },
   ],
-  exports: [SubscriptionService, AndroidSubscriptionVerifier, IosSubscriptionVerifier],
+  exports: [
+    SubscriptionService,
+    AndroidSubscriptionVerifier,
+    IosSubscriptionVerifier,
+  ],
 })
 export class SubscriptionModule {}

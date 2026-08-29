@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { SubscriptionPlatform } from '@prisma/client';
+import { SubscriptionPlatform, SubscriptionStatus } from '@prisma/client';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { SubscriptionService } from './subscription.service';
@@ -10,8 +10,17 @@ import {
   SubscriptionVerifier,
 } from './verifiers/subscription-verifier.interface';
 
+/** 상태 변화를 놓치면 안 되는 구독 (유예·보류는 결제 재성공 시 복구되어야 한다) */
+const RECONCILE_TARGET_STATUSES: SubscriptionStatus[] = [
+  SubscriptionStatus.active,
+  SubscriptionStatus.grace_period,
+  SubscriptionStatus.canceled,
+  SubscriptionStatus.on_hold,
+  SubscriptionStatus.paused,
+];
+
 /**
- * 웹훅 유실에 대비한 안전망. 매일 새벽 만료 임박/만료된 활성 구독을 재검증한다.
+ * 웹훅 유실에 대비한 안전망. 매일 새벽 만료 임박·만료된 구독을 스토어에서 재검증한다.
  */
 @Injectable()
 export class SubscriptionReconcileScheduler {
@@ -28,13 +37,13 @@ export class SubscriptionReconcileScheduler {
 
   @Cron('0 3 * * *')
   async reconcileExpiringSubscriptions() {
-    if (!isSchedulerEnabled('')) return;
+    if (!isSchedulerEnabled('subscription')) return;
 
     const threshold = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const targets = await this.prisma.subscription.findMany({
       where: {
-        status: { in: ['active', 'grace_period'] },
+        status: { in: RECONCILE_TARGET_STATUSES },
         OR: [{ expiresAt: null }, { expiresAt: { lte: threshold } }],
       },
       select: {
@@ -48,6 +57,8 @@ export class SubscriptionReconcileScheduler {
 
     this.logger.log(`구독 재검증 대상 ${targets.length}건`);
 
+    let failed = 0;
+
     for (const target of targets) {
       const verifier =
         target.platform === SubscriptionPlatform.ANDROID
@@ -55,17 +66,24 @@ export class SubscriptionReconcileScheduler {
           : this.iosVerifier;
 
       try {
-        const verified = await verifier.verify(target.originalTransactionId);
+        const verified = await verifier.verifyByOriginalTransactionId(
+          target.originalTransactionId,
+        );
         await this.subscriptionService.applyVerifiedPurchase(
           target.userId,
           verified,
           { eventType: 'RECONCILE', rawPayload: {} },
         );
       } catch (error) {
+        failed++;
         this.logger.warn(
           `구독 재검증 실패 (userId=${target.userId}): ${error.message}`,
         );
       }
     }
+
+    this.logger.log(
+      `구독 재검증 완료 (성공 ${targets.length - failed}건, 실패 ${failed}건)`,
+    );
   }
 }

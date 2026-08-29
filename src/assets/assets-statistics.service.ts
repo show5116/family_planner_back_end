@@ -7,6 +7,7 @@ import {
   TrendQueryDto,
 } from './dto/assets-query.dto';
 import { AccountService } from './account.service';
+import { thisMonthStartInKst } from '@/common/utils/date-kst.util';
 
 type TrendRecord = {
   accountId: string;
@@ -397,9 +398,8 @@ export class AssetsStatisticsService {
       const startBase =
         rangeStart ??
         new Date(Math.min(...records.map((r) => r.recordDate.getTime())));
-      const now = new Date();
       const endBase = rangeStart
-        ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+        ? thisMonthStartInKst()
         : records.length > 0
           ? new Date(Math.max(...records.map((r) => r.recordDate.getTime())))
           : startBase;

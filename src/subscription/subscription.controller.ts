@@ -4,7 +4,11 @@ import { SubscriptionService } from './subscription.service';
 import { VerifyPurchaseDto } from './dto/verify-purchase.dto';
 import { SubscriptionStatusDto } from './dto/subscription-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
-import { ApiSuccess } from '@/common/decorators/api-responses.decorator';
+import {
+  ApiServiceUnavailable,
+  ApiSuccess,
+  ApiUnprocessable,
+} from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('Subscription')
 @ApiCommonAuthResponses()
@@ -24,6 +28,12 @@ export class SubscriptionController {
     summary: '인앱 구매 검증 (Google Play / App Store 서버 검증 후 tier 반영)',
   })
   @ApiSuccess(SubscriptionStatusDto)
+  @ApiUnprocessable(
+    '영수증이 무효하거나 이미 사용됨 (재시도해도 동일하므로 completePurchase 호출 금지)',
+  )
+  @ApiServiceUnavailable(
+    '스토어 검증 서버 일시 장애 (네트워크 오류로 처리 후 재시도 가능)',
+  )
   verifyPurchase(
     @Request() req,
     @Body() dto: VerifyPurchaseDto,

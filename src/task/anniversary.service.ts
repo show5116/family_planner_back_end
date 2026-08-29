@@ -10,6 +10,7 @@ import {
 } from './dto/create-anniversary.dto';
 import { UpdateAnniversaryDto } from './dto/update-anniversary.dto';
 import { AnniversaryOffsetType } from './enums';
+import { todayInKst } from '@/common/utils/date-kst.util';
 
 interface MilestoneSpec {
   offsetDays: number;
@@ -36,7 +37,7 @@ export class AnniversaryService {
       orderBy: { date: 'asc' },
     });
 
-    const today = this.todayUtc();
+    const today = todayInKst();
     return anniversaries.map((a) => this.withDaysSince(a, today));
   }
 
@@ -51,7 +52,7 @@ export class AnniversaryService {
 
     await this.assertGroupMember(userId, anniversary.groupId);
 
-    return this.withDaysSince(anniversary, this.todayUtc());
+    return this.withDaysSince(anniversary, todayInKst());
   }
 
   /**
@@ -84,7 +85,7 @@ export class AnniversaryService {
       config,
     );
 
-    return this.withDaysSince(anniversary, this.todayUtc());
+    return this.withDaysSince(anniversary, todayInKst());
   }
 
   /**
@@ -144,7 +145,7 @@ export class AnniversaryService {
       );
     }
 
-    return this.withDaysSince(updated, this.todayUtc());
+    return this.withDaysSince(updated, todayInKst());
   }
 
   /**
@@ -233,7 +234,7 @@ export class AnniversaryService {
     baseDate: Date,
     config: MilestoneConfigDto | null,
   ) {
-    const today = this.todayUtc();
+    const today = todayInKst();
     const cutoff = new Date(today);
     cutoff.setDate(cutoff.getDate() + this.PREGENERATE_DAYS);
 
@@ -361,7 +362,7 @@ export class AnniversaryService {
    * 미래 milestone Task 소프트 삭제 (milestoneConfig 변경 시)
    */
   private async deleteFutureMilestoneTasks(anniversaryId: string) {
-    const today = this.todayUtc();
+    const today = todayInKst();
     await this.prisma.task.updateMany({
       where: {
         anniversaryId,
@@ -427,13 +428,6 @@ export class AnniversaryService {
     const diffMs = today.getTime() - anniversary.date.getTime();
     const daysSince = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     return { ...anniversary, daysSince };
-  }
-
-  private todayUtc(): Date {
-    const now = new Date();
-    return new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
   }
 
   private async assertGroupMember(userId: string, groupId: string) {

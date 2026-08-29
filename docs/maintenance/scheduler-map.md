@@ -95,7 +95,7 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `runAutoDeposit` | 매일 00:10 (`10 0 * * *`) | 자동 저축 납입 처리 및 목표 달성 알림 |
+| `runAutoDeposit` | 매일 00:10 UTC (KST 09:10) (`10 0 * * *`) | 자동 저축 납입 처리 및 목표 달성 알림 |
 
 ---
 
@@ -105,9 +105,9 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `dispatchAllowance` | 매일 자정 (`0 0 * * *`) | 용돈 지급일인 자녀에게 포인트 지급 |
-| `notifyNegotiationDate` | 매일 자정 (`0 0 * * *`) | 용돈 협상일 알림 발송 |
-| `matureSavingsPlans` | 매일 자정 (`0 0 * * *`) | 만기된 저축 플랜 처리 |
+| `dispatchAllowance` | 매일 00:00 UTC (KST 09:00) (`0 0 * * *`) | 용돈 지급일인 자녀에게 포인트 지급 |
+| `notifyNegotiationDate` | 매일 00:00 UTC (KST 09:00) (`0 0 * * *`) | 용돈 협상일 알림 발송 |
+| `matureSavingsPlans` | 매일 00:00 UTC (KST 09:00) (`0 0 * * *`) | 만기된 저축 플랜 처리 |
 
 ---
 
@@ -117,8 +117,8 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `autoGenerateRecurringExpenses` | 매일 00:05 (`5 0 * * *`) | 고정비용 자동 복사 |
-| `autoGenerateBudgetsFromTemplates` | 매월 1일 00:10 (`10 0 1 * *`) | 예산 템플릿으로 월별 예산 자동 생성 |
+| `autoGenerateRecurringExpenses` | 매일 00:05 KST (`5 0 * * *`) | 고정비용 자동 복사 |
+| `autoGenerateBudgetsFromTemplates` | 매월 1일 00:10 KST (`10 0 1 * *`) | 예산 템플릿으로 월별 예산 자동 생성 |
 
 ---
 
@@ -128,7 +128,19 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `generateRecurringTasks` | 매일 자정 (`EVERY_DAY_AT_MIDNIGHT`) | 반복 규칙 기반 일정 자동 생성 |
+| `generateRecurringTasks` | 매일 00:00 UTC (KST 09:00) (`EVERY_DAY_AT_MIDNIGHT`) | 반복 규칙 기반 일정 자동 생성 |
+| `extendMilestoneTasks` | 매일 01:00 UTC (KST 10:00) (`0 1 * * *`) | 기념일 milestone Task 2년 범위 연장 |
+
+---
+
+### `routine` — 루틴 리마인더
+
+파일: [src/routine/routine-reminder.scheduler.ts](../../src/routine/routine-reminder.scheduler.ts)
+
+| 메서드 | 주기 | 설명 |
+|--------|------|------|
+| `sendDailyReminders` | 매 정시 (`0 * * * *`, KST) | `routineReminderHour` 설정된 유저 중 오늘 미체크 루틴 있으면 발송 |
+| `sendWeeklySummary` | 매주 일요일 20:00 KST (`0 20 * * 0`) | 이번 주 평균 달성률 요약 발송 |
 
 ---
 
@@ -139,6 +151,16 @@
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
 | `autoResolveOldAnsweredQuestions` | 매일 자정 (`EVERY_DAY_AT_MIDNIGHT`) | ANSWERED 상태 1주일 경과 시 RESOLVED로 자동 전환 |
+
+---
+
+### `subscription` — 인앱 구독 재검증
+
+파일: [src/subscription/subscription-reconcile.scheduler.ts](../../src/subscription/subscription-reconcile.scheduler.ts)
+
+| 메서드 | 주기 | 설명 |
+|--------|------|------|
+| `reconcileExpiringSubscriptions` | 매일 새벽 3시 (`0 3 * * *`) | 만료 임박·유예·보류 구독을 스토어에서 재검증 (웹훅 유실 대비 안전망) |
 
 ---
 
