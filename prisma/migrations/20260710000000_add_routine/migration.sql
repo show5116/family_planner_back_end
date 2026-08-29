@@ -20,7 +20,7 @@ CREATE TABLE `routines` (
     INDEX `routines_userId_sortOrder_idx`(`userId`, `sortOrder`),
     INDEX `routines_deletedAt_idx`(`deletedAt`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `routine_logs` (
@@ -35,7 +35,7 @@ CREATE TABLE `routine_logs` (
     INDEX `routine_logs_userId_checkedDate_idx`(`userId`, `checkedDate`),
     UNIQUE INDEX `routine_logs_routineId_checkedDate_key`(`routineId`, `checkedDate`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `routine_shares` (
@@ -47,7 +47,7 @@ CREATE TABLE `routine_shares` (
     INDEX `routine_shares_groupId_idx`(`groupId`),
     UNIQUE INDEX `routine_shares_routineId_groupId_key`(`routineId`, `groupId`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
 ALTER TABLE `routines` ADD CONSTRAINT `routines_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

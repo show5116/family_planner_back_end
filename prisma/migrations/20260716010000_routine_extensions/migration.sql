@@ -12,7 +12,7 @@ CREATE TABLE `routine_categories` (
 
     INDEX `routine_categories_userId_deletedAt_idx`(`userId`, `deletedAt`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `routine_pauses` (
@@ -24,7 +24,7 @@ CREATE TABLE `routine_pauses` (
 
     INDEX `routine_pauses_routineId_pausedFrom_idx`(`routineId`, `pausedFrom`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AlterTable: routines에 신규 컬럼 추가 (전부 nullable 또는 기본값 있음 - 백필 안전)
 ALTER TABLE `routines`

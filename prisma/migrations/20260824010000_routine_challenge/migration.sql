@@ -15,7 +15,7 @@ CREATE TABLE `routine_challenges` (
 
   PRIMARY KEY (`id`),
   INDEX `routine_challenges_groupId_idx`(`groupId`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE `routine_challenge_participants` (
   `id`          VARCHAR(191) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE `routine_challenge_participants` (
   PRIMARY KEY (`id`),
   UNIQUE INDEX `routine_challenge_participants_challengeId_userId_key`(`challengeId`, `userId`),
   INDEX `routine_challenge_participants_challengeId_idx`(`challengeId`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ALTER TABLE `routine_challenges`
   ADD CONSTRAINT `routine_challenges_groupId_fkey`

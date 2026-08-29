@@ -8,7 +8,7 @@ CREATE TABLE `routine_category_links` (
     INDEX `routine_category_links_categoryId_idx`(`categoryId`),
     UNIQUE INDEX `routine_category_links_routineId_categoryId_key`(`routineId`, `categoryId`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 기존 단일 categoryId 값을 조인 테이블 행으로 백필 (컬럼 드롭 전에 실행)
 INSERT INTO `routine_category_links` (`id`, `routineId`, `categoryId`, `createdAt`)

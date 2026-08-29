@@ -16,7 +16,7 @@ CREATE TABLE `routine_badges` (
     INDEX `routine_badges_criteriaType_idx`(`criteriaType`),
     INDEX `routine_badges_isActive_sortOrder_idx`(`isActive`, `sortOrder`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `user_routine_badges` (
@@ -31,7 +31,7 @@ CREATE TABLE `user_routine_badges` (
     INDEX `user_routine_badges_routineId_idx`(`routineId`),
     UNIQUE INDEX `user_routine_badges_userId_badgeId_routineId_key`(`userId`, `badgeId`, `routineId`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4;
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
 ALTER TABLE `user_routine_badges` ADD CONSTRAINT `user_routine_badges_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
