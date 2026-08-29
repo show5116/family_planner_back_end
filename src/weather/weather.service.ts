@@ -11,6 +11,7 @@ import {
   ForecastResponseDto,
 } from '@/weather/dto/forecast-response.dto';
 import { RedisService } from '@/redis/redis.service';
+import { describeOutboundRequest } from '@/common/utils/outbound-request.util';
 
 // 날씨 캐시 TTL: 1시간 (기상청 초단기실황 발표 주기)
 const WEATHER_CACHE_TTL = 60 * 60;
@@ -297,7 +298,7 @@ export class WeatherService {
       const status = error?.response?.status;
       const detail = error?.response?.data ?? error?.message;
       this.logger.error(
-        `날씨 API 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
+        `날씨 API 호출 실패 [${status}] ${describeOutboundRequest(error)}: ${JSON.stringify(detail)}`,
       );
       const stale = await this.redisService.get<WeatherRawCache>(
         `weather:stale:${sido}`,
@@ -358,7 +359,7 @@ export class WeatherService {
       const status = error?.response?.status;
       const detail = error?.response?.data ?? error?.message;
       this.logger.error(
-        `단기예보 API 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
+        `단기예보 API 호출 실패 [${status}] ${describeOutboundRequest(error)}: ${JSON.stringify(detail)}`,
       );
       const stale = await this.redisService.get<ForecastRawCache>(
         `forecast:stale:${sido}`,
@@ -544,7 +545,9 @@ export class WeatherService {
       await this.redisService.set(`air:stale:${sidoKey}`, result);
       return result;
     } catch (error) {
-      this.logger.warn(`미세먼지 API 호출 실패: ${error?.message}`);
+      this.logger.warn(
+        `미세먼지 API 호출 실패 ${describeOutboundRequest(error)}: ${error?.message}`,
+      );
       const stale = await this.redisService.get<{
         pm10: number | null;
         pm25: number | null;

@@ -3,6 +3,7 @@ import { Injectable, BadGatewayException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { RedisService } from '@/redis/redis.service';
+import { describeOutboundRequest } from '@/common/utils/outbound-request.util';
 import { HolidayQueryDto } from '@/task/dto/holiday-query.dto';
 import {
   HolidayDto,
@@ -138,7 +139,7 @@ export class HolidayService {
       const status = error?.response?.status;
       const detail = error?.response?.data ?? error?.message;
       this.logger.error(
-        `공휴일 API 호출 실패 [${status}]: ${JSON.stringify(detail)}`,
+        `공휴일 API 호출 실패 [${status}] ${describeOutboundRequest(error)}: ${JSON.stringify(detail)}`,
       );
       throw new BadGatewayException('task.errors.holiday_fetch_failed');
     }
