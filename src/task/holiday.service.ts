@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, BadGatewayException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { RedisService } from '@/redis/redis.service';
@@ -96,8 +96,8 @@ export class HolidayService {
 
       const header = data.response.header;
       if (header.resultCode !== '00') {
-        this.logger.error(`공휴일 API 오류: ${header.resultMsg}`);
-        throw new BadGatewayException('task.errors.holiday_fetch_failed');
+        // throw로 빠져나가면 아래 catch의 폴백을 타게 된다
+        throw new Error(`공휴일 API 오류: ${header.resultMsg}`);
       }
 
       const body = data.response.body;
@@ -124,24 +124,56 @@ export class HolidayService {
         }
       }
 
-      const specialDays: SpecialDayDto[] = SPECIAL_DAYS.filter(
-        (s) => s.month === month,
-      ).map((s) => ({
-        date: `${year}-${String(s.month).padStart(2, '0')}-${String(s.day).padStart(2, '0')}`,
-        name: s.name,
-      }));
-
-      const result: HolidayListDto = { year, month, holidays, specialDays };
+      const result: HolidayListDto = {
+        year,
+        month,
+        holidays,
+        specialDays: this.buildSpecialDays(year, month),
+      };
       await this.redisService.set(cacheKey, result, HOLIDAY_CACHE_TTL);
+      await this.redisService.set(this.staleCacheKey(year, month), result);
       return result;
     } catch (error) {
-      if (error instanceof BadGatewayException) throw error;
       const status = error?.response?.status;
       const detail = error?.response?.data ?? error?.message;
       this.logger.error(
         `공휴일 API 호출 실패 [${status}] ${describeOutboundRequest(error)}: ${JSON.stringify(detail)}`,
       );
-      throw new BadGatewayException('task.errors.holiday_fetch_failed');
+
+      // 공휴일 데이터는 사실상 불변이므로, 만료된 값이라도 최신값과 다르지 않다.
+      const stale = await this.redisService.get<HolidayListDto>(
+        this.staleCacheKey(year, month),
+      );
+      if (stale) {
+        this.logger.warn(
+          `공휴일 API 실패 — stale 캐시 반환 (${year}-${month})`,
+        );
+        return stale;
+      }
+
+      // 기념일은 외부 API와 무관한 로컬 상수라, 공휴일을 못 받아도 돌려줄 수 있다.
+      this.logger.warn(
+        `공휴일 API 실패 — stale 캐시 없음, 기념일만 반환 (${year}-${month})`,
+      );
+      return {
+        year,
+        month,
+        holidays: [],
+        specialDays: this.buildSpecialDays(year, month),
+      };
     }
+  }
+
+  /** 해당 월의 기념일 목록 (외부 API와 무관한 로컬 상수 기반) */
+  private buildSpecialDays(year: number, month: number): SpecialDayDto[] {
+    return SPECIAL_DAYS.filter((s) => s.month === month).map((s) => ({
+      date: `${year}-${String(s.month).padStart(2, '0')}-${String(s.day).padStart(2, '0')}`,
+      name: s.name,
+    }));
+  }
+
+  /** TTL 없이 보관하는 폴백용 캐시 키 */
+  private staleCacheKey(year: number, month: number): string {
+    return `holidays:stale:${year}:${month}`;
   }
 }
