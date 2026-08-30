@@ -11,6 +11,8 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Public } from '@/auth/decorators/public.decorator';
+import { HolidayDiagnosticService } from '@/task/holiday-diagnostic.service';
 import { TaskService } from './task.service';
 import { CategoryService } from './category.service';
 import { RecurringService } from './recurring.service';
@@ -59,6 +61,7 @@ export class TaskController {
     private readonly recurringService: RecurringService,
     private readonly holidayService: HolidayService,
     private readonly anniversaryService: AnniversaryService,
+    private readonly holidayDiagnosticService: HolidayDiagnosticService,
   ) {}
 
   // ==================== 공휴일 API ====================
@@ -68,6 +71,14 @@ export class TaskController {
   @ApiSuccess(HolidayListDto, '공휴일 목록 조회 성공')
   getHolidays(@Query() query: HolidayQueryDto): Promise<HolidayListDto> {
     return this.holidayService.getHolidays(query);
+  }
+
+  // [임시 진단용] 원인 확정 후 제거
+  @Public()
+  @Get('holidays/diagnose')
+  @ApiOperation({ summary: '[임시] 공휴일 API 호출 방식별 진단' })
+  diagnoseHolidays() {
+    return this.holidayDiagnosticService.run();
   }
 
   // ==================== 카테고리 API ====================
