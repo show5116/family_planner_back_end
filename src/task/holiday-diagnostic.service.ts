@@ -93,10 +93,69 @@ export class HolidayDiagnosticService {
       });
     });
 
+    // D: 매번 새 연결 (keepAlive: false) — 커넥션 재사용이 원인인지 판별
+    const d = await this.attempt('D:freshConnection', async () => {
+      const http = await import('http');
+      const agent = new http.Agent({ keepAlive: false, maxSockets: 1 });
+      const url = API_URL + '?' + this.queryString();
+      try {
+        return await new Promise((resolve, reject) => {
+          http
+            .get(url, { agent }, (res) => {
+              let body = '';
+              res.on('data', (chunk) => (body += chunk));
+              res.on('end', () =>
+                resolve({
+                  statusCode: res.statusCode,
+                  body: body.slice(0, 200),
+                }),
+              );
+            })
+            .on('error', reject);
+        });
+      } finally {
+        agent.destroy();
+      }
+    });
+
+    // E: Connection: close 헤더까지 명시 (게이트웨이에도 재사용 안 함을 알림)
+    const e = await this.attempt('E:connectionClose', async () => {
+      const http = await import('http');
+      const agent = new http.Agent({ keepAlive: false, maxSockets: 1 });
+      const url = API_URL + '?' + this.queryString();
+      try {
+        return await new Promise((resolve, reject) => {
+          http
+            .get(url, { agent, headers: { Connection: 'close' } }, (res) => {
+              let body = '';
+              res.on('data', (chunk) => (body += chunk));
+              res.on('end', () =>
+                resolve({
+                  statusCode: res.statusCode,
+                  body: body.slice(0, 200),
+                }),
+              );
+            })
+            .on('error', reject);
+        });
+      } finally {
+        agent.destroy();
+      }
+    });
+
+    // 참고: globalAgent 상태 (Node 19+ 는 keepAlive 기본 true)
+    const http = await import('http');
+    const globalAgent = {
+      keepAlive: (http.globalAgent as { keepAlive?: boolean }).keepAlive,
+      sockets: Object.keys(http.globalAgent.sockets ?? {}).length,
+      freeSockets: Object.keys(http.globalAgent.freeSockets ?? {}).length,
+    };
+
     return {
       keyLength: this.serviceKey?.length ?? 0,
       keyHead: this.serviceKey?.slice(0, 4) ?? null,
-      results: [a, b, c],
+      globalAgent,
+      results: [a, b, c, d, e],
     };
   }
 }
