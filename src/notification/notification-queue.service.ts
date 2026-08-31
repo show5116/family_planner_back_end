@@ -4,6 +4,7 @@ import { NotificationTokenService } from './notification-token.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { FirebaseService } from '@/firebase/firebase.service';
 import { messaging } from 'firebase-admin';
+import { getAppEnv, getNotificationEnvPrefix } from '@/common/app-env.util';
 
 /**
  * Queue 알림 데이터 인터페이스
@@ -175,7 +176,22 @@ export class NotificationQueueService {
       }
     }
 
-    // 2. 사용자 설정 확인
+    // 2. childcare 알림인 경우, 자녀 데이터가 이미 삭제됐으면 스킵
+    const childId = data?.childId as string | undefined;
+    if (childId) {
+      const child = await this.prisma.child.findUnique({
+        where: { id: childId },
+        select: { id: true },
+      });
+      if (!child) {
+        this.logger.log(
+          `Child ${childId} deleted — skipping stale notification for user ${userId}`,
+        );
+        return;
+      }
+    }
+
+    // 3. 사용자 설정 확인
     const setting = await this.prisma.notificationSetting.findUnique({
       where: { userId_category: { userId, category: category as any } },
     });
@@ -187,30 +203,37 @@ export class NotificationQueueService {
       return;
     }
 
-    // 3. FCM 토큰 조회 (Look-Aside 캐싱)
+    // 4. FCM 토큰 조회 (Look-Aside 캐싱)
     const tokens = await this.tokenService.getUserTokens(userId);
     if (tokens.length === 0) {
       this.logger.warn(`No FCM tokens found for user ${userId}. Skipping.`);
       return;
     }
 
-    // 4. DB에 히스토리 저장 (sent = false)
+    // 5. DB에 히스토리 저장 (sent = false)
+    // 개발 서버도 같은 Firebase 프로젝트로 푸시하므로, 양산이 아니면 제목에 환경 접두사를 붙인다
+    const displayTitle = `${getNotificationEnvPrefix()}${title}`;
+
     const savedNotification = await this.prisma.notification.create({
       data: {
         userId,
         category: category as any,
-        title,
+        title: displayTitle,
         body,
         data: data || null,
         sent: false,
       },
     });
 
-    // 5. FCM 메시지 발송
+    // 6. FCM 메시지 발송
     const message: messaging.MulticastMessage = {
       tokens,
-      notification: { title, body },
-      data: this.convertDataToStringMap({ category, ...(data || {}) }),
+      notification: { title: displayTitle, body },
+      data: this.convertDataToStringMap({
+        category,
+        env: getAppEnv(),
+        ...(data || {}),
+      }),
       android: {
         priority: 'high',
         notification: { channelId: category },
@@ -219,7 +242,7 @@ export class NotificationQueueService {
         headers: { 'apns-priority': '10' },
         payload: {
           aps: {
-            alert: { title, body },
+            alert: { title: displayTitle, body },
             sound: 'default',
             badge: 1,
             contentAvailable: true,
@@ -231,7 +254,7 @@ export class NotificationQueueService {
     const messagingClient = this.firebaseService.getMessaging();
     const response = await messagingClient.sendEachForMulticast(message);
 
-    // 6. 성공 시 DB 업데이트 (sent = true, sentAt 기록)
+    // 7. 성공 시 DB 업데이트 (sent = true, sentAt 기록)
     if (response.successCount > 0) {
       await this.prisma.notification.update({
         where: { id: savedNotification.id },
@@ -239,7 +262,7 @@ export class NotificationQueueService {
       });
     }
 
-    // 7. 실패한 토큰 처리
+    // 8. 실패한 토큰 처리
     if (response.failureCount > 0) {
       const failedTokens: string[] = [];
       response.responses.forEach((res, idx) => {

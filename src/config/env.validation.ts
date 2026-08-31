@@ -10,6 +10,9 @@ export const validationSchema = Joi.object({
     .valid('development', 'production', 'test')
     .default('development'),
 
+  // 배포 환경 구분 (양산/개발 서버 식별용, 없으면 NODE_ENV를 따름)
+  APP_ENV: Joi.string().valid('development', 'production', 'test').optional(),
+
   // 애플리케이션 설정
   PORT: Joi.number().default(3000),
   FRONTEND_URL: Joi.string().uri().required(),

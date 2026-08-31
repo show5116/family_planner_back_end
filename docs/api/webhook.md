@@ -50,6 +50,10 @@ Apple App Store Server Notifications V2 수신.
 **설명:**
 Google Play Real-time Developer Notifications 수신.
 
+**Query Parameters:**
+
+- `token` (`string`) - Optional
+
 **Responses:**
 
 #### 200 - Webhook 수신 성공
