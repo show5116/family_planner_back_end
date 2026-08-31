@@ -34,8 +34,11 @@
 
 그룹 단위로 기념일(연애 시작일, 결혼기념일 등)을 등록하고 경과일을 확인합니다.
 
-- **목록** (`GET /tasks/anniversaries?groupId=...`): 그룹 기념일 목록 + 오늘 기준 경과일(`daysSince`) 반환
-- **단건 조회** (`GET /tasks/anniversaries/:id`): 단건 조회 + `daysSince`
+- **목록** (`GET /tasks/anniversaries?groupId=...`): 그룹 기념일 목록 + 오늘 기준 경과일(`daysSince`, `dayCount`) 반환
+- **단건 조회** (`GET /tasks/anniversaries/:id`): 단건 조회 + `daysSince`, `dayCount`
+
+`daysSince`는 기념일 당일이 0(D+N 기준), `dayCount`는 한국식으로 기념일 당일이 1일째입니다.
+`milestoneConfig.every100Days`로 자동 생성되는 `100일`/`200일` Task도 `dayCount` 기준(기념일 + 99일 = 100일째)으로 만들어집니다.
 - **생성** (`POST /tasks/anniversaries`): 제목, 날짜, 이모지 등록
 - **수정** (`PUT /tasks/anniversaries/:id`): 날짜 변경 시 연동된 모든 Task의 `scheduledAt` 자동 재계산
 - **삭제** (`DELETE /tasks/anniversaries/:id`): 연동 Task의 `anniversaryId`는 자동으로 `null` 처리 (Task 자체는 유지)
@@ -45,7 +48,7 @@ Task 생성/수정 시 `anniversaryId + offsetDays + offsetType` 세 필드를 �
 
 | offsetType | 예시                                         |
 | ---------- | -------------------------------------------- |
-| `DAYS`     | `offsetDays=100` → 기념일 + 100일째 날       |
+| `DAYS`     | `offsetDays=100` → 기념일 + 100일 (당일이 0, 즉 101일째) |
 | `YEARS`    | `offsetDays=1` → 기념일로부터 정확히 1년 후  |
 
 기념일 날짜가 수정되면 해당 기념일에 연동된 모든 Task의 `scheduledAt`이 일괄 재계산됩니다.

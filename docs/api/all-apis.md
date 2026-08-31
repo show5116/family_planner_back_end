@@ -10729,7 +10729,8 @@ R2에 파일이 존재하는지 확인합니다.
     "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
     "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
   }, // milestone Task 자동 생성 설정 (MilestoneConfigDto | null)
-  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수) (number)
+  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 당일 0, 미래면 음수) (number)
+  "dayCount": 321, // 오늘 기준 한국식 일수 카운트 (기념일 당일이 1일째, 미래면 0 이하) (number)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
 }
@@ -10762,7 +10763,8 @@ R2에 파일이 존재하는지 확인합니다.
     "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
     "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
   }, // milestone Task 자동 생성 설정 (MilestoneConfigDto | null)
-  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수) (number)
+  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 당일 0, 미래면 음수) (number)
+  "dayCount": 321, // 오늘 기준 한국식 일수 카운트 (기념일 당일이 1일째, 미래면 0 이하) (number)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
 }
@@ -10808,7 +10810,8 @@ R2에 파일이 존재하는지 확인합니다.
     "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
     "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
   }, // milestone Task 자동 생성 설정 (MilestoneConfigDto | null)
-  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수) (number)
+  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 당일 0, 미래면 음수) (number)
+  "dayCount": 321, // 오늘 기준 한국식 일수 카운트 (기념일 당일이 1일째, 미래면 0 이하) (number)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
 }
@@ -10858,7 +10861,8 @@ R2에 파일이 존재하는지 확인합니다.
     "every100Days": true, // 100일 단위 milestone 생성 여부 (100일, 200일, 300일...) (boolean?)
     "everyYear": true // 매년 주년 milestone 생성 여부 (1주년, 2주년...) (boolean?)
   }, // milestone Task 자동 생성 설정 (MilestoneConfigDto | null)
-  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수) (number)
+  "daysSince": 320, // 오늘 기준 경과일 (기념일로부터 D+N, 당일 0, 미래면 음수) (number)
+  "dayCount": 321, // 오늘 기준 한국식 일수 카운트 (기념일 당일이 1일째, 미래면 0 이하) (number)
   "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일시 (Date)
 }
@@ -11849,6 +11853,10 @@ Apple App Store Server Notifications V2 수신.
 
 **설명:**
 Google Play Real-time Developer Notifications 수신.
+
+**Query Parameters:**
+
+- `token` (`string`) - Optional
 
 **Responses:**
 

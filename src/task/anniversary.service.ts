@@ -282,7 +282,7 @@ export class AnniversaryService {
   /**
    * milestone 목록 계산
    * - D+0 (D-Day)는 항상 포함
-   * - config.every100Days: D+100, D+200, ...
+   * - config.every100Days: 100일, 200일, ... (한국식으로 기념일 당일을 1일째로 계산)
    * - config.everyYear: 1주년, 2주년, ...
    */
   private buildMilestoneSpecs(
@@ -311,25 +311,26 @@ export class AnniversaryService {
 
     if (!config) return specs;
 
-    // 100일 단위 (D+100부터)
+    // 100일 단위 (기념일 당일이 1일째이므로 N일째 = 기념일 + (N-1)일)
     if (config.every100Days) {
-      let n = 100;
+      let dayCount = 100;
       while (true) {
+        const offsetDays = dayCount - 1;
         const scheduledAt = this.calcScheduledAt(
           baseDate,
-          n,
+          offsetDays,
           AnniversaryOffsetType.DAYS,
         );
         if (scheduledAt > to) break;
         if (scheduledAt >= from) {
           specs.push({
-            offsetDays: n,
+            offsetDays,
             offsetType: AnniversaryOffsetType.DAYS,
-            title: `${title} D+${n}`,
+            title: `${title} ${dayCount}일`,
             scheduledAt,
           });
         }
-        n += 100;
+        dayCount += 100;
       }
     }
 
@@ -419,15 +420,17 @@ export class AnniversaryService {
   }
 
   /**
-   * 경과일 계산 (기념일로부터 D+N, 미래면 음수)
+   * 경과일 계산
+   * - daysSince: 기념일로부터 D+N (당일 0, 미래면 음수)
+   * - dayCount: 한국식 카운트 (당일 1일째, 미래면 0 이하)
    */
   private withDaysSince<T extends { date: Date }>(
     anniversary: T,
     today: Date,
-  ): T & { daysSince: number } {
+  ): T & { daysSince: number; dayCount: number } {
     const diffMs = today.getTime() - anniversary.date.getTime();
     const daysSince = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return { ...anniversary, daysSince };
+    return { ...anniversary, daysSince, dayCount: daysSince + 1 };
   }
 
   private async assertGroupMember(userId: string, groupId: string) {
