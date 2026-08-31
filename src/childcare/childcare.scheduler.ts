@@ -40,6 +40,24 @@ export class ChildcareScheduler {
   }
 
   /**
+   * 해당 유저가 아직 그룹 멤버인지 확인
+   *
+   * 자녀 삭제 API가 없어서 그룹을 떠나도 children/allowance plan 행이 그대로 남는다.
+   * 앱에서는 보이지 않는(= 사용자 입장에서 이미 사라진) 자녀인데 스케줄러만 계속
+   * 지급·알림을 돌리는 것을 막기 위해 발송 전에 멤버십을 확인한다.
+   */
+  private async isGroupMember(
+    groupId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const member = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+      select: { id: true },
+    });
+    return member !== null;
+  }
+
+  /**
    * 용돈 자동 지급 — 매일 UTC 00:00(KST 09:00) 실행
    * payDay가 오늘(KST) 날짜와 일치하는 자녀에게 포인트 지급 + 알림
    */
@@ -85,6 +103,13 @@ export class ChildcareScheduler {
       for (const plan of plans) {
         const { child } = plan;
         if (!child.account || !child.group) continue;
+
+        if (!(await this.isGroupMember(child.groupId, child.parentUserId))) {
+          this.logger.debug(
+            `부모가 그룹을 떠난 자녀 — 용돈 지급 스킵: childId=${child.id}`,
+          );
+          continue;
+        }
 
         const account = child.account;
 
@@ -164,7 +189,10 @@ export class ChildcareScheduler {
         await this.prisma.$transaction(ops);
 
         // 자녀 앱 계정이 있으면 알림
-        if (child.userId) {
+        if (
+          child.userId &&
+          (await this.isGroupMember(child.groupId, child.userId))
+        ) {
           const childLang = await this.getUserLang(child.userId);
           this.notificationQueue
             .enqueueImmediate({
@@ -269,6 +297,14 @@ export class ChildcareScheduler {
       for (const plan of plans) {
         const { child } = plan;
         if (!plan.nextNegotiationDate || !child.group) continue;
+
+        if (!(await this.isGroupMember(child.groupId, child.parentUserId))) {
+          this.logger.debug(
+            `부모가 그룹을 떠난 자녀 — 협상 알림 스킵: childId=${child.id}`,
+          );
+          continue;
+        }
+
         const negDate = new Date(plan.nextNegotiationDate);
         negDate.setHours(0, 0, 0, 0);
 
@@ -306,7 +342,10 @@ export class ChildcareScheduler {
           .catch(() => null);
 
         // 자녀 앱 계정이 있으면 알림
-        if (child.userId) {
+        if (
+          child.userId &&
+          (await this.isGroupMember(child.groupId, child.userId))
+        ) {
           const childLang = await this.getUserLang(child.userId);
           const childBody = isToday
             ? this.t('childcare.notification.negotiation_body_today', childLang)
@@ -439,8 +478,14 @@ export class ChildcareScheduler {
           }),
         ]);
 
-        // 자녀 알림
-        if (account.child.userId) {
+        // 자녀 알림 (정산 자체는 잔액 정합성을 위해 그대로 수행)
+        if (
+          account.child.userId &&
+          (await this.isGroupMember(
+            account.child.groupId,
+            account.child.userId,
+          ))
+        ) {
           const childLang = await this.getUserLang(account.child.userId);
           this.notificationQueue
             .enqueueImmediate({
@@ -465,28 +510,34 @@ export class ChildcareScheduler {
         }
 
         // 부모 알림
-        const parentLang = await this.getUserLang(account.parentUserId);
-        this.notificationQueue
-          .enqueueImmediate({
-            userId: account.parentUserId,
-            category: NotificationCategory.CHILDCARE,
-            title: this.t(
-              'childcare.notification.savings_mature_title_parent',
-              parentLang,
-              { name: account.child.name },
-            ),
-            body: this.t(
-              'childcare.notification.savings_mature_body_parent',
-              parentLang,
-              {
-                principal,
-                interest: expectedInterest,
-                total: principal + expectedInterest,
-              },
-            ),
-            data: { childId: account.child.id },
-          })
-          .catch(() => null);
+        const parentIsMember = await this.isGroupMember(
+          account.child.groupId,
+          account.parentUserId,
+        );
+        if (parentIsMember) {
+          const parentLang = await this.getUserLang(account.parentUserId);
+          this.notificationQueue
+            .enqueueImmediate({
+              userId: account.parentUserId,
+              category: NotificationCategory.CHILDCARE,
+              title: this.t(
+                'childcare.notification.savings_mature_title_parent',
+                parentLang,
+                { name: account.child.name },
+              ),
+              body: this.t(
+                'childcare.notification.savings_mature_body_parent',
+                parentLang,
+                {
+                  principal,
+                  interest: expectedInterest,
+                  total: principal + expectedInterest,
+                },
+              ),
+              data: { childId: account.child.id },
+            })
+            .catch(() => null);
+        }
 
         this.logger.debug(
           `적금 만기: ${account.child.name} 원금 ${principal}p + 이자 ${expectedInterest}p`,
