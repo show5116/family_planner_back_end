@@ -28,10 +28,17 @@ export class AnniversaryDto {
   milestoneConfig: MilestoneConfigDto | null;
 
   @ApiProperty({
-    description: '오늘 기준 경과일 (기념일로부터 D+N, 미래면 음수)',
+    description: '오늘 기준 경과일 (기념일로부터 D+N, 당일 0, 미래면 음수)',
     example: 320,
   })
   daysSince: number;
+
+  @ApiProperty({
+    description:
+      '오늘 기준 한국식 일수 카운트 (기념일 당일이 1일째, 미래면 0 이하)',
+    example: 321,
+  })
+  dayCount: number;
 
   @ApiProperty({ description: '생성일시' })
   createdAt: Date;
