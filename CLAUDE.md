@@ -24,6 +24,10 @@
 
 **.claude/skills/** 디렉토리의 스킬 참고
 
+## 기술 블로그 글 작성
+
+구현한 기능이나 트러블슈팅을 Tistory 글로 남길 때는 **[.claude/skills/tech-blog-post/SKILL.md](.claude/skills/tech-blog-post/SKILL.md)** 스킬을 사용한다. 실제 저장소 코드를 근거로만 작성하며, 결과물은 `docs/blog/YYYY-MM-DD-슬러그.md`에 저장한다.
+
 ## 코드 작성 규칙
 
 **[CODE_STYLE.md](CODE_STYLE.md)** 필수 확인
