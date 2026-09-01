@@ -389,14 +389,10 @@ src/diary/
       존재하지 않는 날짜(`2026-02-30`, 평년 `2025-02-29`)의 롤오버 차단, 경로·쿼리 파라미터 검증,
       휴지통 덮어쓰기·복구 충돌, 공개범위 전환(GROUP↔PRIVATE), 인증 누락
 
-### ⬜ Phase 2 (다음 요청서 — 지금 만들지 말 것)
+### ⬜ Phase 2 (미착수 — 별도 요청서)
 
-- `DiaryMedia` 모델 (사진·영상)
-- 용량 한도 (월간 + 계정 누적, 구독 등급별)
-- R2 Presigned URL 직접 업로드 (`reserve` → PUT → `confirm`) — `storage.service.ts`의 `getUploadUrl()` 이미 존재
-- Redis 락 (동시 업로드 한도 경합)
-- 정리 스케줄러 2종 (PENDING 15분 / 고아 미디어 24시간)
-- `/subscription/quota-plans` (등급별 한도표)
+미디어 첨부·용량 한도·R2 직접 업로드는 **[docs/backlog.md](../backlog.md)** 에 항목과
+착수 시 지켜야 할 Phase 1 결정을 함께 정리해두었다.
 
 ---
 
