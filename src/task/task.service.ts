@@ -7,6 +7,7 @@ import { I18nService, I18nContext } from 'nestjs-i18n';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
+import { toKstDateOnly } from '@/common/utils/date-kst.util';
 import { CreateTaskDto, UpdateTaskDto, QueryTasksDto } from './dto';
 import { RecurringGenerationType, AnniversaryOffsetType } from './enums';
 import { RecurringService } from './recurring.service';
@@ -310,16 +311,7 @@ export class TaskService {
       offsetType: AnniversaryOffsetType | null;
     };
 
-    if (task.userId !== userId) {
-      const isParticipant = await this.prisma.taskParticipant.findUnique({
-        where: { taskId_userId: { taskId, userId } },
-      });
-      if (!isParticipant) {
-        throw new ForbiddenException(
-          'Task 작성자 또는 참여자만 수정할 수 있습니다',
-        );
-      }
-    }
+    await this.validateEditAccess(userId, task, taskId);
 
     if (task.recurringId && !updateScope) {
       throw new ForbiddenException(
@@ -566,6 +558,8 @@ export class TaskService {
       throw new NotFoundException('task.errors.task_not_found');
     }
 
+    await this.validateEditAccess(userId, task, taskId);
+
     if (task.recurringId && !deleteScope) {
       throw new ForbiddenException(
         'task.errors.recurring_delete_scope_required',
@@ -757,6 +751,33 @@ export class TaskService {
   /**
    * 그룹 멤버 확인
    */
+  /**
+   * Task 수정·삭제 권한 확인
+   * 그룹 Task는 그룹원 전원, 개인 Task는 작성자 또는 참여자만 가능
+   */
+  private async validateEditAccess(
+    userId: string,
+    task: { userId: string; groupId: string | null },
+    taskId: string,
+  ) {
+    if (task.groupId) {
+      const isMember = await this.checkGroupMember(userId, task.groupId);
+      if (!isMember) {
+        throw new ForbiddenException('task.errors.group_member_only_update');
+      }
+      return;
+    }
+
+    if (task.userId === userId) return;
+
+    const isParticipant = await this.prisma.taskParticipant.findUnique({
+      where: { taskId_userId: { taskId, userId } },
+    });
+    if (!isParticipant) {
+      throw new ForbiddenException('task.errors.own_task_only_update');
+    }
+  }
+
   private async checkGroupMember(
     userId: string,
     groupId: string,
@@ -792,13 +813,14 @@ export class TaskService {
   }
 
   /**
-   * D-Day 계산
+   * D-Day 계산 (KST 달력 날짜 기준, 시·분은 무시)
+   * - 오늘 마감 0, 내일 1, 어제 -1
    */
   private calculateDaysUntilDue(dueAt: Date | null, now?: Date): number | null {
     if (!dueAt) return null;
-    const currentTime = now || new Date();
-    const due = new Date(dueAt);
-    const diffTime = due.getTime() - currentTime.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const dueDay = toKstDateOnly(new Date(dueAt));
+    const today = toKstDateOnly(now ?? new Date());
+    const diffMs = dueDay.getTime() - today.getTime();
+    return Math.round(diffMs / (1000 * 60 * 60 * 24));
   }
 }

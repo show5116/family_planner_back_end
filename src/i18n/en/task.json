@@ -21,7 +21,9 @@
     "category_group_member_only_edit": "Only group members can edit/delete categories",
     "category_own_only_edit": "You can only edit/delete your own categories",
     "category_has_tasks": "Cannot delete category because it has {count} task(s) linked",
-    "category_name_duplicate": "A category with the same name already exists: {name}"
+    "category_name_duplicate": "A category with the same name already exists: {name}",
+    "group_member_only_update": "Only group members can update or delete this",
+    "own_task_only_update": "You can only update or delete tasks you created or participate in"
   },
   "success": {
     "category_deleted": "Category deleted",

@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -62,9 +61,7 @@ export class AccountRecordService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException('assets.errors.own_account_only_record');
-    }
+    await this.accountService.validateGroupMember(userId, account.groupId);
 
     const recordDate = new Date(dto.recordDate);
 
@@ -233,9 +230,7 @@ export class AccountRecordService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException('assets.errors.own_record_only_delete');
-    }
+    await this.accountService.validateGroupMember(userId, account.groupId);
 
     const record = await this.prisma.accountRecord.findUnique({
       where: { id: recordId },
@@ -266,9 +261,7 @@ export class AccountRecordService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException('assets.errors.own_withdrawal_only_add');
-    }
+    await this.accountService.validateGroupMember(userId, account.groupId);
 
     const withdrawalDate = new Date(dto.withdrawalDate);
 
@@ -378,9 +371,7 @@ export class AccountRecordService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException('assets.errors.own_withdrawal_only_delete');
-    }
+    await this.accountService.validateGroupMember(userId, account.groupId);
 
     const withdrawal = await this.prisma.accountWithdrawal.findUnique({
       where: { id: withdrawalId },

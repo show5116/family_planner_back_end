@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -68,9 +67,7 @@ export class HoldingRecordService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException('assets.errors.own_account_only_add_stock');
-    }
+    await this.accountService.validateGroupMember(userId, account.groupId);
 
     const recordDate = new Date(dto.recordDate);
 
@@ -111,11 +108,7 @@ export class HoldingRecordService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException(
-        'assets.errors.own_account_only_update_stock',
-      );
-    }
+    await this.accountService.validateGroupMember(userId, account.groupId);
 
     const record = await this.prisma.accountHoldingRecord.findUnique({
       where: { id: recordId },
@@ -169,11 +162,7 @@ export class HoldingRecordService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException(
-        'assets.errors.own_account_only_delete_stock',
-      );
-    }
+    await this.accountService.validateGroupMember(userId, account.groupId);
 
     const record = await this.prisma.accountHoldingRecord.findUnique({
       where: { id: recordId },

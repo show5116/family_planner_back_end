@@ -136,7 +136,7 @@
 - **`status`는 저장하지 않고 계산**: `UPCOMING`/`ONGOING`/`ENDED`를 매 응답마다 `startDate`/`endDate`와 오늘(KST) 날짜로 계산(`computeChallengeStatus`, `routine-challenge.util.ts`). 상태 전환용 배치가 필요 없다. 종료일 당일까지는 `ONGOING`. 이미 `ENDED`인 챌린지에는 참가 불가(400).
 - **만든 사람이 자동 참가되지는 않음**: 챌린지를 만든 뒤에도 별도로 `join`을 호출해 자신의 습관을 골라야 한다(생성 시점엔 어떤 습관으로 참가할지 알 수 없으므로).
 - **재참가 시 습관 교체(upsert)**: 이미 참가 중인 상태에서 다시 `join`을 호출하면 409로 막지 않고 연결된 습관만 교체한다(`@@unique([challengeId, userId])` 기준 upsert) — 잘못 연결했거나 습관을 바꾸고 싶은 경우를 자연스럽게 지원.
-- **수정/삭제는 만든 사람만**: `PATCH`/`DELETE /routines/challenges/:id`는 `createdBy === 요청자`가 아니면 403.
+- **수정/삭제는 그룹원 전원**: `PATCH`/`DELETE /routines/challenges/:id`는 해당 그룹의 멤버면 누구나 가능(만든 사람 제한 없음). 그룹 공동 콘텐츠는 그룹원이 함께 관리한다는 프로젝트 공통 규칙을 따른다.
 - **습관을 종료해도 참가 기록은 유지**: `RoutineService.end()`는 `deletedAt`만 설정하는 soft delete라 FK cascade가 발동하지 않으므로, 참가자가 습관을 종료해도 `RoutineChallengeParticipant` 행은 그대로 남고 그 시점까지의 체크 기록은 유효하게 집계된다.
 - **엔드포인트**: `GET/POST /routines/groups/:groupId/challenges`(목록/생성), `GET/PATCH/DELETE /routines/challenges/:id`(상세/수정/삭제), `POST/DELETE /routines/challenges/:id/join`(참가/취소).
 
@@ -459,7 +459,7 @@ model RoutineGroup {
 - [x] 루틴 카테고리 (`RoutineCategory`) — 개인 커스텀 태그, CRUD
 - [x] 루틴-카테고리 N:M 연결 (`RoutineCategoryLink`) — 한 루틴에 여러 카테고리 태그, 추가/해제/전체교체 지원
 - [x] 중요도/메모/시간대 분류 필드 추가
-- [x] 그룹 챌린지 (6차) — 기간제 공동 목표, 자유 참가, 습관별 체크 횟수 집계, 만든 사람만 수정/삭제
+- [x] 그룹 챌린지 (6차) — 기간제 공동 목표, 자유 참가, 습관별 체크 횟수 집계, 그룹원이면 수정/삭제 가능
 
 ### ⬜ 향후 고려
 - [ ] 그룹원 간 미체크 알림(사회적 압박 vs 동기부여, 옵트인 필요)
@@ -535,8 +535,8 @@ model RoutineGroup {
 | GET    | `/routines/groups/:groupId/challenges`   | 그룹 챌린지 목록                          | JWT, Member |
 | POST   | `/routines/groups/:groupId/challenges`   | 챌린지 생성 (만든 사람 자동 참가 안 됨)   | JWT, Member |
 | GET    | `/routines/challenges/:id`               | 챌린지 상세 (참가자별 진행률 포함)        | JWT, Member |
-| PATCH  | `/routines/challenges/:id`               | 챌린지 수정                               | JWT, Creator |
-| DELETE | `/routines/challenges/:id`               | 챌린지 삭제                               | JWT, Creator |
+| PATCH  | `/routines/challenges/:id`               | 챌린지 수정                               | JWT, Member |
+| DELETE | `/routines/challenges/:id`               | 챌린지 삭제                               | JWT, Member |
 | POST   | `/routines/challenges/:id/join`          | 참가 (재참가 시 연결 습관 교체)           | JWT, Member |
 | DELETE | `/routines/challenges/:id/join`          | 참가 취소                                 | JWT, Member |
 

@@ -121,9 +121,7 @@ export class AccountService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException('assets.errors.own_account_only_update');
-    }
+    await this.validateGroupMember(userId, account.groupId);
 
     const updated = await this.prisma.account.update({
       where: { id },
@@ -155,9 +153,7 @@ export class AccountService {
     if (!account) {
       throw new NotFoundException('assets.errors.account_not_found');
     }
-    if (account.userId !== userId) {
-      throw new ForbiddenException('assets.errors.own_account_only_delete');
-    }
+    await this.validateGroupMember(userId, account.groupId);
 
     await this.prisma.account.delete({ where: { id } });
 

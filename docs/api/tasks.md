@@ -442,7 +442,7 @@
       "allDay": false, // 종일 여부 (boolean)
       "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
       "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
-      "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
+      "daysUntilDue": 0, // D-Day (KST 달력 기준 남은 일수). 오늘 마감 0, 내일 1, 어제 -1 (number | null)
       "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
       "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
       "recurring": {
@@ -613,7 +613,7 @@
   "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
-  "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
+  "daysUntilDue": 0, // D-Day (KST 달력 기준 남은 일수). 오늘 마감 0, 내일 1, 어제 -1 (number | null)
   "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
@@ -723,7 +723,7 @@
   "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
-  "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
+  "daysUntilDue": 0, // D-Day (KST 달력 기준 남은 일수). 오늘 마감 0, 내일 1, 어제 -1 (number | null)
   "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {
@@ -810,7 +810,7 @@
   "allDay": false, // 종일 여부 (boolean)
   "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
   "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
-  "daysUntilDue": 3, // D-Day (남은 일수) (number | null)
+  "daysUntilDue": 0, // D-Day (KST 달력 기준 남은 일수). 오늘 마감 0, 내일 1, 어제 -1 (number | null)
   "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
   "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
   "recurring": {

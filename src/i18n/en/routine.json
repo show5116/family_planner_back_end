@@ -31,7 +31,6 @@
     "already_categorized": "This category is already linked",
     "category_link_not_found": "Category link not found",
     "challenge_not_found": "Challenge not found",
-    "own_challenge_only_update": "Only the creator can update this challenge",
     "challenge_invalid_date_range": "End date must be on or after the start date",
     "challenge_already_ended": "You cannot join a challenge that has already ended",
     "private_routine_not_joinable": "Private routines cannot be linked to a challenge",

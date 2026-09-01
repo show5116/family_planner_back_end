@@ -27,6 +27,30 @@ export class RecurringService {
   ) {}
 
   /**
+   * 반복 규칙 수정 권한 확인
+   * 그룹 반복 규칙은 그룹원 전원, 개인 규칙은 작성자만 가능
+   */
+  private async validateEditAccess(
+    userId: string,
+    recurring: { userId: string; groupId: string | null },
+    forbiddenKey: string,
+  ) {
+    if (recurring.groupId) {
+      const member = await this.prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId: recurring.groupId, userId } },
+      });
+      if (!member) {
+        throw new ForbiddenException('task.errors.group_member_only_update');
+      }
+      return;
+    }
+
+    if (recurring.userId !== userId) {
+      throw new ForbiddenException(forbiddenKey);
+    }
+  }
+
+  /**
    * 반복 일정 일시정지/재개
    */
   async pauseRecurring(userId: string, recurringId: string) {
@@ -38,9 +62,11 @@ export class RecurringService {
       throw new NotFoundException('task.errors.recurring_not_found');
     }
 
-    if (recurring.userId !== userId) {
-      throw new ForbiddenException('task.errors.own_recurring_only_update');
-    }
+    await this.validateEditAccess(
+      userId,
+      recurring,
+      'task.errors.own_recurring_only_update',
+    );
 
     return await this.prisma.recurring.update({
       where: { id: recurringId },
@@ -64,9 +90,11 @@ export class RecurringService {
       throw new NotFoundException('task.errors.recurring_not_found');
     }
 
-    if (recurring.userId !== userId) {
-      throw new ForbiddenException('task.errors.own_recurring_only_skip');
-    }
+    await this.validateEditAccess(
+      userId,
+      recurring,
+      'task.errors.own_recurring_only_skip',
+    );
 
     const skip = await this.prisma.taskSkip.create({
       data: {

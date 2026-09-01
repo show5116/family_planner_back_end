@@ -31,7 +31,6 @@
     "already_categorized": "すでに連結されているカテゴリーです",
     "category_link_not_found": "連結情報が見つかりません",
     "challenge_not_found": "チャレンジが見つかりません",
-    "own_challenge_only_update": "作成者のみチャレンジを更新できます",
     "challenge_invalid_date_range": "終了日は開始日以降にしてください",
     "challenge_already_ended": "終了したチャレンジには参加できません",
     "private_routine_not_joinable": "非公開のルーティンはチャレンジに連結できません",
