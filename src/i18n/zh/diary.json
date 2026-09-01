@@ -1,0 +1,21 @@
+{
+  "errors": {
+    "content_required": "日记必须填写正文",
+    "text_required": "请输入要记录的内容",
+    "group_id_required": "群组日记必须填写群组ID",
+    "diary_not_found": "日记不存在",
+    "duplicate_date": "该日期已有日记",
+    "future_date": "无法撰写未来日期的日记",
+    "invalid_date": "日期格式不正确",
+    "own_diary_only_update": "只能修改自己的日记",
+    "own_diary_only_delete": "只能删除自己的日记",
+    "no_access": "您无权访问该日记",
+    "no_group_access": "您无权访问该群组",
+    "restore_expired": "已超过30天的恢复期限",
+    "restore_conflict": "该日期已有日记，无法恢复",
+    "append_conflict": "记录保存失败，请重试"
+  },
+  "success": {
+    "diary_deleted": "日记已删除"
+  }
+}

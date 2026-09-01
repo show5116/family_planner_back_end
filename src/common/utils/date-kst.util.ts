@@ -73,3 +73,25 @@ export function getKstTime(date: Date): {
   const d = dayjs(date).tz('Asia/Seoul');
   return { hour: d.hour(), minute: d.minute(), second: d.second() };
 }
+
+/** 다이어리 하루 경계 시각 (KST 기준 시) */
+export const DIARY_DAY_BOUNDARY_HOUR = 4;
+
+/**
+ * 다이어리의 "오늘" 날짜 (하루 경계 = 새벽 4시 KST)
+ *
+ * 4시간을 뺀 뒤 날짜를 취해, 새벽 3시 59분까지는 전날 일기로 들어가게 한다.
+ */
+export function diaryDateInKst(now: Date = new Date()): Date {
+  const kstDateStr = dayjs(now)
+    .tz('Asia/Seoul')
+    .subtract(DIARY_DAY_BOUNDARY_HOUR, 'hour')
+    .format('YYYY-MM-DD');
+  return new Date(`${kstDateStr}T00:00:00.000Z`);
+}
+
+/** 순수 날짜(Date)를 'YYYY-MM-DD' 문자열로 변환 (응답용 — 기기 타임존에 밀리지 않게) */
+export function formatDateOnly(date: Date): string {
+  // 순수 날짜는 UTC 자정으로 정규화되어 저장되므로 UTC 기준으로 잘라낸다
+  return date.toISOString().slice(0, 10);
+}

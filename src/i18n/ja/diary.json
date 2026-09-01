@@ -1,0 +1,21 @@
+{
+  "errors": {
+    "content_required": "日記の本文が必要です",
+    "text_required": "記録する内容を入力してください",
+    "group_id_required": "グループ日記にはグループIDが必要です",
+    "diary_not_found": "日記が見つかりません",
+    "duplicate_date": "その日付の日記はすでに存在します",
+    "future_date": "未来の日付の日記は作成できません",
+    "invalid_date": "日付の形式が正しくありません",
+    "own_diary_only_update": "自分の日記のみ更新できます",
+    "own_diary_only_delete": "自分の日記のみ削除できます",
+    "no_access": "この日記へのアクセス権限がありません",
+    "no_group_access": "このグループへのアクセス権限がありません",
+    "restore_expired": "復元可能な期間(30日)が過ぎました",
+    "restore_conflict": "その日付にすでに日記があるため復元できません",
+    "append_conflict": "記録を保存できませんでした。もう一度お試しください"
+  },
+  "success": {
+    "diary_deleted": "日記を削除しました"
+  }
+}

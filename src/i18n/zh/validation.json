@@ -15,5 +15,6 @@
   "group_name_max": "群组名称最多100个字符",
   "month_format": "月份格式必须为YYYY-MM",
   "year_format": "年份格式必须为YYYY",
-  "date_format": "日期格式必须为YYYY-MM-DD"
+  "date_format": "日期格式必须为YYYY-MM-DD",
+  "time_format": "时间格式必须为 HH:mm"
 }

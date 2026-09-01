@@ -39,6 +39,7 @@ model User {
   taskSkips                 TaskSkip[]
   tasks                     Task[]
   memos                     Memo[]
+  diaries                   Diary[]
   routines                  Routine[]
   routineGroups             RoutineGroup[]
   routineCategories         RoutineCategory[]
@@ -100,6 +101,7 @@ model Group {
   customRoles         Role[]
   tasks               Task[]
   memos               Memo[]
+  diaries             Diary[]
   expenses            Expense[]
   recurringExpenses   RecurringExpense[]
   budgets             Budget[]
@@ -739,6 +741,48 @@ enum MemoFormat {
 }
 
 enum MemoVisibility {
+  PRIVATE
+  GROUP
+}
+
+/// 다이어리(일기)
+///
+/// 하루 1편이 원칙이며(@@unique([userId, date])), 빠른 기록으로 던진 조각들이
+/// 이 한 문서의 content(Delta) 안에 누적된다.
+/// date는 KST 기준 순수 날짜(UTC 자정 정규화) — date-kst.util.ts 참고.
+model Diary {
+  id         String          @id @default(uuid())
+  userId     String
+  groupId    String?
+  date       DateTime        @db.Date
+  title      String?         @db.VarChar(200)
+  content    String          @db.Text
+  plainText  String?         @db.Text
+  format     DiaryFormat     @default(DELTA)
+  visibility DiaryVisibility @default(PRIVATE)
+  mood       String?         @db.VarChar(20)
+  weather    String?         @db.VarChar(20)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  deletedAt  DateTime?
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date(sort: Desc)])
+  @@index([groupId, date(sort: Desc)])
+  @@index([deletedAt])
+  @@map("diaries")
+}
+
+enum DiaryFormat {
+  DELTA
+  PLAIN
+  MARKDOWN
+}
+
+enum DiaryVisibility {
   PRIVATE
   GROUP
 }

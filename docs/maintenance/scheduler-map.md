@@ -164,6 +164,16 @@
 
 ---
 
+### `diary` — 다이어리 휴지통 정리
+
+파일: [src/diary/diary.scheduler.ts](../../src/diary/diary.scheduler.ts)
+
+| 메서드 | 주기 | 설명 |
+|--------|------|------|
+| `purgeDeletedDiaries` | 매일 04:30 KST (`30 4 * * *`) | 삭제 후 30일 지난 일기 완전 삭제 (하루 경계 04:00 직후) |
+
+---
+
 ## 새 스케줄러 추가 시 체크리스트
 
 1. `isSchedulerEnabled('이름')` 을 모든 `@Cron` 메서드 첫 줄에 추가

@@ -15,5 +15,6 @@
   "group_name_max": "그룹명은 최대 100자까지 가능합니다",
   "month_format": "월 형식은 YYYY-MM이어야 합니다",
   "year_format": "연도 형식은 YYYY이어야 합니다",
-  "date_format": "날짜 형식은 YYYY-MM-DD이어야 합니다"
+  "date_format": "날짜 형식은 YYYY-MM-DD이어야 합니다",
+  "time_format": "시각 형식은 HH:mm이어야 합니다"
 }

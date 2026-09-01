@@ -1,0 +1,21 @@
+{
+  "errors": {
+    "content_required": "Diary body is required",
+    "text_required": "Please enter something to record",
+    "group_id_required": "Group ID is required for group diaries",
+    "diary_not_found": "Diary not found",
+    "duplicate_date": "A diary already exists for this date",
+    "future_date": "You cannot write a diary for a future date",
+    "invalid_date": "Invalid date format",
+    "own_diary_only_update": "You can only update your own diaries",
+    "own_diary_only_delete": "You can only delete your own diaries",
+    "no_access": "You do not have access to this diary",
+    "no_group_access": "You do not have access to this group",
+    "restore_expired": "The 30-day restore window has passed",
+    "restore_conflict": "Cannot restore: a diary already exists for this date",
+    "append_conflict": "Failed to save the entry. Please try again"
+  },
+  "success": {
+    "diary_deleted": "Diary deleted"
+  }
+}
