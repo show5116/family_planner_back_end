@@ -22,4 +22,11 @@ export class SubscriptionStatusDto {
     example: 14,
   })
   daysLeft: number;
+
+  @ApiProperty({
+    description:
+      '자동 갱신 예약 여부 (false면 해지·체험 상태로, expiresAt에 혜택이 끝난다)',
+    example: true,
+  })
+  autoRenewing: boolean;
 }

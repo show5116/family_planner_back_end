@@ -94,7 +94,7 @@
 ```json
 {
   "tier": null, // SubscriptionTier
-  "expiresAt": "2026-12-31T23:59:59.000Z" // 구독 만료일 (ISO 8601). null이면 기간 무제한. (string | null?)
+  "expiresAt": "2026-12-31T23:59:59.000Z" // 구독 만료일 (ISO 8601). null이면 기간 무제한. 과거 날짜도 허용된다 (만료 상태 데모 계정용). (string | null?)
 }
 ```
 

@@ -72,6 +72,7 @@ model User {
   subscriptionTier          SubscriptionTier        @default(free)
   subscriptionExpiresAt     DateTime?
   inAppPurchaseToken        String?                 @db.VarChar(500)
+  trialCarryoverDays        Int                     @default(0)
   subscription              Subscription?
   lastLat                   Float?
   lastLon                   Float?

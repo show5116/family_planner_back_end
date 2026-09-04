@@ -22,7 +22,8 @@
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isActive": false, // 구독 활성 여부 (boolean)
   "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
-  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "daysLeft": 14, // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "autoRenewing": true // 자동 갱신 예약 여부 (false면 해지·체험 상태로, expiresAt에 혜택이 끝난다) (boolean)
 }
 ```
 
@@ -52,7 +53,8 @@
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isActive": false, // 구독 활성 여부 (boolean)
   "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
-  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "daysLeft": 14, // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "autoRenewing": true // 자동 갱신 예약 여부 (false면 해지·체험 상태로, expiresAt에 혜택이 끝난다) (boolean)
 }
 ```
 
@@ -72,7 +74,8 @@
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isActive": false, // 구독 활성 여부 (boolean)
   "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
-  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "daysLeft": 14, // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "autoRenewing": true // 자동 갱신 예약 여부 (false면 해지·체험 상태로, expiresAt에 혜택이 끝난다) (boolean)
 }
 ```
 

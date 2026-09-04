@@ -30,8 +30,17 @@ describe('SubscriptionService', () => {
       create: jest.fn(),
     },
     user: {
+      findUniqueOrThrow: jest.fn(),
       update: jest.fn(),
     },
+  };
+
+  /** 체험 이월 대상이 아닌 일반 사용자 (applyVerifiedPurchase가 트랜잭션 안에서 조회) */
+  const paidUser = {
+    subscriptionTier: SubscriptionTier.premium,
+    subscriptionExpiresAt: new Date('2026-07-01T00:00:00.000Z'),
+    inAppPurchaseToken: 'orig-tx-1',
+    trialCarryoverDays: 0,
   };
 
   const mockPrismaService = {
@@ -71,6 +80,8 @@ describe('SubscriptionService', () => {
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
+
+    mockTx.user.findUniqueOrThrow.mockResolvedValue(paidUser);
 
     // $transaction(callback) 형태 호출을 mockTx로 실행
     mockPrismaService.$transaction.mockImplementation(async (arg) => {
@@ -137,6 +148,10 @@ describe('SubscriptionService', () => {
         subscriptionTier: SubscriptionTier.premium,
         subscriptionExpiresAt: verified.expiresAt,
         inAppPurchaseToken: verified.originalTransactionId,
+        subscription: {
+          autoRenewing: true,
+          status: SubscriptionStatus.active,
+        },
       });
 
       const result = await service.verifyPurchase(userId, {
@@ -235,6 +250,169 @@ describe('SubscriptionService', () => {
     });
   });
 
+  describe('무료 체험 잔여일 이월', () => {
+    const userId = 'user-1';
+    const now = new Date('2026-09-04T00:00:00.000Z');
+    const storeExpiresAt = new Date('2026-10-04T00:00:00.000Z');
+
+    const verified: VerifiedPurchase = {
+      platform: SubscriptionPlatform.IOS,
+      productId: 'family_planner_ad_free_monthly',
+      originalTransactionId: 'orig-tx-1',
+      tier: SubscriptionTier.ad_free,
+      expiresAt: storeExpiresAt,
+      autoRenewing: true,
+      status: SubscriptionStatus.active,
+    };
+
+    /** 체험 10일 남은 사용자 */
+    const trialUser = {
+      subscriptionTier: SubscriptionTier.ad_free,
+      subscriptionExpiresAt: new Date('2026-09-14T00:00:00.000Z'),
+      inAppPurchaseToken: null,
+      trialCarryoverDays: 0,
+    };
+
+    const userUpdateData = () =>
+      mockTx.user.update.mock.calls[0][0].data as {
+        subscriptionTier: SubscriptionTier;
+        subscriptionExpiresAt: Date | null;
+        trialCarryoverDays: number;
+      };
+
+    beforeEach(() => {
+      mockTx.subscription.findUnique.mockResolvedValue(null);
+    });
+
+    it('체험 10일 남은 사용자가 결제하면 잔여일이 만료일에 더해진다', async () => {
+      mockTx.user.findUniqueOrThrow.mockResolvedValue(trialUser);
+
+      await service.applyVerifiedPurchase(userId, verified, {
+        eventType: 'VERIFY_PURCHASE',
+        rawPayload: {},
+        occurredAt: now,
+      });
+
+      const data = userUpdateData();
+      expect(data.trialCarryoverDays).toBe(10);
+      expect(data.subscriptionExpiresAt).toEqual(
+        new Date('2026-10-14T00:00:00.000Z'),
+      );
+    });
+
+    it('체험이 없으면 스토어 만료일 그대로', async () => {
+      mockTx.user.findUniqueOrThrow.mockResolvedValue({
+        ...trialUser,
+        subscriptionTier: SubscriptionTier.free,
+        subscriptionExpiresAt: null,
+      });
+
+      await service.applyVerifiedPurchase(userId, verified, {
+        eventType: 'VERIFY_PURCHASE',
+        rawPayload: {},
+        occurredAt: now,
+      });
+
+      const data = userUpdateData();
+      expect(data.trialCarryoverDays).toBe(0);
+      expect(data.subscriptionExpiresAt).toEqual(storeExpiresAt);
+    });
+
+    it('갱신 시에도 이월분이 유지되고 중복 적립되지 않는다', async () => {
+      mockTx.user.findUniqueOrThrow.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.ad_free,
+        subscriptionExpiresAt: new Date('2026-10-14T00:00:00.000Z'),
+        inAppPurchaseToken: 'orig-tx-1',
+        trialCarryoverDays: 10,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        { ...verified, expiresAt: new Date('2026-11-04T00:00:00.000Z') },
+        {
+          eventType: 'DID_RENEW',
+          rawPayload: {},
+          occurredAt: new Date('2026-10-04T00:00:00.000Z'),
+        },
+      );
+
+      const data = userUpdateData();
+      expect(data.trialCarryoverDays).toBe(10);
+      expect(data.subscriptionExpiresAt).toEqual(
+        new Date('2026-11-14T00:00:00.000Z'),
+      );
+    });
+
+    it('환불(revoked)은 이월분과 무관하게 즉시 free로 회수', async () => {
+      mockTx.user.findUniqueOrThrow.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.ad_free,
+        subscriptionExpiresAt: new Date('2026-10-14T00:00:00.000Z'),
+        inAppPurchaseToken: 'orig-tx-1',
+        trialCarryoverDays: 10,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        { ...verified, status: SubscriptionStatus.revoked },
+        { eventType: 'REFUND', rawPayload: {}, occurredAt: now },
+      );
+
+      const data = userUpdateData();
+      expect(data.subscriptionTier).toBe(SubscriptionTier.free);
+      expect(data.subscriptionExpiresAt).toBeNull();
+      expect(data.trialCarryoverDays).toBe(0);
+    });
+
+    it('스토어 만료(expired)라도 이월분이 남아 있으면 그 기간까지 혜택 유지', async () => {
+      mockTx.user.findUniqueOrThrow.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.ad_free,
+        subscriptionExpiresAt: new Date('2026-10-14T00:00:00.000Z'),
+        inAppPurchaseToken: 'orig-tx-1',
+        trialCarryoverDays: 10,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        { ...verified, status: SubscriptionStatus.expired },
+        {
+          eventType: 'EXPIRED',
+          rawPayload: {},
+          occurredAt: new Date('2026-10-05T00:00:00.000Z'),
+        },
+      );
+
+      const data = userUpdateData();
+      expect(data.subscriptionTier).toBe(SubscriptionTier.ad_free);
+      expect(data.subscriptionExpiresAt).toEqual(
+        new Date('2026-10-14T00:00:00.000Z'),
+      );
+      expect(data.trialCarryoverDays).toBe(10);
+    });
+
+    it('이월분까지 모두 지나 만료되면 free + 이월분 초기화', async () => {
+      mockTx.user.findUniqueOrThrow.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.ad_free,
+        subscriptionExpiresAt: new Date('2026-10-14T00:00:00.000Z'),
+        inAppPurchaseToken: 'orig-tx-1',
+        trialCarryoverDays: 10,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        { ...verified, status: SubscriptionStatus.expired },
+        {
+          eventType: 'EXPIRED',
+          rawPayload: {},
+          occurredAt: new Date('2026-10-20T00:00:00.000Z'),
+        },
+      );
+
+      const data = userUpdateData();
+      expect(data.subscriptionTier).toBe(SubscriptionTier.free);
+      expect(data.trialCarryoverDays).toBe(0);
+    });
+  });
+
   describe('findUserIdByOriginalTransactionId', () => {
     it('originalTransactionId로 userId를 역조회', async () => {
       mockPrismaService.subscription.findFirst.mockResolvedValue({
@@ -274,6 +452,7 @@ describe('SubscriptionService', () => {
         data: {
           subscriptionTier: SubscriptionTier.free,
           subscriptionExpiresAt: null,
+          trialCarryoverDays: 0,
         },
       });
     });
@@ -285,6 +464,7 @@ describe('SubscriptionService', () => {
         subscriptionTier: SubscriptionTier.free,
         subscriptionExpiresAt: null,
         inAppPurchaseToken: null,
+        subscription: null,
       });
 
       const result = await service.getStatus('user-1');
@@ -299,6 +479,10 @@ describe('SubscriptionService', () => {
         subscriptionTier: SubscriptionTier.premium,
         subscriptionExpiresAt: future,
         inAppPurchaseToken: 'token',
+        subscription: {
+          autoRenewing: false,
+          status: SubscriptionStatus.canceled,
+        },
       });
 
       const result = await service.getStatus('user-1');
@@ -306,6 +490,8 @@ describe('SubscriptionService', () => {
       expect(result.isActive).toBe(true);
       expect(result.daysLeft).toBeGreaterThanOrEqual(2);
       expect(result.isTrial).toBe(false);
+      // 해지(자동 갱신 OFF)한 구독은 autoRenewing=false
+      expect(result.autoRenewing).toBe(false);
     });
 
     it('ad_free이고 inAppPurchaseToken이 없으면 isTrial=true (무료체험)', async () => {
@@ -314,11 +500,13 @@ describe('SubscriptionService', () => {
         subscriptionTier: SubscriptionTier.ad_free,
         subscriptionExpiresAt: future,
         inAppPurchaseToken: null,
+        subscription: null,
       });
 
       const result = await service.getStatus('user-1');
 
       expect(result.isTrial).toBe(true);
+      expect(result.autoRenewing).toBe(false);
     });
   });
 });

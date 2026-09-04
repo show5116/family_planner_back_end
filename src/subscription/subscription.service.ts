@@ -30,6 +30,30 @@ const ENTITLED_STATUSES = new Set<SubscriptionStatus>([
 /** subscription_events.eventType 컬럼 길이 */
 const EVENT_TYPE_MAX_LENGTH = 50;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** 구독 상태 응답에 필요한 User 필드 */
+const STATUS_SELECT = {
+  subscriptionTier: true,
+  subscriptionExpiresAt: true,
+  inAppPurchaseToken: true,
+  subscription: { select: { autoRenewing: true, status: true } },
+} as const;
+
+type StatusSource = {
+  subscriptionTier: SubscriptionTier;
+  subscriptionExpiresAt: Date | null;
+  inAppPurchaseToken: string | null;
+  subscription: { autoRenewing: boolean; status: SubscriptionStatus } | null;
+};
+
+type CarryoverSource = {
+  subscriptionTier: SubscriptionTier;
+  subscriptionExpiresAt: Date | null;
+  inAppPurchaseToken: string | null;
+  trialCarryoverDays: number;
+};
+
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
@@ -48,11 +72,7 @@ export class SubscriptionService {
   async getStatus(userId: string): Promise<SubscriptionStatusDto> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: {
-        subscriptionTier: true,
-        subscriptionExpiresAt: true,
-        inAppPurchaseToken: true,
-      },
+      select: STATUS_SELECT,
     });
 
     return this.toStatusDto(user);
@@ -128,11 +148,7 @@ export class SubscriptionService {
 
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: {
-        subscriptionTier: true,
-        subscriptionExpiresAt: true,
-        inAppPurchaseToken: true,
-      },
+      select: STATUS_SELECT,
     });
 
     const isActive = this.checkActive(
@@ -146,6 +162,7 @@ export class SubscriptionService {
         data: {
           subscriptionTier: SubscriptionTier.free,
           subscriptionExpiresAt: null,
+          trialCarryoverDays: 0,
         },
       });
     }
@@ -178,6 +195,34 @@ export class SubscriptionService {
         return;
       }
 
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: {
+          subscriptionTier: true,
+          subscriptionExpiresAt: true,
+          inAppPurchaseToken: true,
+          trialCarryoverDays: true,
+        },
+      });
+
+      // 체험 중 결제하면 잔여 체험일을 최초 1회만 적립한다 (갱신마다 더하면 무한히 늘어난다)
+      const carryoverDays = isEntitled
+        ? this.resolveCarryoverDays(user, occurredAt)
+        : user.trialCarryoverDays;
+      const effectiveExpiresAt = this.addDays(
+        verified.expiresAt,
+        carryoverDays,
+      );
+
+      // 자연 만료는 이월분이 남은 동안 혜택을 유지한다 (환불·보류는 이월분과 무관하게 즉시 회수)
+      const keepByCarryover =
+        !isEntitled &&
+        verified.status === SubscriptionStatus.expired &&
+        carryoverDays > 0 &&
+        effectiveExpiresAt !== null &&
+        effectiveExpiresAt > occurredAt;
+      const grantsBenefit = isEntitled || keepByCarryover;
+
       const subscriptionData = {
         platform: verified.platform,
         productId: verified.productId,
@@ -209,16 +254,20 @@ export class SubscriptionService {
       await tx.user.update({
         where: { id: userId },
         data: {
-          subscriptionTier: isEntitled ? verified.tier : SubscriptionTier.free,
-          subscriptionExpiresAt: isEntitled ? verified.expiresAt : null,
+          subscriptionTier: grantsBenefit
+            ? verified.tier
+            : SubscriptionTier.free,
+          subscriptionExpiresAt: grantsBenefit ? effectiveExpiresAt : null,
+          // free로 내려가면 초기화한다 (재구독 때 옛날 체험분이 다시 얹히지 않도록)
+          trialCarryoverDays: grantsBenefit ? carryoverDays : 0,
           inAppPurchaseToken: verified.originalTransactionId,
         },
       });
-    });
 
-    this.logger.log(
-      `구독 반영 완료 (userId=${userId}, eventType=${event.eventType}, status=${verified.status}, tier=${isEntitled ? verified.tier : SubscriptionTier.free})`,
-    );
+      this.logger.log(
+        `구독 반영 완료 (userId=${userId}, eventType=${event.eventType}, status=${verified.status}, tier=${grantsBenefit ? verified.tier : SubscriptionTier.free}, 체험이월=${carryoverDays}일)`,
+      );
+    });
   }
 
   /**
@@ -251,6 +300,7 @@ export class SubscriptionService {
         data: {
           subscriptionTier: SubscriptionTier.free,
           subscriptionExpiresAt: null,
+          trialCarryoverDays: 0,
         },
       }),
     ]);
@@ -267,11 +317,7 @@ export class SubscriptionService {
   /**
    * 만료된 구독은 free로 응답한다 (프론트가 tier를 그대로 신뢰하도록)
    */
-  private toStatusDto(user: {
-    subscriptionTier: SubscriptionTier;
-    subscriptionExpiresAt: Date | null;
-    inAppPurchaseToken: string | null;
-  }): SubscriptionStatusDto {
+  private toStatusDto(user: StatusSource): SubscriptionStatusDto {
     const isActive = this.checkActive(
       user.subscriptionTier,
       user.subscriptionExpiresAt,
@@ -284,6 +330,7 @@ export class SubscriptionService {
         isActive: false,
         isTrial: false,
         daysLeft: 0,
+        autoRenewing: false,
       };
     }
 
@@ -295,6 +342,11 @@ export class SubscriptionService {
         user.subscriptionTier === SubscriptionTier.ad_free &&
         !user.inAppPurchaseToken,
       daysLeft: this.calcDaysLeft(user.subscriptionExpiresAt),
+      // 해지(자동 갱신 OFF)와 정상 갱신을 프론트가 구분할 수 있도록 내려준다
+      autoRenewing:
+        user.subscription !== null &&
+        user.subscription.autoRenewing &&
+        ENTITLED_STATUSES.has(user.subscription.status),
     };
   }
 
@@ -302,6 +354,28 @@ export class SubscriptionService {
     if (tier === SubscriptionTier.free) return false;
     if (!expiresAt) return true;
     return expiresAt > new Date();
+  }
+
+  /**
+   * 결제 시점에 남아 있던 무료 체험 잔여일.
+   * 이미 적립돼 있으면 그대로 유지한다 (최초 결제 때 1회만 적립).
+   */
+  private resolveCarryoverDays(user: CarryoverSource, at: Date): number {
+    if (user.trialCarryoverDays > 0) return user.trialCarryoverDays;
+
+    const isTrial =
+      user.subscriptionTier !== SubscriptionTier.free &&
+      !user.inAppPurchaseToken;
+
+    if (!isTrial || !user.subscriptionExpiresAt) return 0;
+
+    const remaining = user.subscriptionExpiresAt.getTime() - at.getTime();
+    return remaining > 0 ? Math.ceil(remaining / DAY_MS) : 0;
+  }
+
+  private addDays(base: Date | null, days: number): Date | null {
+    if (!base || days <= 0) return base;
+    return new Date(base.getTime() + days * DAY_MS);
   }
 
   private calcDaysLeft(expiresAt: Date | null): number {

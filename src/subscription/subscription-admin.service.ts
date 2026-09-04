@@ -113,6 +113,8 @@ export class SubscriptionAdminService {
       data: {
         subscriptionTier: dto.tier,
         ...(expiresAt !== undefined && { subscriptionExpiresAt: expiresAt }),
+        // free로 내리면 체험 이월분도 함께 정리한다
+        ...(dto.tier === SubscriptionTier.free && { trialCarryoverDays: 0 }),
       },
       select: {
         id: true,

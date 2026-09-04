@@ -10813,7 +10813,7 @@ R2에 파일이 존재하는지 확인합니다.
 ```json
 {
   "tier": null, // SubscriptionTier
-  "expiresAt": "2026-12-31T23:59:59.000Z" // 구독 만료일 (ISO 8601). null이면 기간 무제한. (string | null?)
+  "expiresAt": "2026-12-31T23:59:59.000Z" // 구독 만료일 (ISO 8601). null이면 기간 무제한. 과거 날짜도 허용된다 (만료 상태 데모 계정용). (string | null?)
 }
 ```
 
@@ -10859,7 +10859,8 @@ R2에 파일이 존재하는지 확인합니다.
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isActive": false, // 구독 활성 여부 (boolean)
   "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
-  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "daysLeft": 14, // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "autoRenewing": true // 자동 갱신 예약 여부 (false면 해지·체험 상태로, expiresAt에 혜택이 끝난다) (boolean)
 }
 ```
 
@@ -10889,7 +10890,8 @@ R2에 파일이 존재하는지 확인합니다.
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isActive": false, // 구독 활성 여부 (boolean)
   "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
-  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "daysLeft": 14, // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "autoRenewing": true // 자동 갱신 예약 여부 (false면 해지·체험 상태로, expiresAt에 혜택이 끝난다) (boolean)
 }
 ```
 
@@ -10909,7 +10911,8 @@ R2에 파일이 존재하는지 확인합니다.
   "expiresAt": "2025-01-01T00:00:00Z", // 구독 만료일 (Date | null)
   "isActive": false, // 구독 활성 여부 (boolean)
   "isTrial": true, // 무료 체험 여부 (결제 없이 부여된 ad_free) (boolean)
-  "daysLeft": 14 // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "daysLeft": 14, // 구독 남은 일수 (만료됐거나 무료이면 0) (number)
+  "autoRenewing": true // 자동 갱신 예약 여부 (false면 해지·체험 상태로, expiresAt에 혜택이 끝난다) (boolean)
 }
 ```
 
