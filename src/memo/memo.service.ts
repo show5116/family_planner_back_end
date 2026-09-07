@@ -15,7 +15,7 @@ import { MemoQueryDto, MemoTagListQueryDto } from './dto/memo-query.dto';
 import { CreateMemoTagDto } from './dto/create-memo-tag.dto';
 import { CreateMemoAttachmentDto } from './dto/create-memo-attachment.dto';
 import { MemoVisibility } from './enums/memo-visibility.enum';
-import { deltaToPlainText } from './utils/delta-to-plain-text.util';
+import { deltaToPlainText } from '@/common/utils/delta-to-plain-text.util';
 
 const MEMO_INCLUDE = {
   user: { select: { id: true, name: true } },

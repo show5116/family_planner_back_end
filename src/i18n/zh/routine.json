@@ -31,7 +31,6 @@
     "already_categorized": "该分类已连接",
     "category_link_not_found": "连接信息不存在",
     "challenge_not_found": "挑战不存在",
-    "own_challenge_only_update": "只有创建者可以修改该挑战",
     "challenge_invalid_date_range": "结束日期必须晚于或等于开始日期",
     "challenge_already_ended": "无法参加已结束的挑战",
     "private_routine_not_joinable": "私密例行任务无法连接到挑战",

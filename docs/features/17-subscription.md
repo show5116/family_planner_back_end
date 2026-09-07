@@ -48,12 +48,20 @@ App Store Server API로 서버 검증하고, 스토어 웹훅(RTDN · ASSN V2)�
   "expiresAt": "2026-09-27T00:00:00Z",
   "isActive": true,
   "isTrial": false,
-  "daysLeft": 30
+  "daysLeft": 30,
+  "autoRenewing": true
 }
 ```
 
 만료된 구독은 `tier: "free"`, `expiresAt: null`, `daysLeft: 0`으로 응답합니다.
 (만료 후에도 tier가 남아 있으면 프론트가 혜택이 유지되는 것으로 오인하기 때문)
+
+`expiresAt` / `daysLeft`는 **체험 이월분이 반영된 값**입니다 (아래 [무료 체험](#무료-체험) 참고).
+
+`autoRenewing`은 스토어에 자동 갱신이 예약돼 있는지입니다. 해지(자동 갱신 OFF)한 사용자는
+만료일까지 `isActive: true`이지만 `autoRenewing: false`이므로 프론트가 "다음 갱신일"과
+"해지됨 · ~까지 이용 가능"을 구분해 표시할 수 있습니다. 무료 체험 중이거나(스토어 구독 없음)
+혜택이 없는 상태면 `false`입니다.
 
 ---
 
@@ -87,7 +95,7 @@ Play Console의 유예 기간과 계정 보류가 활성화되어 있다는 전�
 | 계정 보류 (유예 만료) | `on_hold` | `free` | `false` |
 | 일시중지 (사용자 pause) | `paused` | `free` | `false` |
 | 구독 취소 (자동 갱신 해제) | `canceled` | **만료일까지 유지** | 만료 전 `true` |
-| 만료 | `expired` | `free` | `false` |
+| 만료 | `expired` | `free` (체험 이월분이 남았으면 그때까지 유지) | `false` |
 | 환불 / 취소 처리 | `revoked` | `free` (즉시) | `false` |
 | 결제 재성공 | `active` | 즉시 복구 | `true` |
 
@@ -131,6 +139,29 @@ Play Console의 유예 기간과 계정 보류가 활성화되어 있다는 전�
 - `isTrial`은 "tier가 `ad_free`인데 `inAppPurchaseToken`이 없음"으로 판정합니다.
 - 체험 중 실제 구독을 구매하면 검증 시 `inAppPurchaseToken`이 저장되고 만료일이 스토어 기준으로 갱신되므로
   자동으로 `isTrial: false`로 전환됩니다.
+
+### 체험 잔여일 이월 (`trialCarryoverDays`)
+
+앱은 체험 중에도 구매 버튼을 노출합니다. 체험이 남은 상태에서 결제하면 스토어 만료일로 덮어써져
+잔여 체험일이 사라지므로, **결제 시점의 체험 잔여일을 적립해 두고 만료일 계산에 더합니다.**
+
+| 시점 | 값 |
+| --- | --- |
+| 체험 만료일 | 2026-09-14 (가입 + 14일) |
+| 2026-09-04 결제 (스토어 만료 2026-10-04) | `trialCarryoverDays = 10` |
+| `users.subscriptionExpiresAt` | 2026-10-14 (= 스토어 만료일 + 10일) |
+
+- 적립은 **최초 결제 때 1회만** 합니다. 이미 `trialCarryoverDays > 0`이면 다시 계산하지 않습니다
+  (갱신마다 더하면 무한히 늘어남).
+- 갱신 웹훅·재검증 스케줄러도 같은 `applyVerifiedPurchase`를 타므로,
+  갱신될 때마다 `스토어 만료일 + trialCarryoverDays`로 다시 계산됩니다.
+- `subscriptions.expiresAt`에는 **스토어 원본 만료일**을, `users.subscriptionExpiresAt`에는
+  **이월분이 더해진 혜택 만료일**을 저장합니다. `GET /subscription`은 후자를 내려줍니다.
+- 이월분은 `ENTITLED_STATUSES` 판정을 뒤집지 않습니다. 환불(`revoked`)·계정 보류(`on_hold`)·
+  일시중지(`paused`)는 이월분과 무관하게 즉시 회수됩니다.
+- 단, 자연 만료(`expired`)는 이월분이 남아 있는 동안 혜택을 유지합니다
+  (해지한 사용자가 이월분을 잃지 않도록).
+- `free`로 내려갈 때 `trialCarryoverDays`를 0으로 초기화합니다 (재구독 시 옛 체험분 재적립 방지).
 
 ---
 

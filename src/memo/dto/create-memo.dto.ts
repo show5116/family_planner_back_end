@@ -65,7 +65,7 @@ export class CreateMemoDto {
   })
   @IsOptional()
   @IsEnum(MemoFormat)
-  format?: MemoFormat = MemoFormat.DELTA;
+  format?: MemoFormat;
 
   @ApiProperty({
     description: '공개 범위',
@@ -75,7 +75,7 @@ export class CreateMemoDto {
   })
   @IsOptional()
   @IsEnum(MemoVisibility)
-  visibility?: MemoVisibility = MemoVisibility.PRIVATE;
+  visibility?: MemoVisibility;
 
   @ApiProperty({ description: '그룹 ID (GROUP 공개 시 필수)', required: false })
   @IsOptional()

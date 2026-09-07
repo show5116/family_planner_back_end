@@ -15,5 +15,6 @@
   "group_name_max": "グループ名は最大100文字までです",
   "month_format": "月の形式はYYYY-MMである必要があります",
   "year_format": "年の形式はYYYYである必要があります",
-  "date_format": "日付の形式はYYYY-MM-DDである必要があります"
+  "date_format": "日付の形式はYYYY-MM-DDである必要があります",
+  "time_format": "時刻の形式は HH:mm である必要があります"
 }

@@ -48,15 +48,6 @@ export class RoutineChallengeService {
     return challenge;
   }
 
-  /** 챌린지를 만든 사람인지까지 검증 */
-  private async findOwnChallenge(userId: string, challengeId: string) {
-    const challenge = await this.findChallengeWithAccess(userId, challengeId);
-    if (challenge.createdBy !== userId) {
-      throw new ForbiddenException(this.t('errors.own_challenge_only_update'));
-    }
-    return challenge;
-  }
-
   private validateDateRange(startDate: Date, endDate: Date) {
     if (endDate.getTime() < startDate.getTime()) {
       throw new BadRequestException(
@@ -268,7 +259,7 @@ export class RoutineChallengeService {
     challengeId: string,
     dto: UpdateRoutineChallengeDto,
   ) {
-    const challenge = await this.findOwnChallenge(userId, challengeId);
+    const challenge = await this.findChallengeWithAccess(userId, challengeId);
 
     const startDate =
       dto.startDate !== undefined
@@ -346,7 +337,7 @@ export class RoutineChallengeService {
 
   /** 챌린지 삭제 (만든 사람만, 참가 기록은 FK cascade로 함께 삭제) */
   async remove(userId: string, challengeId: string) {
-    await this.findOwnChallenge(userId, challengeId);
+    await this.findChallengeWithAccess(userId, challengeId);
 
     await this.prisma.routineChallenge.delete({ where: { id: challengeId } });
 

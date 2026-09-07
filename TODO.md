@@ -24,11 +24,17 @@
 - 구독 관리: `docs/features/17-subscription.md`
 - 냉장고 관리: `docs/features/18-fridge.md`
 - 스마트 장보기: `docs/features/19-shopping.md`
+- 루틴 관리: `docs/features/20-routine.md`
+- 다이어리: `docs/features/21-diary.md`
 
 ## 전체 로드맵
 
 [ROADMAP.md](ROADMAP.md)에서 Phase별 계획 확인
 
+## 백로그
+
+요청서에 있었지만 아직 착수하지 않은 항목: [docs/backlog.md](docs/backlog.md)
+
 ---
 
-**Last Updated**: 2026-05-26
+**Last Updated**: 2026-09-01

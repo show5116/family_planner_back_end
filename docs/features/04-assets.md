@@ -147,19 +147,19 @@ model AccountHoldingRecord {
 | GET    | `/assets/accounts`                          | 계좌 목록                         | JWT, Group Member |
 | GET    | `/assets/accounts/:id`                      | 계좌 상세                         | JWT, Group Member |
 | PATCH  | `/assets/accounts/reorder`                  | 그룹 계좌 순서 변경               | JWT, Group Member |
-| PATCH  | `/assets/accounts/:id`                      | 계좌 수정                         | JWT, Owner        |
-| DELETE | `/assets/accounts/:id`                      | 계좌 삭제                         | JWT, Owner        |
-| POST   | `/assets/accounts/:id/records`              | 자산 기록 추가                    | JWT, Owner        |
+| PATCH  | `/assets/accounts/:id`                      | 계좌 수정                         | JWT, Group Member |
+| DELETE | `/assets/accounts/:id`                      | 계좌 삭제                         | JWT, Group Member |
+| POST   | `/assets/accounts/:id/records`              | 자산 기록 추가                    | JWT, Group Member |
 | GET    | `/assets/accounts/:id/records`              | 자산 기록 목록                    | JWT, Group Member |
-| DELETE | `/assets/accounts/:id/records/:recordId`    | 자산 기록 삭제                    | JWT, Owner        |
-| POST   | `/assets/accounts/:id/withdrawals`          | 출금 기록 추가 (이후 기록 재계산) | JWT, Owner        |
+| DELETE | `/assets/accounts/:id/records/:recordId`    | 자산 기록 삭제                    | JWT, Group Member |
+| POST   | `/assets/accounts/:id/withdrawals`          | 출금 기록 추가 (이후 기록 재계산) | JWT, Group Member |
 | GET    | `/assets/accounts/:id/withdrawals`          | 출금 기록 목록                    | JWT, Group Member |
-| DELETE | `/assets/accounts/:id/withdrawals/:wId`     | 출금 기록 삭제 (이후 기록 원복)   | JWT, Owner        |
+| DELETE | `/assets/accounts/:id/withdrawals/:wId`     | 출금 기록 삭제 (이후 기록 원복)   | JWT, Group Member |
 | GET    | `/assets/accounts/:id/holding-records/names`              | 종목명 목록 조회 (자동완성용)                              | JWT, Group Member |
 | GET    | `/assets/accounts/:id/holding-records`                    | 종목 기록 목록 (recordDate 쿼리로 날짜 필터 가능)          | JWT, Group Member |
-| POST   | `/assets/accounts/:id/holding-records`                    | 종목 기록 추가 (name·ticker·amount → ratio 자동 계산)     | JWT, Owner        |
-| PATCH  | `/assets/accounts/:id/holding-records/:recordId`          | 종목 기록 수정 (name·ticker·amount)                       | JWT, Owner        |
-| DELETE | `/assets/accounts/:id/holding-records/:recordId`          | 종목 기록 삭제                                             | JWT, Owner        |
+| POST   | `/assets/accounts/:id/holding-records`                    | 종목 기록 추가 (name·ticker·amount → ratio 자동 계산)     | JWT, Group Member |
+| PATCH  | `/assets/accounts/:id/holding-records/:recordId`          | 종목 기록 수정 (name·ticker·amount)                       | JWT, Group Member |
+| DELETE | `/assets/accounts/:id/holding-records/:recordId`          | 종목 기록 삭제                                             | JWT, Group Member |
 | GET    | `/assets/gold/current-price`                | 금 현물가 조회 (원/g)             | JWT               |
 | GET    | `/assets/statistics`                        | 통계 조회 (적립금·종목 포함)      | JWT, Group Member |
 | GET    | `/assets/statistics/trend`                  | 그룹 전체 자산 기간 통계          | JWT, Group Member |

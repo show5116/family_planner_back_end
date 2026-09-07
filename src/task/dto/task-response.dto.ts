@@ -110,8 +110,9 @@ export class TaskDto {
   dueAt: Date | null;
 
   @ApiProperty({
-    description: 'D-Day (남은 일수)',
-    example: 3,
+    description:
+      'D-Day (KST 달력 기준 남은 일수). 오늘 마감 0, 내일 1, 어제 -1',
+    example: 0,
     nullable: true,
   })
   daysUntilDue: number | null;

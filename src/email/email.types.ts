@@ -36,9 +36,7 @@ export interface PasswordResetEmailContext extends BaseEmailContext {
   securityText: string;
 }
 
-export type EmailContext =
-  | VerificationEmailContext
-  | PasswordResetEmailContext;
+export type EmailContext = VerificationEmailContext | PasswordResetEmailContext;
 
 export interface SendEmailOptions {
   to: string;

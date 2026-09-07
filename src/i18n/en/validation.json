@@ -15,5 +15,6 @@
   "group_name_max": "Group name can be up to 100 characters",
   "month_format": "Month format must be YYYY-MM",
   "year_format": "Year format must be YYYY",
-  "date_format": "Date format must be YYYY-MM-DD"
+  "date_format": "Date format must be YYYY-MM-DD",
+  "time_format": "Time format must be HH:mm"
 }

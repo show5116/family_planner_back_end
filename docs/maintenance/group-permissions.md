@@ -116,6 +116,25 @@ Prisma schema의 `PermissionCode` enum. `Role.permissions` JSON 배열에 저장
 
 ---
 
+## 그룹 콘텐츠 편집 규칙 (공통)
+
+그룹에 공유한 콘텐츠는 **그룹원이면 누구나 수정·삭제**할 수 있다. 작성자 본인만 다룰 수 있는 것은
+그룹에 공유하지 않은 개인 데이터뿐이다. (2026-09-01 정책 통일)
+
+| 모듈 | 대상 | 규칙 |
+|------|------|------|
+| 메모 | `Memo` (visibility=GROUP) | 그룹원 전원 |
+| 다이어리 | `Diary` (visibility=GROUP) | 그룹원 전원 |
+| 가계부 | `Expense`/`RecurringExpense`/`Merchant` (groupId) | 그룹원 전원 |
+| 자산 | `Account` 및 자산·출금·종목 기록 | 그룹원 전원 (계좌는 항상 그룹 소속) |
+| 일정/할일 | `Task`(groupId), `Recurring`(groupId) | 그룹원 전원 / 개인 Task는 작성자·참여자 |
+| 루틴 | 그룹 챌린지(`RoutineChallenge`) | 그룹원 전원 |
+
+**개인 데이터라 작성자 본인만 가능한 것**: 루틴(습관)·루틴 그룹·루틴 카테고리(공유는 열람 전용),
+Q&A 문의, 알림/디바이스 토큰, 개인 메모·다이어리(`PRIVATE`).
+
+---
+
 ## 알려진 이슈
 
 | 이슈 | 내용 |
@@ -126,4 +145,4 @@ Prisma schema의 `PermissionCode` enum. `Role.permissions` JSON 배열에 저장
 
 ---
 
-**Last Updated**: 2026-03-10
+**Last Updated**: 2026-09-01
