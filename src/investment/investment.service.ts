@@ -67,6 +67,13 @@ const INDICATORS: {
     unit: 'pt',
   },
   {
+    symbol: 'RUSSELL2000',
+    name: 'Russell 2000',
+    nameKo: '러셀 2000',
+    category: 'INDEX',
+    unit: 'pt',
+  },
+  {
     symbol: 'NIKKEI225',
     name: 'Nikkei 225',
     nameKo: '니케이 225',
@@ -128,6 +135,20 @@ const INDICATORS: {
     nameKo: '구리',
     category: 'COMMODITY',
     unit: 'USD/lb',
+  },
+  {
+    symbol: 'NAT_GAS',
+    name: 'Natural Gas',
+    nameKo: '천연가스',
+    category: 'COMMODITY',
+    unit: 'USD/MMBtu',
+  },
+  {
+    symbol: 'WHEAT',
+    name: 'Wheat',
+    nameKo: '밀',
+    category: 'COMMODITY',
+    unit: 'USX/bu',
   },
   {
     symbol: 'US10Y',
@@ -513,25 +534,16 @@ export class InvestmentService implements OnModuleInit {
           `;
         }
 
-        // 버킷 맵: bucket → spot price (주말 필터 적용된 rows 기준)
-        const spotMap = new Map(
-          filteredRows.map((r) => [r.bucket, Number(r.price)]),
+        // 버킷이 일치하는 지점만 남깁니다 (주말 필터가 적용된 rows 기준).
+        // 7일 이하는 현물이 **분 단위**, 국제금·환율이 **시간 단위** 버킷이라
+        // 그대로 맞추면 정각에 수집된 것만 살아남습니다(실측: 160건 중 32건).
+        // 두 쪽을 시간 단위로 묶어 비교합니다.
+        const toHour = (b: string) => b.slice(0, 13); // 'YYYY-MM-DD HH'
+        spreadHistory = this.calcSpreadSeries(
+          filteredRows,
+          spreadRows,
+          days <= 7 ? toHour : undefined,
         );
-
-        spreadHistory = spreadRows
-          .map((r) => {
-            const spot = spotMap.get(r.bucket);
-            if (spot == null) return null;
-            const calc = (Number(r.goldUsd) * Number(r.usdKrw)) / 31.1035;
-            if (calc <= 0) return null;
-            return {
-              spread: (((spot - calc) / calc) * 100).toFixed(2),
-              recordedAt: r.bucket,
-            };
-          })
-          .filter(
-            (r): r is { spread: string; recordedAt: string } => r !== null,
-          );
       }
     }
 
@@ -616,7 +628,83 @@ export class InvestmentService implements OnModuleInit {
       recordedAt: new Date(r.bucket),
     }));
 
-    return { symbol: ind.symbol, nameKo: ind.nameKo, history };
+    // GOLD_KRW_SPOT: 30일 초과 조회도 이격률 시계열을 함께 내려줍니다.
+    // days > 30 은 이 메서드로 곧장 빠지기 때문에, 여기서 계산하지 않으면
+    // 90일·180일·1년에서는 이격률 차트가 영영 그려지지 않습니다.
+    let spreadHistory: { spread: string; recordedAt: Date }[] | undefined;
+    if (ind.symbol === 'GOLD_KRW_SPOT' && rows.length > 0) {
+      const daily = await this.fetchDailyGoldSpreadRows(from);
+      spreadHistory = this.calcSpreadSeries(rows, daily).map((r) => ({
+        spread: r.spread,
+        recordedAt: new Date(r.recordedAt),
+      }));
+    }
+
+    return {
+      symbol: ind.symbol,
+      nameKo: ind.nameKo,
+      history,
+      ...(spreadHistory !== undefined && { spreadHistory }),
+    };
+  }
+
+  /**
+   * 국제 금값·환율의 **일 단위** 평균 시세를 날짜 버킷으로 묶어 가져옵니다.
+   * (findHistoryFromYahoo 의 DB fallback 이 일 단위라 버킷 형식을 맞춥니다.)
+   */
+  private async fetchDailyGoldSpreadRows(from: Date) {
+    const [goldUsdInd, usdKrwInd] = await Promise.all([
+      this.prisma.indicator.findUnique({ where: { symbol: 'GOLD_USD' } }),
+      this.prisma.indicator.findUnique({ where: { symbol: 'USD_KRW' } }),
+    ]);
+    if (!goldUsdInd || !usdKrwInd) return [];
+
+    return this.prisma.$queryRaw<
+      { bucket: string; goldUsd: string; usdKrw: string }[]
+    >`
+      SELECT g.bucket AS bucket, g.price AS goldUsd, u.price AS usdKrw
+      FROM (
+        SELECT DATE_FORMAT(recordedAt, '%Y-%m-%d') AS bucket,
+               CAST(AVG(price) AS CHAR) AS price
+        FROM indicator_prices
+        WHERE indicatorId = ${goldUsdInd.id} AND recordedAt >= ${from}
+        GROUP BY bucket
+      ) g
+      JOIN (
+        SELECT DATE_FORMAT(recordedAt, '%Y-%m-%d') AS bucket,
+               CAST(AVG(price) AS CHAR) AS price
+        FROM indicator_prices
+        WHERE indicatorId = ${usdKrwInd.id} AND recordedAt >= ${from}
+        GROUP BY bucket
+      ) u ON u.bucket = g.bucket
+      ORDER BY g.bucket ASC
+    `;
+  }
+
+  /**
+   * 현물가와 국제 환산가(GOLD_USD × USD_KRW ÷ 31.1035)의 이격률을 계산합니다.
+   * 두 목록의 **버킷이 같은 지점**만 남깁니다.
+   */
+  private calcSpreadSeries(
+    spotRows: { bucket: string; price: string }[],
+    spreadRows: { bucket: string; goldUsd: string; usdKrw: string }[],
+    keyOf: (bucket: string) => string = (b) => b,
+  ) {
+    // 같은 키가 여러 번 나오면 마지막 값을 씁니다 (분 단위를 시간 단위로 묶을 때)
+    const spotMap = new Map<string, number>();
+    for (const r of spotRows) spotMap.set(keyOf(r.bucket), Number(r.price));
+    return spreadRows
+      .map((r) => {
+        const spot = spotMap.get(keyOf(r.bucket));
+        if (spot == null) return null;
+        const calc = (Number(r.goldUsd) * Number(r.usdKrw)) / 31.1035;
+        if (calc <= 0) return null;
+        return {
+          spread: (((spot - calc) / calc) * 100).toFixed(2),
+          recordedAt: r.bucket,
+        };
+      })
+      .filter((r): r is { spread: string; recordedAt: string } => r !== null);
   }
 
   /**
@@ -821,7 +909,15 @@ export class InvestmentService implements OnModuleInit {
     recordedAt?: Date,
   ) {
     const indicatorId = this.indicatorIdCache.get(symbol);
-    if (!indicatorId) return;
+    if (!indicatorId) {
+      // 캐시는 INDICATORS 상수로만 채워집니다. 수집기(YAHOO_SYMBOLS 등)에만 심볼을
+      // 추가하고 상수에 빠뜨리면 여기서 조용히 버려져 몇 달간 수집이 멈춥니다.
+      // (실제로 RUSSELL2000·NAT_GAS·WHEAT가 그렇게 멈춰 있었습니다.)
+      this.logger.warn(
+        `savePrice skipped: '${symbol}' is not in INDICATORS (indicatorIdCache miss)`,
+      );
+      return;
+    }
 
     let resolvedPrev = prevPrice;
     if (resolvedPrev == null) {
