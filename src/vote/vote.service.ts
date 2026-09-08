@@ -30,7 +30,7 @@ export class VoteService {
     groupId: string,
     query: VoteQueryDto,
   ): Promise<PaginatedVoteDto> {
-    await this.assertGroupMember(userId, groupId);
+    const { isOwner } = await this.assertGroupMember(userId, groupId);
 
     const { page = 1, limit = 20, status = VoteStatusFilter.ALL } = query;
     const skip = (page - 1) * limit;
@@ -63,7 +63,7 @@ export class VoteService {
       this.prisma.vote.count({ where }),
     ]);
 
-    const items = votes.map((v) => this.toDto(v, userId));
+    const items = votes.map((v) => this.toDto(v, userId, isOwner));
 
     return {
       items,
@@ -82,7 +82,7 @@ export class VoteService {
     groupId: string,
     voteId: string,
   ): Promise<VoteDto> {
-    await this.assertGroupMember(userId, groupId);
+    const { isOwner } = await this.assertGroupMember(userId, groupId);
 
     const vote = await this.prisma.vote.findUnique({
       where: { id: voteId },
@@ -102,7 +102,7 @@ export class VoteService {
       throw new NotFoundException('vote.errors.vote_not_found');
     }
 
-    return this.toDto(vote, userId);
+    return this.toDto(vote, userId, isOwner);
   }
 
   /**
@@ -113,7 +113,7 @@ export class VoteService {
     groupId: string,
     dto: CreateVoteDto,
   ): Promise<VoteDto> {
-    await this.assertGroupMember(userId, groupId);
+    const { isOwner } = await this.assertGroupMember(userId, groupId);
 
     const vote = await this.prisma.vote.create({
       data: {
@@ -140,7 +140,7 @@ export class VoteService {
       },
     });
 
-    return this.toDto(vote, userId);
+    return this.toDto(vote, userId, isOwner);
   }
 
   /**
@@ -151,24 +151,15 @@ export class VoteService {
     groupId: string,
     voteId: string,
   ): Promise<{ message: string }> {
-    await this.assertGroupMember(userId, groupId);
+    const { isOwner } = await this.assertGroupMember(userId, groupId);
 
     const vote = await this.prisma.vote.findUnique({ where: { id: voteId } });
     if (!vote || vote.groupId !== groupId) {
       throw new NotFoundException('vote.errors.vote_not_found');
     }
 
-    const isCreator = vote.createdBy === userId;
-    if (!isCreator) {
-      // 그룹 OWNER 여부 확인
-      const member = await this.prisma.groupMember.findUnique({
-        where: { groupId_userId: { groupId, userId } },
-        include: { role: true },
-      });
-      const isOwner = member?.role?.name === 'OWNER';
-      if (!isOwner) {
-        throw new ForbiddenException('vote.errors.author_or_admin_only');
-      }
+    if (vote.createdBy !== userId && !isOwner) {
+      throw new ForbiddenException('vote.errors.author_or_admin_only');
     }
 
     await this.prisma.vote.delete({ where: { id: voteId } });
@@ -269,22 +260,30 @@ export class VoteService {
   /**
    * 그룹 멤버 검증
    */
+  /**
+   * 그룹 멤버인지 확인하고, **그룹장(OWNER) 여부**를 함께 돌려줍니다.
+   *
+   * 삭제 권한(작성자 또는 그룹장)을 응답에 담으려면 조회 시점에도 이 정보가 필요합니다.
+   * 멤버 조회를 어차피 하므로 role까지 같이 읽어 재조회를 없앴습니다.
+   */
   private async assertGroupMember(
     userId: string,
     groupId: string,
-  ): Promise<void> {
+  ): Promise<{ isOwner: boolean }> {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
+      include: { role: true },
     });
     if (!member) {
       throw new ForbiddenException('vote.errors.group_member_only');
     }
+    return { isOwner: member.role?.name === 'OWNER' };
   }
 
   /**
    * Prisma Vote 엔티티 → VoteDto 변환
    */
-  private toDto(vote: any, userId: string): VoteDto {
+  private toDto(vote: any, userId: string, isGroupOwner = false): VoteDto {
     const now = new Date();
     const isOngoing = !vote.endsAt || vote.endsAt > now;
 
@@ -318,6 +317,9 @@ export class VoteService {
       hasVoted,
       creatorName: vote.creator.name,
       createdAt: vote.createdAt,
+      // 삭제 규칙(작성자 또는 그룹장)을 클라이언트가 그대로 알 수 있게 내려줍니다.
+      // 앱이 이 값으로 삭제 버튼 노출을 판단합니다.
+      canDelete: vote.createdBy === userId || isGroupOwner,
       options,
     };
   }

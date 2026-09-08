@@ -59,6 +59,13 @@ export class VoteDto {
   @ApiProperty({ description: '작성자 이름', example: '홍길동' })
   creatorName: string;
 
+  @ApiProperty({
+    description:
+      '삭제 가능 여부 (작성자 본인 또는 그룹장). 앱의 삭제 버튼 노출 판단에 씁니다',
+    example: true,
+  })
+  canDelete: boolean;
+
   @ApiProperty({ description: '생성 시각' })
   createdAt: Date;
 
