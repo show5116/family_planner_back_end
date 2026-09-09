@@ -1,6 +1,6 @@
 # 21. 다이어리 (Diary)
 
-> **상태**: ✅ 완료 (Phase 1 — 텍스트 일기 + 빠른 기록)
+> **상태**: ✅ 완료 (텍스트 일기 + 빠른 기록 + 미디어 첨부)
 > **Phase**: Phase 6
 > **원본 요청서**: 프론트 레포 `docs/features/24-diary.md`
 > **참고 구현체**: `src/memo/` (구조가 거의 동일)
@@ -16,7 +16,7 @@
 | 식별 단위 | 자유 (개수 무제한) | **날짜** — `@@unique([userId, date])` |
 | 작성 방식 | 폼으로 한 번에 작성 | **조각을 던져 누적(append)** 후 나중에 다듬기 |
 
-Phase 1은 **텍스트 일기 + 빠른 기록**만 다룹니다. 사진·영상 첨부와 용량 한도는 Phase 2입니다(맨 아래 참고).
+기능은 두 단계로 나눠 만들었습니다. **Phase 1**이 텍스트 일기와 빠른 기록, **Phase 2**가 사진·영상 첨부와 등급별 용량 한도입니다. 성격이 다른 이유는 Phase 2가 **비용이 걸린 검증**이기 때문입니다 — 입력값 검증은 뚫려도 데이터가 지저분해지는 정도지만, 용량 한도가 뚫리면 실제 돈이 나갑니다. 그래서 한도는 **서버가 실측한 값만** 신뢰합니다.
 
 ---
 
@@ -133,6 +133,61 @@ enum DiaryVisibility {
 
 관계 추가: `model User`에 `diaries Diary[]`, `model Group`에 `diaries Diary[]`.
 
+### `DiaryMedia` — 첨부 미디어 (Phase 2)
+
+```prisma
+/// 일기 첨부 미디어 (R2 Presigned 업로드)
+///
+/// 한도 집계는 일기가 아니라 "올린 사람"(userId) 기준이다.
+/// 그룹 일기에 그룹원이 올려도 그 사람의 한도를 쓴다.
+model DiaryMedia {
+  id           String      @id @default(uuid())
+  diaryId      String?                          // 업로드 직후엔 null (고아 정리 대상)
+  userId       String                           // 한도 집계 기준 — 업로더
+  type         MediaType                        // IMAGE | VIDEO
+  status       MediaStatus @default(PENDING)    // presigned 업로드 상태
+  storageKey   String      @db.VarChar(500)
+  thumbnailKey String?     @db.VarChar(500)
+  fileName     String      @db.VarChar(255)
+  declaredSize Int                              // 클라이언트 신고 크기 (예약용)
+  fileSize     Int?                             // ★ 한도 집계 기준 (HeadObject 실측)
+  originalSize Int?                             // 압축 전 크기 (절약량 표시용)
+  mimeType     String      @db.VarChar(100)
+  width        Int?
+  height       Int?
+  durationMs   Int?
+  isOriginal   Boolean     @default(false)
+  sortOrder    Int         @default(0)
+  reservedAt   DateTime    @default(now())      // presigned 발급 시각 (만료 정리 기준)
+  uploadedAt   DateTime?                        // ★ 월간 집계 기준 (확정 시각)
+  deletedAt    DateTime?
+
+  // 일기를 완전 삭제해도 미디어 행은 남긴다 (행이 사라지면 월간 한도가 회복돼 버린다).
+  // 실제 정리는 서비스에서 R2 삭제 + deletedAt 기록으로 처리한다.
+  diary Diary? @relation(fields: [diaryId], references: [id], onDelete: SetNull)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, uploadedAt])                 // 월간 집계용
+  @@index([userId, deletedAt])                  // 누적 집계용
+  @@index([userId, status, reservedAt])         // 만료 PENDING 정리용
+  @@index([diaryId, sortOrder])
+  @@map("diary_media")
+}
+
+enum MediaType   { IMAGE VIDEO }
+enum MediaStatus { PENDING CONFIRMED }
+```
+
+관계 추가: `model Diary`에 `media DiaryMedia[]`, `model User`에 `diaryMedia DiaryMedia[]`.
+
+**왜 이런 필드가 필요한가**
+
+- **`userId`를 따로 두는 이유** — 한도는 사용자 단위다. diary를 거쳐 집계하면 `diaryId`가 아직 null인 임시 첨부가 집계에서 빠진다.
+- **`diaryId`가 nullable인 이유** — 사진만 올리고 저장하지 않고 나가는 경우가 있다. 이 고아 미디어가 한도를 계속 잡아먹으므로 정리 스케줄러가 필요하다.
+- **`declaredSize` / `fileSize`를 나눈 이유** — presigned 방식에서는 서버가 바이트를 보지 못한다. 발급 시점엔 신고값으로 자리를 예약하고, 완료 확정에서 `HeadObject` 실측값으로 확정한다. **한도 집계는 언제나 `fileSize` 기준**이다.
+- **`status`가 필요한 이유** — presigned URL만 받고 업로드하지 않은 레코드는 실제 파일이 없는데도 예약 용량을 잡는다. 15분 지나면 정리한다.
+- **`onDelete: SetNull`인 이유** — Cascade면 정책 A 덮어쓰기와 30일 purge가 미디어 행까지 지워 **월간 한도가 회복된다.** 아래 "삭제 시 한도 회복" 참고.
+
 ### 마이그레이션 시 COLLATE 필수
 
 `CLAUDE.md`대로 `CREATE TABLE`에 **반드시 `COLLATE utf8mb4_unicode_ci`를 명시**합니다. 생략하면 개발 DB(MySQL 8.x)는 통과하고 양산(9.x)에서만 FK 에러 3780으로 죽습니다.
@@ -142,6 +197,8 @@ enum DiaryVisibility {
 grep -c "CREATE TABLE" prisma/migrations/*_add_diary/migration.sql
 grep -c "COLLATE utf8mb4_unicode_ci" prisma/migrations/*_add_diary/migration.sql
 ```
+
+마이그레이션은 두 개입니다 — `20260901000000_add_diary`(Diary), `20260909000000_add_diary_media`(DiaryMedia). 둘 다 `CREATE TABLE` 개수와 `COLLATE` 개수가 일치하는 것을 확인했습니다.
 
 ### ⚠️ soft delete와 유니크 제약의 충돌 (정책 A 채택)
 
@@ -177,6 +234,77 @@ grep -c "COLLATE utf8mb4_unicode_ci" prisma/migrations/*_add_diary/migration.sql
 - 스트릭: 연속 작성일수 + 이번 달 작성일수 + 최장 연속일수, 전부 새벽 4시 경계 기준
 - 회고(flashback): 1개월 / 3개월 / 6개월 / 1년 / n년 전 오늘
 
+### 미디어 첨부 (Phase 2)
+
+사진·영상을 일기에 붙이고, 용량을 구독 등급별 한도로 관리합니다.
+
+#### 업로드는 R2 Presigned URL 3단계
+
+파일이 백엔드를 거치지 않고 클라이언트에서 R2로 직접 올라갑니다. 프리미엄 파일 최대 200MB에 영상까지 가면 모바일 네트워크에서 백엔드가 병목이 되고, Railway 인스턴스의 요청 타임아웃·메모리가 그대로 한계가 됩니다.
+
+```
+[1] POST /diaries/media/reserve       한도 검증 + 자리 예약
+      Redis 락 → 한도 확인 → DiaryMedia(status=PENDING) 생성
+      → { mediaId, uploadUrl, storageKey, expiresIn }
+
+[2] PUT <uploadUrl>                   클라이언트 → R2 직접 (백엔드 경유 안 함)
+      실패 시 같은 mediaId로 재시도 가능
+
+[3] POST /diaries/media/:id/confirm   완료 확정
+      HeadObject로 실제 존재·크기 확인 → 실측 fileSize 기록
+      → status=CONFIRMED, uploadedAt=now, 락 안에서 한도 재확인
+```
+
+> **★ 실측 검증이 이 방식의 유일한 방어선입니다.** presigned URL은 발급 후 만료 전까지 그 키에 무엇이든 쓸 수 있습니다. 신고값만 믿으면 **1KB로 예약하고 200MB를 올릴 수 있습니다.** `confirm`은 반드시 `HeadObject` 실측값으로 확정하고, 한도를 넘으면 **R2 파일을 지운 뒤 402**를 돌려줍니다.
+
+#### 등급별 한도
+
+| Tier | 월간 업로드 | 계정 누적 | 파일 1개 최대 | 영상 |
+| --- | --- | --- | --- | --- |
+| `free` | 100 MB | 500 MB | 20 MB | ❌ (이미지만) |
+| `ad_free` | 300 MB | 2 GB | 50 MB | ✅ 최대 60초 |
+| `premium` | 2 GB | 20 GB | 200 MB | ✅ 최대 5분 |
+
+수치는 R2 실단가와 초기 사용 통계를 보고 출시 전 조정할 초안입니다. **앱에 하드코딩하지 않고 서버가 내려줍니다** — [src/config/diary-media.config.ts](../../src/config/diary-media.config.ts)에 기본값을 두고 `DIARY_MEDIA_FREE_MONTHLY_MB` 같은 환경변수로 덮어씁니다(MB·초 단위). 조정에 앱 재배포가 필요 없습니다.
+
+#### 한도 집계 규칙
+
+- **월간**: `uploadedAt`이 이번 달인 미디어의 `fileSize` 합. 매월 1일 리셋을 배치로 처리하지 않고 **조회 시점의 기간 집계**로 계산합니다(배치는 실패하면 조용히 한도가 안 풀립니다).
+- **누적**: `deletedAt IS NULL`인 미디어의 `fileSize` 합
+- 양쪽 모두 **유효한 `PENDING` 예약분(`declaredSize`)을 포함**합니다. 그래야 업로드 중인 파일이 게이지에 반영되어, 연달아 올리다 마지막에만 거부당하는 일이 없습니다.
+- **월 경계도 새벽 4시** — 월간 집계의 월 시작은 1일 04:00 KST(`diaryMonthStartInKst()`)입니다. 캘린더·스트릭과 다른 기준을 쓰면 사용자에게 설명할 수 없는 차이가 생깁니다.
+
+#### ⚠️ 삭제 시 한도 회복은 비대칭
+
+| | 회복되나? |
+| --- | --- |
+| 계정 누적 한도 | **즉시 회복** |
+| 월간 한도 | **회복되지 않음** |
+
+월간 한도를 회복시키면 "지웠다 올렸다"를 반복해 **실질 무한 용량**이 됩니다. 업로드 트래픽 자체가 비용이므로 이렇게 고정합니다.
+
+이 규칙 때문에 **삭제는 R2 파일만 지우고 행은 남기는 soft delete**입니다. 행까지 지우면 월간 집계에서도 빠져 한도가 되돌아갑니다. 일기를 완전 삭제할 때도 마찬가지로 `diaryId`만 떼고 행은 남깁니다(그래서 FK가 `SetNull`).
+
+행이 무한히 쌓이지 않도록, 두 집계 어디에도 영향이 없어진 행(`deletedAt IS NOT NULL` && `uploadedAt < 이번 달 시작`)은 매일 04:30 배치에서 hard delete합니다.
+
+#### 다운그레이드
+
+이미 올린 파일은 삭제하지 않습니다. 누적 한도를 초과한 상태여도 **신규 업로드만 차단**하고 조회·삭제는 그대로 허용합니다. 데이터를 인질로 잡지 않습니다.
+
+#### 동시성 — Redis 락
+
+`reserve` 요청 여러 건이 동시에 도달하면 각각 한도를 통과해 합계가 한도를 넘길 수 있습니다. 한도는 여러 행에 걸친 집계라 빠른 기록의 `SELECT ... FOR UPDATE`로는 부족하고, `diary:media:quota:{userId}` 키로 사용자 단위 분산 락을 겁니다(TTL 10초, 100ms 간격 재시도). `confirm`의 최종 확인도 같은 락 안에서 재집계합니다.
+
+#### 정리 스케줄러 — 둘 다 없으면 한도가 샙니다
+
+| 대상 | 조건 | 처리 | 주기 |
+| --- | --- | --- | --- |
+| 만료된 예약 | `PENDING` && `reservedAt` 15분 경과 | R2 잔여물 + 레코드 삭제 | 5분마다 |
+| 고아 미디어 | `diaryId IS NULL` && `CONFIRMED` 24시간 경과 | R2 삭제 + soft delete | 매시 10분 |
+| 집계 무관 행 | `deletedAt` 있음 && 지난 달 이전 업로드 | 레코드 hard delete | 매일 04:30 |
+
+앞의 둘은 각각 "presigned만 받고 업로드 안 함", "사진 올리고 일기를 저장하지 않고 나감"에 대응합니다.
+
 ---
 
 ## API 엔드포인트
@@ -197,6 +325,19 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 | DELETE | `/diaries/:id` | 삭제 (soft delete) | JWT, Owner/Group Member |
 | POST | `/diaries/:id/restore` | 30일 내 복구 | JWT, Owner/Group Member |
 
+미디어 — Base: `/diaries/media`
+
+| Method | Endpoint | 설명 | 권한 |
+| --- | --- | --- | --- |
+| GET | `/diaries/media/quota` | 현재 한도 상태 (업로드 전 필수 조회) | JWT |
+| GET | `/diaries/media/large` | 용량 큰 미디어 Top N (저장공간 관리 화면용) | JWT |
+| POST | `/diaries/media/reserve` | 한도 검증 + presigned URL 발급 | JWT |
+| POST | `/diaries/media/:id/confirm` | 업로드 완료 확정 (실측 반영) | JWT, Uploader |
+| PATCH | `/diaries/media/reorder` | 첨부 순서 변경 | JWT, Owner/Group Member |
+| DELETE | `/diaries/media/:id` | 삭제 (R2 즉시 삭제, 누적만 회복) | JWT, Owner/Group Member |
+
+등급별 한도표는 구독 쪽에 있습니다 — `GET /subscription/quota-plans`([17-subscription.md](17-subscription.md)). 구독 화면의 플랜 비교 카드에서 "프리미엄은 얼마나 더 쓸 수 있는지"를 보여주는 용도로, `/diaries/media/quota`와 같은 서버 설정을 읽습니다.
+
 > **라우트 순서**: `/append`, `/calendar`, `/by-date/:date`, `/streak`, `/flashback`은 반드시 `/:id`보다 **먼저** 선언합니다(메모 컨트롤러의 `/tags`, `/pinned`와 동일).
 
 ### `POST /diaries/append` — 빠른 기록 ★ 핵심
@@ -205,7 +346,8 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 // 요청
 {
   "date": "2026-09-01",       // 생략 시 서버가 diaryDateInKst()로 결정
-  "text": "점심에 본 고양이",   // 텍스트 조각 (Phase 1의 유일한 조각 종류)
+  "text": "점심에 본 고양이",   // 텍스트 조각
+  "mediaIds": ["uuid"],        // 함께 붙일 첨부 (confirm까지 끝난 것)
   "capturedAt": "14:32"        // 조각 시각 마커 (선택, HH:mm)
 }
 ```
@@ -231,7 +373,8 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 
 **검증**
 
-- `text`가 비어 있으면 400 (`diary.errors.text_required`)
+- `text`와 `mediaIds`가 **둘 다** 비어 있으면 400 (`diary.errors.text_required`). 사진만 던지는 빠른 기록이 오히려 더 잦아, 둘 중 하나만 있으면 됩니다
+- 첨부는 **내가 올린 `CONFIRMED`이면서 아직 어디에도 붙지 않은 것**만 허용 (`POST /diaries`·`PATCH /diaries/:id`도 같은 규칙으로 `mediaIds`를 받습니다)
 - 미래 날짜면 400 (`diary.errors.future_date`)
 - `capturedAt`은 `HH:mm` 형식만 허용
 
@@ -277,8 +420,7 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 
 - `groupId` 지정 시 그 그룹의 `GROUP` 일기(멤버 전원) — 같은 `date`가 여러 번 나올 수 있음
 - 미지정 시 본인 일기만
-- `hasMedia`는 Phase 1에서 항상 `false`였고, **Phase 2에서 실제 값으로 채워졌다**
-  ([22-diary-media.md](22-diary-media.md)). 조회 응답에는 `media` 배열도 함께 내려간다
+- `hasMedia`는 Phase 1에서 자리만 잡아둔(항상 `false`) 필드였고 Phase 2에서 실제 값으로 채워졌습니다 — 프론트 모델은 그대로 두고 값만 바뀌었습니다
 
 ### `GET /diaries/streak`
 
@@ -312,15 +454,76 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 }
 ```
 
+### `GET /diaries/media/quota`
+
+```json
+{
+  "tier": "premium",
+  "monthly": {
+    "usedBytes": 524288000,
+    "limitBytes": 2147483648,
+    "remainingBytes": 1623195648,
+    "resetsAt": "2026-10-01T04:00:00+09:00"
+  },
+  "total": { "usedBytes": 3221225472, "limitBytes": 21474836480, "remainingBytes": 18253611008 },
+  "perFileLimitBytes": 209715200,
+  "videoAllowed": true,
+  "maxVideoDurationMs": 300000
+}
+```
+
+### `POST /diaries/media/reserve`
+
+`diaryId`(선택), `date`(선택), `type`, `fileName`, `mimeType`, `declaredSize`, `isOriginal`, `width`/`height`/`durationMs`(선택)를 받습니다. `diaryId` 없이 `date`만 오면 **그 날짜의 내 일기를 찾아 있으면 즉시 연결**하고, 없으면 `diaryId=null`로 두어 나중에 일기 저장 시 연결합니다.
+
+**검증 순서 — 비용이 큰 것부터 막습니다**
+
+1. `declaredSize`가 파일 1개 최대치 초과 → **413** `file_too_large`
+2. 영상 불가 등급인데 `type=VIDEO` → **403** `video_not_allowed`
+3. 영상 길이 초과 → **400** `video_too_long` (신고값 기준, `confirm`에서 재검증)
+4. `mimeType` 화이트리스트 (`image/jpeg|png|webp|gif`, `video/mp4|quicktime`) → **400** `invalid_mime_type`
+5. **Redis 사용자 락** → 월간·누적 잔여 확인(`CONFIRMED` + 유효 `PENDING`) → 초과 시 **402** `quota_exceeded`
+6. `PENDING` 레코드 생성 + presigned PUT URL 발급 (유효 10분)
+
+402 응답에는 **남은 용량을 함께 싣습니다.** 프론트가 "이번 달 남은 용량 N MB"를 그 자리에서 안내해야 하기 때문입니다.
+
+```json
+{ "statusCode": 402, "message": "이번 달 업로드 용량을 모두 사용했어요", "quota": { /* quota와 같은 형태 */ } }
+```
+
+### `POST /diaries/media/:id/confirm`
+
+1. `HeadObject`로 존재·크기 확인 — 없으면 **400** `upload_not_found`
+2. `Content-Type` 재확인 — 화이트리스트 밖이면 R2 파일 삭제 후 **400**
+3. 실측 크기가 파일 1개 최대치를 넘으면 R2 파일 삭제 후 **413**
+4. 락 안에서 실측값으로 한도 재검증 → 초과 시 **R2 파일 삭제 후 402**
+5. `CONFIRMED` 확정, `uploadedAt = now()`
+
+응답은 확정된 미디어 + **갱신된 quota**를 함께 주어, 프론트가 게이지를 즉시 맞출 수 있게 합니다. 이미 확정된 건에 다시 호출하면 현재 상태를 그대로 돌려줍니다(재시도 안전).
+
+### 미디어 URL — presigned GET
+
+일기는 사적인 내용이라 R2 버킷을 public으로 열지 않고 **만료 1시간의 presigned GET**으로 내립니다. 서명은 네트워크 호출 없는 로컬 계산이라 목록에서 썸네일 수십 건을 서명해도 부담이 없습니다. 조회 응답의 `media[].url`·`thumbnailUrl`이 여기 해당합니다.
+
+```json
+"media": [
+  { "id": "uuid", "type": "IMAGE", "url": "https://...", "thumbnailUrl": null,
+    "width": 1920, "height": 1080, "durationMs": null, "sortOrder": 0 }
+]
+```
+
 ### 삭제 정책
 
 | 대상 | 정책 |
 | --- | --- |
 | 일기 본문 | **soft delete 30일** → `restore` 가능, 이후 스케줄러가 완전 삭제 |
-| 첨부 미디어 | 즉시 영구 삭제 — 복구 불가 (Phase 2에서 구현) |
+| 첨부 미디어 | **즉시 영구 삭제 — 복구 불가** (R2 파일 삭제, 행은 월간 집계용으로 유지) |
 
 - `POST /diaries/:id/restore`: `deletedAt`이 30일 이내여야 하고(초과 시 404), 같은 날짜에 활성 일기가 있으면 409
 - 완전 삭제 스케줄러: `diary` 이름으로 `isSchedulerEnabled('diary')` 게이트, 매일 1회 `deletedAt < now-30d` 하드 삭제
+- 본문과 미디어의 정책이 다른 이유: 텍스트는 복구 가치가 크고 저장 비용이 ~0인 반면, 미디어는 정반대입니다. 비용 구조가 다른 두 자원에 같은 정책을 쓸 이유가 없습니다
+- 그래서 **일기를 삭제하면 첨부는 그 자리에서 R2에서 사라집니다.** 30일 뒤 복구하면 본문만 돌아오고 미디어 자리는 비어 있습니다
+- 정책 A(휴지통 덮어쓰기)로 휴지통 일기를 완전 삭제할 때도 첨부 R2 파일을 함께 지웁니다 — 안 지우면 참조가 사라진 파일이 R2에 영구히 남습니다
 
 ---
 
@@ -333,32 +536,51 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 - **수정·삭제·복구는 그룹 일기면 그룹원 전원** — 가족이 함께 쓰는 기록이므로 메모·가계부와 동일하게 그룹원이면 누구나 다룰 수 있다. 개인(`PRIVATE`) 일기는 작성자 본인만
 - 그룹 목록 조회 시 `getUserGroupIds` Redis 캐시 패턴(TTL 60초) 재사용
 
+미디어도 같은 규칙을 따릅니다 — 그룹 일기의 첨부는 그룹원 누구나 추가·삭제할 수 있습니다. 다만 **한도는 업로드한 사람에게 귀속**됩니다. `DiaryMedia.userId`가 일기 작성자였다면 남의 한도를 소진시킬 수 있습니다. 일기에 붙지 않은 첨부는 올린 본인만 다룰 수 있습니다.
+
 ---
 
-## 구현 파일 (예정)
+## 구현 파일
 
 ```
 src/diary/
   diary.module.ts
   diary.controller.ts
   diary.service.ts
-  diary.scheduler.ts                — 30일 경과 soft delete 완전 삭제 (매일 1회)
+  diary.scheduler.ts                — 30일 경과 일기 완전 삭제 + 집계 무관 미디어 행 정리 (매일 04:30)
   dto/
-    create-diary.dto.ts
+    create-diary.dto.ts             — mediaIds 포함
     update-diary.dto.ts
-    append-diary.dto.ts             — ★ 빠른 기록
-    diary-query.dto.ts              — 목록/캘린더 쿼리
-    diary-response.dto.ts           — DiaryDto, AppendDiaryResultDto, DiaryCalendarDto, DiaryStreakDto, DiaryFlashbackDto, PaginatedDiaryDto
+    append-diary.dto.ts             — ★ 빠른 기록 (text·mediaIds 중 하나)
+    diary-query.dto.ts
+    diary-response.dto.ts
   enums/
     diary-format.enum.ts            — export { DiaryFormat } from '@prisma/client'
-    diary-visibility.enum.ts        — export { DiaryVisibility } from '@prisma/client'
+    diary-visibility.enum.ts
   utils/
     delta-append.util.ts            — ★ Delta에 조각 append
+  media/
+    diary-media.controller.ts
+    diary-media.service.ts          — ★ reserve / confirm / delete / reorder / 정리
+    diary-media-quota.service.ts    — ★ 월간·누적 집계 (비대칭 회복 규칙)
+    diary-media.scheduler.ts        — 만료 예약(5분) / 고아 미디어(매시)
+    diary-media.constants.ts        — MIME 화이트리스트, 락 설정
+    quota-exceeded.exception.ts     — 402 + quota payload
+    dto/
+      reserve-media.dto.ts
+      reorder-media.dto.ts
+      large-media-query.dto.ts
+      diary-media-response.dto.ts
 ```
 
-- `deltaToPlainText`는 `src/memo/utils/delta-to-plain-text.util.ts`에 이미 있습니다. 다이어리도 Delta를 쓰므로 **`src/common/utils/delta-to-plain-text.util.ts`로 승격**하고 메모 import를 갱신합니다(복제 금지).
-- `app.module.ts`에 `DiaryModule` 등록
-- i18n: `src/i18n/{ko,en,ja,zh}/diary.json` 4개 언어
+함께 손댄 공용 코드
+
+- [src/config/diary-media.config.ts](../../src/config/diary-media.config.ts) — 등급별 한도 (환경변수 오버라이드)
+- [src/common/utils/date-kst.util.ts](../../src/common/utils/date-kst.util.ts) — `diaryDateInKst()`, `diaryMonthStartInKst()`, `nextDiaryMonthStartInKst()`
+- [src/storage/storage.service.ts](../../src/storage/storage.service.ts) — `getFileMetadata()`(HeadObject 실측), `getViewUrl()`(로그 없는 presigned GET) 추가
+- [src/common/filters/i18n-exception.filter.ts](../../src/common/filters/i18n-exception.filter.ts) — HttpException payload 전달 (402의 `quota`)
+- `deltaToPlainText`는 메모에서 `src/common/utils/`로 승격해 공유
+- i18n: `src/i18n/{ko,en,ja,zh}/diary.json` — 문구 톤은 "제한"이 아니라 "다 썼어요" 쪽(스토어 심사에서 결제 압박으로 읽히지 않게)
 
 ---
 
@@ -391,12 +613,75 @@ src/diary/
       존재하지 않는 날짜(`2026-02-30`, 평년 `2025-02-29`)의 롤오버 차단, 경로·쿼리 파라미터 검증,
       휴지통 덮어쓰기·복구 충돌, 공개범위 전환(GROUP↔PRIVATE), 인증 누락
 
-### ✅ Phase 2 (완료)
+### ✅ Phase 2 (완료 — 2026-09-09)
 
-미디어 첨부·용량 한도·R2 직접 업로드는 **[22-diary-media.md](22-diary-media.md)** 에
-요청서가 있다. 착수 시 지켜야 할 Phase 1 결정(정책 A와 미디어, 그룹 미디어 권한,
-월간 집계의 새벽 4시 경계)은 그 문서 4-8절에 정리해두었다.
+- [x] `DiaryMedia` 모델 + 마이그레이션 (`20260909000000_add_diary_media`, COLLATE 1:1 확인)
+- [x] 등급별 한도를 서버 설정에서 읽도록 구성 (환경변수 오버라이드, 하드코딩 없음)
+- [x] `/media/quota` — 유효 `PENDING` 예약분 포함 집계
+- [x] `/media/reserve` — 검증 6단계 + Redis 락 + presigned 발급
+- [x] `/media/:id/confirm` — **HeadObject 실측 검증** + 초과 시 R2 파일 삭제 후 402
+- [x] `/media/:id` DELETE — R2 즉시 삭제, 누적만 회복
+- [x] `/media/reorder`, `/media/large`
+- [x] 기존 조회 API에 `media` 배열 추가, `calendar.hasMedia` 실제 값
+- [x] `append`의 `text` 필수 완화 + `mediaIds` (`create`/`update`에도 추가)
+- [x] 휴지통 완전 삭제·일기 삭제 시 R2 파일 동반 삭제 (정책 A 포함)
+- [x] 정리 스케줄러 3종 (만료 예약 / 고아 미디어 / 집계 무관 행)
+- [x] `GET /subscription/quota-plans`
+- [x] i18n 4개 언어 (한도·업로드 오류 11키)
+- [x] `npm run check` 통과
+
+### 검증 결과 (2026-09-09, 개발 서버 + 실제 R2 버킷)
+
+비용이 걸린 기능이라 9개 시나리오를 실호출로 확인했습니다 (총 54개 체크 통과).
+
+| 시나리오 | 결과 |
+| --- | --- |
+| 1KB 예약 후 3MB 업로드 | `confirm` 402 + R2 파일 삭제 + 예약 행 제거 |
+| 20MB × 6건 동시 reserve (한도 100MB) | 5건 성공 / 1건 402, 합계 정확히 100MB |
+| 미디어 삭제 | 누적만 회복, 월간 유지 |
+| presigned 받고 업로드 안 함 | 15분 경과분만 정리, 유효 예약 유지 |
+| 사진만 올리고 일기 미저장 | 24시간 경과분만 정리, R2 삭제 + 행 유지 |
+| 무료 계정 영상 업로드 | 403 (+ 413 파일 초과, 400 MIME도 확인) |
+| 다운그레이드 후 누적 초과 | 신규만 402, 조회·삭제 정상 |
+| 삭제한 날짜에 재작성 (정책 A) | 휴지통 일기의 R2 파일 잔여 없음 |
+| 그룹원이 올린 미디어 | 한도가 업로더에게 귀속 |
 
 ---
 
-**Last Updated**: 2026-09-01
+## 구현 노트 — 요청서와 달라진 판단
+
+Phase 2 요청서(프론트 레포 `docs/features/24-diary.md`)와 다르게 구현한 지점입니다.
+
+### 삭제를 "레코드 삭제"로 할 수 없다
+
+요청서는 "`deletedAt` 기록 또는 레코드 삭제 — 편한 쪽으로"라고 열어뒀지만, 행을 지우면 월간 집계에서도 빠져 **월간 한도가 회복됩니다.** 요청서가 금지한 "지웠다 올렸다 무한 용량"이 그대로 열립니다. R2 파일만 지우고 행은 남깁니다.
+
+같은 이유로 `DiaryMedia.diaryId`의 FK를 요청서의 `onDelete: Cascade` 대신 **`SetNull`** 로 두고, 일기 완전 삭제 경로에서 서비스가 R2 삭제 → `deletedAt` 기록 → 분리를 직접 합니다.
+
+### 월 경계는 `thisMonthStartInKst()`를 쓸 수 없다
+
+요청서 본문은 기존 `thisMonthStartInKst()`를, 뒤쪽 절은 하루 경계(04:00 KST)에 맞추라고 해 서로 어긋났습니다. 후자를 택했습니다. 게다가 `thisMonthStartInKst()`는 **UTC 자정 순수 날짜**를 반환해 `uploadedAt`(실제 timestamp)과 비교하면 **매월 1일 00:00~09:00 KST 업로드분이 통째로 누락**됩니다. `diaryMonthStartInKst()`를 새로 만들었습니다.
+
+### `fileExists()`로는 실측 검증을 할 수 없다
+
+기존 `StorageService.fileExists()`는 boolean만 돌려줘 핵심 방어(실제 크기 확인)에 쓸 수 없습니다. `HeadObject`의 `ContentLength`/`ContentType`을 반환하는 `getFileMetadata()`를 추가했습니다.
+
+### 402에 `quota`를 실으려면 예외 필터를 넓혀야 했다
+
+`I18nExceptionFilter`가 `statusCode`/`message`/`error`만 내보내고 있어 `quota`가 잘려나갔습니다. HttpException이 실은 payload를 그대로 전달하도록 확장했습니다(추가 필드가 없는 기존 예외는 응답 그대로).
+
+### `create`/`update`에도 `mediaIds`
+
+요청서는 `append`만 명시했지만, "`diaryId` 없이 예약 → 일기 저장 시 연결" 흐름은 일반 작성 경로에도 필요합니다.
+
+### `reserve`의 `date`는 저장하지 않는다
+
+모델에 날짜 칼럼이 없어, 그 날짜의 내 일기를 찾아 연결하는 용도로만 씁니다.
+
+### 조회 URL은 presigned GET
+
+요청서가 백엔드 판단에 맡긴 항목입니다. 공개 URL은 캐시 효율이 좋지만 키를 아는 사람은 누구나 영구 접근할 수 있어, 사적인 기록에는 단기 만료 서명을 택했습니다.
+
+---
+
+**Last Updated**: 2026-09-09

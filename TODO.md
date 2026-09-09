@@ -29,12 +29,8 @@
 
 ## 전체 로드맵
 
-[ROADMAP.md](ROADMAP.md)에서 Phase별 계획 확인
-
-## 백로그
-
-요청서에 있었지만 아직 착수하지 않은 항목: [docs/backlog.md](docs/backlog.md)
+[ROADMAP.md](ROADMAP.md)에서 Phase별 계획 확인 — 미착수 항목도 여기에 있습니다.
 
 ---
 
-**Last Updated**: 2026-09-01
+**Last Updated**: 2026-09-09

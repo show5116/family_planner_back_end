@@ -218,7 +218,7 @@
 - ⬜ 매일/특정 요일 반복 타입 확장
 - ⬜ 그룹원 간 미체크 알림(사회적 압박, 옵트인 필요)
 
-### 🟢 다이어리 (Phase 1: 텍스트 일기 + 빠른 기록)
+### 🟢 다이어리
 - ✅ `Diary` 모델 + 마이그레이션 (하루 1편, `@@unique([userId, date])`)
 - ✅ 하루 경계 새벽 4시 헬퍼(`diaryDateInKst()`) 추가
 - ✅ 일기 CRUD + 날짜별 조회 + soft delete/복구(30일)
@@ -226,7 +226,9 @@
 - ✅ 캘린더 월별 현황 / 스트릭 / 회고(flashback)
 - ✅ 그룹 공개 범위 + 멤버십 검증 (메모 패턴 재사용)
 - ✅ 30일 경과 일기 완전 삭제 스케줄러 (매일 04:30 KST)
-- ⬜ Phase 2 (미디어 첨부, 용량 한도, R2 Presigned 업로드) — [docs/backlog.md](docs/backlog.md)
+- ✅ **미디어 첨부** — R2 Presigned 3단계 업로드(reserve → PUT → confirm), HeadObject 실측 확정
+- ✅ 등급별 용량 한도 (월간·누적, 서버 설정에서 조정) + `GET /subscription/quota-plans`
+- ✅ 한도 경합 방지 Redis 락 / 만료 예약·고아 미디어 정리 스케줄러
 
 ### 🟢 구독 관리
 - ✅ 구독 상태 조회 / 업데이트 / 복원
