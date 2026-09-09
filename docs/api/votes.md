@@ -41,6 +41,7 @@
       "totalVoters": 5, // 총 투표 참여자 수 (number)
       "hasVoted": false, // 현재 사용자 참여 여부 (boolean)
       "creatorName": "홍길동", // 작성자 이름 (string)
+      "canDelete": true, // 삭제 가능 여부 (작성자 본인 또는 그룹장). 앱의 삭제 버튼 노출 판단에 씁니다 (boolean)
       "createdAt": "2025-01-01T00:00:00Z", // 생성 시각 (Date)
       "options": {
         "id": "uuid-1234",
@@ -86,6 +87,7 @@
   "totalVoters": 5, // 총 투표 참여자 수 (number)
   "hasVoted": false, // 현재 사용자 참여 여부 (boolean)
   "creatorName": "홍길동", // 작성자 이름 (string)
+  "canDelete": true, // 삭제 가능 여부 (작성자 본인 또는 그룹장). 앱의 삭제 버튼 노출 판단에 씁니다 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 생성 시각 (Date)
   "options": [
     {
@@ -141,6 +143,7 @@
   "totalVoters": 5, // 총 투표 참여자 수 (number)
   "hasVoted": false, // 현재 사용자 참여 여부 (boolean)
   "creatorName": "홍길동", // 작성자 이름 (string)
+  "canDelete": true, // 삭제 가능 여부 (작성자 본인 또는 그룹장). 앱의 삭제 버튼 노출 판단에 씁니다 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 생성 시각 (Date)
   "options": [
     {
@@ -215,6 +218,7 @@
   "totalVoters": 5, // 총 투표 참여자 수 (number)
   "hasVoted": false, // 현재 사용자 참여 여부 (boolean)
   "creatorName": "홍길동", // 작성자 이름 (string)
+  "canDelete": true, // 삭제 가능 여부 (작성자 본인 또는 그룹장). 앱의 삭제 버튼 노출 판단에 씁니다 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 생성 시각 (Date)
   "options": [
     {
@@ -258,6 +262,7 @@
   "totalVoters": 5, // 총 투표 참여자 수 (number)
   "hasVoted": false, // 현재 사용자 참여 여부 (boolean)
   "creatorName": "홍길동", // 작성자 이름 (string)
+  "canDelete": true, // 삭제 가능 여부 (작성자 본인 또는 그룹장). 앱의 삭제 버튼 노출 판단에 씁니다 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 생성 시각 (Date)
   "options": [
     {
