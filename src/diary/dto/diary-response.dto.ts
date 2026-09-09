@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DiaryMediaDto } from '@/diary/media/dto/diary-media-response.dto';
+import { FlashbackUnit } from '@/diary/enums/flashback-unit.enum';
 import { DiaryFormat } from '@/diary/enums/diary-format.enum';
 import { DiaryVisibility } from '@/diary/enums/diary-visibility.enum';
 
@@ -173,8 +174,21 @@ export class DiaryFlashbackItemDto {
   })
   date: string;
 
-  @ApiProperty({ description: '회고 라벨', example: '1년 전 오늘' })
+  @ApiProperty({
+    description:
+      '회고 라벨 (한국어 고정 — 구버전 앱 호환용. 신규 앱은 unit·amount로 문구를 만든다)',
+    example: '1년 전 오늘',
+  })
   label: string;
+
+  @ApiProperty({ description: '회고 시점 단위', enum: FlashbackUnit })
+  unit: FlashbackUnit;
+
+  @ApiProperty({
+    description: '회고 시점 수치 (개월 수 또는 연 수)',
+    example: 1,
+  })
+  amount: number;
 
   @ApiProperty({ description: '제목', example: '가을 첫날', nullable: true })
   title: string | null;
@@ -188,6 +202,16 @@ export class DiaryFlashbackItemDto {
     nullable: true,
   })
   mood: string | null;
+
+  @ApiProperty({ description: '첨부 미디어 존재 여부' })
+  hasMedia: boolean;
+
+  @ApiProperty({
+    description:
+      '대표 썸네일 URL (sortOrder가 가장 앞선 첨부, 단기 만료 presigned GET)',
+    nullable: true,
+  })
+  thumbnailUrl: string | null;
 }
 
 export class DiaryFlashbackDto {

@@ -66,6 +66,10 @@
 }
 ```
 
+#### 400 - 본문이 없거나 미래 날짜입니다
+
+#### 409 - 해당 날짜에 이미 일기가 있습니다
+
 ---
 
 ### POST `diaries/append`
@@ -101,6 +105,8 @@
   "updatedAt": "2025-01-01T00:00:00Z" // 수정일 (Date)
 }
 ```
+
+#### 400 - 텍스트가 비어 있거나 미래 날짜입니다
 
 ---
 
@@ -226,10 +232,14 @@
     {
       "id": "uuid-1234", // 일기 ID (string)
       "date": "2025-09-01", // 일기 날짜 ('YYYY-MM-DD') (string)
-      "label": "1년 전 오늘", // 회고 라벨 (string)
+      "label": "1년 전 오늘", // 회고 라벨 (한국어 고정 — 구버전 앱 호환용. 신규 앱은 unit·amount로 문구를 만든다) (string)
+      "unit": null, // 회고 시점 단위 (가능한 값: MONTH, YEAR) (FlashbackUnit)
+      "amount": 1, // 회고 시점 수치 (개월 수 또는 연 수) (number)
       "title": "가을 첫날", // 제목 (string | null)
       "excerpt": null, // 본문 발췌 (평문 앞부분) (string | null)
-      "mood": "😊" // 기분 이모지/코드 (string | null)
+      "mood": "😊", // 기분 이모지/코드 (string | null)
+      "hasMedia": false, // 첨부 미디어 존재 여부 (boolean)
+      "thumbnailUrl": null // 대표 썸네일 URL (sortOrder가 가장 앞선 첨부, 단기 만료 presigned GET) (string | null)
     }
   ] // 회고 목록 (없으면 빈 배열) (DiaryFlashbackItemDto[])
 }
@@ -470,5 +480,7 @@
 #### 404 - 복구할 일기를 찾을 수 없거나 복구 기간이 지났습니다
 
 #### 403 - 본인의 일기만 복구할 수 있습니다
+
+#### 409 - 해당 날짜에 이미 일기가 있습니다
 
 ---

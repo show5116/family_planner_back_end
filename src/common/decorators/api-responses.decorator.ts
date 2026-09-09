@@ -90,6 +90,22 @@ export function ApiServiceUnavailable(description: string) {
 }
 
 /**
+ * 결제 필요 (402) — 용량·이용 한도를 넘어 상위 요금제가 필요한 경우
+ * @param description 에러 설명
+ */
+export function ApiPaymentRequired(description: string) {
+  return ApiResponse({ status: 402, description });
+}
+
+/**
+ * 요청 본문이 너무 큼 (413)
+ * @param description 에러 설명
+ */
+export function ApiPayloadTooLarge(description: string) {
+  return ApiResponse({ status: 413, description });
+}
+
+/**
  * 여러 특수 응답을 한 번에 적용
  */
 export function ApiExtraResponses(

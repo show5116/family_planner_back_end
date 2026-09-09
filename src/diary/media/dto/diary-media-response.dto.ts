@@ -84,6 +84,15 @@ export class ReserveMediaResultDto {
 
   @ApiProperty({ description: 'presigned URL 유효 시간 (초)' })
   expiresIn: number;
+
+  @ApiProperty({
+    description:
+      '썸네일 업로드용 presigned PUT URL (JPEG, 최대 변 640px, 품질 80). 선택 — 올리지 않아도 확정된다',
+  })
+  thumbnailUploadUrl: string;
+
+  @ApiProperty({ description: '썸네일 R2 저장 키' })
+  thumbnailKey: string;
 }
 
 export class ConfirmMediaResultDto {

@@ -441,6 +441,12 @@ class ApiDocGenerator {
                 'ApiCreatedResponse',
                 'ApiNotFound',
                 'ApiForbidden',
+                'ApiBadRequest',
+                'ApiConflict',
+                'ApiPaymentRequired',
+                'ApiPayloadTooLarge',
+                'ApiUnprocessable',
+                'ApiServiceUnavailable',
               ].includes(decoratorName)
             ) {
               const expression = modifier.expression as ts.CallExpression;
@@ -713,6 +719,12 @@ class ApiDocGenerator {
       ApiCreated: 201,
       ApiNotFound: 404,
       ApiForbidden: 403,
+      ApiBadRequest: 400,
+      ApiPaymentRequired: 402,
+      ApiPayloadTooLarge: 413,
+      ApiConflict: 409,
+      ApiUnprocessable: 422,
+      ApiServiceUnavailable: 503,
     };
     return statusMap[decoratorName] || 200;
   }
@@ -723,6 +735,12 @@ class ApiDocGenerator {
       ApiCreated: '생성 성공',
       ApiNotFound: '찾을 수 없음',
       ApiForbidden: '권한 없음',
+      ApiBadRequest: '잘못된 요청',
+      ApiPaymentRequired: '한도 초과 — 상위 요금제 필요',
+      ApiPayloadTooLarge: '요청 본문이 너무 큼',
+      ApiConflict: '중복된 데이터',
+      ApiUnprocessable: '처리할 수 없는 요청',
+      ApiServiceUnavailable: '일시적으로 처리 불가',
     };
     return descMap[decoratorName] || '';
   }

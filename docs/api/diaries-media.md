@@ -103,11 +103,19 @@
   "mediaId": "", // 미디어 ID (confirm에 사용) (string)
   "uploadUrl": "", // R2 직접 업로드용 presigned PUT URL (string)
   "storageKey": "", // R2 저장 키 (string)
-  "expiresIn": 0 // presigned URL 유효 시간 (초) (number)
+  "expiresIn": 0, // presigned URL 유효 시간 (초) (number)
+  "thumbnailUploadUrl": "", // 썸네일 업로드용 presigned PUT URL (JPEG, 최대 변 640px, 품질 80). 선택 — 올리지 않아도 확정된다 (string)
+  "thumbnailKey": "" // 썸네일 R2 저장 키 (string)
 }
 ```
 
+#### 400 - 지원하지 않는 형식이거나 영상 길이가 너무 깁니다 (길이 초과 시 maxVideoDurationMs 동봉)
+
+#### 402 - 용량 한도를 초과했습니다 (남은 용량 quota 동봉)
+
 #### 403 - 현재 요금제에서는 영상을 첨부할 수 없습니다
+
+#### 413 - 파일 하나의 최대 크기를 초과했습니다
 
 #### 404 - 일기를 찾을 수 없습니다
 
@@ -156,6 +164,12 @@
   } // 갱신된 한도 상태 (MediaQuotaDto)
 }
 ```
+
+#### 400 - 업로드된 파일을 찾을 수 없거나 형식이 다릅니다
+
+#### 402 - 실측 크기가 용량 한도를 초과했습니다 (R2 파일 삭제됨)
+
+#### 413 - 실측 크기가 파일 최대 크기를 초과했습니다 (R2 파일 삭제됨)
 
 #### 404 - 첨부를 찾을 수 없습니다
 

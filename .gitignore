@@ -57,3 +57,6 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# 인계 요청서 (프론트에서 받은 원본 — 내용은 기능 문서로 옮기고 추적하지 않는다)
+docs/requests/

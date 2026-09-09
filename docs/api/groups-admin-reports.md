@@ -78,4 +78,6 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
 
 #### 404 - 신고를 찾을 수 없음
 
+#### 409 - 이미 처리 완료된 신고
+
 ---

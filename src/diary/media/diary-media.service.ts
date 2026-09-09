@@ -27,6 +27,8 @@ import { QuotaExceededException } from './quota-exceeded.exception';
 import {
   ALLOWED_MIME_TYPES,
   DIARY_MEDIA_FOLDER,
+  THUMBNAIL_MIME_TYPE,
+  thumbnailKeyOf,
   QUOTA_LOCK_MAX_RETRIES,
   QUOTA_LOCK_RETRY_DELAY_MS,
   QUOTA_LOCK_TTL_SECONDS,
@@ -125,7 +127,11 @@ export class DiaryMediaService {
       dto.durationMs !== undefined &&
       dto.durationMs > plan.maxVideoDurationMs
     ) {
-      throw new BadRequestException('diary.errors.video_too_long');
+      // 앱이 "최대 60초까지 올릴 수 있어요"로 구체적으로 안내할 수 있게 한도를 함께 싣는다
+      throw new BadRequestException({
+        message: 'diary.errors.video_too_long',
+        maxVideoDurationMs: plan.maxVideoDurationMs,
+      });
     }
 
     if (!ALLOWED_MIME_TYPES[dto.type].includes(dto.mimeType)) {
@@ -166,13 +172,23 @@ export class DiaryMediaService {
       });
     });
 
-    const uploadUrl = await this.storage.getUploadUrl(
-      storageKey,
-      dto.mimeType,
-      expiresIn,
-    );
+    // 썸네일은 클라이언트가 만들어 올린다 (영상 첫 프레임 / 이미지 축소본).
+    // 서버가 바이트를 보지 않는 설계라 ffmpeg·sharp를 돌릴 수 없고,
+    // 목록에서 원본을 그대로 받으면 사진이 많은 달에 트래픽이 커진다.
+    const thumbnailKey = thumbnailKeyOf(storageKey);
+    const [uploadUrl, thumbnailUploadUrl] = await Promise.all([
+      this.storage.getUploadUrl(storageKey, dto.mimeType, expiresIn),
+      this.storage.getUploadUrl(thumbnailKey, THUMBNAIL_MIME_TYPE, expiresIn),
+    ]);
 
-    return { mediaId: media.id, uploadUrl, storageKey, expiresIn };
+    return {
+      mediaId: media.id,
+      uploadUrl,
+      storageKey,
+      expiresIn,
+      thumbnailUploadUrl,
+      thumbnailKey,
+    };
   }
 
   /**
@@ -222,6 +238,11 @@ export class DiaryMediaService {
       throw new PayloadTooLargeException('diary.errors.file_too_large');
     }
 
+    // 썸네일은 있으면 쓰고 없으면 넘어간다 — 프레임 추출은 기기·코덱에 따라 실패하는데,
+    // 본체가 올라갔는데 썸네일 때문에 업로드 전체가 날아가는 쪽이 훨씬 나쁘다.
+    // 크기도 한도에 넣지 않는다("20MB 영상을 올렸는데 20.1MB가 줄었다"를 겪지 않도록).
+    const thumbnailKey = await this.resolveThumbnailKey(media.storageKey);
+
     const confirmed = await this.withQuotaLock(userId, async () => {
       // 예약분(declaredSize)을 뺀 상태에서 실측값이 들어갈 자리가 있는지 본다
       const quota = await this.quotaService.getQuota(userId, tier);
@@ -237,6 +258,7 @@ export class DiaryMediaService {
         data: {
           status: MediaStatus.CONFIRMED,
           fileSize: meta.size,
+          thumbnailKey,
           uploadedAt: new Date(),
         },
       });
@@ -373,6 +395,40 @@ export class DiaryMediaService {
     return map.get(diaryId) ?? [];
   }
 
+  /**
+   * 일기별 대표 썸네일 (회고 카드용)
+   *
+   * 카드가 사진을 한 장만 쓰므로 목록처럼 media[] 전체를 서명하지 않는다.
+   * 대표는 sortOrder가 가장 앞선 첨부 — 상세 화면 갤러리의 첫 장과 같아야
+   * "카드에서 본 사진이 안에 없다"가 되지 않는다.
+   */
+  async findRepresentativeThumbnails(
+    diaryIds: string[],
+  ): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (diaryIds.length === 0) return map;
+
+    const media = await this.prisma.diaryMedia.findMany({
+      where: {
+        diaryId: { in: diaryIds },
+        status: MediaStatus.CONFIRMED,
+        deletedAt: null,
+      },
+      orderBy: [{ diaryId: 'asc' }, { sortOrder: 'asc' }],
+      distinct: ['diaryId'],
+      select: { diaryId: true, storageKey: true, thumbnailKey: true },
+    });
+
+    for (const m of media) {
+      if (!m.diaryId) continue;
+      // 썸네일이 아직 없으면 원본을 서명해 내려준다 (빈 카드보다 낫다)
+      const url = await this.signKey(m.thumbnailKey ?? m.storageKey);
+      if (url) map.set(m.diaryId, url);
+    }
+
+    return map;
+  }
+
   /** 미디어가 붙어 있는 일기 ID 집합 (캘린더 hasMedia용) */
   async findDiaryIdsWithMedia(diaryIds: string[]): Promise<Set<string>> {
     if (diaryIds.length === 0) return new Set();
@@ -424,7 +480,10 @@ export class DiaryMediaService {
 
     for (const media of expired) {
       await this.safeDeleteFile(media.storageKey);
-      await this.safeDeleteFile(media.thumbnailKey);
+      // 예약 단계에서는 thumbnailKey가 아직 비어 있으므로 파생 키로도 지운다
+      await this.safeDeleteFile(
+        media.thumbnailKey ?? thumbnailKeyOf(media.storageKey),
+      );
     }
 
     if (expired.length > 0) {
@@ -494,7 +553,16 @@ export class DiaryMediaService {
   /** 한도 초과로 거부된 업로드 — R2 파일과 예약 행을 모두 없앤다 */
   private async discardUpload(media: DiaryMedia): Promise<void> {
     await this.safeDeleteFile(media.storageKey);
+    await this.safeDeleteFile(thumbnailKeyOf(media.storageKey));
     await this.prisma.diaryMedia.delete({ where: { id: media.id } });
+  }
+
+  /** 클라이언트가 썸네일을 올렸는지 확인한다 (없으면 null — 확정을 막지 않는다) */
+  private async resolveThumbnailKey(
+    storageKey: string,
+  ): Promise<string | null> {
+    const key = thumbnailKeyOf(storageKey);
+    return (await this.storage.fileExists(key)) ? key : null;
   }
 
   /** R2 삭제 실패가 요청 전체를 무너뜨리지 않게 한다 (잔여물은 로그로 추적) */

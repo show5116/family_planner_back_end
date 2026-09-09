@@ -30,6 +30,8 @@ import {
   ApiNotFound,
   ApiForbidden,
   ApiBadRequest,
+  ApiPaymentRequired,
+  ApiPayloadTooLarge,
 } from '@/common/decorators/api-responses.decorator';
 
 @ApiTags('다이어리 미디어')
@@ -59,8 +61,12 @@ export class DiaryMediaController {
     summary: '업로드 예약 — 한도 검증 후 presigned PUT URL 발급',
   })
   @ApiCreated(ReserveMediaResultDto, '예약 성공')
-  @ApiBadRequest('지원하지 않는 형식이거나 영상 길이가 너무 깁니다')
+  @ApiBadRequest(
+    '지원하지 않는 형식이거나 영상 길이가 너무 깁니다 (길이 초과 시 maxVideoDurationMs 동봉)',
+  )
+  @ApiPaymentRequired('용량 한도를 초과했습니다 (남은 용량 quota 동봉)')
   @ApiForbidden('현재 요금제에서는 영상을 첨부할 수 없습니다')
+  @ApiPayloadTooLarge('파일 하나의 최대 크기를 초과했습니다')
   @ApiNotFound('일기를 찾을 수 없습니다')
   reserve(@Request() req, @Body() dto: ReserveMediaDto) {
     return this.mediaService.reserve(req.user.userId, dto);
@@ -69,7 +75,11 @@ export class DiaryMediaController {
   @Post(':id/confirm')
   @ApiOperation({ summary: '업로드 완료 확정 (실측 크기로 한도 재검증)' })
   @ApiCreated(ConfirmMediaResultDto, '확정 성공')
-  @ApiBadRequest('업로드된 파일을 찾을 수 없습니다')
+  @ApiBadRequest('업로드된 파일을 찾을 수 없거나 형식이 다릅니다')
+  @ApiPaymentRequired('실측 크기가 용량 한도를 초과했습니다 (R2 파일 삭제됨)')
+  @ApiPayloadTooLarge(
+    '실측 크기가 파일 최대 크기를 초과했습니다 (R2 파일 삭제됨)',
+  )
   @ApiNotFound('첨부를 찾을 수 없습니다')
   confirm(@Request() req, @Param('id') id: string) {
     return this.mediaService.confirm(req.user.userId, id);

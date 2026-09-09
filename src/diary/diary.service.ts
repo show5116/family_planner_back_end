@@ -21,6 +21,7 @@ import { UpdateDiaryDto } from './dto/update-diary.dto';
 import { AppendDiaryDto } from './dto/append-diary.dto';
 import { DiaryCalendarQueryDto, DiaryQueryDto } from './dto/diary-query.dto';
 import { DiaryVisibility } from './enums/diary-visibility.enum';
+import { FlashbackUnit } from './enums/flashback-unit.enum';
 import { appendTextToDelta, emptyDelta } from './utils/delta-append.util';
 import { DiaryMediaService } from './media/diary-media.service';
 import { DiaryMediaDto } from './media/dto/diary-media-response.dto';
@@ -44,6 +45,20 @@ function toDiaryResponse(
     hasMedia: media.length > 0,
     media,
   };
+}
+
+/**
+ * 구버전 앱 호환용 한국어 라벨.
+ *
+ * 지금 배포된 앱이 label을 그대로 그리고 있어 서버만 먼저 나가면 라벨이 사라진다.
+ * 신규 앱은 unit·amount로 각 언어의 복수형에 맞는 문구를 직접 만든다.
+ */
+function toFlashbackLabel(candidate: {
+  unit: FlashbackUnit;
+  amount: number;
+}): string {
+  const suffix = candidate.unit === FlashbackUnit.YEAR ? '년' : '개월';
+  return `${candidate.amount}${suffix} 전 오늘`;
 }
 
 const GROUP_IDS_CACHE_TTL = 60;
@@ -355,55 +370,79 @@ export class DiaryService {
 
     const yearsBack = today.diff(dayjs(formatDateOnly(oldest.date)), 'year');
     const candidates = [
-      { label: '1개월 전 오늘', date: today.subtract(1, 'month') },
-      { label: '3개월 전 오늘', date: today.subtract(3, 'month') },
-      { label: '6개월 전 오늘', date: today.subtract(6, 'month') },
+      {
+        unit: FlashbackUnit.MONTH,
+        amount: 1,
+        date: today.subtract(1, 'month'),
+      },
+      {
+        unit: FlashbackUnit.MONTH,
+        amount: 3,
+        date: today.subtract(3, 'month'),
+      },
+      {
+        unit: FlashbackUnit.MONTH,
+        amount: 6,
+        date: today.subtract(6, 'month'),
+      },
       ...Array.from({ length: Math.max(yearsBack, 0) }, (_, index) => ({
-        label: `${index + 1}년 전 오늘`,
+        unit: FlashbackUnit.YEAR,
+        amount: index + 1,
         date: today.subtract(index + 1, 'year'),
       })),
     ];
 
-    const labelByDate = new Map(
+    const candidateByDate = new Map(
       candidates.map((candidate) => [
         candidate.date.format('YYYY-MM-DD'),
-        candidate.label,
+        candidate,
       ]),
     );
 
-    // 여러 개가 걸리면 가장 오래된 것 하나만 — 오래될수록 반가움이 크다
-    const diary = await this.prisma.diary.findFirst({
+    const diaries = await this.prisma.diary.findMany({
       where: {
         userId,
         deletedAt: null,
         date: {
-          in: [...labelByDate.keys()].map((date) => parseDateOnly(date)),
+          in: [...candidateByDate.keys()].map((date) => parseDateOnly(date)),
         },
       },
       orderBy: { date: 'asc' },
     });
 
-    if (!diary) return { items: [] };
+    if (diaries.length === 0) return { items: [] };
 
-    const date = formatDateOnly(diary.date);
+    const thumbnails = await this.media.findRepresentativeThumbnails(
+      diaries.map((diary) => diary.id),
+    );
+
+    // 사진이 있는 회고를 먼저 — 회고는 찾으러 가지 않아도 올라오는 뷰라
+    // 글자만 있는 카드는 탭할 이유가 생기지 않는다. 같은 조건이면 더 오래된 쪽.
+    const picked =
+      diaries.find((diary) => thumbnails.has(diary.id)) ?? diaries[0];
+
+    const date = formatDateOnly(picked.date);
+    const candidate = candidateByDate.get(date);
+    const thumbnailUrl = thumbnails.get(picked.id) ?? null;
 
     return {
       items: [
         {
-          id: diary.id,
+          id: picked.id,
           date,
-          label: labelByDate.get(date) ?? '',
-          title: diary.title,
-          excerpt: diary.plainText?.slice(0, FLASHBACK_EXCERPT_LENGTH) ?? null,
-          mood: diary.mood,
+          label: candidate ? toFlashbackLabel(candidate) : '',
+          unit: candidate?.unit ?? FlashbackUnit.MONTH,
+          amount: candidate?.amount ?? 0,
+          title: picked.title,
+          excerpt: picked.plainText?.slice(0, FLASHBACK_EXCERPT_LENGTH) ?? null,
+          mood: picked.mood,
+          hasMedia: thumbnailUrl !== null,
+          thumbnailUrl,
         },
       ],
     };
   }
 
-  /**
-   * 일기 상세 조회
-   */
   async findOne(userId: string, id: string) {
     const diary = await this.prisma.diary.findFirst({
       where: { id, deletedAt: null },
