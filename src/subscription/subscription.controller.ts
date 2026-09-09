@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SubscriptionService } from './subscription.service';
 import { VerifyPurchaseDto } from './dto/verify-purchase.dto';
 import { SubscriptionStatusDto } from './dto/subscription-response.dto';
+import { MediaQuotaPlanListDto } from '@/diary/media/dto/diary-media-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
   ApiServiceUnavailable,
@@ -21,6 +22,15 @@ export class SubscriptionController {
   @ApiSuccess(SubscriptionStatusDto)
   getStatus(@Request() req): Promise<SubscriptionStatusDto> {
     return this.subscriptionService.getStatus(req.user.userId);
+  }
+
+  @Get('quota-plans')
+  @ApiOperation({
+    summary: '등급별 미디어 용량 한도표 (플랜 비교 카드용)',
+  })
+  @ApiSuccess(MediaQuotaPlanListDto)
+  getQuotaPlans(): MediaQuotaPlanListDto {
+    return this.subscriptionService.getMediaQuotaPlans();
   }
 
   @Post('verify')

@@ -315,6 +315,55 @@ export class StorageService {
   }
 
   /**
+   * 조회용 Presigned GET URL 생성 (로그 없음 — 목록에서 다건 호출된다)
+   *
+   * 서명은 네트워크 호출 없는 로컬 계산이라 썸네일 수십 건도 부담이 없다.
+   *
+   * @param key - 파일 키
+   * @param expiresIn - URL 유효 시간 (초, 기본 1시간)
+   */
+  async getViewUrl(key: string, expiresIn: number = 3600): Promise<string> {
+    return await getSignedUrl(
+      this.s3Client,
+      new GetObjectCommand({ Bucket: this.bucketName, Key: key }),
+      { expiresIn },
+    );
+  }
+
+  /**
+   * 파일 메타데이터 조회 (HeadObject)
+   *
+   * presigned 업로드는 서버가 바이트를 보지 못하므로, 신고값이 아니라 이 실측값으로
+   * 용량을 확정해야 한다. 파일이 없으면 null.
+   *
+   * @param key - 확인할 파일 키
+   */
+  async getFileMetadata(
+    key: string,
+  ): Promise<{ size: number; contentType?: string } | null> {
+    try {
+      const result = await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        }),
+      );
+      return {
+        size: result.ContentLength ?? 0,
+        contentType: result.ContentType,
+      };
+    } catch (error) {
+      if (
+        error.name === 'NotFound' ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * 업로드용 Presigned PUT URL 생성 (클라이언트 직접 업로드)
    * @param key - 저장할 파일 키
    * @param contentType - 파일 MIME 타입

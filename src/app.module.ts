@@ -34,6 +34,7 @@ import r2Config from '@/config/r2.config';
 import aiConfig from '@/config/ai.config';
 import weatherConfig from '@/config/weather.config';
 import iapConfig from '@/config/iap.config';
+import diaryMediaConfig from '@/config/diary-media.config';
 import { validationSchema } from '@/config/env.validation';
 import { SentryModule } from '@/sentry/sentry.module';
 import { StorageModule } from '@/storage/storage.module';
@@ -76,6 +77,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         aiConfig,
         weatherConfig,
         iapConfig,
+        diaryMediaConfig,
       ],
       envFilePath: '.env',
       validationSchema: validationSchema,

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { DiaryMediaDto } from '@/diary/media/dto/diary-media-response.dto';
 import { DiaryFormat } from '@/diary/enums/diary-format.enum';
 import { DiaryVisibility } from '@/diary/enums/diary-visibility.enum';
 
@@ -51,10 +52,11 @@ export class DiaryDto {
   @ApiProperty({ description: '작성자 정보', type: DiaryAuthorDto })
   user: DiaryAuthorDto;
 
-  @ApiProperty({
-    description: '첨부 미디어 존재 여부 (Phase 1에서는 항상 false)',
-  })
+  @ApiProperty({ description: '첨부 미디어 존재 여부' })
   hasMedia: boolean;
+
+  @ApiProperty({ description: '첨부 미디어 목록', type: [DiaryMediaDto] })
+  media: DiaryMediaDto[];
 
   @ApiProperty({ description: '생성일' })
   createdAt: Date;
@@ -81,10 +83,11 @@ export class PaginatedDiaryDto {
 
 export class AppendedFragmentDto {
   @ApiProperty({
-    description: '추가된 텍스트 조각',
+    description: '추가된 텍스트 조각 (첨부만 추가한 경우 null)',
     example: '점심에 본 고양이',
+    nullable: true,
   })
-  text: string;
+  text: string | null;
 
   @ApiProperty({
     description: "조각 시각 마커 ('HH:mm')",
@@ -137,9 +140,7 @@ export class DiaryCalendarDayDto {
   })
   mood: string | null;
 
-  @ApiProperty({
-    description: '첨부 미디어 존재 여부 (Phase 1에서는 항상 false)',
-  })
+  @ApiProperty({ description: '첨부 미디어 존재 여부' })
   hasMedia: boolean;
 }
 

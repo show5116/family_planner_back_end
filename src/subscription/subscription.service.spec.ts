@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
@@ -68,6 +69,10 @@ describe('SubscriptionService', () => {
       providers: [
         SubscriptionService,
         { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue({}) },
+        },
         {
           provide: ANDROID_SUBSCRIPTION_VERIFIER,
           useValue: mockAndroidVerifier,

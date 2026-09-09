@@ -50,7 +50,24 @@ export class I18nExceptionFilter implements ExceptionFilter {
       statusCode: status,
       message,
       error: exception.name.replace('Exception', ''),
+      // 예외가 payload를 실어 보낸 경우 그대로 전달 (예: 402의 quota)
+      ...this.extractExtra(exception),
     });
+  }
+
+  /** HttpException 응답 객체에서 표준 필드를 뺀 나머지 (없으면 빈 객체) */
+  private extractExtra(exception: HttpException): Record<string, unknown> {
+    const res = exception.getResponse();
+    if (typeof res !== 'object' || res === null) return {};
+
+    const { statusCode, message, error, ...extra } = res as Record<
+      string,
+      unknown
+    >;
+    void statusCode;
+    void message;
+    void error;
+    return extra;
   }
 
   private translateKey(key: string, lang: string): string {

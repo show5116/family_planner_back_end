@@ -2,12 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { DiaryService } from './diary.service';
+import { DiaryMediaService } from './media/diary-media.service';
 
 @Injectable()
 export class DiaryScheduler {
   private readonly logger = new Logger(DiaryScheduler.name);
 
-  constructor(private readonly diaryService: DiaryService) {}
+  constructor(
+    private readonly diaryService: DiaryService,
+    private readonly mediaService: DiaryMediaService,
+  ) {}
 
   /**
    * 매일 04:30 KST — 삭제 후 30일이 지난 일기 완전 삭제
@@ -19,5 +23,11 @@ export class DiaryScheduler {
 
     const count = await this.diaryService.purgeExpired();
     this.logger.log(`30일 경과 일기 완전 삭제: ${count}건`);
+
+    // 이미 지워졌고 지난 달 이전 업로드라 두 집계 어디에도 영향이 없는 행 정리
+    const purged = await this.mediaService.purgeStaleDeletedRows();
+    if (purged > 0) {
+      this.logger.log(`집계 영향 없는 미디어 행 정리: ${purged}건`);
+    }
   }
 }

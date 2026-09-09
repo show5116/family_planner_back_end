@@ -13,9 +13,21 @@
     "no_group_access": "このグループへのアクセス権限がありません",
     "restore_expired": "復元可能な期間(30日)が過ぎました",
     "restore_conflict": "その日付にすでに日記があるため復元できません",
-    "append_conflict": "記録を保存できませんでした。もう一度お試しください"
+    "append_conflict": "記録を保存できませんでした。もう一度お試しください",
+    "quota_exceeded": "今月のアップロード容量をすべて使いました",
+    "total_quota_exceeded": "保存容量をすべて使いました",
+    "file_too_large": "ファイルサイズが大きすぎます",
+    "video_not_allowed": "動画の添付は上位プランでご利用いただけます",
+    "video_too_long": "動画の長さが長すぎます",
+    "invalid_mime_type": "対応していないファイル形式です",
+    "upload_not_found": "アップロードされたファイルが見つかりません",
+    "media_not_found": "添付が見つかりません",
+    "media_already_attached": "すでに別の日記に添付されているファイルです",
+    "media_reorder_mixed": "同じ日記の添付のみ並べ替えできます",
+    "media_busy": "アップロードを処理中です。しばらくしてからもう一度お試しください"
   },
   "success": {
-    "diary_deleted": "日記を削除しました"
+    "diary_deleted": "日記を削除しました",
+    "media_deleted": "添付を削除しました"
   }
 }

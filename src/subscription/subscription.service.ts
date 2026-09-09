@@ -9,7 +9,10 @@ import {
   SubscriptionStatus,
   SubscriptionTier,
 } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
+import { MediaQuotaPlan } from '@/config/diary-media.config';
+import { MediaQuotaPlanListDto } from '@/diary/media/dto/diary-media-response.dto';
 import { VerifyPurchaseDto } from './dto/verify-purchase.dto';
 import { SubscriptionStatusDto } from './dto/subscription-response.dto';
 import { PurchaseVerificationFailedException } from './verifiers/verification-error';
@@ -60,6 +63,7 @@ export class SubscriptionService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
     @Inject(ANDROID_SUBSCRIPTION_VERIFIER)
     private readonly androidVerifier: SubscriptionVerifier,
     @Inject(IOS_SUBSCRIPTION_VERIFIER)
@@ -76,6 +80,23 @@ export class SubscriptionService {
     });
 
     return this.toStatusDto(user);
+  }
+
+  /**
+   * 등급별 미디어 용량 한도표 (플랜 비교 카드용)
+   *
+   * 앱이 한도를 하드코딩하지 않도록 서버 설정을 그대로 내려준다.
+   */
+  getMediaQuotaPlans(): MediaQuotaPlanListDto {
+    const plans =
+      this.config.get<Record<string, MediaQuotaPlan>>('diaryMedia.plans');
+
+    return {
+      plans: Object.values(SubscriptionTier).map((tier) => ({
+        tier,
+        ...plans[tier],
+      })),
+    };
   }
 
   /**

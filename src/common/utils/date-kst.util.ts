@@ -90,6 +90,32 @@ export function diaryDateInKst(now: Date = new Date()): Date {
   return new Date(`${kstDateStr}T00:00:00.000Z`);
 }
 
+/**
+ * 다이어리 기준 "이번 달"의 시작 시각 (해당 월 1일 04:00 KST의 실제 시각)
+ *
+ * 월간 업로드 한도 집계용. 캘린더·스트릭이 쓰는 하루 경계(새벽 4시)와 같은 기준을 써야
+ * "달이 바뀌었는데 아직 어제 일기"인 구간에서 설명 불가능한 차이가 생기지 않는다.
+ * (순수 날짜가 아니라 timestamp 비교용 실제 시각을 돌려준다)
+ */
+export function diaryMonthStartInKst(now: Date = new Date()): Date {
+  const monthStr = dayjs(now)
+    .tz('Asia/Seoul')
+    .subtract(DIARY_DAY_BOUNDARY_HOUR, 'hour')
+    .format('YYYY-MM-01');
+  return dayjs
+    .tz(monthStr, 'Asia/Seoul')
+    .hour(DIARY_DAY_BOUNDARY_HOUR)
+    .toDate();
+}
+
+/** 다음 달 시작 시각 (월간 한도 리셋 시점 — 프론트 안내용) */
+export function nextDiaryMonthStartInKst(now: Date = new Date()): Date {
+  return dayjs(diaryMonthStartInKst(now))
+    .tz('Asia/Seoul')
+    .add(1, 'month')
+    .toDate();
+}
+
 /** 순수 날짜(Date)를 'YYYY-MM-DD' 문자열로 변환 (응답용 — 기기 타임존에 밀리지 않게) */
 export function formatDateOnly(date: Date): string {
   // 순수 날짜는 UTC 자정으로 정규화되어 저장되므로 UTC 기준으로 잘라낸다

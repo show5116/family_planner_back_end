@@ -8,77 +8,78 @@ datasource db {
 }
 
 model User {
-  id                        String                  @id @default(uuid())
-  email                     String?                 @unique
-  name                      String
-  provider                  Provider                @default(LOCAL)
-  providerId                String?
-  password                  String?
-  createdAt                 DateTime                @default(now())
-  updatedAt                 DateTime                @updatedAt
-  isEmailVerified           Boolean                 @default(false)
-  isAdmin                   Boolean                 @default(false)
-  isSuperAdmin              Boolean                 @default(false)
-  lastLoginAt               DateTime?
-  phoneNumber               String?                 @db.VarChar(20)
-  profileImageKey           String?                 @db.VarChar(255)
-  personalColor             String?                 @db.VarChar(7)
-  announcementReads         AnnouncementRead[]      @relation("AnnouncementReads")
-  announcements             Announcement[]          @relation("AnnouncementAuthor")
-  answers                   Answer[]                @relation("AdminAnswers")
-  categories                Category[]
-  deviceTokens              DeviceToken[]
-  groupMemberships          GroupMember[]
-  notificationSettings      NotificationSetting[]
-  notifications             Notification[]
-  questions                 Question[]
-  recurrings                Recurring[]
-  taskHistories             TaskHistory[]
-  taskParticipants          TaskParticipant[]
-  taskReminders             TaskReminder[]
-  taskSkips                 TaskSkip[]
-  tasks                     Task[]
-  memos                     Memo[]
-  diaries                   Diary[]
-  routines                  Routine[]
-  routineGroups             RoutineGroup[]
-  routineCategories         RoutineCategory[]
-  routineBadges             UserRoutineBadge[]
-  routineSetting            RoutineSetting?
-  routineSettingHistory     RoutineSettingHistory[]
-  routineGroupShares        RoutineGroupShare[]
-  routineChallenges         RoutineChallenge[]            @relation("RoutineChallengeCreator")
+  id                             String                        @id @default(uuid())
+  email                          String?                       @unique
+  name                           String
+  provider                       Provider                      @default(LOCAL)
+  providerId                     String?
+  password                       String?
+  createdAt                      DateTime                      @default(now())
+  updatedAt                      DateTime                      @updatedAt
+  isEmailVerified                Boolean                       @default(false)
+  isAdmin                        Boolean                       @default(false)
+  isSuperAdmin                   Boolean                       @default(false)
+  lastLoginAt                    DateTime?
+  phoneNumber                    String?                       @db.VarChar(20)
+  profileImageKey                String?                       @db.VarChar(255)
+  personalColor                  String?                       @db.VarChar(7)
+  announcementReads              AnnouncementRead[]            @relation("AnnouncementReads")
+  announcements                  Announcement[]                @relation("AnnouncementAuthor")
+  answers                        Answer[]                      @relation("AdminAnswers")
+  categories                     Category[]
+  deviceTokens                   DeviceToken[]
+  groupMemberships               GroupMember[]
+  notificationSettings           NotificationSetting[]
+  notifications                  Notification[]
+  questions                      Question[]
+  recurrings                     Recurring[]
+  taskHistories                  TaskHistory[]
+  taskParticipants               TaskParticipant[]
+  taskReminders                  TaskReminder[]
+  taskSkips                      TaskSkip[]
+  tasks                          Task[]
+  memos                          Memo[]
+  diaries                        Diary[]
+  diaryMedia                     DiaryMedia[]
+  routines                       Routine[]
+  routineGroups                  RoutineGroup[]
+  routineCategories              RoutineCategory[]
+  routineBadges                  UserRoutineBadge[]
+  routineSetting                 RoutineSetting?
+  routineSettingHistory          RoutineSettingHistory[]
+  routineGroupShares             RoutineGroupShare[]
+  routineChallenges              RoutineChallenge[]            @relation("RoutineChallengeCreator")
   routineChallengeParticipations RoutineChallengeParticipant[]
-  expenses                  Expense[]
-  expensesAsMember          Expense[]               @relation("ExpenseMember")
-  recurringExpenses         RecurringExpense[]
-  recurringExpensesAsMember RecurringExpense[]      @relation("RecurringExpenseMember")
-  budgets                   Budget[]
-  budgetTemplates           BudgetTemplate[]
-  groupBudgets              GroupBudget[]
-  groupBudgetTemplates      GroupBudgetTemplate[]
-  merchants                 Merchant[]
-  accounts                  Account[]
-  indicatorBookmarks        IndicatorBookmark[]
-  childcareAsParent         ChildcareAccount[]      @relation("ChildcareParent")
-  childcareTransactions     ChildcareTransaction[]  @relation("ChildcareTransactionCreator")
-  childProfiles             Child[]                 @relation("ChildParent")
-  linkedChildProfiles       Child[]                 @relation("ChildLinkedUser")
-  votesCreated              Vote[]                  @relation("VoteCreator")
-  voteBallots               VoteBallot[]            @relation("VoteBallots")
-  reportsMade               MemberReport[]          @relation("ReporterRelation")
-  reportsReceived           MemberReport[]          @relation("ReportedRelation")
-  resolvedReports           MemberReport[]          @relation("ReportResolver")
-  subscriptionTier          SubscriptionTier        @default(free)
-  subscriptionExpiresAt     DateTime?
-  inAppPurchaseToken        String?                 @db.VarChar(500)
-  trialCarryoverDays        Int                     @default(0)
-  subscription              Subscription?
-  lastLat                   Float?
-  lastLon                   Float?
-  language                  String                  @default("ko") @db.VarChar(10)
-  deletedAt                 DateTime?
-  termsAgreedAt             DateTime?
+  expenses                       Expense[]
+  expensesAsMember               Expense[]                     @relation("ExpenseMember")
+  recurringExpenses              RecurringExpense[]
+  recurringExpensesAsMember      RecurringExpense[]            @relation("RecurringExpenseMember")
+  budgets                        Budget[]
+  budgetTemplates                BudgetTemplate[]
+  groupBudgets                   GroupBudget[]
+  groupBudgetTemplates           GroupBudgetTemplate[]
+  merchants                      Merchant[]
+  accounts                       Account[]
+  indicatorBookmarks             IndicatorBookmark[]
+  childcareAsParent              ChildcareAccount[]            @relation("ChildcareParent")
+  childcareTransactions          ChildcareTransaction[]        @relation("ChildcareTransactionCreator")
+  childProfiles                  Child[]                       @relation("ChildParent")
+  linkedChildProfiles            Child[]                       @relation("ChildLinkedUser")
+  votesCreated                   Vote[]                        @relation("VoteCreator")
+  voteBallots                    VoteBallot[]                  @relation("VoteBallots")
+  reportsMade                    MemberReport[]                @relation("ReporterRelation")
+  reportsReceived                MemberReport[]                @relation("ReportedRelation")
+  resolvedReports                MemberReport[]                @relation("ReportResolver")
+  subscriptionTier               SubscriptionTier              @default(free)
+  subscriptionExpiresAt          DateTime?
+  inAppPurchaseToken             String?                       @db.VarChar(500)
+  trialCarryoverDays             Int                           @default(0)
+  subscription                   Subscription?
+  lastLat                        Float?
+  lastLon                        Float?
+  language                       String                        @default("ko") @db.VarChar(10)
+  deletedAt                      DateTime?
+  termsAgreedAt                  DateTime?
 
   @@unique([provider, providerId])
   @@index([email])
@@ -767,8 +768,9 @@ model Diary {
   updatedAt  DateTime        @updatedAt
   deletedAt  DateTime?
 
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group?       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  media DiaryMedia[]
 
   @@unique([userId, date])
   @@index([userId, date(sort: Desc)])
@@ -786,6 +788,54 @@ enum DiaryFormat {
 enum DiaryVisibility {
   PRIVATE
   GROUP
+}
+
+/// 일기 첨부 미디어 (R2 Presigned 업로드)
+///
+/// 한도 집계는 일기가 아니라 "올린 사람"(userId) 기준이다.
+/// 그룹 일기에 그룹원이 올려도 그 사람의 한도를 쓴다.
+model DiaryMedia {
+  id           String      @id @default(uuid())
+  diaryId      String?
+  userId       String
+  type         MediaType
+  status       MediaStatus @default(PENDING)
+  storageKey   String      @db.VarChar(500)
+  thumbnailKey String?     @db.VarChar(500)
+  fileName     String      @db.VarChar(255)
+  declaredSize Int
+  fileSize     Int?
+  originalSize Int?
+  mimeType     String      @db.VarChar(100)
+  width        Int?
+  height       Int?
+  durationMs   Int?
+  isOriginal   Boolean     @default(false)
+  sortOrder    Int         @default(0)
+  reservedAt   DateTime    @default(now())
+  uploadedAt   DateTime?
+  deletedAt    DateTime?
+
+  // 일기를 완전 삭제해도 미디어 행은 남긴다 (행이 사라지면 월간 한도가 회복돼 버린다).
+  // 실제 정리는 서비스에서 R2 삭제 + deletedAt 기록으로 처리한다.
+  diary Diary? @relation(fields: [diaryId], references: [id], onDelete: SetNull)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, uploadedAt])
+  @@index([userId, deletedAt])
+  @@index([userId, status, reservedAt])
+  @@index([diaryId, sortOrder])
+  @@map("diary_media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum MediaStatus {
+  PENDING
+  CONFIRMED
 }
 
 model Merchant {
@@ -1734,11 +1784,11 @@ model Routine {
   updatedAt          DateTime             @updatedAt
   deletedAt          DateTime?
 
-  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  group         RoutineGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  logs          RoutineLog[]
-  pauses        RoutinePause[]
-  categoryLinks RoutineCategoryLink[]
+  user                    User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group                   RoutineGroup?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  logs                    RoutineLog[]
+  pauses                  RoutinePause[]
+  categoryLinks           RoutineCategoryLink[]
   challengeParticipations RoutineChallengeParticipant[]
 
   @@index([userId, status])
@@ -1832,22 +1882,22 @@ model RoutineGroupShare {
 }
 
 model RoutineChallenge {
-  id          String   @id @default(uuid())
-  groupId     String
-  createdBy   String
+  id        String @id @default(uuid())
+  groupId   String
+  createdBy String
 
-  title       String   @db.VarChar(50)
-  description String?  @db.VarChar(200)
+  title       String  @db.VarChar(50)
+  description String? @db.VarChar(200)
 
-  startDate   DateTime @db.Date
-  endDate     DateTime @db.Date
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
 
   targetCount Int
 
-  reward      String?  @db.VarChar(100)
+  reward String? @db.VarChar(100)
 
-  group        Group                          @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  creator      User                           @relation("RoutineChallengeCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  group        Group                         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator      User                          @relation("RoutineChallengeCreator", fields: [createdBy], references: [id], onDelete: Cascade)
   participants RoutineChallengeParticipant[]
 
   createdAt DateTime @default(now())

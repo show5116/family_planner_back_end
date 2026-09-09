@@ -21,7 +21,9 @@ import { UpdateDiaryDto } from './dto/update-diary.dto';
 import { AppendDiaryDto } from './dto/append-diary.dto';
 import { DiaryCalendarQueryDto, DiaryQueryDto } from './dto/diary-query.dto';
 import { DiaryVisibility } from './enums/diary-visibility.enum';
-import { appendTextToDelta } from './utils/delta-append.util';
+import { appendTextToDelta, emptyDelta } from './utils/delta-append.util';
+import { DiaryMediaService } from './media/diary-media.service';
+import { DiaryMediaDto } from './media/dto/diary-media-response.dto';
 
 const DIARY_INCLUDE = {
   user: { select: { id: true, name: true } },
@@ -32,12 +34,15 @@ type DiaryWithRelations = Prisma.DiaryGetPayload<{
 }>;
 
 /** 응답 변환 — date는 문자열로 내려야 기기 타임존에서 하루가 밀리지 않는다 */
-function toDiaryResponse(diary: DiaryWithRelations) {
+function toDiaryResponse(
+  diary: DiaryWithRelations,
+  media: DiaryMediaDto[] = [],
+) {
   return {
     ...diary,
     date: formatDateOnly(diary.date),
-    // Phase 2(미디어)에서 실제 값을 채운다
-    hasMedia: false,
+    hasMedia: media.length > 0,
+    media,
   };
 }
 
@@ -51,6 +56,7 @@ export class DiaryService {
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService,
     private readonly redis: RedisService,
+    private readonly media: DiaryMediaService,
   ) {}
 
   /**
@@ -74,6 +80,11 @@ export class DiaryService {
 
     if (existing && !existing.deletedAt) {
       throw new ConflictException('diary.errors.duplicate_date');
+    }
+
+    // 휴지통 일기를 완전 삭제하기 전에 첨부 파일부터 R2에서 지운다 (고아 파일 방지)
+    if (existing) {
+      await this.media.purgeForDiaries([existing.id]);
     }
 
     try {
@@ -100,7 +111,9 @@ export class DiaryService {
         });
       });
 
-      return toDiaryResponse(diary);
+      await this.media.attachToDiary(userId, diary.id, dto.mediaIds ?? []);
+
+      return toDiaryResponse(diary, await this.media.findByDiaryId(diary.id));
     } catch (error) {
       if (this.isUniqueViolation(error)) {
         throw new ConflictException('diary.errors.duplicate_date');
@@ -114,7 +127,10 @@ export class DiaryService {
    */
   async append(userId: string, dto: AppendDiaryDto) {
     const text = dto.text?.trim();
-    if (!text) {
+    const mediaIds = dto.mediaIds ?? [];
+
+    // 사진만 던지는 빠른 기록이 오히려 더 잦다 — 텍스트와 첨부 중 하나만 있으면 된다
+    if (!text && mediaIds.length === 0) {
       throw new BadRequestException('diary.errors.text_required');
     }
 
@@ -131,7 +147,13 @@ export class DiaryService {
       });
 
       if (existing && !existing.deletedAt) {
-        return this.appendToExisting(existing.id, text, dto.capturedAt);
+        return this.appendToExisting(
+          userId,
+          existing.id,
+          text,
+          mediaIds,
+          dto.capturedAt,
+        );
       }
 
       try {
@@ -139,6 +161,7 @@ export class DiaryService {
           userId,
           date,
           text,
+          mediaIds,
           capturedAt: dto.capturedAt,
           visibility,
           groupId,
@@ -193,8 +216,12 @@ export class DiaryService {
       this.prisma.diary.count({ where }),
     ]);
 
+    const mediaMap = await this.media.findByDiaryIds(diaries.map((d) => d.id));
+
     return {
-      data: diaries.map(toDiaryResponse),
+      data: diaries.map((diary) =>
+        toDiaryResponse(diary, mediaMap.get(diary.id) ?? []),
+      ),
       meta: {
         total,
         page: query.page,
@@ -235,6 +262,10 @@ export class DiaryService {
       orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
     });
 
+    const withMedia = await this.media.findDiaryIdsWithMedia(
+      diaries.map((d) => d.id),
+    );
+
     return {
       days: diaries.map((diary) => ({
         date: formatDateOnly(diary.date),
@@ -242,7 +273,7 @@ export class DiaryService {
         userId: diary.userId,
         authorName: diary.user.name,
         mood: diary.mood,
-        hasMedia: false,
+        hasMedia: withMedia.has(diary.id),
       })),
     };
   }
@@ -260,7 +291,7 @@ export class DiaryService {
       throw new NotFoundException('diary.errors.diary_not_found');
     }
 
-    return toDiaryResponse(diary);
+    return toDiaryResponse(diary, await this.media.findByDiaryId(diary.id));
   }
 
   /**
@@ -385,7 +416,7 @@ export class DiaryService {
 
     await this.validateReadAccess(userId, diary);
 
-    return toDiaryResponse(diary);
+    return toDiaryResponse(diary, await this.media.findByDiaryId(diary.id));
   }
 
   /**
@@ -421,7 +452,9 @@ export class DiaryService {
       include: DIARY_INCLUDE,
     });
 
-    return toDiaryResponse(updated);
+    await this.media.attachToDiary(userId, id, dto.mediaIds ?? []);
+
+    return toDiaryResponse(updated, await this.media.findByDiaryId(id));
   }
 
   /**
@@ -433,6 +466,10 @@ export class DiaryService {
       id,
       'diary.errors.own_diary_only_delete',
     );
+
+    // 본문은 30일 복구 가능하지만 첨부는 즉시 영구 삭제한다 —
+    // 텍스트는 복구 가치가 크고 저장 비용이 ~0인 반면 미디어는 정반대다
+    await this.media.purgeForDiaries([id]);
 
     await this.prisma.diary.update({
       where: { id },
@@ -475,6 +512,7 @@ export class DiaryService {
       throw new ConflictException('diary.errors.restore_conflict');
     }
 
+    // 미디어는 삭제 시점에 영구 삭제됐으므로 본문만 돌아온다
     const restored = await this.prisma.diary.update({
       where: { id },
       data: { deletedAt: null },
@@ -490,6 +528,14 @@ export class DiaryService {
   async purgeExpired(now: Date = new Date()) {
     const threshold = dayjs(now).subtract(RESTORE_WINDOW_DAYS, 'day').toDate();
 
+    // 일기 행이 사라지기 전에 R2 잔여물부터 지운다
+    const expired = await this.prisma.diary.findMany({
+      where: { deletedAt: { lt: threshold } },
+      select: { id: true },
+    });
+
+    await this.media.purgeForDiaries(expired.map((d) => d.id));
+
     const { count } = await this.prisma.diary.deleteMany({
       where: { deletedAt: { lt: threshold } },
     });
@@ -499,11 +545,13 @@ export class DiaryService {
 
   /** 기존 일기에 조각 append — 행을 잠가 동시 요청에도 조각이 유실되지 않게 한다 */
   private async appendToExisting(
+    userId: string,
     diaryId: string,
-    text: string,
+    text: string | undefined,
+    mediaIds: string[],
     capturedAt?: string,
   ) {
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ content: string }[]>`
         SELECT content FROM diaries WHERE id = ${diaryId} FOR UPDATE
       `;
@@ -512,28 +560,46 @@ export class DiaryService {
         throw new ConflictException('diary.errors.append_conflict');
       }
 
-      const content = appendTextToDelta(locked[0].content, text, capturedAt);
+      // 첨부만 추가하는 경우 본문은 그대로 둔다
+      const content = text
+        ? appendTextToDelta(locked[0].content, text, capturedAt)
+        : null;
 
-      const updated = await tx.diary.update({
-        where: { id: diaryId },
-        data: { content, plainText: deltaToPlainText(content) },
-      });
+      const updated = content
+        ? await tx.diary.update({
+            where: { id: diaryId },
+            data: { content, plainText: deltaToPlainText(content) },
+          })
+        : await tx.diary.findUniqueOrThrow({ where: { id: diaryId } });
 
-      return this.toAppendResult(updated, text, capturedAt, false);
+      await this.media.attachToDiary(userId, diaryId, mediaIds, tx);
+
+      return updated;
     });
+
+    return this.toAppendResult(result, text, capturedAt, false);
   }
 
   /** 그날 일기가 없을 때 조각 하나로 새 일기를 만든다 */
   private async createFromFragment(params: {
     userId: string;
     date: Date;
-    text: string;
+    text: string | undefined;
+    mediaIds: string[];
     capturedAt?: string;
     visibility: DiaryVisibility;
     groupId: string | null;
     trashedId?: string;
   }) {
-    const content = appendTextToDelta(null, params.text, params.capturedAt);
+    // 사진만 올린 빠른 기록이면 본문은 빈 Delta로 시작한다
+    const content = params.text
+      ? appendTextToDelta(null, params.text, params.capturedAt)
+      : JSON.stringify(emptyDelta());
+
+    // 휴지통 일기를 지우기 전에 첨부 파일부터 R2에서 제거한다
+    if (params.trashedId) {
+      await this.media.purgeForDiaries([params.trashedId]);
+    }
 
     const created = await this.prisma.$transaction(async (tx) => {
       // 같은 날짜의 휴지통 일기는 완전 삭제하고 새로 쓴다 (유니크 제약 회피)
@@ -541,7 +607,7 @@ export class DiaryService {
         await tx.diary.delete({ where: { id: params.trashedId } });
       }
 
-      return tx.diary.create({
+      const diary = await tx.diary.create({
         data: {
           userId: params.userId,
           groupId: params.groupId,
@@ -551,6 +617,15 @@ export class DiaryService {
           visibility: params.visibility,
         },
       });
+
+      await this.media.attachToDiary(
+        params.userId,
+        diary.id,
+        params.mediaIds,
+        tx,
+      );
+
+      return diary;
     });
 
     return this.toAppendResult(created, params.text, params.capturedAt, true);
@@ -558,7 +633,7 @@ export class DiaryService {
 
   private toAppendResult(
     diary: { id: string; date: Date; updatedAt: Date },
-    text: string,
+    text: string | undefined,
     capturedAt: string | undefined,
     created: boolean,
   ) {
@@ -566,7 +641,7 @@ export class DiaryService {
       id: diary.id,
       date: formatDateOnly(diary.date),
       created,
-      appended: { text, capturedAt: capturedAt ?? null },
+      appended: { text: text ?? null, capturedAt: capturedAt ?? null },
       updatedAt: diary.updatedAt,
     };
   }

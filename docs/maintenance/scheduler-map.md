@@ -170,7 +170,14 @@
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
-| `purgeDeletedDiaries` | 매일 04:30 KST (`30 4 * * *`) | 삭제 후 30일 지난 일기 완전 삭제 (하루 경계 04:00 직후) |
+| `purgeDeletedDiaries` | 매일 04:30 KST (`30 4 * * *`) | 삭제 후 30일 지난 일기 완전 삭제 (하루 경계 04:00 직후) + 집계에 영향 없는 미디어 행 정리 |
+
+파일: [src/diary/media/diary-media.scheduler.ts](../../src/diary/media/diary-media.scheduler.ts) (같은 `diary` 플래그)
+
+| 메서드 | 주기 | 설명 |
+|--------|------|------|
+| `cleanupExpiredReservations` | 5분마다 (`*/5 * * * *`) | presigned만 받고 업로드하지 않은 만료 예약(15분) 정리 — 예약 용량을 잡고 있다 |
+| `cleanupOrphanMedia` | 매시 10분 (`10 * * * *`) | 일기에 붙지 못한 고아 미디어(24시간) R2·행 정리 |
 
 ---
 

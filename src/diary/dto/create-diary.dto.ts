@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsArray,
   IsString,
   IsOptional,
   IsEnum,
@@ -88,4 +89,14 @@ export class CreateDiaryDto {
   @IsString()
   @MaxLength(20)
   weather?: string;
+
+  @ApiProperty({
+    description: '첨부할 미디어 ID 배열 (reserve → confirm까지 끝난 것)',
+    type: [String],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mediaIds?: string[];
 }

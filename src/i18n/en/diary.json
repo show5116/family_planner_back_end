@@ -13,9 +13,21 @@
     "no_group_access": "You do not have access to this group",
     "restore_expired": "The 30-day restore window has passed",
     "restore_conflict": "Cannot restore: a diary already exists for this date",
-    "append_conflict": "Failed to save the entry. Please try again"
+    "append_conflict": "Failed to save the entry. Please try again",
+    "quota_exceeded": "You've used all of this month's upload allowance",
+    "total_quota_exceeded": "You've used all of your storage space",
+    "file_too_large": "This file is too large",
+    "video_not_allowed": "Video attachments are available on higher plans",
+    "video_too_long": "This video is too long",
+    "invalid_mime_type": "This file type isn't supported",
+    "upload_not_found": "The uploaded file could not be found",
+    "media_not_found": "Attachment not found",
+    "media_already_attached": "This file is already attached to another diary",
+    "media_reorder_mixed": "You can only reorder attachments within the same diary",
+    "media_busy": "An upload is being processed. Please try again in a moment"
   },
   "success": {
-    "diary_deleted": "Diary deleted"
+    "diary_deleted": "Diary deleted",
+    "media_deleted": "Attachment deleted"
   }
 }

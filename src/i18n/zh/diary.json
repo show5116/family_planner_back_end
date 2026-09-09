@@ -13,9 +13,21 @@
     "no_group_access": "您无权访问该群组",
     "restore_expired": "已超过30天的恢复期限",
     "restore_conflict": "该日期已有日记，无法恢复",
-    "append_conflict": "记录保存失败，请重试"
+    "append_conflict": "记录保存失败，请重试",
+    "quota_exceeded": "本月的上传容量已用完",
+    "total_quota_exceeded": "存储空间已用完",
+    "file_too_large": "文件太大了",
+    "video_not_allowed": "视频附件可在更高级的套餐中使用",
+    "video_too_long": "视频时长太长了",
+    "invalid_mime_type": "不支持该文件格式",
+    "upload_not_found": "找不到已上传的文件",
+    "media_not_found": "找不到该附件",
+    "media_already_attached": "该文件已附加到其他日记",
+    "media_reorder_mixed": "只能调整同一篇日记内附件的顺序",
+    "media_busy": "正在处理上传，请稍后再试"
   },
   "success": {
-    "diary_deleted": "日记已删除"
+    "diary_deleted": "日记已删除",
+    "media_deleted": "附件已删除"
   }
 }

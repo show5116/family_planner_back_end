@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsArray,
   IsString,
   IsOptional,
   IsEnum,
@@ -21,16 +22,28 @@ export class AppendDiaryDto {
   date?: string;
 
   @ApiProperty({
-    description: '텍스트 조각',
+    description: '텍스트 조각 (mediaIds가 있으면 생략 가능)',
     example: '점심에 본 고양이',
     maxLength: 5000,
+    required: false,
   })
+  @IsOptional()
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim() : (value as string),
   )
   @IsString()
   @MaxLength(5000)
-  text: string;
+  text?: string;
+
+  @ApiProperty({
+    description: '함께 첨부할 미디어 ID 배열 (confirm까지 끝난 것)',
+    type: [String],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mediaIds?: string[];
 
   @ApiProperty({
     description: "조각 시각 마커 ('HH:mm')",

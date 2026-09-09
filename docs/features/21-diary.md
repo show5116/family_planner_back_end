@@ -268,7 +268,8 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
       "userId": "uuid",
       "authorName": "홍길동",
       "mood": "😊",
-      "hasMedia": false
+      "hasMedia": false,
+      "media": []
     }
   ]
 }
@@ -276,7 +277,8 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 
 - `groupId` 지정 시 그 그룹의 `GROUP` 일기(멤버 전원) — 같은 `date`가 여러 번 나올 수 있음
 - 미지정 시 본인 일기만
-- `hasMedia`는 **Phase 1에서 항상 `false`**. 필드를 미리 둬서 Phase 2에 프론트 모델을 고치지 않게 함
+- `hasMedia`는 Phase 1에서 항상 `false`였고, **Phase 2에서 실제 값으로 채워졌다**
+  ([22-diary-media.md](22-diary-media.md)). 조회 응답에는 `media` 배열도 함께 내려간다
 
 ### `GET /diaries/streak`
 
@@ -315,7 +317,7 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 | 대상 | 정책 |
 | --- | --- |
 | 일기 본문 | **soft delete 30일** → `restore` 가능, 이후 스케줄러가 완전 삭제 |
-| 첨부 미디어 | (Phase 2) 즉시 영구 삭제 — 복구 불가 |
+| 첨부 미디어 | 즉시 영구 삭제 — 복구 불가 (Phase 2에서 구현) |
 
 - `POST /diaries/:id/restore`: `deletedAt`이 30일 이내여야 하고(초과 시 404), 같은 날짜에 활성 일기가 있으면 409
 - 완전 삭제 스케줄러: `diary` 이름으로 `isSchedulerEnabled('diary')` 게이트, 매일 1회 `deletedAt < now-30d` 하드 삭제
@@ -389,7 +391,7 @@ src/diary/
       존재하지 않는 날짜(`2026-02-30`, 평년 `2025-02-29`)의 롤오버 차단, 경로·쿼리 파라미터 검증,
       휴지통 덮어쓰기·복구 충돌, 공개범위 전환(GROUP↔PRIVATE), 인증 누락
 
-### ⬜ Phase 2 (미착수 — 요청서 도착)
+### ✅ Phase 2 (완료)
 
 미디어 첨부·용량 한도·R2 직접 업로드는 **[22-diary-media.md](22-diary-media.md)** 에
 요청서가 있다. 착수 시 지켜야 할 Phase 1 결정(정책 A와 미디어, 그룹 미디어 권한,

@@ -1,6 +1,6 @@
 # 22. 다이어리 미디어 (Diary Media)
 
-> **상태**: ⬜ 미착수 — 프론트 레포에서 인계받은 작업 요청서
+> **상태**: ✅ 완료 (2026-09-09 구현) — 프론트 레포에서 인계받은 작업 요청서
 > **Phase**: Phase 6
 > **선행 작업**: [21-diary.md](21-diary.md) (Phase 1 완료)
 > **원본 요청서**: 프론트 레포 `docs/features/24-diary.md` (1~4장에 배경과 근거)
@@ -8,6 +8,8 @@
 >
 > 백로그([../backlog.md](../backlog.md))에 예약돼 있던 "다이어리 Phase 2"의 정식 요청서입니다.
 > 백로그에 적어둔 "착수 시 지켜야 할 Phase 1 결정"과 이 문서의 내용은 일치합니다.
+>
+> **구현 시 요청서와 달라진 판단은 9절 아래 "구현 노트"에 정리했습니다.**
 
 ---
 
@@ -425,21 +427,38 @@ diary.errors.media_not_found       첨부를 찾을 수 없습니다
 
 ## 9. 완료 기준 (Definition of Done)
 
-- [ ] `DiaryMedia` 모델 + 마이그레이션 (**COLLATE 확인**)
-- [ ] 등급별 한도를 **서버 설정에서** 읽도록 구성 (하드코딩 금지)
-- [ ] `/media/quota` — PENDING 예약분 포함 집계
-- [ ] `/media/reserve` — 검증 6단계 + Redis 락 + presigned 발급
-- [ ] `/media/:id/confirm` — **HeadObject 실측 검증** + 초과 시 파일 삭제
-- [ ] `/media/:id` DELETE — R2 즉시 삭제, 누적만 회복
-- [ ] `/media/reorder`, `/media/large`
-- [ ] 기존 조회 API에 `media` 배열 추가, `calendar.hasMedia` 실제 값
-- [ ] `append`에 `mediaIds` 지원 + `text` 필수 완화
-- [ ] **휴지통 완전 삭제 시 R2 파일 동반 삭제** (정책 A — 4-8절)
-- [ ] **정리 스케줄러 2종**
-- [ ] `/subscription/quota-plans`
-- [ ] i18n 4개 언어
-- [ ] `npm run check` 통과
-- [ ] 프론트 참조용 API 문서 → 프론트 레포 `docs/api/diaries.md` 갱신
+- [x] `DiaryMedia` 모델 + 마이그레이션 (`20260909000000_add_diary_media`, COLLATE 1:1 확인)
+- [x] 등급별 한도를 **서버 설정에서** 읽도록 구성 ([src/config/diary-media.config.ts](../../src/config/diary-media.config.ts), 환경변수 오버라이드)
+- [x] `/media/quota` — PENDING 예약분 포함 집계
+- [x] `/media/reserve` — 검증 6단계 + Redis 락 + presigned 발급
+- [x] `/media/:id/confirm` — **HeadObject 실측 검증** + 초과 시 파일 삭제
+- [x] `/media/:id` DELETE — R2 즉시 삭제, 누적만 회복
+- [x] `/media/reorder`, `/media/large`
+- [x] 기존 조회 API에 `media` 배열 추가, `calendar.hasMedia` 실제 값
+- [x] `append`에 `mediaIds` 지원 + `text` 필수 완화 (`create`/`update`에도 추가 — 구현 노트 7)
+- [x] **휴지통 완전 삭제 시 R2 파일 동반 삭제** (정책 A — 4-8절)
+- [x] **정리 스케줄러 2종** (+ 집계에 영향 없는 삭제 행 정리 1종)
+- [x] `/subscription/quota-plans`
+- [x] i18n 4개 언어 (요청서 8키 + 운영 3키)
+- [x] `npm run check` 통과
+- [x] API 문서 갱신 — [../api/diaries.md](../api/diaries.md), [../api/diaries-media.md](../api/diaries-media.md) (`npm run gen:api`)
+
+### 검증 결과 (2026-09-09, 개발 서버 + 실제 R2 버킷)
+
+9개 시나리오 전부 실제 호출로 확인했습니다 (총 54개 체크 통과).
+검증 스크립트는 일회용이라 실행 후 삭제했고, 테스트 계정의 잔여 데이터·R2 객체도 정리했습니다.
+
+| # | 시나리오 | 결과 |
+|---|---------|------|
+| 1 | 1KB 예약 후 3MB 업로드 | `confirm` 402 + R2 파일 삭제 + 예약 행 제거 ✅ |
+| 2 | 20MB × 6건 동시 reserve (한도 100MB) | 5건 성공 / 1건 402, 합계 정확히 100MB ✅ |
+| 3 | 미디어 삭제 | 누적만 회복, 월간 유지 ✅ |
+| 4 | presigned 받고 업로드 안 함 | 15분 경과분만 정리, 유효 예약 유지 ✅ |
+| 5 | 사진만 올리고 일기 미저장 | 24시간 경과분만 정리, R2 삭제 + 행 유지 ✅ |
+| 6 | 무료 계정 영상 업로드 | 403 ✅ (+ 413 파일 초과, 400 MIME도 확인) |
+| 7 | 다운그레이드 후 누적 초과 | 신규만 402, 조회·삭제 정상 ✅ |
+| 8 | 삭제한 날짜에 재작성 (정책 A) | 휴지통 일기의 R2 파일 잔여 없음 ✅ |
+| 9 | 그룹원이 올린 미디어 | 한도가 업로더에게 귀속 ✅ |
 
 ### 검증 시 꼭 확인해주면 좋은 것
 
@@ -454,6 +473,70 @@ diary.errors.media_not_found       첨부를 찾을 수 없습니다
 7. **다운그레이드 후 누적 초과 상태** → 신규 업로드만 막히고 조회·삭제는 되는지
 8. **삭제한 날짜에 다시 일기 작성**(정책 A) → 휴지통 일기의 R2 파일이 남지 않는지
 9. **그룹원이 올린 미디어** → 한도가 업로더에게 잡히는지(일기 작성자가 아니라)
+
+---
+
+## 9-1. 구현 노트 — 요청서와 달라진 판단
+
+### 1. 삭제는 soft delete로 고정 (요청서가 열어둔 "레코드 삭제" 불가)
+
+4-5절이 "`deletedAt` 기록 **또는 레코드 삭제** — 편한 쪽으로"라고 열어뒀지만,
+**행을 지우면 월간 집계에서도 빠져 월간 한도가 회복됩니다.** 요청서가 금지한
+"지웠다 올렸다 무한 용량"이 그대로 열립니다. R2 파일만 즉시 지우고 행은 남깁니다.
+
+같은 이유로 `DiaryMedia.diaryId`의 FK는 요청서의 `onDelete: Cascade` 대신
+**`SetNull`** 로 두고, 일기 완전 삭제 경로에서 서비스가 명시적으로
+R2 삭제 → `deletedAt` 기록 → `diaryId` 분리를 수행합니다. Cascade면 정책 A 덮어쓰기와
+30일 purge가 미디어 행을 지워 월간 한도를 되돌립니다.
+
+행이 무한히 쌓이지 않도록, **두 집계 어디에도 영향이 없어진 행**
+(`deletedAt IS NOT NULL` && `uploadedAt < 이번 달 시작`)은 매일 04:30 배치에서 hard delete합니다.
+
+### 2. 월 경계는 4-8절 기준(1일 04:00 KST)을 채택
+
+2절은 `thisMonthStartInKst()`를, 4-8절은 하루 경계(04:00 KST)에 맞추라고 해서 서로 어긋납니다.
+Phase 1 구현을 반영한 4-8절을 따랐습니다. 또한 `thisMonthStartInKst()`는 **UTC 자정 순수 날짜**를
+반환해 `uploadedAt`(실제 timestamp)과 비교하면 **1일 00:00~09:00 KST 업로드분이 통째로 누락**됩니다.
+`diaryMonthStartInKst()` / `nextDiaryMonthStartInKst()`를 새로 만들어 씁니다
+([date-kst.util.ts](../../src/common/utils/date-kst.util.ts)).
+
+### 3. 조회 URL은 presigned GET (만료 1시간)
+
+4-7절이 백엔드 판단에 맡긴 항목입니다. 일기는 사적인 내용이라 버킷을 public으로 열지 않고
+단기 만료 presigned GET으로 내립니다. 서명은 네트워크 호출 없는 로컬 계산이라
+목록에서 썸네일 수십 건을 서명해도 부담이 없습니다.
+
+### 4. 한도 설정은 config + 환경변수 오버라이드
+
+2절이 맡긴 선택입니다. [diary-media.config.ts](../../src/config/diary-media.config.ts)에 기본값을 두고
+`DIARY_MEDIA_FREE_MONTHLY_MB` 같은 환경변수로 덮어씁니다(MB·초 단위 입력).
+설정 테이블은 어드민 화면까지 필요해 Phase 2 범위를 넘습니다. 앱은 `/media/quota`와
+`/subscription/quota-plans`로 값을 받으므로 **한도 조정에 앱 재배포는 필요 없습니다.**
+
+### 5. `StorageService.getFileMetadata()` 추가
+
+기존 `fileExists()`는 boolean만 돌려줘 4-4절의 핵심 방어(실측 크기 확인)를 할 수 없습니다.
+`HeadObject`의 `ContentLength`/`ContentType`을 돌려주는 메서드를 새로 추가했습니다.
+
+### 6. 402 응답에 `quota`를 싣기 위해 예외 필터 확장
+
+`I18nExceptionFilter`가 `statusCode`/`message`/`error`만 내보내고 있어, HttpException이 실은
+payload를 그대로 전달하도록 넓혔습니다. 기존 예외는 추가 필드가 없어 응답이 그대로입니다.
+
+### 7. `create`/`update`에도 `mediaIds` 추가
+
+요청서는 `append`만 명시했지만, 4-3절의 "diaryId 없이 예약 → 일기 저장 시 연결" 흐름은
+일반 작성 경로에도 필요합니다. 첨부는 **내가 올린 CONFIRMED이면서 아직 어디에도 붙지 않은 것**만 허용합니다.
+
+### 8. `reserve`의 `date`는 칼럼으로 저장하지 않음
+
+모델에 날짜 칼럼이 없어, `diaryId`가 없고 `date`만 온 경우 **그 날짜의 내 일기를 찾아 있으면 즉시 연결**하고
+없으면 `diaryId=null`로 두어 고아 정리 대상으로 남깁니다.
+
+### 9. 운영용 i18n 키 3개 추가
+
+요청서 8개 키에 더해 `media_already_attached`, `media_reorder_mixed`, `media_busy`(락 획득 실패)를
+4개 언어로 추가했습니다. 문구 톤은 요청서 지침대로 "제한"이 아니라 "다 썼어요" 쪽입니다.
 
 ---
 

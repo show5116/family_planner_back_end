@@ -107,6 +107,27 @@ export const validationSchema = Joi.object({
   APPLE_IAP_KEY_ID: Joi.string().optional(),
   APPLE_IAP_PRIVATE_KEY: Joi.string().optional(),
   APPLE_IAP_ENVIRONMENT: Joi.string().valid('Sandbox', 'Production').optional(),
+
+  // 다이어리 미디어 용량 한도 (선택적 — 없으면 diary-media.config.ts 기본값)
+  DIARY_MEDIA_FREE_MONTHLY_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_FREE_TOTAL_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_FREE_PER_FILE_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_FREE_VIDEO_ALLOWED: Joi.boolean().optional(),
+  DIARY_MEDIA_FREE_MAX_VIDEO_SECONDS: Joi.number().positive().optional(),
+  DIARY_MEDIA_AD_FREE_MONTHLY_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_AD_FREE_TOTAL_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_AD_FREE_PER_FILE_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_AD_FREE_VIDEO_ALLOWED: Joi.boolean().optional(),
+  DIARY_MEDIA_AD_FREE_MAX_VIDEO_SECONDS: Joi.number().positive().optional(),
+  DIARY_MEDIA_PREMIUM_MONTHLY_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_PREMIUM_TOTAL_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_PREMIUM_PER_FILE_MB: Joi.number().positive().optional(),
+  DIARY_MEDIA_PREMIUM_VIDEO_ALLOWED: Joi.boolean().optional(),
+  DIARY_MEDIA_PREMIUM_MAX_VIDEO_SECONDS: Joi.number().positive().optional(),
+  DIARY_MEDIA_UPLOAD_URL_TTL: Joi.number().positive().optional(),
+  DIARY_MEDIA_VIEW_URL_TTL: Joi.number().positive().optional(),
+  DIARY_MEDIA_RESERVATION_TTL_MINUTES: Joi.number().positive().optional(),
+  DIARY_MEDIA_ORPHAN_TTL_HOURS: Joi.number().positive().optional(),
 })
   // Axiom 설정 검증: 토큰이 있으면 dataset도 필수
   .custom((value, helpers) => {
