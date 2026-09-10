@@ -78,7 +78,9 @@ import { JoinRoutineChallengeDto } from './dto/join-routine-challenge.dto';
 import {
   RoutineChallengeDto,
   RoutineChallengeDetailDto,
+  MyRoutineChallengeDto,
 } from './dto/routine-challenge-response.dto';
+import { MyChallengeQueryDto } from './dto/routine-challenge-query.dto';
 import { MessageResponseDto } from '@/task/dto/common-response.dto';
 import { ApiCommonAuthResponses } from '@/common/decorators/api-common-responses.decorator';
 import {
@@ -391,6 +393,20 @@ export class RoutineController {
     @Body() dto: UpdateDailyGoalInclusionsDto,
   ) {
     return this.routineService.updateDailyGoalInclusions(req.user.userId, dto);
+  }
+
+  @Get('challenges/me')
+  @ApiOperation({
+    summary: '내가 속한 모든 그룹의 챌린지 조회 (마감 임박순, ENDED 제외)',
+  })
+  @ApiSuccess(MyRoutineChallengeDto, '내 챌린지 목록 조회 성공', {
+    isArray: true,
+  })
+  findMyChallenges(@Request() req, @Query() query: MyChallengeQueryDto) {
+    return this.routineChallengeService.findMyChallenges(
+      req.user.userId,
+      query,
+    );
   }
 
   @Get('challenges/:id')

@@ -64,6 +64,8 @@
 
 ```json
 {
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyXzEyMyIsImlhdCI6MTYxNjIzOTAyMn0...", // Access Token (JWT) (string)
+  "refreshToken": "refresh_token_abc123def456", // Refresh Token (RTR 방식) (string)
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)
@@ -202,7 +204,20 @@
 #### 200 - 사용자 정보 반환 (isAdmin, profileImage 포함)
 
 ```json
-{}
+{
+  "id": "user_clxxx123", // 사용자 ID (string)
+  "email": "user@example.com", // 이메일 (string)
+  "name": "홍길동", // 사용자 이름 (string)
+  "isEmailVerified": true, // 이메일 인증 여부 (boolean)
+  "isAdmin": false, // 운영자 여부 (boolean)
+  "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
+  "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+  "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
+  "socialProvider": "google", // 소셜 로그인 제공자 (string?)
+  "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+  "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
+}
 ```
 
 ---
@@ -594,6 +609,8 @@
 
 ```json
 {
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyXzEyMyIsImlhdCI6MTYxNjIzOTAyMn0...", // Access Token (JWT) (string)
+  "refreshToken": "refresh_token_abc123def456", // Refresh Token (RTR 방식) (string)
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)

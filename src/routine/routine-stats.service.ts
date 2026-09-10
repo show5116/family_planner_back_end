@@ -310,6 +310,8 @@ export class RoutineStatsService {
           routineId: routine.id,
           title: routine.title,
           emoji: routine.emoji,
+          timeFilter: routine.timeFilter,
+          recordType: routine.recordType,
           checkedToday,
           currentStreakDays: dayStreak.currentStreakDays,
           thisWeekProgress,
@@ -589,8 +591,12 @@ export class RoutineStatsService {
       to,
     );
 
-    const { currentStreakDays, longestStreakDays } =
-      computeDailyGoalAchievementSummary(dailyStatuses);
+    const {
+      currentStreakDays,
+      longestStreakDays,
+      totalAchievedDays,
+      perfectWeeksCount,
+    } = computeDailyGoalAchievementSummary(dailyStatuses);
 
     const todayStatus = dailyStatuses[dailyStatuses.length - 1];
     const todayAchieved = todayStatus?.goalAchieved === true;
@@ -616,6 +622,8 @@ export class RoutineStatsService {
     return {
       currentStreakDays,
       longestStreakDays,
+      totalAchievedDays,
+      perfectWeeksCount,
       todayAchieved,
       todayCheckedCount,
       todayTargetCount,

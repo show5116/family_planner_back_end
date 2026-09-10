@@ -107,6 +107,21 @@
 
 ```json
 {
+  "id": "uuid-1234", // 적립 목표 ID (string)
+  "groupId": "uuid-5678", // 그룹 ID (string)
+  "name": "여름 휴가 비용", // 이름 (string)
+  "description": "제주도 여행", // 설명 (string | null)
+  "targetAmount": 1000000, // 목표 금액 (number | null)
+  "currentAmount": 350000, // 현재 적립 금액 (number)
+  "autoDeposit": false, // 자동 적립 여부 (boolean)
+  "depositDay": 1, // 매달 자동 적립 실행일 (1~31) (number)
+  "monthlyAmount": 100000, // 매달 자동 적립 금액 (number | null)
+  "includeInAssets": false, // 자산 통계 연동 여부 (boolean)
+  "status": null, // 상태 (ACTIVE: 적립 중, PAUSED: 일시 중지) (SavingsGoalStatus)
+  "achievementRate": 35, // 달성률 (targetAmount 없으면 null) (number | null)
+  "isGoalReached": false, // 목표 금액 달성 여부 (targetAmount 없으면 null) (boolean | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
   "transactions": [
     {
       "id": "uuid-1234", // 트랜잭션 ID (string)

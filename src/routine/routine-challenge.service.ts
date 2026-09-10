@@ -9,7 +9,12 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { CreateRoutineChallengeDto } from './dto/create-routine-challenge.dto';
 import { UpdateRoutineChallengeDto } from './dto/update-routine-challenge.dto';
 import { JoinRoutineChallengeDto } from './dto/join-routine-challenge.dto';
+import { RoutineChallenge, RoutineChallengeParticipant } from '@prisma/client';
 import { RoutineChallengeStatus } from './dto/routine-challenge-response.dto';
+import {
+  MyChallengeQueryDto,
+  MyChallengeStatusFilter,
+} from './dto/routine-challenge-query.dto';
 import {
   computeChallengeStatus,
   computeAchieved,
@@ -64,6 +69,65 @@ export class RoutineChallengeService {
       where: { groupId },
       orderBy: { createdAt: 'desc' },
     });
+
+    return this.buildChallengeList(userId, challenges);
+  }
+
+  /** 내가 속한 모든 그룹의 챌린지를 마감 임박순으로 조회 (ENDED 제외) */
+  async findMyChallenges(userId: string, query: MyChallengeQueryDto) {
+    const memberships = await this.prisma.groupMember.findMany({
+      where: { userId },
+      select: { groupId: true, group: { select: { name: true } } },
+    });
+    if (memberships.length === 0) return [];
+
+    const groupNameMap = new Map(
+      memberships.map((m) => [m.groupId, m.group.name]),
+    );
+    const today = todayInKst();
+
+    const challenges = await this.prisma.routineChallenge.findMany({
+      where: {
+        groupId: { in: [...groupNameMap.keys()] },
+        ...this.buildStatusDateFilter(query.status, today),
+      },
+      orderBy: [{ endDate: 'asc' }, { startDate: 'asc' }],
+    });
+
+    const challengeGroupMap = new Map(challenges.map((c) => [c.id, c.groupId]));
+    const items = await this.buildChallengeList(userId, challenges);
+
+    return items.map((item) => {
+      const groupId = challengeGroupMap.get(item.id) ?? '';
+      return {
+        ...item,
+        groupId,
+        groupName: groupNameMap.get(groupId) ?? '',
+      };
+    });
+  }
+
+  /** 상태 필터를 startDate/endDate 조건으로 변환 (생략 시 ENDED만 제외) */
+  private buildStatusDateFilter(
+    status: MyChallengeStatusFilter | undefined,
+    today: Date,
+  ) {
+    if (status === MyChallengeStatusFilter.ONGOING) {
+      return { startDate: { lte: today }, endDate: { gte: today } };
+    }
+    if (status === MyChallengeStatusFilter.UPCOMING) {
+      return { startDate: { gt: today } };
+    }
+    return { endDate: { gte: today } };
+  }
+
+  /** 챌린지 목록에 내 참가 정보·참가자 수·내 체크 횟수를 붙여 응답 형태로 변환 */
+  private async buildChallengeList(
+    userId: string,
+    challenges: RoutineChallenge[],
+  ) {
+    if (challenges.length === 0) return [];
+
     const challengeIds = challenges.map((c) => c.id);
 
     const [myParticipations, participantCounts] = await Promise.all([
@@ -84,26 +148,15 @@ export class RoutineChallengeService {
       participantCounts.map((c) => [c.challengeId, c._count._all]),
     );
 
-    const myCheckedCounts = new Map<string, number>();
-    await Promise.all(
-      challenges.map(async (challenge) => {
-        const participation = myParticipationMap.get(challenge.id);
-        if (!participation) return;
-        const count = await this.prisma.routineLog.count({
-          where: {
-            routineId: participation.routineId,
-            checkedDate: { gte: challenge.startDate, lte: challenge.endDate },
-          },
-        });
-        myCheckedCounts.set(challenge.id, count);
-      }),
+    const myCheckedCounts = await this.countMyChecks(
+      challenges,
+      myParticipationMap,
     );
 
     const today = todayInKst();
 
     return challenges.map((challenge) => {
-      const participation = myParticipationMap.get(challenge.id);
-      const joined = !!participation;
+      const joined = myParticipationMap.has(challenge.id);
       const myCheckedCount = joined
         ? (myCheckedCounts.get(challenge.id) ?? 0)
         : null;
@@ -133,6 +186,59 @@ export class RoutineChallengeService {
         updatedAt: challenge.updatedAt,
       };
     });
+  }
+
+  /**
+   * 참가 중인 챌린지별 내 체크 횟수를 쿼리 1회로 집계.
+   * 챌린지마다 기간이 달라 groupBy로는 나눌 수 없어, 전체 기간 로그를 한 번에 받아 메모리에서 센다.
+   */
+  private async countMyChecks(
+    challenges: RoutineChallenge[],
+    myParticipationMap: Map<string, RoutineChallengeParticipant>,
+  ): Promise<Map<string, number>> {
+    const joined = challenges.flatMap((challenge) => {
+      const participation = myParticipationMap.get(challenge.id);
+      return participation ? [{ challenge, participation }] : [];
+    });
+    if (joined.length === 0) return new Map();
+
+    const routineIds = [
+      ...new Set(joined.map(({ participation }) => participation.routineId)),
+    ];
+    const startTimes = joined.map(({ challenge }) =>
+      challenge.startDate.getTime(),
+    );
+    const endTimes = joined.map(({ challenge }) => challenge.endDate.getTime());
+
+    const logs = await this.prisma.routineLog.findMany({
+      where: {
+        routineId: { in: routineIds },
+        checkedDate: {
+          gte: new Date(Math.min(...startTimes)),
+          lte: new Date(Math.max(...endTimes)),
+        },
+      },
+      select: { routineId: true, checkedDate: true },
+    });
+
+    const checkedTimesByRoutine = new Map<string, number[]>();
+    for (const log of logs) {
+      const times = checkedTimesByRoutine.get(log.routineId) ?? [];
+      times.push(log.checkedDate.getTime());
+      checkedTimesByRoutine.set(log.routineId, times);
+    }
+
+    const counts = new Map<string, number>();
+    for (const { challenge, participation } of joined) {
+      const times = checkedTimesByRoutine.get(participation.routineId) ?? [];
+      const start = challenge.startDate.getTime();
+      const end = challenge.endDate.getTime();
+      counts.set(
+        challenge.id,
+        times.filter((t) => t >= start && t <= end).length,
+      );
+    }
+    return counts;
   }
 
   /** 챌린지 생성 (만든 사람이 자동 참가되지는 않음) */

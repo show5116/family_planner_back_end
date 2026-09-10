@@ -142,6 +142,8 @@
       "routineId": "", // 루틴 ID (string)
       "title": "", // 루틴 제목 (string)
       "emoji": null, // 이모지 (string | null)
+      "timeFilter": null, // 시간대 분류 (위젯 우선순위 정렬용) (RoutineTimeFilter | null)
+      "recordType": null, // 기록 방식 (체크 시 값 입력 분기용) (RoutineRecordType)
       "checkedToday": false, // 오늘 체크 여부 (boolean)
       "currentStreakDays": 0, // 현재 연속 체크 일수 (number)
       "thisWeekProgress": {
@@ -221,6 +223,8 @@
 {
   "currentStreakDays": 0, // 오늘(또는 어제)까지 이어지는 연속 달성 일수 (number)
   "longestStreakDays": 0, // 역대 최장 연속 달성 일수 (number)
+  "totalAchievedDays": 0, // 목표를 달성한 날의 누적 수 (전체 기간) (number)
+  "perfectWeeksCount": 0, // 월~일 7일 전부 달성한 주의 수 (number)
   "todayAchieved": false, // 오늘 목표 달성 여부 (boolean)
   "todayCheckedCount": 0, // 오늘 체크한 습관 수 (number)
   "todayTargetCount": 0, // 오늘 기준 목표 개수 (ALL 모드면 오늘 대상 습관 수) (number)
@@ -449,6 +453,13 @@
 
 ```json
 {
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "routines": [
     {
       "id": "uuid-1234", // 루틴 ID (string)
@@ -666,6 +677,17 @@
 
 ```json
 {
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "routines": [
     {
       "id": "uuid-1234", // 루틴 ID (string)
@@ -1147,6 +1169,43 @@
 
 ---
 
+### GET `routines/challenges/me`
+
+**요약:** 내가 속한 모든 그룹의 챌린지 조회 (마감 임박순, ENDED 제외)
+
+**Query Parameters:**
+
+- `status` (`MyChallengeStatusFilter`) (Optional): 상태 필터. 생략 시 ONGOING + UPCOMING 모두 조회 (ENDED는 항상 제외)
+
+**Responses:**
+
+#### 200 - 내 챌린지 목록 조회 성공
+
+```json
+{
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
+  "groupId": "", // 챌린지가 속한 그룹 ID (string)
+  "groupName": "" // 챌린지가 속한 그룹 이름 (string)
+}
+```
+
+---
+
 ### GET `routines/challenges/:id`
 
 **요약:** 챌린지 상세 조회 (참가자별 진행률 포함)
@@ -1161,6 +1220,22 @@
 
 ```json
 {
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "participants": [
     {
       "userId": "", // 사용자 ID (string)
@@ -1272,6 +1347,22 @@
 
 ```json
 {
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "participants": [
     {
       "userId": "", // 사용자 ID (string)

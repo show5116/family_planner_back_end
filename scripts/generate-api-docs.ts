@@ -285,7 +285,28 @@ class ApiDocGenerator {
           }
         });
 
-        dtoInfo = { name: dtoName, fields };
+        // extends로 물려받은 부모 클래스 필드를 앞에 붙임 (같은 이름은 자식 선언이 우선).
+        // PartialType(...) 같은 헬퍼 호출식은 Identifier가 아니라 자동으로 건너뛴다.
+        const inherited: DtoField[] = [];
+        node.heritageClauses?.forEach((clause) => {
+          if (clause.token !== ts.SyntaxKind.ExtendsKeyword) return;
+          clause.types.forEach((typeExpr) => {
+            if (!ts.isIdentifier(typeExpr.expression)) return;
+            const baseName = typeExpr.expression.text;
+            if (baseName === dtoName) return;
+            const baseDto = this.parseDtoFile(baseName);
+            if (baseDto) inherited.push(...baseDto.fields);
+          });
+        });
+
+        const ownFieldNames = new Set(fields.map((f) => f.name));
+        dtoInfo = {
+          name: dtoName,
+          fields: [
+            ...inherited.filter((f) => !ownFieldNames.has(f.name)),
+            ...fields,
+          ],
+        };
       }
 
       ts.forEachChild(node, visit);

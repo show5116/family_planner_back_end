@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { RoutineTimeFilter, RoutineRecordType } from '@/routine/enums';
 
 export class HeatmapResponseDto {
   @ApiProperty({ description: '루틴 ID' })
@@ -98,6 +99,19 @@ export class RoutineSummaryItemDto {
 
   @ApiProperty({ description: '이모지', nullable: true })
   emoji: string | null;
+
+  @ApiProperty({
+    description: '시간대 분류 (위젯 우선순위 정렬용)',
+    enum: RoutineTimeFilter,
+    nullable: true,
+  })
+  timeFilter: RoutineTimeFilter | null;
+
+  @ApiProperty({
+    description: '기록 방식 (체크 시 값 입력 분기용)',
+    enum: RoutineRecordType,
+  })
+  recordType: RoutineRecordType;
 
   @ApiProperty({ description: '오늘 체크 여부' })
   checkedToday: boolean;
@@ -261,6 +275,12 @@ export class DailyStreakResponseDto {
 
   @ApiProperty({ description: '역대 최장 연속 달성 일수' })
   longestStreakDays: number;
+
+  @ApiProperty({ description: '목표를 달성한 날의 누적 수 (전체 기간)' })
+  totalAchievedDays: number;
+
+  @ApiProperty({ description: '월~일 7일 전부 달성한 주의 수' })
+  perfectWeeksCount: number;
 
   @ApiProperty({ description: '오늘 목표 달성 여부' })
   todayAchieved: boolean;

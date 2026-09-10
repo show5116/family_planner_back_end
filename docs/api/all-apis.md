@@ -1133,6 +1133,8 @@ period=monthly 시 year 필수.
 
 ```json
 {
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyXzEyMyIsImlhdCI6MTYxNjIzOTAyMn0...", // Access Token (JWT) (string)
+  "refreshToken": "refresh_token_abc123def456", // Refresh Token (RTR 방식) (string)
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)
@@ -1271,7 +1273,20 @@ period=monthly 시 year 필수.
 #### 200 - 사용자 정보 반환 (isAdmin, profileImage 포함)
 
 ```json
-{}
+{
+  "id": "user_clxxx123", // 사용자 ID (string)
+  "email": "user@example.com", // 이메일 (string)
+  "name": "홍길동", // 사용자 이름 (string)
+  "isEmailVerified": true, // 이메일 인증 여부 (boolean)
+  "isAdmin": false, // 운영자 여부 (boolean)
+  "profileImageUrl": "https://r2.yourdomain.com/profiles/google-123456.jpg", // 프로필 이미지 URL (R2 public URL) (string?)
+  "phoneNumber": "010-1234-5678", // 전화번호 (string?)
+  "personalColor": "#FF5733", // 개인 색상 (HEX 코드) (string?)
+  "socialProvider": "google", // 소셜 로그인 제공자 (string?)
+  "createdAt": "2024-01-01T00:00:00.000Z", // 생성 일시 (Date)
+  "updatedAt": "2024-01-01T00:00:00.000Z", // 수정 일시 (Date)
+  "scheduledDeleteAt": "2024-01-08T00:00:00.000Z" // 계정 삭제 예정 일시 (null이면 삭제 예약 없음) (Date | null)
+}
 ```
 
 ---
@@ -1663,6 +1678,8 @@ period=monthly 시 year 필수.
 
 ```json
 {
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyXzEyMyIsImlhdCI6MTYxNjIzOTAyMn0...", // Access Token (JWT) (string)
+  "refreshToken": "refresh_token_abc123def456", // Refresh Token (RTR 방식) (string)
   "user": {
     "id": "user_clxxx123", // 사용자 ID (string)
     "email": "user@example.com", // 이메일 (string)
@@ -8566,6 +8583,8 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
       "routineId": "", // 루틴 ID (string)
       "title": "", // 루틴 제목 (string)
       "emoji": null, // 이모지 (string | null)
+      "timeFilter": null, // 시간대 분류 (위젯 우선순위 정렬용) (RoutineTimeFilter | null)
+      "recordType": null, // 기록 방식 (체크 시 값 입력 분기용) (RoutineRecordType)
       "checkedToday": false, // 오늘 체크 여부 (boolean)
       "currentStreakDays": 0, // 현재 연속 체크 일수 (number)
       "thisWeekProgress": {
@@ -8645,6 +8664,8 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 {
   "currentStreakDays": 0, // 오늘(또는 어제)까지 이어지는 연속 달성 일수 (number)
   "longestStreakDays": 0, // 역대 최장 연속 달성 일수 (number)
+  "totalAchievedDays": 0, // 목표를 달성한 날의 누적 수 (전체 기간) (number)
+  "perfectWeeksCount": 0, // 월~일 7일 전부 달성한 주의 수 (number)
   "todayAchieved": false, // 오늘 목표 달성 여부 (boolean)
   "todayCheckedCount": 0, // 오늘 체크한 습관 수 (number)
   "todayTargetCount": 0, // 오늘 기준 목표 개수 (ALL 모드면 오늘 대상 습관 수) (number)
@@ -8873,6 +8894,13 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ```json
 {
+  "id": "", // 카테고리 ID (string)
+  "title": "규칙적인 삶", // 카테고리 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "routines": [
     {
       "id": "uuid-1234", // 루틴 ID (string)
@@ -9090,6 +9118,17 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ```json
 {
+  "id": "", // 그룹 ID (string)
+  "title": "아침 루틴", // 그룹 제목 (string)
+  "emoji": null, // 이모지 (string | null)
+  "color": null, // 색상 (string | null)
+  "sortOrder": 0, // 정렬 순서 (number)
+  "todayProgress": {
+    "checked": 0, // 오늘 체크 완료 개수 (number)
+    "total": 0 // 오늘 기준 활성 습관 총 개수 (number)
+  }, // 오늘 진행 상황 (RoutineGroupProgressDto)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "routines": [
     {
       "id": "uuid-1234", // 루틴 ID (string)
@@ -9571,6 +9610,43 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ---
 
+### GET `routines/challenges/me`
+
+**요약:** 내가 속한 모든 그룹의 챌린지 조회 (마감 임박순, ENDED 제외)
+
+**Query Parameters:**
+
+- `status` (`MyChallengeStatusFilter`) (Optional): 상태 필터. 생략 시 ONGOING + UPCOMING 모두 조회 (ENDED는 항상 제외)
+
+**Responses:**
+
+#### 200 - 내 챌린지 목록 조회 성공
+
+```json
+{
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
+  "groupId": "", // 챌린지가 속한 그룹 ID (string)
+  "groupName": "" // 챌린지가 속한 그룹 이름 (string)
+}
+```
+
+---
+
 ### GET `routines/challenges/:id`
 
 **요약:** 챌린지 상세 조회 (참가자별 진행률 포함)
@@ -9585,6 +9661,22 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ```json
 {
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "participants": [
     {
       "userId": "", // 사용자 ID (string)
@@ -9696,6 +9788,22 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ```json
 {
+  "id": "", // 챌린지 ID (string)
+  "title": "", // 챌린지 제목 (string)
+  "description": null, // 챌린지 설명 (string | null)
+  "startDate": "2025-01-01T00:00:00Z", // 시작일 (Date)
+  "endDate": "2025-01-01T00:00:00Z", // 종료일 (Date)
+  "targetCount": 0, // 기간 내 목표 체크 횟수 (number)
+  "reward": null, // 내기·벌칙 문구 (string | null)
+  "status": null, // 상태 (서버가 startDate/endDate와 오늘 날짜로 계산) (가능한 값: UPCOMING, ONGOING, ENDED) (RoutineChallengeStatus)
+  "participantCount": 0, // 참가자 수 (number)
+  "joined": false, // 내가 참가 중인지 여부 (boolean)
+  "myCheckedCount": null, // 내 기간 내 체크 횟수 (참가 중일 때만 값, 아니면 null) (number | null)
+  "myAchieved": false, // 내 목표 달성 여부 (boolean)
+  "createdBy": "", // 만든 사용자 ID (string)
+  "isMine": false, // 내가 만든 챌린지인지 여부 (boolean)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "participants": [
     {
       "userId": "", // 사용자 ID (string)
@@ -10363,6 +10471,21 @@ ANSWERED 상태의 질문을 RESOLVED로 변경
 
 ```json
 {
+  "id": "uuid-1234", // 적립 목표 ID (string)
+  "groupId": "uuid-5678", // 그룹 ID (string)
+  "name": "여름 휴가 비용", // 이름 (string)
+  "description": "제주도 여행", // 설명 (string | null)
+  "targetAmount": 1000000, // 목표 금액 (number | null)
+  "currentAmount": 350000, // 현재 적립 금액 (number)
+  "autoDeposit": false, // 자동 적립 여부 (boolean)
+  "depositDay": 1, // 매달 자동 적립 실행일 (1~31) (number)
+  "monthlyAmount": 100000, // 매달 자동 적립 금액 (number | null)
+  "includeInAssets": false, // 자산 통계 연동 여부 (boolean)
+  "status": null, // 상태 (ACTIVE: 적립 중, PAUSED: 일시 중지) (SavingsGoalStatus)
+  "achievementRate": 35, // 달성률 (targetAmount 없으면 null) (number | null)
+  "isGoalReached": false, // 목표 금액 달성 여부 (targetAmount 없으면 null) (boolean | null)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일시 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일시 (Date)
   "transactions": [
     {
       "id": "uuid-1234", // 트랜잭션 ID (string)
@@ -11824,6 +11947,62 @@ R2에 파일이 존재하는지 확인합니다.
 
 ```json
 {
+  "id": "uuid", // ID (string)
+  "userId": "uuid", // 사용자 ID (string)
+  "groupId": "uuid", // 그룹 ID (string | null)
+  "title": "회의 참석", // 제목 (string)
+  "description": "분기 결산 회의", // 설명 (string | null)
+  "location": {
+    "name": "스타벅스 강남점", // 장소명 (string)
+    "address": "서울 강남구 테헤란로 212", // 주소 (string?)
+    "lat": 37, // 위도 (number?)
+    "lng": 127 // 경도 (number?)
+  }, // 장소 (LocationDto | null)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
+  "category": {
+    "id": "uuid", // ID (string)
+    "userId": "uuid", // 사용자 ID (string)
+    "groupId": "uuid", // 그룹 ID (string | null)
+    "name": "업무", // 카테고리 이름 (string)
+    "description": "업무 관련 일정", // 설명 (string | null)
+    "emoji": "💼", // 이모지 (string | null)
+    "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+    "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+  }, // 카테고리 (CategoryDto)
+  "allDay": false, // 종일 여부 (boolean)
+  "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
+  "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
+  "daysUntilDue": 0, // D-Day (KST 달력 기준 남은 일수). 오늘 마감 0, 내일 1, 어제 -1 (number | null)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
+  "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
+  "recurring": {
+    "id": "uuid", // ID (string)
+    "ruleType": "WEEKLY", // 반복 타입 (string)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (Record<string, any>)
+    "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
+    "isActive": true, // 활성화 여부 (boolean)
+    "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
+  }, // 반복 정보 (RecurringDto | null)
+  "participants": [
+    {
+      "id": "uuid", // 참여자 ID (string)
+      "taskId": "uuid", // Task ID (string)
+      "userId": "uuid", // 사용자 ID (string)
+      "user": {
+        "id": "uuid",
+        "name": "홍길동",
+        "profileImageKey": "profile/uuid.jpg"
+      }, // 참여자 정보 (ParticipantUserDto)
+      "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
+    }
+  ], // 참여자 목록 (TaskParticipantDto[]?)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "reminders": [
     {
       "id": "uuid", // ID (string)

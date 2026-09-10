@@ -493,6 +493,62 @@
 
 ```json
 {
+  "id": "uuid", // ID (string)
+  "userId": "uuid", // 사용자 ID (string)
+  "groupId": "uuid", // 그룹 ID (string | null)
+  "title": "회의 참석", // 제목 (string)
+  "description": "분기 결산 회의", // 설명 (string | null)
+  "location": {
+    "name": "스타벅스 강남점", // 장소명 (string)
+    "address": "서울 강남구 테헤란로 212", // 주소 (string?)
+    "lat": 37, // 위도 (number?)
+    "lng": 127 // 경도 (number?)
+  }, // 장소 (LocationDto | null)
+  "type": null, // Task 타입 (가능한 값: CALENDAR_ONLY, TODO_LINKED, TODO_ONLY) (TaskType)
+  "priority": null, // 우선순위 (가능한 값: LOW, MEDIUM, HIGH, URGENT) (TaskPriority)
+  "category": {
+    "id": "uuid", // ID (string)
+    "userId": "uuid", // 사용자 ID (string)
+    "groupId": "uuid", // 그룹 ID (string | null)
+    "name": "업무", // 카테고리 이름 (string)
+    "description": "업무 관련 일정", // 설명 (string | null)
+    "emoji": "💼", // 이모지 (string | null)
+    "createdAt": "2025-12-30T00:00:00Z", // 생성일 (Date)
+    "updatedAt": "2025-12-30T00:00:00Z" // 수정일 (Date)
+  }, // 카테고리 (CategoryDto)
+  "allDay": false, // 종일 여부 (boolean)
+  "scheduledAt": "2025-01-01T00:00:00Z", // 수행 시작 날짜 (Date | null)
+  "dueAt": "2025-01-01T00:00:00Z", // 마감 날짜 (Date | null)
+  "daysUntilDue": 0, // D-Day (KST 달력 기준 남은 일수). 오늘 마감 0, 내일 1, 어제 -1 (number | null)
+  "status": "PENDING", // Task 상태 (가능한 값: PENDING, IN_PROGRESS, COMPLETED, HOLD, DROP, FAILED) (TaskStatus)
+  "completedAt": "2025-01-01T00:00:00Z", // 완료 시간 (Date | null)
+  "recurring": {
+    "id": "uuid", // ID (string)
+    "ruleType": "WEEKLY", // 반복 타입 (string)
+    "ruleConfig": {
+      "interval": 1,
+      "endType": "NEVER",
+      "daysOfWeek": [1, 3, 5]
+    }, // 반복 설정 (Record<string, any>)
+    "generationType": "AUTO_SCHEDULER", // 생성 방식 (string)
+    "isActive": true, // 활성화 여부 (boolean)
+    "lastGeneratedAt": "2025-01-01T00:00:00Z" // 마지막 생성 날짜 (Date | null)
+  }, // 반복 정보 (RecurringDto | null)
+  "participants": [
+    {
+      "id": "uuid", // 참여자 ID (string)
+      "taskId": "uuid", // Task ID (string)
+      "userId": "uuid", // 사용자 ID (string)
+      "user": {
+        "id": "uuid",
+        "name": "홍길동",
+        "profileImageKey": "profile/uuid.jpg"
+      }, // 참여자 정보 (ParticipantUserDto)
+      "createdAt": "2025-01-01T00:00:00Z" // 생성일 (Date)
+    }
+  ], // 참여자 목록 (TaskParticipantDto[]?)
+  "createdAt": "2025-01-01T00:00:00Z", // 생성일 (Date)
+  "updatedAt": "2025-01-01T00:00:00Z", // 수정일 (Date)
   "reminders": [
     {
       "id": "uuid", // ID (string)

@@ -92,3 +92,11 @@ export class RoutineChallengeDetailDto extends RoutineChallengeDto {
   })
   participants: RoutineChallengeParticipantDto[];
 }
+
+export class MyRoutineChallengeDto extends RoutineChallengeDto {
+  @ApiProperty({ description: '챌린지가 속한 그룹 ID' })
+  groupId: string;
+
+  @ApiProperty({ description: '챌린지가 속한 그룹 이름' })
+  groupName: string;
+}
