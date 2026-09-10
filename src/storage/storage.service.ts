@@ -321,13 +321,54 @@ export class StorageService {
    *
    * @param key - 파일 키
    * @param expiresIn - URL 유효 시간 (초, 기본 1시간)
+   * @param contentType - 응답 Content-Type 강제 (저장된 헤더는 업로더가 정한 값이라 믿을 수 없다)
    */
-  async getViewUrl(key: string, expiresIn: number = 3600): Promise<string> {
+  async getViewUrl(
+    key: string,
+    expiresIn: number = 3600,
+    contentType?: string,
+  ): Promise<string> {
     return await getSignedUrl(
       this.s3Client,
-      new GetObjectCommand({ Bucket: this.bucketName, Key: key }),
+      new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        ...(contentType ? { ResponseContentType: contentType } : {}),
+      }),
       { expiresIn },
     );
+  }
+
+  /**
+   * 파일 선두 바이트만 읽기 (Range GET)
+   *
+   * presigned 업로드는 서버가 바이트를 보지 못하므로, 매직바이트로 실제 형식을
+   * 확인할 때 쓴다. 전체를 받지 않아 요청 1회에 수십 바이트만 오간다.
+   *
+   * @param key - 파일 키
+   * @param length - 읽을 바이트 수
+   * @returns 선두 바이트 (파일이 없거나 비어 있으면 null)
+   */
+  async getFileHead(key: string, length: number): Promise<Buffer | null> {
+    try {
+      const result = await this.s3Client.send(
+        new GetObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Range: `bytes=0-${length - 1}`,
+        }),
+      );
+
+      if (!result.Body) return null;
+      return Buffer.from(await result.Body.transformToByteArray());
+    } catch (error) {
+      // NotFound / 빈 파일(InvalidRange)은 "확인할 내용이 없다"로 다룬다
+      const status = error.$metadata?.httpStatusCode;
+      if (error.name === 'NoSuchKey' || status === 404 || status === 416) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   /**

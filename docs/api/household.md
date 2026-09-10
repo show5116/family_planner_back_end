@@ -282,10 +282,10 @@
 
 ```json
 {
-  "fileKey": "receipts/uuid-1234.jpg", // 업로드된 파일 키 (getReceiptUploadUrl 응답의 fileKey) (string)
+  "fileKey": "receipts/expense-uuid/file-uuid.jpg", // 업로드된 파일 키 (getReceiptUploadUrl 응답의 fileKey 그대로). 해당 지출에 발급된 키가 아니면 400 (string)
   "fileName": "receipt.jpg", // 원본 파일명 (string)
-  "fileSize": 102400, // 파일 크기 (bytes) (number)
-  "mimeType": "image/jpeg" // MIME 타입 (string)
+  "fileSize": 102400, // 파일 크기 (bytes) — 참고용. 서버가 실측값으로 덮어쓴다 (number)
+  "mimeType": "image/jpeg" // MIME 타입 — 참고용. 서버가 매직바이트로 판별한 값으로 덮어쓴다 (string)
 }
 ```
 

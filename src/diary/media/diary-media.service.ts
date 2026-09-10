@@ -23,6 +23,10 @@ import { StorageService } from '@/storage/storage.service';
 import { SubscriptionService } from '@/subscription/subscription.service';
 import { formatDateOnly, parseDateOnly } from '@/common/utils/date-kst.util';
 import { DiaryMediaQuotaService } from './diary-media-quota.service';
+import {
+  MAGIC_BYTES_LENGTH,
+  detectMimeType,
+} from '@/common/utils/media-signature.util';
 import { QuotaExceededException } from './quota-exceeded.exception';
 import {
   ALLOWED_MIME_TYPES,
@@ -91,7 +95,7 @@ export class DiaryMediaService {
         fileSize: m.fileSize ?? 0,
         originalSize: m.originalSize,
         isOriginal: m.isOriginal,
-        thumbnailUrl: await this.signKey(m.thumbnailKey),
+        thumbnailUrl: await this.signKey(m.thumbnailKey, THUMBNAIL_MIME_TYPE),
         uploadedAt: m.uploadedAt,
       })),
     );
@@ -221,12 +225,15 @@ export class DiaryMediaService {
       throw new BadRequestException('diary.errors.upload_not_found');
     }
 
-    if (
-      meta.contentType &&
-      !ALLOWED_MIME_TYPES[media.type].includes(meta.contentType)
-    ) {
-      await this.storage.deleteFile(media.storageKey);
-      await this.prisma.diaryMedia.delete({ where: { id: media.id } });
+    // 저장된 Content-Type은 업로더가 정한 값이라(서명 대상이 아니다) 근거가 되지 못한다.
+    // 실제 바이트로 형식을 확인해야 화이트리스트가 보증이 된다.
+    const actualMimeType = await this.detectActualMimeType(
+      media.storageKey,
+      media.type,
+    );
+
+    if (!actualMimeType) {
+      await this.discardUpload(media);
       throw new BadRequestException('diary.errors.invalid_mime_type');
     }
 
@@ -258,6 +265,8 @@ export class DiaryMediaService {
         data: {
           status: MediaStatus.CONFIRMED,
           fileSize: meta.size,
+          // 신고값이 아니라 실측 형식을 저장한다 — 조회 URL의 Content-Type 근거가 된다
+          mimeType: actualMimeType,
           thumbnailKey,
           uploadedAt: new Date(),
         },
@@ -416,13 +425,20 @@ export class DiaryMediaService {
       },
       orderBy: [{ diaryId: 'asc' }, { sortOrder: 'asc' }],
       distinct: ['diaryId'],
-      select: { diaryId: true, storageKey: true, thumbnailKey: true },
+      select: {
+        diaryId: true,
+        storageKey: true,
+        thumbnailKey: true,
+        mimeType: true,
+      },
     });
 
     for (const m of media) {
       if (!m.diaryId) continue;
       // 썸네일이 아직 없으면 원본을 서명해 내려준다 (빈 카드보다 낫다)
-      const url = await this.signKey(m.thumbnailKey ?? m.storageKey);
+      const url = m.thumbnailKey
+        ? await this.signKey(m.thumbnailKey, THUMBNAIL_MIME_TYPE)
+        : await this.signKey(m.storageKey, m.mimeType);
       if (url) map.set(m.diaryId, url);
     }
 
@@ -557,12 +573,49 @@ export class DiaryMediaService {
     await this.prisma.diaryMedia.delete({ where: { id: media.id } });
   }
 
-  /** 클라이언트가 썸네일을 올렸는지 확인한다 (없으면 null — 확정을 막지 않는다) */
+  /**
+   * 클라이언트가 썸네일을 올렸는지 확인한다 (없으면 null — 확정을 막지 않는다)
+   *
+   * 본체와 같은 이유로 바이트까지 본다. JPEG가 아니면 잔여물을 지우고 없는 것으로 다룬다.
+   */
   private async resolveThumbnailKey(
     storageKey: string,
   ): Promise<string | null> {
     const key = thumbnailKeyOf(storageKey);
-    return (await this.storage.fileExists(key)) ? key : null;
+    const head = await this.storage.getFileHead(key, MAGIC_BYTES_LENGTH);
+
+    if (!head) return null;
+
+    if (detectMimeType(head) !== THUMBNAIL_MIME_TYPE) {
+      this.logger.warn(`썸네일 형식이 JPEG가 아니라 폐기 (key=${key})`);
+      await this.safeDeleteFile(key);
+      return null;
+    }
+
+    return key;
+  }
+
+  /**
+   * 업로드된 파일의 실제 형식 (화이트리스트 밖이면 null)
+   *
+   * Range GET으로 선두 32바이트만 받는다 — 요청 1회에 수십 바이트다.
+   */
+  private async detectActualMimeType(
+    storageKey: string,
+    type: MediaType,
+  ): Promise<string | null> {
+    const head = await this.storage.getFileHead(storageKey, MAGIC_BYTES_LENGTH);
+    if (!head) return null;
+
+    const detected = detectMimeType(head);
+    if (!detected || !ALLOWED_MIME_TYPES[type].includes(detected)) {
+      this.logger.warn(
+        `업로드 형식 불일치로 거부 (key=${storageKey}, 실측=${detected ?? '알 수 없음'})`,
+      );
+      return null;
+    }
+
+    return detected;
   }
 
   /** R2 삭제 실패가 요청 전체를 무너뜨리지 않게 한다 (잔여물은 로그로 추적) */
@@ -580,8 +633,8 @@ export class DiaryMediaService {
     return {
       id: media.id,
       type: media.type,
-      url: (await this.signKey(media.storageKey)) ?? '',
-      thumbnailUrl: await this.signKey(media.thumbnailKey),
+      url: (await this.signKey(media.storageKey, media.mimeType)) ?? '',
+      thumbnailUrl: await this.signKey(media.thumbnailKey, THUMBNAIL_MIME_TYPE),
       width: media.width,
       height: media.height,
       durationMs: media.durationMs,
@@ -593,11 +646,15 @@ export class DiaryMediaService {
    * 조회용 URL — 일기는 사적인 내용이라 버킷을 public으로 열지 않고
    * 단기 만료 presigned GET으로 내린다. 서명은 로컬 계산이라 목록 조회에도 부담이 없다.
    */
-  private async signKey(key: string | null): Promise<string | null> {
+  private async signKey(
+    key: string | null,
+    contentType: string,
+  ): Promise<string | null> {
     if (!key) return null;
 
     const expiresIn = this.config.get<number>('diaryMedia.viewUrlExpiresIn');
-    return this.storage.getViewUrl(key, expiresIn);
+    // 저장된 헤더는 업로더가 정한 값이라, 서버가 확인한 형식으로 덮어써서 내려보낸다
+    return this.storage.getViewUrl(key, expiresIn, contentType);
   }
 
   private buildStorageKey(userId: string, fileName: string): string {

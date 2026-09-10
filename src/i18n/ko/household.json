@@ -12,7 +12,9 @@
     "own_receipt_only_delete": "본인이 등록한 지출의 영수증만 삭제할 수 있습니다",
     "merchant_not_found": "가맹점을 찾을 수 없습니다",
     "own_merchant_only": "본인이 등록한 가맹점만 수정/삭제할 수 있습니다",
-    "total_months_requires_start_date": "총 반복 개월 수를 입력하려면 시작 월을 함께 입력해야 합니다"
+    "total_months_requires_start_date": "총 반복 개월 수를 입력하려면 시작 월을 함께 입력해야 합니다",
+    "invalid_file_key": "잘못된 파일 키입니다",
+    "upload_not_found": "업로드된 파일을 찾을 수 없습니다"
   },
   "success": {
     "expense_deleted": "지출 내역이 삭제되었습니다",

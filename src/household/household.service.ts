@@ -40,6 +40,10 @@ import {
   toUtcDate,
 } from './household.util';
 import { todayInKst, thisMonthStartInKst } from '@/common/utils/date-kst.util';
+import {
+  MAGIC_BYTES_LENGTH,
+  detectMimeType,
+} from '@/common/utils/media-signature.util';
 
 const ALLOWED_RECEIPT_TYPES = [
   'image/jpeg',
@@ -47,6 +51,14 @@ const ALLOWED_RECEIPT_TYPES = [
   'image/webp',
   'application/pdf',
 ];
+
+/** MIME → 확장자. mimeType.split('/')[1]은 application/pdf에서 'pdf'가 나오지 않는다 */
+const RECEIPT_EXTENSIONS: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
 const MAX_RECEIPT_SIZE = 10 * 1024 * 1024; // 10MB
 
 @Injectable()
@@ -552,9 +564,11 @@ export class HouseholdService {
       throw new ForbiddenException('household.errors.own_expense_only_update');
     }
 
-    const ext = mimeType.split('/')[1] || 'bin';
+    // 키를 지출 단위로 묶는다 — confirm에서 "이 지출의 키인가"를 검사할 수 있어야
+    // 클라이언트가 남의 파일 키를 들고 와 영수증으로 등록하는 걸 막는다
+    const ext = RECEIPT_EXTENSIONS[mimeType];
     const { randomUUID } = await import('crypto');
-    const fileKey = `receipts/${randomUUID()}.${ext}`;
+    const fileKey = `receipts/${expenseId}/${randomUUID()}.${ext}`;
 
     const uploadUrl = await this.storage.getUploadUrl(fileKey, mimeType);
 
@@ -569,10 +583,6 @@ export class HouseholdService {
     expenseId: string,
     dto: ConfirmReceiptDto,
   ) {
-    if (dto.fileSize > MAX_RECEIPT_SIZE) {
-      throw new BadRequestException('common.errors.file_too_large');
-    }
-
     const expense = await this.prisma.expense.findUnique({
       where: { id: expenseId },
     });
@@ -587,16 +597,43 @@ export class HouseholdService {
       throw new ForbiddenException('household.errors.own_expense_only_update');
     }
 
-    const fileUrl = this.storage.getPublicUrl(dto.fileKey);
+    // 우리가 이 지출에 발급한 키인지 — 다른 키를 들고 오면 남의 파일이 영수증이 된다
+    if (!dto.fileKey.startsWith(`receipts/${expenseId}/`)) {
+      throw new BadRequestException('household.errors.invalid_file_key');
+    }
+
+    // presigned 업로드는 서버가 바이트를 보지 못하므로 신고값(fileSize·mimeType)은
+    // 아무것도 보증하지 못한다. 크기는 HeadObject 실측으로, 형식은 매직바이트로 확인한다.
+    const meta = await this.storage.getFileMetadata(dto.fileKey);
+    if (!meta || meta.size <= 0) {
+      throw new BadRequestException('household.errors.upload_not_found');
+    }
+
+    if (meta.size > MAX_RECEIPT_SIZE) {
+      await this.storage.deleteFile(dto.fileKey).catch(() => null);
+      throw new BadRequestException('common.errors.file_too_large');
+    }
+
+    const head = await this.storage.getFileHead(
+      dto.fileKey,
+      MAGIC_BYTES_LENGTH,
+    );
+    const detected = head ? detectMimeType(head) : null;
+
+    if (!detected || !ALLOWED_RECEIPT_TYPES.includes(detected)) {
+      await this.storage.deleteFile(dto.fileKey).catch(() => null);
+      throw new BadRequestException('household.errors.unsupported_file_type');
+    }
 
     return await this.prisma.expenseReceipt.create({
       data: {
         expenseId,
         fileKey: dto.fileKey,
-        fileUrl,
+        fileUrl: this.storage.getPublicUrl(dto.fileKey),
         fileName: dto.fileName,
-        fileSize: dto.fileSize,
-        mimeType: dto.mimeType,
+        // 신고값이 아니라 실측값을 남긴다
+        fileSize: meta.size,
+        mimeType: detected,
       },
     });
   }

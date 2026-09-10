@@ -12,7 +12,9 @@
     "own_receipt_only_delete": "只能删除自己支出的收据",
     "merchant_not_found": "商家不存在",
     "own_merchant_only": "只能修改或删除自己添加的商家",
-    "total_months_requires_start_date": "设置总重复月数时必须同时输入开始月份"
+    "total_months_requires_start_date": "设置总重复月数时必须同时输入开始月份",
+    "invalid_file_key": "文件键无效",
+    "upload_not_found": "找不到已上传的文件"
   },
   "success": {
     "expense_deleted": "支出记录已删除",

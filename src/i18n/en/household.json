@@ -12,7 +12,9 @@
     "own_receipt_only_delete": "You can only delete receipts from your own expenses",
     "merchant_not_found": "Merchant not found",
     "own_merchant_only": "You can only update or delete your own merchants",
-    "total_months_requires_start_date": "startDate is required when totalMonths is set"
+    "total_months_requires_start_date": "startDate is required when totalMonths is set",
+    "invalid_file_key": "Invalid file key",
+    "upload_not_found": "The uploaded file could not be found"
   },
   "success": {
     "expense_deleted": "Expense record deleted",
