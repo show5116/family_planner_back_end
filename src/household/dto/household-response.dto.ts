@@ -228,8 +228,9 @@ export class ExpenseReceiptDto {
   expenseId: string;
 
   @ApiProperty({
-    description: '파일 URL',
-    example: 'https://cdn.example.com/receipts/xxx.jpg',
+    description:
+      '조회용 파일 URL (단기 만료 presigned GET — 조회 시점에 새로 발급된다. 저장해두고 재사용하지 말 것)',
+    example: 'https://…/receipts/expense-uuid/file-uuid.jpg?X-Amz-Signature=…',
   })
   fileUrl: string;
 

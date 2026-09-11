@@ -265,6 +265,11 @@ grep -c "COLLATE utf8mb4_unicode_ci" prisma/migrations/*_add_diary/migration.sql
 | `ad_free` | 300 MB | 2 GB | 50 MB | ✅ 최대 60초 |
 | `premium` | 2 GB | 20 GB | 200 MB | ✅ 최대 5분 |
 
+> ⚠️ **이 표는 재검토 중입니다.** 매달 월 한도를 꽉 채우면 누적 한도가 1년 안에 차서,
+> 월 한도가 남았는데 못 올리는 상태가 됩니다(`ad_free` 6.8개월 / `premium` 10개월).
+> 「누적 ≥ 월 × 13」 원칙과 상향안은
+> [maintenance/subscription-open-issues.md](../maintenance/subscription-open-issues.md) A-1 참고.
+
 수치는 R2 실단가와 초기 사용 통계를 보고 출시 전 조정할 초안입니다. **앱에 하드코딩하지 않고 서버가 내려줍니다** — [src/config/diary-media.config.ts](../../src/config/diary-media.config.ts)에 기본값을 두고 `DIARY_MEDIA_FREE_MONTHLY_MB` 같은 환경변수로 덮어씁니다(MB·초 단위). 조정에 앱 재배포가 필요 없습니다.
 
 #### 한도 집계 규칙
@@ -538,7 +543,7 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
 
 ### 미디어 URL — presigned GET
 
-일기는 사적인 내용이라 R2 버킷을 public으로 열지 않고 **만료 1시간의 presigned GET**으로 내립니다. 서명은 네트워크 호출 없는 로컬 계산이라 목록에서 썸네일 수십 건을 서명해도 부담이 없습니다. 조회 응답의 `media[].url`·`thumbnailUrl`이 여기 해당합니다.
+일기는 사적인 내용이라 **공개 URL이 없는 별도 버킷**(`R2_PRIVATE_BUCKET_NAME`)에 두고 **만료 1시간의 presigned GET**으로 내립니다. 공개 버킷에 두면 presigned URL에서 쿼리스트링만 떼도 영구 접근이 되어 만료가 무의미해집니다([storage-buckets.md](../maintenance/storage-buckets.md)). 서명은 네트워크 호출 없는 로컬 계산이라 목록에서 썸네일 수십 건을 서명해도 부담이 없습니다. 조회 응답의 `media[].url`·`thumbnailUrl`이 여기 해당합니다.
 
 ```json
 "media": [

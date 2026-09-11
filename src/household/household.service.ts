@@ -60,6 +60,8 @@ const RECEIPT_EXTENSIONS: Record<string, string> = {
   'application/pdf': 'pdf',
 };
 const MAX_RECEIPT_SIZE = 10 * 1024 * 1024; // 10MB
+/** 영수증 조회 URL 유효 시간 (초) */
+const RECEIPT_URL_TTL_SECONDS = 3600;
 
 @Injectable()
 export class HouseholdService {
@@ -122,7 +124,7 @@ export class HouseholdService {
       ).catch(() => null);
     }
 
-    return expense;
+    return this.withReceiptUrls(expense);
   }
 
   /**
@@ -165,7 +167,7 @@ export class HouseholdService {
       where.incomeCategory = query.incomeCategory;
     }
 
-    return await this.prisma.expense.findMany({
+    const expenses = await this.prisma.expense.findMany({
       where,
       include: {
         receipts: true,
@@ -175,6 +177,10 @@ export class HouseholdService {
       },
       orderBy: { date: 'desc' },
     });
+
+    return Promise.all(
+      expenses.map((expense) => this.withReceiptUrls(expense)),
+    );
   }
 
   /**
@@ -201,7 +207,7 @@ export class HouseholdService {
       throw new ForbiddenException('household.errors.own_expense_only_view');
     }
 
-    return expense;
+    return this.withReceiptUrls(expense);
   }
 
   /**
@@ -230,7 +236,7 @@ export class HouseholdService {
       expense.recurringExpenseId !== null &&
       !expense.isConfirmed;
 
-    return await this.prisma.expense.update({
+    const updated = await this.prisma.expense.update({
       where: { id },
       data: {
         ...(dto.type !== undefined && { type: dto.type }),
@@ -262,6 +268,8 @@ export class HouseholdService {
         member: { select: { id: true, name: true } },
       },
     });
+
+    return this.withReceiptUrls(updated);
   }
 
   /**
@@ -284,7 +292,9 @@ export class HouseholdService {
     }
 
     for (const receipt of expense.receipts) {
-      await this.storage.deleteFile(receipt.fileKey).catch(() => null);
+      await this.storage
+        .deleteFile(receipt.fileKey, this.storage.privateBucket)
+        .catch(() => null);
     }
 
     await this.prisma.expense.delete({ where: { id } });
@@ -570,9 +580,41 @@ export class HouseholdService {
     const { randomUUID } = await import('crypto');
     const fileKey = `receipts/${expenseId}/${randomUUID()}.${ext}`;
 
-    const uploadUrl = await this.storage.getUploadUrl(fileKey, mimeType);
+    // 영수증은 사적인 문서라 공개 URL이 열린 버킷에 두지 않는다
+    const uploadUrl = await this.storage.getUploadUrl(
+      fileKey,
+      mimeType,
+      undefined,
+      this.storage.privateBucket,
+    );
 
     return { uploadUrl, fileKey };
+  }
+
+  /**
+   * 영수증에 조회용 presigned URL을 붙인다
+   *
+   * 비공개 버킷에는 고정 URL이 없어 조회 시점에 서명해 내보낸다.
+   * 서명은 네트워크 호출 없는 로컬 계산이라 목록에서 다건이어도 부담이 없다.
+   */
+  private async withReceiptUrls<
+    T extends { receipts?: { fileKey: string; mimeType: string }[] },
+  >(expense: T): Promise<T> {
+    if (!expense?.receipts?.length) return expense;
+
+    const receipts = await Promise.all(
+      expense.receipts.map(async (receipt) => ({
+        ...receipt,
+        fileUrl: await this.storage.getViewUrl(
+          receipt.fileKey,
+          RECEIPT_URL_TTL_SECONDS,
+          receipt.mimeType,
+          this.storage.privateBucket,
+        ),
+      })),
+    );
+
+    return { ...expense, receipts };
   }
 
   /**
@@ -604,24 +646,32 @@ export class HouseholdService {
 
     // presigned 업로드는 서버가 바이트를 보지 못하므로 신고값(fileSize·mimeType)은
     // 아무것도 보증하지 못한다. 크기는 HeadObject 실측으로, 형식은 매직바이트로 확인한다.
-    const meta = await this.storage.getFileMetadata(dto.fileKey);
+    const meta = await this.storage.getFileMetadata(
+      dto.fileKey,
+      this.storage.privateBucket,
+    );
     if (!meta || meta.size <= 0) {
       throw new BadRequestException('household.errors.upload_not_found');
     }
 
     if (meta.size > MAX_RECEIPT_SIZE) {
-      await this.storage.deleteFile(dto.fileKey).catch(() => null);
+      await this.storage
+        .deleteFile(dto.fileKey, this.storage.privateBucket)
+        .catch(() => null);
       throw new BadRequestException('common.errors.file_too_large');
     }
 
     const head = await this.storage.getFileHead(
       dto.fileKey,
       MAGIC_BYTES_LENGTH,
+      this.storage.privateBucket,
     );
     const detected = head ? detectMimeType(head) : null;
 
     if (!detected || !ALLOWED_RECEIPT_TYPES.includes(detected)) {
-      await this.storage.deleteFile(dto.fileKey).catch(() => null);
+      await this.storage
+        .deleteFile(dto.fileKey, this.storage.privateBucket)
+        .catch(() => null);
       throw new BadRequestException('household.errors.unsupported_file_type');
     }
 
@@ -629,7 +679,9 @@ export class HouseholdService {
       data: {
         expenseId,
         fileKey: dto.fileKey,
-        fileUrl: this.storage.getPublicUrl(dto.fileKey),
+        // 비공개 버킷이라 고정 URL이 없다. 조회 시점에 presigned로 만들어 내보내므로
+        // 이 칼럼은 더 이상 쓰지 않는다 (기능 재개발 때 제거 대상)
+        fileUrl: '',
         fileName: dto.fileName,
         // 신고값이 아니라 실측값을 남긴다
         fileSize: meta.size,
@@ -657,7 +709,9 @@ export class HouseholdService {
       throw new ForbiddenException('household.errors.own_receipt_only_delete');
     }
 
-    await this.storage.deleteFile(receipt.fileKey).catch(() => null);
+    await this.storage
+      .deleteFile(receipt.fileKey, this.storage.privateBucket)
+      .catch(() => null);
     await this.prisma.expenseReceipt.delete({ where: { id: receiptId } });
 
     return {

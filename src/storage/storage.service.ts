@@ -21,6 +21,7 @@ export class StorageService {
   private readonly logger = new Logger(StorageService.name);
   private readonly s3Client: S3Client;
   private readonly bucketName: string;
+  private readonly privateBucketName: string;
   private readonly publicUrl?: string;
 
   constructor(
@@ -32,6 +33,9 @@ export class StorageService {
     const secretAccessKey =
       this.configService.get<string>('r2.secretAccessKey');
     this.bucketName = this.configService.get<string>('r2.bucketName');
+    this.privateBucketName = this.configService.get<string>(
+      'r2.privateBucketName',
+    );
     this.publicUrl = this.configService.get<string>('r2.publicUrl');
 
     // Cloudflare R2는 S3 호환 API 사용
@@ -45,6 +49,17 @@ export class StorageService {
     });
 
     this.logger.log('StorageService initialized with Cloudflare R2');
+  }
+
+  /**
+   * 공개되면 안 되는 파일용 버킷 (공개 개발 URL이 꺼진 버킷)
+   *
+   * 기본 버킷은 r2.dev 공개 URL이 열려 있어 키만 알면 누구나 읽을 수 있다.
+   * presigned URL에서 쿼리스트링만 떼면 영구 접근 링크가 되므로, 사적인 파일은
+   * 이 버킷에 두고 presigned로만 내보낸다.
+   */
+  get privateBucket(): string {
+    return this.privateBucketName;
   }
 
   /**
@@ -276,11 +291,11 @@ export class StorageService {
    * 파일 삭제
    * @param key - 삭제할 파일 키
    */
-  async deleteFile(key: string): Promise<void> {
+  async deleteFile(key: string, bucket?: string): Promise<void> {
     try {
       await this.s3Client.send(
         new DeleteObjectCommand({
-          Bucket: this.bucketName,
+          Bucket: bucket ?? this.bucketName,
           Key: key,
         }),
       );
@@ -297,11 +312,11 @@ export class StorageService {
    * @param key - 확인할 파일 키
    * @returns 파일 존재 여부
    */
-  async fileExists(key: string): Promise<boolean> {
+  async fileExists(key: string, bucket?: string): Promise<boolean> {
     try {
       await this.s3Client.send(
         new HeadObjectCommand({
-          Bucket: this.bucketName,
+          Bucket: bucket ?? this.bucketName,
           Key: key,
         }),
       );
@@ -327,11 +342,12 @@ export class StorageService {
     key: string,
     expiresIn: number = 3600,
     contentType?: string,
+    bucket?: string,
   ): Promise<string> {
     return await getSignedUrl(
       this.s3Client,
       new GetObjectCommand({
-        Bucket: this.bucketName,
+        Bucket: bucket ?? this.bucketName,
         Key: key,
         ...(contentType ? { ResponseContentType: contentType } : {}),
       }),
@@ -349,11 +365,15 @@ export class StorageService {
    * @param length - 읽을 바이트 수
    * @returns 선두 바이트 (파일이 없거나 비어 있으면 null)
    */
-  async getFileHead(key: string, length: number): Promise<Buffer | null> {
+  async getFileHead(
+    key: string,
+    length: number,
+    bucket?: string,
+  ): Promise<Buffer | null> {
     try {
       const result = await this.s3Client.send(
         new GetObjectCommand({
-          Bucket: this.bucketName,
+          Bucket: bucket ?? this.bucketName,
           Key: key,
           Range: `bytes=0-${length - 1}`,
         }),
@@ -381,11 +401,12 @@ export class StorageService {
    */
   async getFileMetadata(
     key: string,
+    bucket?: string,
   ): Promise<{ size: number; contentType?: string } | null> {
     try {
       const result = await this.s3Client.send(
         new HeadObjectCommand({
-          Bucket: this.bucketName,
+          Bucket: bucket ?? this.bucketName,
           Key: key,
         }),
       );
@@ -415,9 +436,10 @@ export class StorageService {
     key: string,
     contentType: string,
     expiresIn: number = 600,
+    bucket?: string,
   ): Promise<string> {
     const command = new PutObjectCommand({
-      Bucket: this.bucketName,
+      Bucket: bucket ?? this.bucketName,
       Key: key,
       ContentType: contentType,
     });

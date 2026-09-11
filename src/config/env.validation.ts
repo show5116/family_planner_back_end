@@ -109,6 +109,8 @@ export const validationSchema = Joi.object({
   APPLE_IAP_ENVIRONMENT: Joi.string().valid('Sandbox', 'Production').optional(),
 
   // 다이어리 미디어 용량 한도 (선택적 — 없으면 diary-media.config.ts 기본값)
+  R2_PRIVATE_BUCKET_NAME: Joi.string().optional(),
+
   DIARY_MEDIA_FREE_MONTHLY_MB: Joi.number().positive().optional(),
   DIARY_MEDIA_FREE_TOTAL_MB: Joi.number().positive().optional(),
   DIARY_MEDIA_FREE_PER_FILE_MB: Joi.number().positive().optional(),

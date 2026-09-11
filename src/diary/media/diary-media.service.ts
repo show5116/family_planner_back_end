@@ -181,8 +181,18 @@ export class DiaryMediaService {
     // 목록에서 원본을 그대로 받으면 사진이 많은 달에 트래픽이 커진다.
     const thumbnailKey = thumbnailKeyOf(storageKey);
     const [uploadUrl, thumbnailUploadUrl] = await Promise.all([
-      this.storage.getUploadUrl(storageKey, dto.mimeType, expiresIn),
-      this.storage.getUploadUrl(thumbnailKey, THUMBNAIL_MIME_TYPE, expiresIn),
+      this.storage.getUploadUrl(
+        storageKey,
+        dto.mimeType,
+        expiresIn,
+        this.storage.privateBucket,
+      ),
+      this.storage.getUploadUrl(
+        thumbnailKey,
+        THUMBNAIL_MIME_TYPE,
+        expiresIn,
+        this.storage.privateBucket,
+      ),
     ]);
 
     return {
@@ -220,7 +230,10 @@ export class DiaryMediaService {
       };
     }
 
-    const meta = await this.storage.getFileMetadata(media.storageKey);
+    const meta = await this.storage.getFileMetadata(
+      media.storageKey,
+      this.storage.privateBucket,
+    );
     if (!meta || meta.size <= 0) {
       throw new BadRequestException('diary.errors.upload_not_found');
     }
@@ -582,7 +595,11 @@ export class DiaryMediaService {
     storageKey: string,
   ): Promise<string | null> {
     const key = thumbnailKeyOf(storageKey);
-    const head = await this.storage.getFileHead(key, MAGIC_BYTES_LENGTH);
+    const head = await this.storage.getFileHead(
+      key,
+      MAGIC_BYTES_LENGTH,
+      this.storage.privateBucket,
+    );
 
     if (!head) return null;
 
@@ -604,7 +621,11 @@ export class DiaryMediaService {
     storageKey: string,
     type: MediaType,
   ): Promise<string | null> {
-    const head = await this.storage.getFileHead(storageKey, MAGIC_BYTES_LENGTH);
+    const head = await this.storage.getFileHead(
+      storageKey,
+      MAGIC_BYTES_LENGTH,
+      this.storage.privateBucket,
+    );
     if (!head) return null;
 
     const detected = detectMimeType(head);
@@ -623,7 +644,7 @@ export class DiaryMediaService {
     if (!key) return;
 
     try {
-      await this.storage.deleteFile(key);
+      await this.storage.deleteFile(key, this.storage.privateBucket);
     } catch (error) {
       this.logger.error(`R2 파일 삭제 실패 (key=${key}): ${error.message}`);
     }
@@ -654,7 +675,12 @@ export class DiaryMediaService {
 
     const expiresIn = this.config.get<number>('diaryMedia.viewUrlExpiresIn');
     // 저장된 헤더는 업로더가 정한 값이라, 서버가 확인한 형식으로 덮어써서 내려보낸다
-    return this.storage.getViewUrl(key, expiresIn, contentType);
+    return this.storage.getViewUrl(
+      key,
+      expiresIn,
+      contentType,
+      this.storage.privateBucket,
+    );
   }
 
   private buildStorageKey(userId: string, fileName: string): string {

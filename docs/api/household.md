@@ -297,7 +297,7 @@
 {
   "id": "uuid-1234", // 영수증 ID (string)
   "expenseId": "uuid-1234", // 지출 ID (string)
-  "fileUrl": "https://cdn.example.com/receipts/xxx.jpg", // 파일 URL (string)
+  "fileUrl": "https://…/receipts/expense-uuid/file-uuid.jpg?X-Amz-Signature=…", // 조회용 파일 URL (단기 만료 presigned GET — 조회 시점에 새로 발급된다. 저장해두고 재사용하지 말 것) (string)
   "fileName": "receipt.jpg", // 파일명 (string)
   "fileSize": 102400, // 파일 크기 (bytes) (number)
   "mimeType": "image/jpeg", // MIME 타입 (string)
