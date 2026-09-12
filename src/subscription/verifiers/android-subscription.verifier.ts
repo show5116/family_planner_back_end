@@ -8,9 +8,13 @@ import {
   PurchaseVerificationUnavailableException,
 } from './verification-error';
 import {
+  CancellationContext,
   SubscriptionVerifier,
   VerifiedPurchase,
 } from './subscription-verifier.interface';
+
+/** 취소 설문 자유 입력은 사용자가 쓰는 값이라 길이를 제한한다 */
+const SURVEY_INPUT_MAX_LENGTH = 500;
 
 /**
  * Google Play 구독 상태 → 내부 상태 매핑
@@ -182,6 +186,46 @@ export class AndroidSubscriptionVerifier implements SubscriptionVerifier {
       expiresAt: lineItem.expiryTime ? new Date(lineItem.expiryTime) : null,
       autoRenewing: !!lineItem.autoRenewingPlan?.autoRenewEnabled,
       status,
+      cancellation: this.toCancellation(data),
+    };
+  }
+
+  /**
+   * 해지 맥락 추출
+   *
+   * `canceledStateContext`는 CANCELED·EXPIRED 상태에서만 채워지고, 네 갈래 중 하나만 설정된다.
+   * 서비스 계정의 "구독 취소 설문 응답 보기" 권한이 있어야 설문이 함께 내려온다.
+   *
+   * 교체(업그레이드)를 먼저 걸러낸다 — 만에 하나 다른 갈래와 함께 오더라도
+   * 이탈로 세면 안 되는 건 확실하기 때문이다.
+   */
+  private toCancellation(
+    data: androidpublisher_v3.Schema$SubscriptionPurchaseV2,
+  ): CancellationContext | undefined {
+    const context = data.canceledStateContext;
+    if (!context) return undefined;
+
+    if (context.replacementCancellation) return { initiator: 'REPLACEMENT' };
+    if (context.developerInitiatedCancellation) {
+      return { initiator: 'DEVELOPER' };
+    }
+    if (context.systemInitiatedCancellation) return { initiator: 'SYSTEM' };
+
+    const userCancellation = context.userInitiatedCancellation;
+    if (!userCancellation) return undefined;
+
+    const survey = userCancellation.cancelSurveyResult;
+
+    return {
+      initiator: 'USER',
+      // 설문은 응답이 선택이라 비어 있는 경우가 많다
+      surveyReason: survey?.reason ?? undefined,
+      // 자유 입력이라 길이를 제한한다 (감사 로그 JSON이 무한정 커지지 않도록)
+      surveyUserInput:
+        survey?.reasonUserInput?.slice(0, SURVEY_INPUT_MAX_LENGTH) ?? undefined,
+      canceledAt: userCancellation.cancelTime
+        ? new Date(userCancellation.cancelTime)
+        : undefined,
     };
   }
 }

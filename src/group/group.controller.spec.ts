@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GroupController } from './group.controller';
 import { GroupService } from './group.service';
+import { GroupMemberService } from './group-member.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { GroupMembershipGuard, GroupPermissionGuard } from './guards';
@@ -18,6 +19,10 @@ describe('GroupController', () => {
     remove: jest.fn(),
   };
 
+  const mockGroupMemberService = {
+    reorderMyGroups: jest.fn(),
+  };
+
   const mockGuard = {
     canActivate: jest.fn(() => true),
   };
@@ -29,6 +34,10 @@ describe('GroupController', () => {
         {
           provide: GroupService,
           useValue: mockGroupService,
+        },
+        {
+          provide: GroupMemberService,
+          useValue: mockGroupMemberService,
         },
       ],
     })

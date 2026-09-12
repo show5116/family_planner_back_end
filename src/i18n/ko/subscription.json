@@ -7,5 +7,10 @@
     "already_used": "다른 계정에서 이미 사용된 구매 내역입니다",
     "unknown_product": "지원하지 않는 상품입니다",
     "purchase_pending": "결제가 아직 완료되지 않았습니다"
+  },
+  "notification": {
+    "expiring_title": "구독이 곧 만료돼요",
+    "expiring_body": "{days}일 뒤 무료 요금제로 전환돼요. 계속 이용하시려면 갱신해 주세요.",
+    "expiring_body_over_quota": "{days}일 뒤 무료 요금제로 전환되면, 저장 중인 {usedGb}GB 중 {overGb}GB가 한도를 넘게 돼요."
   }
 }

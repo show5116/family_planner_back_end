@@ -35,6 +35,7 @@ import aiConfig from '@/config/ai.config';
 import weatherConfig from '@/config/weather.config';
 import iapConfig from '@/config/iap.config';
 import diaryMediaConfig from '@/config/diary-media.config';
+import groupQuotaConfig from '@/config/group-quota.config';
 import { validationSchema } from '@/config/env.validation';
 import { SentryModule } from '@/sentry/sentry.module';
 import { StorageModule } from '@/storage/storage.module';
@@ -78,6 +79,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         weatherConfig,
         iapConfig,
         diaryMediaConfig,
+        groupQuotaConfig,
       ],
       envFilePath: '.env',
       validationSchema: validationSchema,

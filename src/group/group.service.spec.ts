@@ -5,6 +5,9 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { GroupInviteService } from './group-invite.service';
 import { StorageService } from '@/storage/storage.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
+import { GroupQuotaService } from './group-quota.service';
+import { GroupQuotaExceededException } from './group-quota-exceeded.exception';
 
 describe('GroupService', () => {
   let service: GroupService;
@@ -32,6 +35,17 @@ describe('GroupService', () => {
     generateUniqueInviteCode: jest.fn(),
   };
 
+  const mockGroupQuotaService = {
+    assertCanJoin: jest.fn(),
+    assertMemberCanJoin: jest.fn(),
+    getQuota: jest.fn(),
+  };
+
+  const mockI18nService = {
+    translate: jest.fn((key: string) => key),
+    t: jest.fn((key: string) => key),
+  };
+
   const mockStorageService = {
     getPublicUrl: jest.fn(),
   };
@@ -52,6 +66,14 @@ describe('GroupService', () => {
           provide: StorageService,
           useValue: mockStorageService,
         },
+        {
+          provide: GroupQuotaService,
+          useValue: mockGroupQuotaService,
+        },
+        {
+          provide: I18nService,
+          useValue: mockI18nService,
+        },
       ],
     }).compile();
 
@@ -69,6 +91,28 @@ describe('GroupService', () => {
   });
 
   describe('create', () => {
+    it('그룹 수 한도를 초과하면 그룹을 만들지 않아야 함', async () => {
+      // Once가 아니면 clearAllMocks가 구현을 남겨 다음 테스트까지 거부가 새어나간다
+      mockGroupQuotaService.assertCanJoin.mockRejectedValueOnce(
+        new GroupQuotaExceededException('group.errors.group_limit_exceeded', {
+          tier: 'free' as never,
+          used: 1,
+          limit: 1,
+          remaining: 0,
+        }),
+      );
+
+      await expect(
+        service.create('user-1', { name: 'Family' }),
+      ).rejects.toThrow(GroupQuotaExceededException);
+
+      // 한도를 넘었으면 초대 코드 발급도, 그룹 생성도 일어나면 안 된다
+      expect(
+        groupInviteService.generateUniqueInviteCode,
+      ).not.toHaveBeenCalled();
+      expect(prismaService.group.create).not.toHaveBeenCalled();
+    });
+
     it('그룹을 생성하고 생성자를 OWNER로 추가해야 함', async () => {
       const userId = 'user-1';
       const createGroupDto = {

@@ -33,6 +33,15 @@ const ENTITLED_STATUSES = new Set<SubscriptionStatus>([
 /** subscription_events.eventType 컬럼 길이 */
 const EVENT_TYPE_MAX_LENGTH = 50;
 
+/**
+ * 자동 갱신 해제(= 해지 버튼을 누른 순간)를 남기는 파생 이벤트
+ *
+ * 스토어는 이걸 별도 알림으로 주지 않는다. Google은 `SUBSCRIPTION_STATE_CANCELED`로,
+ * Apple은 `autoRenewStatus`로만 현재 상태를 알려주므로 "언제 꺼졌는지"는 직접 비교해야 한다.
+ * 이 시점이 만료 전에 되돌릴 수 있는 유일한 창이라 감사 로그에 따로 남긴다.
+ */
+export const AUTO_RENEW_OFF_EVENT = 'AUTO_RENEW_OFF';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** 구독 상태 응답에 필요한 User 필드 */
@@ -90,11 +99,15 @@ export class SubscriptionService {
   getMediaQuotaPlans(): MediaQuotaPlanListDto {
     const plans =
       this.config.get<Record<string, MediaQuotaPlan>>('diaryMedia.plans');
+    const maxGroups = this.config.get<Record<string, number>>(
+      'groupQuota.maxGroups',
+    );
 
     return {
       plans: Object.values(SubscriptionTier).map((tier) => ({
         tier,
         ...plans[tier],
+        maxGroups: maxGroups[tier],
       })),
     };
   }
@@ -206,7 +219,7 @@ export class SubscriptionService {
     await this.prisma.$transaction(async (tx) => {
       const existing = await tx.subscription.findUnique({
         where: { userId },
-        select: { lastVerifiedAt: true },
+        select: { lastVerifiedAt: true, autoRenewing: true },
       });
 
       if (existing?.lastVerifiedAt && existing.lastVerifiedAt > occurredAt) {
@@ -271,6 +284,45 @@ export class SubscriptionService {
           rawPayload: event.rawPayload as any,
         },
       });
+
+      // 자동 갱신이 켜져 있다가 꺼진 순간만 잡는다.
+      // - existing이 null이면 첫 구매다 (해제가 아니다)
+      // - 이미 꺼진 상태로 다시 들어온 검증·재검증은 값이 그대로라 걸리지 않는다
+      if (
+        existing !== null &&
+        existing.autoRenewing &&
+        !verified.autoRenewing
+      ) {
+        await tx.subscriptionEvent.create({
+          data: {
+            userId,
+            platform: verified.platform,
+            eventType: AUTO_RENEW_OFF_EVENT,
+            originalTransactionId: verified.originalTransactionId,
+            rawPayload: {
+              detectedFrom: event.eventType,
+              status: verified.status,
+              expiresAt: verified.expiresAt?.toISOString() ?? null,
+              // 왜 떠나는지 (Google만 제공. 설문은 응답이 선택이라 비어 있을 수 있다)
+              cancellation: verified.cancellation
+                ? {
+                    ...verified.cancellation,
+                    canceledAt:
+                      verified.cancellation.canceledAt?.toISOString() ?? null,
+                  }
+                : null,
+            } as any,
+          },
+        });
+
+        const cancellation = verified.cancellation;
+        this.logger.log(
+          `자동 갱신 해제 감지 (userId=${userId}, detectedFrom=${event.eventType}, ` +
+            `initiator=${cancellation?.initiator ?? 'UNKNOWN'}, ` +
+            `surveyReason=${cancellation?.surveyReason ?? 'none'}, ` +
+            `만료예정=${verified.expiresAt?.toISOString() ?? 'null'})`,
+        );
+      }
 
       await tx.user.update({
         where: { id: userId },

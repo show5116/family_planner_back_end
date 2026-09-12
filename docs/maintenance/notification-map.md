@@ -140,8 +140,13 @@
 | 2 | Q&A 답변 등록 | 답변이 등록되었습니다 | 질문 작성자 | 즉시 | [qna.service.ts](../../src/qna/qna.service.ts) |
 | 3 | 공지사항 등록 (즉시/조용한 시간대 이후) | 새 공지사항 | 전체 앱 사용자 | FCM Topic | [announcement.service.ts](../../src/announcement/announcement.service.ts) |
 | 4 | 테스트 (관리자 수동 발송) | 테스트 알림 | 요청한 관리자 본인 | 즉시 | [notification.service.ts](../../src/notification/notification.service.ts) |
+| 5 | 구독 만료 7일 전 (자동 갱신 해제자 한정) | 구독이 곧 만료돼요 | 해당 사용자 | 즉시 (매일 10시 KST 배치) | [subscription-expiry.scheduler.ts](../../src/subscription/subscription-expiry.scheduler.ts) |
 
 > **공지사항**: FCM Topic `announcements` 사용. DB에 저장되지 않음 (휘발성).
+>
+> **구독 만료 알림**: 대상은 `autoRenewing: false`인 사용자뿐이다 (갱신될 사람에게 "곧 만료됩니다"는
+> 거짓말이고 되돌릴 것도 없다). 저장 용량이 free 한도를 넘게 되는 경우 본문이 초과분을 알려주는
+> 문구로 바뀐다. 중복 발송은 `subscription_events`의 `EXPIRY_NOTICE` 기록으로 막는다.
 
 ---
 
@@ -173,6 +178,7 @@
 | **GROUP** | `groupId` | `{ "groupId": "uuid" }` |
 | **SYSTEM** (공지사항) | `announcementId` | `{ "announcementId": "uuid" }` |
 | **SYSTEM** (Q&A) | `questionId` | `{ "questionId": "uuid" }` |
+| **SYSTEM** (구독 만료 임박) | `action` | `{ "action": "view_subscription" }` |
 | **WEATHER** | `action` | `{ "action": "view_weather" }` |
 | **FRIDGE** | `action`, `groupId` | `{ "action": "view_fridge", "groupId": "uuid" }` |
 | **ROUTINE** (일일/주간 리마인더) | `action` | `{ "action": "view_routine" }` / `{ "action": "view_routine_summary" }` |

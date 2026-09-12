@@ -41,6 +41,7 @@ import {
   ApiConflict,
   ApiBadRequest,
   ApiForbidden,
+  ApiPaymentRequired,
 } from '@/common/decorators/api-responses.decorator';
 import {
   GroupPermissionGuard,
@@ -84,6 +85,9 @@ export class GroupMemberController {
   @ApiCreated(JoinGroupResponseDto, '그룹 가입 성공 또는 가입 요청 성공')
   @ApiNotFound('유효하지 않은 초대 코드 또는 만료된 초대 코드')
   @ApiConflict('이미 그룹 멤버이거나 가입 요청이 대기 중')
+  @ApiPaymentRequired(
+    '현재 요금제의 그룹 개수 한도를 초과했습니다 (한도 groupQuota 동봉)',
+  )
   joinByInviteCode(@Request() req, @Body() joinGroupDto: JoinGroupDto) {
     return this.groupInviteService.joinByInviteCode(
       req.user.userId,
@@ -226,6 +230,9 @@ export class GroupMemberController {
     description: 'PENDING 상태의 가입 요청을 승인하고 그룹 멤버로 추가',
   })
   @ApiSuccess(AcceptJoinRequestResponseDto, '가입 요청 승인 성공')
+  @ApiPaymentRequired(
+    '신청자가 자신의 요금제 그룹 개수 한도를 초과했습니다 (한도 groupQuota 동봉)',
+  )
   @ApiBadRequest('해당 이메일로 가입된 사용자가 없음')
   @ApiConflict('이미 처리된 요청 또는 이미 그룹 멤버임')
   @ApiForbidden('권한 없음')

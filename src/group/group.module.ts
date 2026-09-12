@@ -13,6 +13,8 @@ import { StorageModule } from '@/storage/storage.module';
 import { NotificationModule } from '@/notification/notification.module';
 import { WebhookModule } from '@/webhook/webhook.module';
 import { RedisModule } from '@/redis/redis.module';
+import { SubscriptionModule } from '@/subscription/subscription.module';
+import { GroupQuotaService } from '@/group/group-quota.service';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { RedisModule } from '@/redis/redis.module';
     NotificationModule,
     WebhookModule,
     RedisModule,
+    SubscriptionModule,
   ],
   controllers: [
     GroupMemberController,
@@ -33,8 +36,14 @@ import { RedisModule } from '@/redis/redis.module';
     GroupMemberService,
     GroupInviteService,
     GroupReportService,
+    GroupQuotaService,
     RoleService,
   ],
-  exports: [GroupService, GroupMemberService, GroupInviteService],
+  exports: [
+    GroupService,
+    GroupMemberService,
+    GroupInviteService,
+    GroupQuotaService,
+  ],
 })
 export class GroupModule {}

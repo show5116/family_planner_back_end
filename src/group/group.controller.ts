@@ -28,6 +28,7 @@ import {
   ApiNotFound,
   ApiForbidden,
   ApiBadRequest,
+  ApiPaymentRequired,
 } from '@/common/decorators/api-responses.decorator';
 import {
   GroupPermissionGuard,
@@ -48,6 +49,9 @@ export class GroupController {
   @Post()
   @ApiOperation({ summary: '그룹 생성' })
   @ApiCreated(GroupDto, '그룹 생성 성공')
+  @ApiPaymentRequired(
+    '현재 요금제의 그룹 개수 한도를 초과했습니다 (한도 groupQuota 동봉)',
+  )
   create(@Request() req, @Body() createGroupDto: CreateGroupDto) {
     return this.groupService.create(req.user.userId, createGroupDto);
   }

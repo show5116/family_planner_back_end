@@ -262,15 +262,17 @@ grep -c "COLLATE utf8mb4_unicode_ci" prisma/migrations/*_add_diary/migration.sql
 | Tier | 월간 업로드 | 계정 누적 | 파일 1개 최대 | 영상 |
 | --- | --- | --- | --- | --- |
 | `free` | 100 MB | 500 MB | 20 MB | ❌ (이미지만) |
-| `ad_free` | 300 MB | 2 GB | 50 MB | ✅ 최대 60초 |
-| `premium` | 2 GB | 20 GB | 200 MB | ✅ 최대 5분 |
+| `ad_free` | 300 MB | 4 GB | 50 MB | ✅ 최대 60초 |
+| `premium` | 3 GB | 40 GB | 200 MB | ✅ 최대 5분 |
 
-> ⚠️ **이 표는 재검토 중입니다.** 매달 월 한도를 꽉 채우면 누적 한도가 1년 안에 차서,
-> 월 한도가 남았는데 못 올리는 상태가 됩니다(`ad_free` 6.8개월 / `premium` 10개월).
-> 「누적 ≥ 월 × 13」 원칙과 상향안은
-> [maintenance/subscription-open-issues.md](../maintenance/subscription-open-issues.md) A-1 참고.
+> **★ 유료 티어는 「누적 ≥ 월 × 13」을 지킵니다.** 매달 월 한도를 꽉 채워도 13개월간
+> 누적에 막히지 않는다는 뜻입니다. 12가 아니라 13인 이유는 **연간 구독자가 갱신 전에
+> 막히지 않게** 하기 위함입니다. 비율이 깨지면 "월 한도는 남았는데 못 올린다"가 되고,
+> 그 시점이 하필 갱신 직전이라 그대로 해지 트리거가 됩니다.
+> `free`의 5개월(100MB × 5)은 전환 유도 목적의 의도적 예외입니다.
+> 경위는 [maintenance/subscription-open-issues.md](../maintenance/subscription-open-issues.md) A-1 참고.
 
-수치는 R2 실단가와 초기 사용 통계를 보고 출시 전 조정할 초안입니다. **앱에 하드코딩하지 않고 서버가 내려줍니다** — [src/config/diary-media.config.ts](../../src/config/diary-media.config.ts)에 기본값을 두고 `DIARY_MEDIA_FREE_MONTHLY_MB` 같은 환경변수로 덮어씁니다(MB·초 단위). 조정에 앱 재배포가 필요 없습니다.
+수치는 R2 실단가와 초기 사용 통계를 보고 조정합니다(2026-09-12 1차 조정). **앱에 하드코딩하지 않고 서버가 내려줍니다** — [src/config/diary-media.config.ts](../../src/config/diary-media.config.ts)에 기본값을 두고 `DIARY_MEDIA_FREE_MONTHLY_MB` 같은 환경변수로 덮어씁니다(MB·초 단위). 조정에 앱 재배포가 필요 없습니다.
 
 #### 한도 집계 규칙
 
@@ -472,11 +474,11 @@ Base: `/diaries` · 전 엔드포인트 인증 필요(`@ApiCommonAuthResponses()
   "tier": "premium",
   "monthly": {
     "usedBytes": 524288000,
-    "limitBytes": 2147483648,
-    "remainingBytes": 1623195648,
+    "limitBytes": 3221225472,
+    "remainingBytes": 2696937472,
     "resetsAt": "2026-10-01T04:00:00+09:00"
   },
-  "total": { "usedBytes": 3221225472, "limitBytes": 21474836480, "remainingBytes": 18253611008 },
+  "total": { "usedBytes": 3221225472, "limitBytes": 42949672960, "remainingBytes": 39728447488 },
   "perFileLimitBytes": 209715200,
   "videoAllowed": true,
   "maxVideoDurationMs": 300000

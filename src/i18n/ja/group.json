@@ -26,7 +26,9 @@
     "owner_cannot_leave": "OWNERはグループを退出できません。他のメンバーにOWNER権限を譲渡するか、グループを削除してください",
     "owner_role_cannot_change": "OWNERロールは変更できません。グループ管理権限の譲渡機能をご利用ください",
     "owner_role_cannot_assign": "OWNERロールは割り当てられません。グループ管理権限の譲渡機能をご利用ください",
-    "invite_auto_approved": "INVITEタイプは招待コードからユーザーが参加した際に自動承認されます"
+    "invite_auto_approved": "INVITEタイプは招待コードからユーザーが参加した際に自動承認されます",
+    "group_limit_exceeded": "現在のプランで利用できるグループ数の上限に達しました",
+    "member_group_limit_exceeded": "相手の方が現在のプランのグループ数の上限に達しています"
   },
   "notification": {
     "new_member_title": "新しいメンバーが参加しました",

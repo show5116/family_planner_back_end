@@ -9,6 +9,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
+import { GroupQuotaService } from '@/group/group-quota.service';
 
 @Injectable()
 export class GroupInviteService {
@@ -16,6 +17,7 @@ export class GroupInviteService {
     private prisma: PrismaService,
     private storageService: StorageService,
     private notificationService: NotificationService,
+    private groupQuotaService: GroupQuotaService,
     private i18n: I18nService,
   ) {}
 
@@ -182,6 +184,9 @@ export class GroupInviteService {
 
     // 이메일로 초대받은 경우 즉시 승인 및 멤버 추가
     if (inviteRequest) {
+      // 이 분기는 승인 없이 바로 멤버가 되므로 여기서 한도를 봐야 한다
+      await this.groupQuotaService.assertCanJoin(userId);
+
       const defaultRole = await this.getDefaultRole(group.id);
 
       // 트랜잭션: 요청 승인 + 멤버 추가
@@ -261,6 +266,10 @@ export class GroupInviteService {
     if (existingRequest) {
       throw new ConflictException('group.errors.pending_join_request');
     }
+
+    // 한도는 여기서 막는다. 승인 시점(acceptJoinRequest)에 막으면 402를 받는 쪽이
+    // 그룹 관리자인데 정작 그가 해결할 수 없는 문제가 된다.
+    await this.groupQuotaService.assertCanJoin(userId);
 
     // GroupJoinRequest 생성 (REQUEST 타입, PENDING 상태)
     const joinRequest = await this.prisma.groupJoinRequest.create({
@@ -426,6 +435,10 @@ export class GroupInviteService {
     if (existingMember) {
       throw new ConflictException('group.errors.already_member_short');
     }
+
+    // 신청 시점에 이미 막았으므로 여기까지 오는 건 "신청 후 다른 그룹에 들어간" 경우다.
+    // 호출자(관리자)와 한도 주인(신청자)이 다르므로 메시지를 구분한다.
+    await this.groupQuotaService.assertMemberCanJoin(user.id);
 
     // 기본 역할 조회
     const defaultRole = await this.getDefaultRole(groupId);

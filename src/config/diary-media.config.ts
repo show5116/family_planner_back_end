@@ -5,6 +5,13 @@ import { registerAs } from '@nestjs/config';
  *
  * 앱에 하드코딩하지 않고 서버가 내려준다 — 한도 조정에 앱 재배포가 필요하면 안 된다.
  * 기본값은 아래 상수이고, 환경변수로 덮어쓸 수 있다(서버 재시작만으로 반영).
+ *
+ * ★ 유료 티어는 「누적 ≥ 월 × 13」을 지킨다.
+ *   매달 월 한도를 꽉 채워도 13개월간 누적 한도에 막히지 않아야 한다는 뜻이다.
+ *   12가 아니라 13인 이유는 연간 구독자가 갱신 전에 막히지 않게 하기 위함이다.
+ *   비율이 깨지면 "월 한도는 남았는데 못 올린다"가 되고, 그 시점이 하필 갱신 직전이라
+ *   그대로 해지 트리거가 된다. 숫자를 조정할 때 이 비율을 함께 확인할 것.
+ *   free는 전환 유도가 목적이라 의도적으로 5개월(100MB × 5 = 500MB)만 준다.
  */
 
 const MB = 1024 * 1024;
@@ -33,14 +40,14 @@ const DEFAULTS = {
   },
   ad_free: {
     monthlyBytes: 300 * MB,
-    totalBytes: 2 * GB,
+    totalBytes: 4 * GB, // 300MB × 13 = 3.9GB
     perFileBytes: 50 * MB,
     videoAllowed: true,
     maxVideoDurationMs: 60 * 1000,
   },
   premium: {
-    monthlyBytes: 2 * GB,
-    totalBytes: 20 * GB,
+    monthlyBytes: 3 * GB,
+    totalBytes: 40 * GB, // 3GB × 13 = 39GB
     perFileBytes: 200 * MB,
     videoAllowed: true,
     maxVideoDurationMs: 5 * 60 * 1000,

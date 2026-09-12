@@ -3,6 +3,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GroupInviteService } from './group-invite.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
+import { I18nService } from 'nestjs-i18n';
+import { NotificationService } from '@/notification/notification.service';
+import { GroupQuotaService } from './group-quota.service';
 import {
   NotFoundException,
   ConflictException,
@@ -40,6 +43,21 @@ describe('GroupInviteService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockNotificationService = {
+    sendNotification: jest.fn(),
+  };
+
+  const mockGroupQuotaService = {
+    assertCanJoin: jest.fn(),
+    assertMemberCanJoin: jest.fn(),
+    getQuota: jest.fn(),
+  };
+
+  const mockI18nService = {
+    translate: jest.fn((key: string) => key),
+    t: jest.fn((key: string) => key),
+  };
+
   const mockStorageService = {
     getPublicUrl: jest.fn(),
   };
@@ -55,6 +73,18 @@ describe('GroupInviteService', () => {
         {
           provide: StorageService,
           useValue: mockStorageService,
+        },
+        {
+          provide: NotificationService,
+          useValue: mockNotificationService,
+        },
+        {
+          provide: GroupQuotaService,
+          useValue: mockGroupQuotaService,
+        },
+        {
+          provide: I18nService,
+          useValue: mockI18nService,
         },
       ],
     }).compile();

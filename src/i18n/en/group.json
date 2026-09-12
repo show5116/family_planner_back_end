@@ -26,7 +26,9 @@
     "owner_cannot_leave": "OWNER cannot leave the group. Please transfer OWNER privileges to another member or delete the group",
     "owner_role_cannot_change": "OWNER role cannot be changed. Please use the ownership transfer feature",
     "owner_role_cannot_assign": "OWNER role cannot be assigned. Please use the ownership transfer feature",
-    "invite_auto_approved": "INVITE type requests are automatically approved when the user joins via invite code"
+    "invite_auto_approved": "INVITE type requests are automatically approved when the user joins via invite code",
+    "group_limit_exceeded": "You've reached the group limit for your current plan",
+    "member_group_limit_exceeded": "That user has reached the group limit for their plan"
   },
   "notification": {
     "new_member_title": "New member joined",

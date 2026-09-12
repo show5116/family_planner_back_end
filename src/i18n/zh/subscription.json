@@ -7,5 +7,10 @@
     "already_used": "该购买记录已被其他账号使用",
     "unknown_product": "不支持的商品",
     "purchase_pending": "支付尚未完成"
+  },
+  "notification": {
+    "expiring_title": "订阅即将到期",
+    "expiring_body": "{days}天后将切换为免费套餐。如需继续使用请续订。",
+    "expiring_body_over_quota": "{days}天后切换为免费套餐后，已保存的{usedGb}GB中将有{overGb}GB超出限额。"
   }
 }

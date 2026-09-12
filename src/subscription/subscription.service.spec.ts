@@ -10,7 +10,10 @@ import {
   SubscriptionStatus,
   SubscriptionTier,
 } from '@prisma/client';
-import { SubscriptionService } from './subscription.service';
+import {
+  AUTO_RENEW_OFF_EVENT,
+  SubscriptionService,
+} from './subscription.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
   ANDROID_SUBSCRIPTION_VERIFIER,
@@ -252,6 +255,162 @@ describe('SubscriptionService', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('자동 갱신 해제 감지', () => {
+    const userId = 'user-1';
+    const verified: VerifiedPurchase = {
+      platform: SubscriptionPlatform.IOS,
+      productId: 'premium_monthly',
+      originalTransactionId: 'orig-tx-1',
+      tier: SubscriptionTier.premium,
+      expiresAt: new Date('2026-08-01T00:00:00.000Z'),
+      autoRenewing: true,
+      status: SubscriptionStatus.active,
+    };
+
+    /** subscriptionEvent.create 호출 중 AUTO_RENEW_OFF 건만 추린다 */
+    const autoRenewOffCalls = () =>
+      mockTx.subscriptionEvent.create.mock.calls.filter(
+        ([arg]) => arg.data.eventType === AUTO_RENEW_OFF_EVENT,
+      );
+
+    it('켜져 있다가 꺼지면 AUTO_RENEW_OFF 이벤트를 남겨야 함', async () => {
+      mockTx.subscription.findUnique.mockResolvedValue({
+        lastVerifiedAt: null,
+        autoRenewing: true,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        {
+          ...verified,
+          autoRenewing: false,
+          status: SubscriptionStatus.canceled,
+        },
+        { eventType: 'DID_CHANGE_RENEWAL_STATUS', rawPayload: {} },
+      );
+
+      expect(autoRenewOffCalls()).toHaveLength(1);
+      expect(autoRenewOffCalls()[0][0].data).toMatchObject({
+        userId,
+        eventType: AUTO_RENEW_OFF_EVENT,
+        rawPayload: { detectedFrom: 'DID_CHANGE_RENEWAL_STATUS' },
+      });
+    });
+
+    it('해제되어도 혜택은 만료일까지 유지되어야 함 (canceled는 entitled)', async () => {
+      mockTx.subscription.findUnique.mockResolvedValue({
+        lastVerifiedAt: null,
+        autoRenewing: true,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        {
+          ...verified,
+          autoRenewing: false,
+          status: SubscriptionStatus.canceled,
+        },
+        { eventType: 'DID_CHANGE_RENEWAL_STATUS', rawPayload: {} },
+      );
+
+      expect(mockTx.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subscriptionTier: SubscriptionTier.premium,
+          }),
+        }),
+      );
+    });
+
+    it('첫 구매(기존 구독 없음)는 해제가 아니어야 함', async () => {
+      mockTx.subscription.findUnique.mockResolvedValue(null);
+
+      await service.applyVerifiedPurchase(
+        userId,
+        { ...verified, autoRenewing: false },
+        { eventType: 'SUBSCRIBED', rawPayload: {} },
+      );
+
+      expect(autoRenewOffCalls()).toHaveLength(0);
+    });
+
+    it('이미 꺼진 상태로 재검증되면 다시 남기지 않아야 함', async () => {
+      mockTx.subscription.findUnique.mockResolvedValue({
+        lastVerifiedAt: null,
+        autoRenewing: false,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        { ...verified, autoRenewing: false },
+        { eventType: 'RECONCILE', rawPayload: {} },
+      );
+
+      expect(autoRenewOffCalls()).toHaveLength(0);
+    });
+
+    it('해지 사유(설문·주체)를 이벤트에 함께 남겨야 함', async () => {
+      mockTx.subscription.findUnique.mockResolvedValue({
+        lastVerifiedAt: null,
+        autoRenewing: true,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        {
+          ...verified,
+          autoRenewing: false,
+          status: SubscriptionStatus.canceled,
+          cancellation: {
+            initiator: 'USER',
+            surveyReason: 'CANCEL_SURVEY_REASON_COST_RELATED',
+            canceledAt: new Date('2026-09-10T12:00:00.000Z'),
+          },
+        },
+        { eventType: 'SUBSCRIPTION_CANCELED', rawPayload: {} },
+      );
+
+      expect(autoRenewOffCalls()[0][0].data.rawPayload).toMatchObject({
+        cancellation: {
+          initiator: 'USER',
+          surveyReason: 'CANCEL_SURVEY_REASON_COST_RELATED',
+          canceledAt: '2026-09-10T12:00:00.000Z',
+        },
+      });
+    });
+
+    it('해지 맥락이 없으면(iOS 등) cancellation은 null이어야 함', async () => {
+      mockTx.subscription.findUnique.mockResolvedValue({
+        lastVerifiedAt: null,
+        autoRenewing: true,
+      });
+
+      await service.applyVerifiedPurchase(
+        userId,
+        { ...verified, autoRenewing: false },
+        { eventType: 'DID_CHANGE_RENEWAL_STATUS', rawPayload: {} },
+      );
+
+      expect(autoRenewOffCalls()[0][0].data.rawPayload).toMatchObject({
+        cancellation: null,
+      });
+    });
+
+    it('다시 켜지는 방향은 남기지 않아야 함', async () => {
+      mockTx.subscription.findUnique.mockResolvedValue({
+        lastVerifiedAt: null,
+        autoRenewing: false,
+      });
+
+      await service.applyVerifiedPurchase(userId, verified, {
+        eventType: 'DID_CHANGE_RENEWAL_STATUS',
+        rawPayload: {},
+      });
+
+      expect(autoRenewOffCalls()).toHaveLength(0);
     });
   });
 

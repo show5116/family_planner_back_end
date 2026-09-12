@@ -26,7 +26,9 @@
     "owner_cannot_leave": "OWNER는 그룹을 나갈 수 없습니다. 다른 멤버에게 OWNER 권한을 위임하거나 그룹을 삭제해주세요",
     "owner_role_cannot_change": "OWNER 역할은 변경할 수 없습니다. 그룹장 양도 기능을 사용해주세요",
     "owner_role_cannot_assign": "OWNER 역할은 할당할 수 없습니다. 그룹장 양도 기능을 사용해주세요",
-    "invite_auto_approved": "INVITE 타입은 사용자가 초대 코드로 가입 시 자동 승인됩니다"
+    "invite_auto_approved": "INVITE 타입은 사용자가 초대 코드로 가입 시 자동 승인됩니다",
+    "group_limit_exceeded": "현재 요금제에서 사용할 수 있는 그룹 개수를 모두 사용했어요",
+    "member_group_limit_exceeded": "상대방이 현재 요금제의 그룹 개수 한도에 도달했어요"
   },
   "notification": {
     "new_member_title": "새 멤버 가입",

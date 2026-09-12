@@ -9,6 +9,7 @@ import { CreateGroupDto } from '@/group/dto/create-group.dto';
 import { UpdateGroupDto } from '@/group/dto/update-group.dto';
 import { GroupInviteService } from '@/group/group-invite.service';
 import { StorageService } from '@/storage/storage.service';
+import { GroupQuotaService } from '@/group/group-quota.service';
 
 @Injectable()
 export class GroupService {
@@ -16,6 +17,7 @@ export class GroupService {
     private prisma: PrismaService,
     private groupInviteService: GroupInviteService,
     private storageService: StorageService,
+    private groupQuotaService: GroupQuotaService,
     private i18n: I18nService,
   ) {}
 
@@ -58,6 +60,9 @@ export class GroupService {
    * 그룹 생성
    */
   async create(userId: string, createGroupDto: CreateGroupDto) {
+    // 그룹 수 한도 — 멤버가 생기는 3개 경로 중 하나다 (나머지는 GroupInviteService)
+    await this.groupQuotaService.assertCanJoin(userId);
+
     const inviteCode = await this.groupInviteService.generateUniqueInviteCode();
     const ownerRole = await this.getOwnerRole();
 

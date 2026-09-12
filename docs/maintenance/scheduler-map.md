@@ -154,13 +154,17 @@
 
 ---
 
-### `subscription` — 인앱 구독 재검증
+### `subscription` — 인앱 구독 재검증 · 만료 임박 알림
 
-파일: [src/subscription/subscription-reconcile.scheduler.ts](../../src/subscription/subscription-reconcile.scheduler.ts)
+파일: [src/subscription/subscription-reconcile.scheduler.ts](../../src/subscription/subscription-reconcile.scheduler.ts),
+[src/subscription/subscription-expiry.scheduler.ts](../../src/subscription/subscription-expiry.scheduler.ts)
 
 | 메서드 | 주기 | 설명 |
 |--------|------|------|
 | `reconcileExpiringSubscriptions` | 매일 새벽 3시 (`0 3 * * *`) | 만료 임박·유예·보류 구독을 스토어에서 재검증 (웹훅 유실 대비 안전망) |
+| `notifyExpiringSubscriptions` | 매일 오전 10시 KST (`0 10 * * *`) | 자동 갱신을 끈 사용자에게 만료 7일 전 알림. `EXPIRY_NOTICE` 이벤트로 한 주기 1회만 발송 |
+
+> 재검증은 서버 시간대로 돌지만, **알림은 사용자가 보는 시각이라 `Asia/Seoul`을 명시**한다.
 
 ---
 

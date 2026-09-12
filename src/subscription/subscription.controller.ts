@@ -26,7 +26,7 @@ export class SubscriptionController {
 
   @Get('quota-plans')
   @ApiOperation({
-    summary: '등급별 미디어 용량 한도표 (플랜 비교 카드용)',
+    summary: '등급별 한도표 — 미디어 용량 + 그룹 수 (플랜 비교 카드용)',
   })
   @ApiSuccess(MediaQuotaPlanListDto)
   getQuotaPlans(): MediaQuotaPlanListDto {

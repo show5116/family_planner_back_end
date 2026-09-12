@@ -7,5 +7,10 @@
     "already_used": "この購入は既に他のアカウントで使用されています",
     "unknown_product": "サポートされていない商品です",
     "purchase_pending": "決済がまだ完了していません"
+  },
+  "notification": {
+    "expiring_title": "サブスクリプションがまもなく終了します",
+    "expiring_body": "{days}日後に無料プランに切り替わります。継続するには更新してください。",
+    "expiring_body_over_quota": "{days}日後に無料プランへ切り替わると、保存中の{usedGb}GBのうち{overGb}GBが上限を超えます。"
   }
 }

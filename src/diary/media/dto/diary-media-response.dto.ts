@@ -161,6 +161,10 @@ export class MediaQuotaPlanDto {
 
   @ApiProperty({ description: '영상 최대 길이 (ms)', nullable: true })
   maxVideoDurationMs: number | null;
+
+  // 미디어 한도는 아니지만 플랜 비교 카드가 한 번의 호출로 받도록 여기 함께 싣는다.
+  @ApiProperty({ description: '속할 수 있는 그룹 수 한도', example: 1 })
+  maxGroups: number;
 }
 
 export class MediaQuotaPlanListDto {

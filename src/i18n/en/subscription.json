@@ -7,5 +7,10 @@
     "already_used": "This purchase is already linked to another account",
     "unknown_product": "Unsupported product",
     "purchase_pending": "The payment has not been completed yet"
+  },
+  "notification": {
+    "expiring_title": "Your subscription is ending soon",
+    "expiring_body": "It switches to the free plan in {days} days. Renew to keep your benefits.",
+    "expiring_body_over_quota": "In {days} days you'll move to the free plan, and {overGb}GB of your {usedGb}GB will be over the limit."
   }
 }

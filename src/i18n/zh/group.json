@@ -26,7 +26,9 @@
     "owner_cannot_leave": "OWNER无法退出群组。请将OWNER权限转让给其他成员或删除群组",
     "owner_role_cannot_change": "OWNER角色无法变更，请使用群主转让功能",
     "owner_role_cannot_assign": "无法分配OWNER角色，请使用群主转让功能",
-    "invite_auto_approved": "INVITE类型在用户通过邀请码加入时自动批准"
+    "invite_auto_approved": "INVITE类型在用户通过邀请码加入时自动批准",
+    "group_limit_exceeded": "已达到当前套餐可使用的群组数量上限",
+    "member_group_limit_exceeded": "对方已达到其套餐的群组数量上限"
   },
   "notification": {
     "new_member_title": "新成员加入",
