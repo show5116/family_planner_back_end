@@ -31,7 +31,7 @@
 
 ### GET `subscription/quota-plans`
 
-**요약:** 등급별 미디어 용량 한도표 (플랜 비교 카드용)
+**요약:** 등급별 한도표 — 미디어 용량 + 그룹 수 (플랜 비교 카드용)
 
 **Responses:**
 
@@ -46,7 +46,8 @@
       "totalBytes": 0, // 계정 누적 한도 (bytes) (number)
       "perFileBytes": 0, // 파일 1개 최대 크기 (bytes) (number)
       "videoAllowed": false, // 영상 첨부 가능 여부 (boolean)
-      "maxVideoDurationMs": null // 영상 최대 길이 (ms) (number | null)
+      "maxVideoDurationMs": null, // 영상 최대 길이 (ms) (number | null)
+      "maxGroups": 1 // 속할 수 있는 그룹 수 한도 (number)
     }
   ] // 등급별 한도표 (MediaQuotaPlanDto[])
 }

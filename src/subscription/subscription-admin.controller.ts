@@ -21,6 +21,7 @@ import {
   AdminUserQueryDto,
   AdminUserDto,
   AdminUserPageDto,
+  AdminStorageStatsDto,
 } from './dto/admin-subscription.dto';
 
 @ApiTags('Subscription (ADMIN)')
@@ -38,6 +39,16 @@ export class SubscriptionAdminController {
   @ApiSuccess(AdminUserPageDto, '사용자 목록 조회 성공')
   getUsers(@Query() query: AdminUserQueryDto): Promise<AdminUserPageDto> {
     return this.subscriptionAdminService.getUsers(query);
+  }
+
+  @Get('storage-stats')
+  @ApiOperation({
+    summary:
+      '저장 사용량 분포 (ADMIN 전용) — 등급별 요약 + 구간별 인원. 상위 등급 신설 판단용',
+  })
+  @ApiSuccess(AdminStorageStatsDto, '분포 조회 성공')
+  getStorageStats(): Promise<AdminStorageStatsDto> {
+    return this.subscriptionAdminService.getStorageStats();
   }
 
   @Get('users/:userId')

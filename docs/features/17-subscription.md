@@ -415,9 +415,36 @@ RTDN 페이로드는 서명되어 있지 않으므로 `purchaseToken`을 Google 
 
 | Method | Endpoint | 설명 | Guard |
 | --- | --- | --- | --- |
-| GET | `/subscription/admin/users` | 사용자 목록 (검색/필터) | JWT, Admin |
+| GET | `/subscription/admin/users` | 사용자 목록 (검색/필터, 저장 사용량 포함) | JWT, Admin |
 | GET | `/subscription/admin/users/:userId` | 사용자 상세 조회 | JWT, Admin |
+| GET | `/subscription/admin/storage-stats` | 저장 사용량 분포 (등급별 요약 + 구간별 인원) | JWT, Admin |
 | PATCH | `/subscription/admin/users/:userId/subscription` | tier/만료일 직접 수정 | JWT, Admin |
+
+### 저장 사용량 관측
+
+한도를 올릴지, 상위 등급을 만들지를 **감이 아니라 숫자로** 판단하기 위한 것입니다.
+`nearLimitCount`(한도 80% 이상)와 `overLimitCount`가 그 신호입니다.
+
+```json
+{
+  "totalStoredBytes": 128849018880,
+  "usersWithMedia": 412,
+  "tiers": [
+    { "tier": "premium", "userCount": 30, "usersWithMedia": 24,
+      "totalBytes": 53687091200, "medianBytes": 1073741824, "maxBytes": 39728447488,
+      "limitBytes": 42949672960, "nearLimitCount": 2, "overLimitCount": 0 }
+  ],
+  "buckets": [ { "label": "~500MB", "maxBytes": 524288000, "userCount": 87 } ]
+}
+```
+
+`AdminUserDto.storageUsedBytes`와 이 통계는 모두
+[media-usage.util.ts](../../src/common/utils/media-usage.util.ts)의 같은 집계를 씁니다.
+
+> **⚠️ 앱의 한도 게이지와 값이 다를 수 있습니다.** 게이지(`DiaryMediaQuotaService`)는 아직
+> 올라오지 않은 `PENDING` 예약분까지 더해 한도를 막습니다 — 돈이 걸린 판정이라 업로드 중인 것도
+> 미리 잡아야 하기 때문입니다. 관리자 화면은 **R2에 실제로 올라간 것만** 세므로 최대 15분짜리
+> 예약분만큼 작게 나옵니다. 의도된 차이입니다.
 
 ---
 

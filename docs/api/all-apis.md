@@ -4217,6 +4217,8 @@ period=monthly 시 year 필수.
 
 #### 409 - 이미 그룹 멤버이거나 가입 요청이 대기 중
 
+#### 402 - 현재 요금제의 그룹 개수 한도를 초과했습니다 (한도 groupQuota 동봉)
+
 ---
 
 ### POST `groups/:id/leave`
@@ -4596,6 +4598,8 @@ PENDING 상태의 가입 요청을 승인하고 그룹 멤버로 추가
   } // GroupMemberDto
 }
 ```
+
+#### 402 - 신청자가 자신의 요금제 그룹 개수 한도를 초과했습니다 (한도 groupQuota 동봉)
 
 #### 400 - 해당 이메일로 가입된 사용자가 없음
 
@@ -5009,6 +5013,8 @@ status 쿼리로 필터 가능 (PENDING, REVIEWING, RESOLVED, DISMISSED)
   ] // GroupMemberDto[]
 }
 ```
+
+#### 402 - 현재 요금제의 그룹 개수 한도를 초과했습니다 (한도 groupQuota 동봉)
 
 ---
 
@@ -11268,12 +11274,50 @@ R2에 파일이 존재하는지 확인합니다.
       "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
       "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
       "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
-      "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
+      "deletedAt": "2024-01-08T00:00:00.000Z", // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
+      "storageUsedBytes": 1073741824 // 다이어리 미디어 저장 사용량 (bytes). R2에 실제 올라간 것만 세므로 앱의 한도 게이지보다 작을 수 있다 (number)
     }
   ], // AdminUserDto[]
   "total": 120, // number
   "page": 1, // number
   "limit": 20 // number
+}
+```
+
+---
+
+### GET `subscription/admin/storage-stats`
+
+**요약:** 저장 사용량 분포 (ADMIN 전용) — 등급별 요약 + 구간별 인원. 상위 등급 신설 판단용
+
+**Responses:**
+
+#### 200 - 분포 조회 성공
+
+```json
+{
+  "totalStoredBytes": 128849018880, // 전체 저장량 합 (bytes) (number)
+  "usersWithMedia": 412, // 미디어를 1건이라도 올린 전체 사용자 수 (number)
+  "tiers": [
+    {
+      "tier": null, // SubscriptionTier
+      "userCount": 1200, // 해당 등급 전체 사용자 수 (number)
+      "usersWithMedia": 340, // 미디어를 1건이라도 올린 사용자 수 (number)
+      "totalBytes": 53687091200, // 등급 합계 저장량 (bytes) (number)
+      "medianBytes": 314572800, // 미디어가 있는 사용자 기준 중앙값 (bytes) (number)
+      "maxBytes": 39728447488, // 최대 사용자의 저장량 (bytes) (number)
+      "limitBytes": 42949672960, // 등급 누적 한도 (bytes) (number)
+      "nearLimitCount": 12, // 한도의 80% 이상 100% 미만 사용자 수 (상위 등급 수요 신호) (number)
+      "overLimitCount": 3 // 한도를 이미 넘긴 사용자 수 (number)
+    }
+  ], // 등급별 요약 (AdminTierStorageDto[])
+  "buckets": [
+    {
+      "label": "~500MB", // 구간 이름 (string)
+      "maxBytes": 524288000, // 구간 상한 (bytes). null이면 상한 없음 (number | null)
+      "userCount": 87 // 구간에 속한 사용자 수 (number)
+    }
+  ] // 저장량 구간별 사용자 분포 (미디어가 있는 사용자만) (AdminStorageBucketDto[])
 }
 ```
 
@@ -11303,7 +11347,8 @@ R2에 파일이 존재하는지 확인합니다.
   "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
   "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
-  "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
+  "deletedAt": "2024-01-08T00:00:00.000Z", // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
+  "storageUsedBytes": 1073741824 // 다이어리 미디어 저장 사용량 (bytes). R2에 실제 올라간 것만 세므로 앱의 한도 게이지보다 작을 수 있다 (number)
 }
 ```
 
@@ -11344,7 +11389,8 @@ R2에 파일이 존재하는지 확인합니다.
   "isSubscriptionActive": false, // 구독 활성 여부 (boolean)
   "createdAt": "2025-01-01T00:00:00Z", // 가입일 (Date)
   "lastLoginAt": "2025-01-01T00:00:00Z", // 마지막 로그인 (Date | null)
-  "deletedAt": "2024-01-08T00:00:00.000Z" // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
+  "deletedAt": "2024-01-08T00:00:00.000Z", // 삭제 예약 일시 (null이면 정상 계정) (Date | null)
+  "storageUsedBytes": 1073741824 // 다이어리 미디어 저장 사용량 (bytes). R2에 실제 올라간 것만 세므로 앱의 한도 게이지보다 작을 수 있다 (number)
 }
 ```
 
@@ -11379,7 +11425,7 @@ R2에 파일이 존재하는지 확인합니다.
 
 ### GET `subscription/quota-plans`
 
-**요약:** 등급별 미디어 용량 한도표 (플랜 비교 카드용)
+**요약:** 등급별 한도표 — 미디어 용량 + 그룹 수 (플랜 비교 카드용)
 
 **Responses:**
 
@@ -11394,7 +11440,8 @@ R2에 파일이 존재하는지 확인합니다.
       "totalBytes": 0, // 계정 누적 한도 (bytes) (number)
       "perFileBytes": 0, // 파일 1개 최대 크기 (bytes) (number)
       "videoAllowed": false, // 영상 첨부 가능 여부 (boolean)
-      "maxVideoDurationMs": null // 영상 최대 길이 (ms) (number | null)
+      "maxVideoDurationMs": null, // 영상 최대 길이 (ms) (number | null)
+      "maxGroups": 1 // 속할 수 있는 그룹 수 한도 (number)
     }
   ] // 등급별 한도표 (MediaQuotaPlanDto[])
 }

@@ -115,6 +115,92 @@ export class AdminUserDto {
     example: '2024-01-08T00:00:00.000Z',
   })
   deletedAt: Date | null;
+
+  @ApiProperty({
+    description:
+      '다이어리 미디어 저장 사용량 (bytes). R2에 실제 올라간 것만 세므로 앱의 한도 게이지보다 작을 수 있다',
+    example: 1073741824,
+  })
+  storageUsedBytes: number;
+}
+
+export class AdminTierStorageDto {
+  @ApiProperty({ enum: SubscriptionTier })
+  tier: SubscriptionTier;
+
+  @ApiProperty({ description: '해당 등급 전체 사용자 수', example: 1200 })
+  userCount: number;
+
+  @ApiProperty({
+    description: '미디어를 1건이라도 올린 사용자 수',
+    example: 340,
+  })
+  usersWithMedia: number;
+
+  @ApiProperty({
+    description: '등급 합계 저장량 (bytes)',
+    example: 53687091200,
+  })
+  totalBytes: number;
+
+  @ApiProperty({
+    description: '미디어가 있는 사용자 기준 중앙값 (bytes)',
+    example: 314572800,
+  })
+  medianBytes: number;
+
+  @ApiProperty({
+    description: '최대 사용자의 저장량 (bytes)',
+    example: 39728447488,
+  })
+  maxBytes: number;
+
+  @ApiProperty({ description: '등급 누적 한도 (bytes)', example: 42949672960 })
+  limitBytes: number;
+
+  @ApiProperty({
+    description: '한도의 80% 이상 100% 미만 사용자 수 (상위 등급 수요 신호)',
+    example: 12,
+  })
+  nearLimitCount: number;
+
+  @ApiProperty({ description: '한도를 이미 넘긴 사용자 수', example: 3 })
+  overLimitCount: number;
+}
+
+export class AdminStorageBucketDto {
+  @ApiProperty({ description: '구간 이름', example: '~500MB' })
+  label: string;
+
+  @ApiProperty({
+    description: '구간 상한 (bytes). null이면 상한 없음',
+    nullable: true,
+    example: 524288000,
+  })
+  maxBytes: number | null;
+
+  @ApiProperty({ description: '구간에 속한 사용자 수', example: 87 })
+  userCount: number;
+}
+
+export class AdminStorageStatsDto {
+  @ApiProperty({ description: '전체 저장량 합 (bytes)', example: 128849018880 })
+  totalStoredBytes: number;
+
+  @ApiProperty({
+    description: '미디어를 1건이라도 올린 전체 사용자 수',
+    example: 412,
+  })
+  usersWithMedia: number;
+
+  @ApiProperty({ type: [AdminTierStorageDto], description: '등급별 요약' })
+  tiers: AdminTierStorageDto[];
+
+  @ApiProperty({
+    type: [AdminStorageBucketDto],
+    description: '저장량 구간별 사용자 분포 (미디어가 있는 사용자만)',
+  })
+  buckets: AdminStorageBucketDto[];
 }
 
 export class AdminUserPageDto {

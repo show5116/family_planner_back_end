@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
-import { MediaStatus, SubscriptionTier } from '@prisma/client';
+import { SubscriptionTier } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { isSchedulerEnabled } from '@/common/base.scheduler';
 import { PrismaService } from '@/prisma/prisma.service';
 import { NotificationService } from '@/notification/notification.service';
 import { NotificationCategory } from '@/notification/enums/notification-category.enum';
 import { MediaQuotaPlan } from '@/config/diary-media.config';
+import { sumStoredMediaBytes } from '@/common/utils/media-usage.util';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const GB = 1024 * 1024 * 1024;
@@ -73,7 +74,7 @@ export class SubscriptionExpiryScheduler {
     const userIds = targets.map((t) => t.id);
     const [notified, usage] = await Promise.all([
       this.findAlreadyNotified(userIds, now),
-      this.sumStoredBytes(userIds),
+      sumStoredMediaBytes(this.prisma, userIds),
     ]);
 
     const freeTotalBytes = this.freeTotalBytes();
@@ -117,29 +118,6 @@ export class SubscriptionExpiryScheduler {
     });
 
     return new Set(events.map((e) => e.userId));
-  }
-
-  /**
-   * 사용자별 누적 저장 바이트
-   *
-   * 다이어리 누적 한도와 같은 기준(CONFIRMED + 미삭제)이다. 알림 문구용이므로
-   * 최대 15분짜리 PENDING 예약분은 세지 않는다 — DiaryMediaQuotaService의 게이지와
-   * 그만큼 다를 수 있다. (SubscriptionModule이 DiaryModule을 import하면 순환이라 직접 집계한다)
-   */
-  private async sumStoredBytes(
-    userIds: string[],
-  ): Promise<Map<string, number>> {
-    const rows = await this.prisma.diaryMedia.groupBy({
-      by: ['userId'],
-      where: {
-        userId: { in: userIds },
-        status: MediaStatus.CONFIRMED,
-        deletedAt: null,
-      },
-      _sum: { fileSize: true },
-    });
-
-    return new Map(rows.map((r) => [r.userId, r._sum.fileSize ?? 0]));
   }
 
   /** free 등급의 누적 한도 (한도 정의는 diary-media.config 한 곳에만 둔다) */
